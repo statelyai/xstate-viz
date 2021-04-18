@@ -1,0 +1,13 @@
+@import './base.scss';
+
+[data-viz='transition'] {
+}
+
+[data-viz='transition-label'] {
+  font-size: var(--viz-font-size-sm);
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  background: var(--viz-color-event);
+  color: white;
+  border-radius: 1rem;
+}

@@ -14,6 +14,12 @@ module.exports = {
         ...(process.versions.pnp ? { tsc: 'yarn pnpify tsc' } : {}),
       },
     ],
+    [
+      '@snowpack/plugin-sass',
+      {
+        includePaths: ['src/'],
+      },
+    ],
   ],
   routes: [
     /* Enable an SPA Fallback in development: */

@@ -1,0 +1,8 @@
+[data-viz='invoke'] {
+  &:before {
+    content: 'invoke /';
+    font-size: var(--viz-font-size-sm);
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+}
