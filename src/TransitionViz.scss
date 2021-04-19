@@ -1,13 +1,37 @@
 @import './base.scss';
 
-[data-viz='transition'] {
+[data-viz='transitions'] {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 [data-viz='transition-label'] {
   font-size: var(--viz-font-size-sm);
   font-weight: bold;
-  padding: 0.25rem 0.5rem;
-  background: var(--viz-color-event);
   color: white;
   border-radius: 1rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  border: 2px solid var(--viz-color-active);
+  overflow: hidden;
+}
+
+[data-viz='transition-event'] {
+  background: var(--viz-color-active);
+  padding: 0.25rem 0.5rem;
+}
+
+[data-viz='transition-guard'] {
+  padding: 0 0.5rem;
+  &:before {
+    content: '[';
+  }
+  &:after {
+    content: ']';
+  }
 }

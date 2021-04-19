@@ -1,23 +1,38 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 
 import './base.scss';
 
 import Editor from '@monaco-editor/react';
-import { StateNodeViz } from './StateNodeViz';
 import {
   AnyEventObject,
   assign,
   createMachine,
+  createSchema,
   interpret,
   Interpreter,
   send,
   State,
   StateMachine,
 } from 'xstate';
-import { useInterpret, useMachine, useService } from '@xstate/react';
+import { useInterpret, useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
+import { MachineViz } from './MachineViz';
 
 const testMachine = createMachine({
+  schema: {
+    events: {
+      INC: {
+        properties: {
+          value: {
+            type: 'number',
+          },
+        },
+      },
+    },
+  },
+  context: {
+    count: 0,
+  },
   initial: 'simple',
   entry: ['rootAction1'],
   exit: ['rootAction1'],
@@ -30,6 +45,16 @@ const testMachine = createMachine({
       exit: ['anotherAction', 'action4'],
       on: {
         NEXT: 'compound',
+        INC: [
+          { target: 'compound', cond: (_, e) => e.value > 10 },
+          { target: 'final' },
+        ],
+        EVENT: {
+          target: 'final',
+          cond: function somethingIsTrue() {
+            return true;
+          },
+        },
       },
     },
     compound: {
@@ -96,12 +121,15 @@ const createSimModel = (machine: StateMachine<any, any, any>) =>
     {
       state: machine.initialState,
       machine,
+      previewEvent: undefined as string | undefined,
     },
     {
       events: {
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
         EVENT: (event: AnyEventObject) => ({ event }),
         'MACHINE.UPDATE': () => ({}),
+        'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
+        'PREVIEW.CLEAR': () => ({}),
       },
     },
   );
@@ -111,7 +139,6 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
   return createMachine<typeof simModel>({
     context: simModel.initialContext,
     initial: 'active',
-
     states: {
       active: {
         invoke: {
@@ -160,6 +187,14 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
               }),
             ],
           },
+          'EVENT.PREVIEW': {
+            actions: simModel.assign({
+              previewEvent: (_, event) => event.eventType,
+            }),
+          },
+          'PREVIEW.CLEAR': {
+            actions: simModel.assign({ previewEvent: undefined }),
+          },
         },
       },
     },
@@ -169,7 +204,24 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
       },
 
       EVENT: {
-        actions: send((ctx, e) => e.event, { to: 'machine' }),
+        actions: send(
+          (ctx, e) => {
+            const eventSchema = ctx.machine.schema?.events?.[e.event.type];
+            const eventToSend = { ...e.event };
+
+            if (eventSchema) {
+              Object.keys(eventSchema.properties).forEach((prop) => {
+                const value = prompt(
+                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+                );
+
+                eventToSend[prop] = value;
+              });
+            }
+            return eventToSend;
+          },
+          { to: 'machine' },
+        ),
       },
     },
   });
@@ -184,13 +236,6 @@ const canvasMachine = createMachine({
     },
   },
 });
-
-const MachineViz = () => {
-  const simService = useContext(SimulationContext);
-  const [state, send] = useService(simService);
-
-  return <StateNodeViz definition={state.context.machine.definition} />;
-};
 
 function App() {
   const [state, send] = useMachine(canvasMachine);

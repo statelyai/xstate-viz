@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import type { StateNodeDefinition } from 'xstate';
-import { EventViz } from './EventViz';
+import { TransitionViz } from './TransitionViz';
 import './StateNodeViz.scss';
 import './InvokeViz.scss';
 import './ActionViz.scss';
@@ -49,18 +49,33 @@ export const StateNodeViz: React.FC<{
   const service = useContext(SimulationContext);
   const [state, send] = useService(service);
 
-  console.log(state.context.state);
+  const previewState = useMemo(() => {
+    if (!state.context.previewEvent) {
+      return undefined;
+    }
+    return state.context.machine.transition(
+      state.context.state,
+      state.context.previewEvent,
+    );
+  }, [state]);
 
   return (
     <div data-viz="stateNodeGroup">
       <div
         data-viz="stateNode"
         data-viz-type={definition.type}
+        data-viz-atomic={
+          ['atomic', 'final'].includes(definition.type) || undefined
+        }
         data-viz-parent-type={parent?.type}
         data-viz-active={
           state.context.state.configuration.find(
             (n) => n.id === definition.id,
           ) || undefined
+        }
+        data-viz-previewed={
+          previewState?.configuration.find((n) => n.id === definition.id) ||
+          undefined
         }
         title={`#${definition.id}`}
       >
@@ -118,7 +133,7 @@ export const StateNodeViz: React.FC<{
       </div>
       <div data-viz="transitions">
         {definition.transitions.map((transition, i) => {
-          return <EventViz definition={transition} key={i} />;
+          return <TransitionViz definition={transition} key={i} />;
         })}
       </div>
     </div>

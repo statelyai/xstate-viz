@@ -14,13 +14,18 @@
   display: inline-grid;
   align-self: start;
   opacity: 0.5;
+  font-size: 1em;
 
   &[data-viz-active] {
     opacity: 1;
   }
 
+  &[data-viz-previewed]:not([data-viz-active]) {
+    outline: 2px solid var(--viz-color-active);
+  }
+
   &[data-viz-active] {
-    --viz-node-border-color: var(--viz-color-event);
+    --viz-node-border-color: var(--viz-color-active);
   }
 
   &[data-viz-type='history'] {
