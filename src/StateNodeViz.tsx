@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useRef } from 'react';
 import type { StateNodeDefinition } from 'xstate';
 import { TransitionViz } from './TransitionViz';
 import './StateNodeViz.scss';
@@ -6,6 +6,7 @@ import './InvokeViz.scss';
 import './ActionViz.scss';
 import { SimulationContext } from './App';
 import { useMachine, useService } from '@xstate/react';
+import { setRect } from './getRect';
 
 interface BaseStateNodeDef {
   key: string;
@@ -48,6 +49,7 @@ export const StateNodeViz: React.FC<{
 }> = ({ definition, parent }) => {
   const service = useContext(SimulationContext);
   const [state, send] = useService(service);
+  const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {
@@ -59,8 +61,14 @@ export const StateNodeViz: React.FC<{
     );
   }, [state]);
 
+  useEffect(() => {
+    if (ref.current) {
+      setRect(definition.id, ref.current);
+    }
+  }, []);
+
   return (
-    <div data-viz="stateNodeGroup">
+    <div data-viz="stateNodeGroup" ref={ref}>
       <div
         data-viz="stateNode"
         data-viz-type={definition.type}

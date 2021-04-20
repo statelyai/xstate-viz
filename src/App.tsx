@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 
 import './base.scss';
 
@@ -14,9 +14,12 @@ import {
   State,
   StateMachine,
 } from 'xstate';
-import { useInterpret, useMachine } from '@xstate/react';
+import { useInterpret, useMachine, useService } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
+import { toDirectedGraph } from '@xstate/graph';
 import { MachineViz } from './MachineViz';
+import { getAllEdges } from './utils';
+import { getRect, useGetRect } from './getRect';
 
 const testMachine = createMachine({
   schema: {
@@ -234,8 +237,67 @@ const canvasMachine = createMachine({
       actions: model.assign({ zoom: (ctx) => ctx.zoom - 0.1 }),
       cond: (ctx) => ctx.zoom > 0.5,
     },
+    'ZOOM.IN': {
+      actions: model.assign({ zoom: (ctx) => ctx.zoom + 0.1 }),
+    },
   },
 });
+
+const EdgeViz = () => {};
+
+function Edges() {
+  const service = useContext(SimulationContext);
+  const [state] = useService(service);
+  const digraph = toDirectedGraph(state.context.machine);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const i = setTimeout(() => {
+      setCount(count + 1);
+    }, 500);
+
+    return () => {
+      clearTimeout(i);
+    };
+  }, []);
+
+  const edges = getAllEdges(state.context.machine);
+  return (
+    <svg
+      style={{
+        position: 'fixed',
+        height: '100%',
+        width: '100%',
+        top: 0,
+        left: 0,
+        pointerEvents: 'none',
+      }}
+    >
+      {edges.map((edge, i) => {
+        const [count, setCount] = useState(0);
+
+        const sourceRect = useGetRect(`${edge.source.id}`);
+        const edgeRect = useGetRect(`${edge.source.id}:${i}`);
+        const targetRect = useGetRect(`${edge.target.id}`);
+
+        if (!sourceRect || !targetRect) {
+          return null;
+        }
+        return (
+          <line
+            key={i}
+            stroke="yellow"
+            strokeWidth={2}
+            x1={sourceRect.left}
+            y1={sourceRect.top}
+            x2={targetRect.left}
+            y2={targetRect.top}
+          ></line>
+        );
+      })}
+    </svg>
+  );
+}
 
 function App() {
   const [state, send] = useMachine(canvasMachine);
@@ -244,13 +306,10 @@ function App() {
   return (
     <SimulationContext.Provider value={simService}>
       <main data-viz="app" data-viz-theme="dark">
-        <div
-          style={{
-            transform: `scale(${state.context.zoom})`,
-          }}
-        >
+        <div>
           <div>
             <button onClick={() => send('ZOOM.OUT')}>-</button>
+            <button onClick={() => send('ZOOM.IN')}>+</button>
             <button
               onClick={() =>
                 simService.send({
@@ -265,7 +324,15 @@ function App() {
               MACHINE
             </button>
           </div>
-          <MachineViz />
+          <div
+            style={{
+              transform: `scale(${state.context.zoom})`,
+              transition: `transform .2s ease`,
+            }}
+          >
+            <MachineViz />
+          </div>
+          <Edges />
         </div>
         <Editor
           height="90vh"
