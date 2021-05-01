@@ -32,7 +32,7 @@ const testMachine = createMachine({
           },
         },
       },
-    },
+    } as any,
   },
   context: {
     count: 0,
@@ -64,6 +64,8 @@ const testMachine = createMachine({
     compound: {
       invoke: {
         src: 'fooSrc',
+        onDone: 'final',
+        onError: 'failure',
       },
       initial: 'one',
       states: {
@@ -75,10 +77,15 @@ const testMachine = createMachine({
         two: {
           on: {
             PREV: 'one',
+            NEXT: 'three',
           },
         },
         three: {
           initial: 'atomic',
+          always: {
+            target: 'one',
+            cond: () => false,
+          },
           states: {
             atomic: {},
             history: {
@@ -103,6 +110,7 @@ const testMachine = createMachine({
     final: {
       type: 'final',
     },
+    failure: {},
   },
 });
 

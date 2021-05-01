@@ -68,7 +68,18 @@ export const StateNodeViz: React.FC<{
   }, []);
 
   return (
-    <div data-viz="stateNodeGroup">
+    <div
+      data-viz="stateNodeGroup"
+      data-viz-active={
+        !!state.context.state.configuration.find(
+          (n) => n.id === definition.id,
+        ) || undefined
+      }
+      data-viz-previewed={
+        previewState?.configuration.find((n) => n.id === definition.id) ||
+        undefined
+      }
+    >
       <div
         ref={ref}
         data-viz="stateNode"
@@ -77,15 +88,6 @@ export const StateNodeViz: React.FC<{
           ['atomic', 'final'].includes(definition.type) || undefined
         }
         data-viz-parent-type={parent?.type}
-        data-viz-active={
-          state.context.state.configuration.find(
-            (n) => n.id === definition.id,
-          ) || undefined
-        }
-        data-viz-previewed={
-          previewState?.configuration.find((n) => n.id === definition.id) ||
-          undefined
-        }
         title={`#${definition.id}`}
       >
         <div data-viz="stateNode-header">

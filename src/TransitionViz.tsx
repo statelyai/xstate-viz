@@ -2,6 +2,7 @@ import { useSelector } from '@xstate/react';
 import React, { useContext, useEffect, useRef } from 'react';
 import type { Guard, TransitionDefinition } from 'xstate';
 import { SimulationContext } from './App';
+import { EventTypeViz } from './EventTypeViz';
 import { setRect } from './getRect';
 import './TransitionViz.scss';
 
@@ -49,7 +50,9 @@ export const TransitionViz: React.FC<{
           });
         }}
       >
-        <div data-viz="transition-event">{definition.eventType}</div>
+        <div data-viz="transition-event">
+          <EventTypeViz eventType={definition.eventType} />
+        </div>
         {definition.cond && (
           <div data-viz="transition-guard">{getGuardType(definition.cond)}</div>
         )}
