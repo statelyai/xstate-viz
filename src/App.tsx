@@ -18,8 +18,9 @@ import { useInterpret, useMachine, useService } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { toDirectedGraph } from '@xstate/graph';
 import { MachineViz } from './MachineViz';
-import { getAllEdges } from './utils';
+import { Edge, getAllEdges } from './utils';
 import { getRect, useGetRect } from './getRect';
+import { getPath, pathToD } from './pathUtils';
 
 const testMachine = createMachine({
   schema: {
@@ -105,9 +106,29 @@ const testMachine = createMachine({
   },
 });
 
-const model = createModel({
-  zoom: 1,
-});
+interface Point {
+  x: number;
+  y: number;
+}
+
+const model = createModel(
+  {
+    zoom: 1,
+    pan: {
+      dx: 0,
+      dy: 0,
+    },
+    initialPosition: { x: 0, y: 0 },
+  },
+  {
+    events: {
+      'ZOOM.OUT': () => ({}),
+      'ZOOM.IN': () => ({}),
+      'POSITION.SET': ({ x, y }: Point) => ({ position: { x, y } }),
+      PAN: (dx: number, dy: number) => ({ dx, dy }),
+    },
+  },
+);
 
 export const SimulationContext = createContext(
   (null as any) as Interpreter<
@@ -115,6 +136,8 @@ export const SimulationContext = createContext(
       state: State<any, any, any, any>;
       machine: any;
     },
+    any,
+    any,
     any
   >,
 );
@@ -230,7 +253,7 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
   });
 };
 
-const canvasMachine = createMachine({
+const canvasMachine = createMachine<typeof model>({
   context: model.initialContext,
   on: {
     'ZOOM.OUT': {
@@ -240,26 +263,60 @@ const canvasMachine = createMachine({
     'ZOOM.IN': {
       actions: model.assign({ zoom: (ctx) => ctx.zoom + 0.1 }),
     },
+    PAN: {
+      actions: model.assign({
+        pan: (ctx, e) => {
+          return {
+            dx: ctx.pan.dx - e.dx,
+            dy: ctx.pan.dy - e.dy,
+          };
+        },
+      }),
+    },
+    'POSITION.SET': {
+      actions: model.assign({
+        initialPosition: (_, e) => e.position,
+      }),
+    },
   },
 });
 
-const EdgeViz = () => {};
+const EdgeViz: React.FC<{ edge: Edge<any, any, any> }> = ({ edge }) => {
+  const sourceRect = useGetRect(`${edge.source.id}`);
+  const edgeRect = useGetRect(`${edge.source.id}:${edge.order}`);
+  const targetRect = useGetRect(`${edge.target.id}`);
+
+  if (!sourceRect || !targetRect || !edgeRect) {
+    console.log(
+      'missing one of these',
+      [sourceRect, targetRect, edgeRect],
+      edge,
+      edge.order,
+    );
+    return null;
+  }
+
+  const edgeCenterY = edgeRect.top + edgeRect.height / 2;
+
+  const path = getPath(edgeRect, targetRect);
+
+  // const path = [
+  //   `M ${sourceRect.right},${edgeCenterY}`,
+  //   `L ${edgeRect.left},${edgeCenterY}`,
+  //   `M ${edgeRect.right},${edgeCenterY}`,
+  //   `L ${edgeRect.right + 10},${edgeCenterY}`,
+  //   `L ${targetRect.left},${targetRect.top}`,
+  // ];
+
+  return path ? (
+    <path stroke="#fff4" strokeWidth={2} fill="none" d={pathToD(path)}></path>
+  ) : null;
+};
 
 function Edges() {
   const service = useContext(SimulationContext);
   const [state] = useService(service);
   const digraph = toDirectedGraph(state.context.machine);
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const i = setTimeout(() => {
-      setCount(count + 1);
-    }, 500);
-
-    return () => {
-      clearTimeout(i);
-    };
-  }, []);
 
   const edges = getAllEdges(state.context.machine);
   return (
@@ -274,26 +331,7 @@ function Edges() {
       }}
     >
       {edges.map((edge, i) => {
-        const [count, setCount] = useState(0);
-
-        const sourceRect = useGetRect(`${edge.source.id}`);
-        const edgeRect = useGetRect(`${edge.source.id}:${i}`);
-        const targetRect = useGetRect(`${edge.target.id}`);
-
-        if (!sourceRect || !targetRect) {
-          return null;
-        }
-        return (
-          <line
-            key={i}
-            stroke="yellow"
-            strokeWidth={2}
-            x1={sourceRect.left}
-            y1={sourceRect.top}
-            x2={targetRect.left}
-            y2={targetRect.top}
-          ></line>
-        );
+        return <EdgeViz edge={edge} />;
       })}
     </svg>
   );
@@ -306,7 +344,12 @@ function App() {
   return (
     <SimulationContext.Provider value={simService}>
       <main data-viz="app" data-viz-theme="dark">
-        <div>
+        <div
+          data-panel="viz"
+          onWheel={(e) => {
+            send(model.events.PAN(e.deltaX, e.deltaY));
+          }}
+        >
           <div>
             <button onClick={() => send('ZOOM.OUT')}>-</button>
             <button onClick={() => send('ZOOM.IN')}>+</button>
@@ -326,19 +369,20 @@ function App() {
           </div>
           <div
             style={{
-              transform: `scale(${state.context.zoom})`,
-              transition: `transform .2s ease`,
+              transform: `translate(${state.context.pan.dx}px, ${state.context.pan.dy}px) scale(${state.context.zoom})`,
             }}
           >
             <MachineViz />
           </div>
           <Edges />
         </div>
-        <Editor
-          height="90vh"
-          defaultLanguage="javascript"
-          defaultValue="// some comment"
-        />
+        <div data-panel="code">
+          <Editor
+            height="90vh"
+            defaultLanguage="javascript"
+            defaultValue="// some comment"
+          />
+        </div>
       </main>
     </SimulationContext.Provider>
   );

@@ -68,8 +68,9 @@ export const StateNodeViz: React.FC<{
   }, []);
 
   return (
-    <div data-viz="stateNodeGroup" ref={ref}>
+    <div data-viz="stateNodeGroup">
       <div
+        ref={ref}
         data-viz="stateNode"
         data-viz-type={definition.type}
         data-viz-atomic={
@@ -97,51 +98,51 @@ export const StateNodeViz: React.FC<{
           <div data-viz="stateNode-key">{definition.key}</div>
         </div>
         <div data-viz="stateNode-content">
-          <div data-viz="stateNode-invocations">
-            {definition.invoke.map((invocation) => {
-              return (
-                <div data-viz="invoke">
-                  <div data-viz="invoke-id">{invocation.id}</div>
-                </div>
-              );
-            })}
-          </div>
-          <div data-viz="stateNode-actions" data-viz-actions="entry">
-            {definition.entry.map((action) => {
-              return (
-                <div data-viz="action" data-viz-action="entry">
-                  <div data-viz="action-type">{action.type}</div>
-                </div>
-              );
-            })}
-          </div>
-          <div data-viz="stateNode-actions" data-viz-actions="exit">
-            {definition.exit.map((action) => {
-              return (
-                <div data-viz="action" data-viz-action="exit">
-                  <div data-viz="action-type">{action.type}</div>
-                </div>
-              );
-            })}
-          </div>
+          {definition.invoke.length > 0 && (
+            <div data-viz="stateNode-invocations">
+              {definition.invoke.map((invocation) => {
+                return (
+                  <div data-viz="invoke">
+                    <div data-viz="invoke-id">{invocation.id}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {definition.entry.length > 0 && (
+            <div data-viz="stateNode-actions" data-viz-actions="entry">
+              {definition.entry.map((action) => {
+                return (
+                  <div data-viz="action" data-viz-action="entry">
+                    <div data-viz="action-type">{action.type}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {definition.exit.length > 0 && (
+            <div data-viz="stateNode-actions" data-viz-actions="exit">
+              {definition.exit.map((action) => {
+                return (
+                  <div data-viz="action" data-viz-action="exit">
+                    <div data-viz="action-type">{action.type}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
         {'states' in definition && (
           <div data-viz="stateNode-states">
             {Object.entries(definition.states!).map(([key, value]) => {
-              return (
-                <StateNodeViz
-                  key={key}
-                  definition={value}
-                  parent={definition}
-                />
-              );
+              return <StateNodeViz key={key} definition={value} />;
             })}
           </div>
         )}
       </div>
       <div data-viz="transitions">
         {definition.transitions.map((transition, i) => {
-          return <TransitionViz definition={transition} key={i} />;
+          return <TransitionViz definition={transition} key={i} index={i} />;
         })}
       </div>
     </div>

@@ -10,6 +10,7 @@ export interface Edge<
   source: StateNode<TContext, any, TEvent>;
   target: StateNode<TContext, any, TEvent>;
   transition: TransitionDefinition<TContext, TEvent>;
+  order: number;
 }
 
 export function getChildren(stateNode: StateNode): StateNode[] {
@@ -29,7 +30,7 @@ export function getChildren(stateNode: StateNode): StateNode[] {
 export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
   const edges: Array<Edge<any, any, any>> = [];
 
-  Object.keys(stateNode.on).forEach((eventType) => {
+  Object.keys(stateNode.on).forEach((eventType, order) => {
     const transitions = stateNode.on[eventType];
 
     transitions.forEach((t) => {
@@ -40,6 +41,7 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
           source: stateNode,
           target,
           transition: t,
+          order,
         });
       });
     });

@@ -2,18 +2,24 @@ import { useEffect, useState } from 'react';
 
 type RectListener = (rect: ClientRect) => void;
 
-const rectMap: Map<
-  string,
-  {
-    rect?: ClientRect;
-    listeners: Set<RectListener>;
-  }
-> = new Map();
+const rectMap: Map<string, ClientRect> = new Map();
+const rectListenersMap = new Map<string, Set<RectListener>>();
 
 (window as any).rectMap = rectMap;
 
+const run = () => {
+  document.querySelectorAll('[data-rect]').forEach((el) => {
+    const rectId = (el as HTMLElement).dataset.rect!;
+    readRect(rectId);
+  });
+
+  requestAnimationFrame(run);
+};
+
+requestAnimationFrame(run);
+
 export const getRect = (id: string): ClientRect | undefined => {
-  return rectMap.get(id)?.rect;
+  return rectMap.get(id);
 };
 
 export const readRect = (id: string): ClientRect | undefined => {
@@ -25,45 +31,54 @@ export const readRect = (id: string): ClientRect | undefined => {
   return getRect(id);
 };
 
+export function rectsEqual(a: ClientRect, b: ClientRect): boolean {
+  return (
+    a.left === b.left &&
+    a.right === b.right &&
+    a.top === b.top &&
+    a.bottom === b.bottom
+  );
+}
+
 export const setRect = (id: string, el: HTMLElement) => {
+  const prevRect = getRect(id);
   el.dataset.rect = id;
-  const currentConfig = rectMap.get(id);
   const rect = el.getBoundingClientRect();
-  const nextConfig = {
-    rect,
-    listeners: currentConfig?.listeners ?? new Set(),
-  };
-  rectMap.set(id, nextConfig);
-  nextConfig.listeners.forEach((listener) => listener(rect));
+  rectMap.set(id, rect);
+
+  if (!prevRect || !rectsEqual(prevRect, rect)) {
+    rectListenersMap.get(id)?.forEach((listener) => listener(rect));
+  }
 };
 
 export const onRect = (id: string, listener: RectListener) => {
-  let config = rectMap.get(id);
-  if (!config) {
-    config = { listeners: new Set() };
-    rectMap.set(id, config);
+  let set = rectListenersMap.get(id);
+  if (!set) {
+    set = new Set();
+    rectListenersMap.set(id, set);
   }
-  config.listeners.add(listener);
-  config.rect && listener(config.rect);
+  set.add(listener);
+
+  const currentRect = rectMap.get(id);
+
+  if (currentRect) {
+    listener(currentRect);
+  }
+
+  return {
+    unsubscribe: () => {
+      rectListenersMap.get(id)?.delete(listener);
+    },
+  };
 };
 
 export function useGetRect(id: string) {
   const [rect, setRect] = useState(getRect(id));
 
   useEffect(() => {
-    let af: number;
-    const getNextRect = () => {
-      const nextRect = readRect(id);
-      if (rect?.left !== nextRect?.left || rect?.top !== nextRect?.top) {
-        setRect(nextRect);
-      }
-      af = requestAnimationFrame(getNextRect);
-    };
-    af = requestAnimationFrame(getNextRect);
+    const sub = onRect(id, setRect);
 
-    return () => {
-      cancelAnimationFrame(af);
-    };
+    return sub.unsubscribe;
   }, [id]);
 
   return rect;
