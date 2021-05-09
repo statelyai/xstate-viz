@@ -5,6 +5,10 @@
   position: relative;
 }
 
+.monaco-editor * {
+  position: static;
+}
+
 [data-viz='app'] {
   height: 100vh;
   width: 100vw;
@@ -17,7 +21,7 @@
     grid-row: 1 / -1;
   }
 
-  > [data-panel='code'] {
+  > [data-panel='editor'] {
     grid-column: 2 / -1;
     grid-row: 1 / -1;
   }

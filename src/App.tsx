@@ -21,6 +21,7 @@ import { MachineViz } from './MachineViz';
 import { Edge, getAllEdges } from './utils';
 import { getRect, useGetRect } from './getRect';
 import { getPath, pathToD } from './pathUtils';
+import { EditorPanel } from './EditorPanel';
 
 const testMachine = createMachine({
   schema: {
@@ -161,7 +162,9 @@ const createSimModel = (machine: StateMachine<any, any, any>) =>
       events: {
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
         EVENT: (event: AnyEventObject) => ({ event }),
-        'MACHINE.UPDATE': () => ({}),
+        'MACHINE.UPDATE': (machine: StateMachine<any, any, any>) => ({
+          machine,
+        }),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
       },
@@ -202,22 +205,8 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
             target: 'active',
             internal: false,
             actions: [
-              assign({
-                machine: createMachine({
-                  initial: 'foo',
-                  states: {
-                    foo: {
-                      on: {
-                        NEXT: 'bar',
-                      },
-                    },
-                    bar: {
-                      on: {
-                        NEXT: 'foo',
-                      },
-                    },
-                  },
-                }),
+              simModel.assign({
+                machine: (_, e) => e.machine,
               }),
             ],
           },
@@ -295,12 +284,6 @@ const EdgeViz: React.FC<{ edge: Edge<any, any, any> }> = ({ edge }) => {
   const targetRect = useGetRect(`${edge.target.id}`);
 
   if (!sourceRect || !targetRect || !edgeRect) {
-    console.log(
-      'missing one of these',
-      [sourceRect, targetRect, edgeRect],
-      edge,
-      edge.order,
-    );
     return null;
   }
 
@@ -384,13 +367,11 @@ function App() {
           </div>
           <Edges />
         </div>
-        <div data-panel="code">
-          <Editor
-            height="90vh"
-            defaultLanguage="javascript"
-            defaultValue="// some comment"
-          />
-        </div>
+        <EditorPanel
+          onChange={(machine) => {
+            console.log(machine);
+          }}
+        />
       </main>
     </SimulationContext.Provider>
   );
