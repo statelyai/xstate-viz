@@ -1,6 +1,6 @@
-# New Project
+# XState Visualizer
 
-> ✨ Bootstrapped with Create Snowpack App (CSA).
+The source code for quickly creating visualizations of state machines and statecharts made in XState.
 
 ## Available Scripts
 
