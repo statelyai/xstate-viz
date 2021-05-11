@@ -368,8 +368,12 @@ function App() {
           <Edges />
         </div>
         <EditorPanel
-          onChange={(machine) => {
-            console.log(machine);
+          onChange={(machines) => {
+            simService.send({
+              type: 'MACHINE.UPDATE',
+              machine: machines[0],
+            });
+            console.log(machines);
           }}
         />
       </main>
