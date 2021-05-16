@@ -3,7 +3,7 @@ import type { editor } from 'monaco-editor';
 import React, { useRef } from 'react';
 
 interface EditorWithXStateImportsProps {
-  onChange?: (text: string | undefined) => void;
+  onChange?: (text: string) => void;
   defaultValue?: string;
 }
 
@@ -18,7 +18,11 @@ export const EditorWithXStateImports = (
       defaultLanguage="typescript"
       defaultValue={props.defaultValue}
       theme="vs-dark"
-      onChange={props.onChange}
+      onChange={(text) => {
+        if (text) {
+          props.onChange?.(text);
+        }
+      }}
       onMount={async (editor, monaco) => {
         ref.current = editor;
         const indexFile = await fetch(`/xstate.d.ts.txt`).then((res) =>

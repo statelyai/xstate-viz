@@ -13,8 +13,8 @@ const editorPanelModel = createModel(
   },
   {
     events: {
-      UPDATE: () => ({}),
-      SEND_CURRENT_FILE_VALUE: (code: string) => ({ code }),
+      UPDATE_MACHINE_PRESSED: () => ({}),
+      EDITOR_CHANGED_VALUE: (code: string) => ({ code }),
     },
   },
 );
@@ -22,10 +22,10 @@ const editorPanelModel = createModel(
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
   on: {
-    SEND_CURRENT_FILE_VALUE: {
+    EDITOR_CHANGED_VALUE: {
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
     },
-    UPDATE: {
+    UPDATE_MACHINE_PRESSED: {
       actions: 'onChange',
     },
   },
@@ -48,16 +48,14 @@ export const EditorPanel: React.FC<{
       <EditorWithXStateImports
         defaultValue="// some comment"
         onChange={(code) => {
-          if (code) {
-            send({ type: 'SEND_CURRENT_FILE_VALUE', code });
-          }
+          send({ type: 'EDITOR_CHANGED_VALUE', code });
         }}
       />
       <div>
         <button
           onClick={() => {
             send({
-              type: 'UPDATE',
+              type: 'UPDATE_MACHINE_PRESSED',
             });
           }}
         >
