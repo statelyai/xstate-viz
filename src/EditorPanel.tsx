@@ -1,9 +1,9 @@
+import Editor from '@monaco-editor/react';
 import { useMachine } from '@xstate/react';
-import React from 'react';
-import { createMachine } from 'xstate';
+import React, { useEffect, useRef } from 'react';
+import { assign, createMachine, StateMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import './EditorPanel.scss';
-import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
 
@@ -13,8 +13,7 @@ const editorPanelModel = createModel(
   },
   {
     events: {
-      UPDATE: () => ({}),
-      SEND_CURRENT_FILE_VALUE: (code: string) => ({ code }),
+      UPDATE: (code: string) => ({ code }),
     },
   },
 );
@@ -22,11 +21,11 @@ const editorPanelModel = createModel(
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
   on: {
-    SEND_CURRENT_FILE_VALUE: {
-      actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
-    },
     UPDATE: {
-      actions: 'onChange',
+      actions: [
+        editorPanelModel.assign({ code: (_, e) => e.code }),
+        'onChange',
+      ],
     },
   },
 });
@@ -43,25 +42,28 @@ export const EditorPanel: React.FC<{
     },
   });
 
+  const ref = useRef<any>(null);
+
   return (
     <div data-panel="editor">
-      <EditorWithXStateImports
+      <Editor
+        height="auto"
+        defaultLanguage="javascript"
         defaultValue="// some comment"
-        onChange={(code) => {
-          if (code) {
-            send({ type: 'SEND_CURRENT_FILE_VALUE', code });
-          }
-        }}
+        theme="vs-dark"
+        onMount={(editor) => (ref.current = editor)}
       />
       <div>
         <button
           onClick={() => {
+            console.log(ref.current?.getValue());
             send({
               type: 'UPDATE',
+              code: ref.current?.getValue(),
             });
           }}
         >
-          Update Chart
+          Click me
         </button>
       </div>
     </div>
