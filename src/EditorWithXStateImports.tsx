@@ -10,8 +10,6 @@ interface EditorWithXStateImportsProps {
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
-  const ref = useRef<editor.IStandaloneCodeEditor | null>(null);
-
   return (
     <Editor
       height="auto"
@@ -24,7 +22,6 @@ export const EditorWithXStateImports = (
         }
       }}
       onMount={async (editor, monaco) => {
-        ref.current = editor;
         const indexFile = await fetch(`/xstate.d.ts.txt`).then((res) =>
           res.text(),
         );
