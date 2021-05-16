@@ -1,9 +1,9 @@
-import Editor from '@monaco-editor/react';
 import { useMachine } from '@xstate/react';
-import React, { useEffect, useRef } from 'react';
-import { assign, createMachine, StateMachine } from 'xstate';
+import React from 'react';
+import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import './EditorPanel.scss';
+import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
 
@@ -13,7 +13,8 @@ const editorPanelModel = createModel(
   },
   {
     events: {
-      UPDATE: (code: string) => ({ code }),
+      UPDATE_MACHINE_PRESSED: () => ({}),
+      EDITOR_CHANGED_VALUE: (code: string) => ({ code }),
     },
   },
 );
@@ -21,11 +22,11 @@ const editorPanelModel = createModel(
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
   on: {
-    UPDATE: {
-      actions: [
-        editorPanelModel.assign({ code: (_, e) => e.code }),
-        'onChange',
-      ],
+    EDITOR_CHANGED_VALUE: {
+      actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
+    },
+    UPDATE_MACHINE_PRESSED: {
+      actions: 'onChange',
     },
   },
 });
@@ -42,28 +43,23 @@ export const EditorPanel: React.FC<{
     },
   });
 
-  const ref = useRef<any>(null);
-
   return (
     <div data-panel="editor">
-      <Editor
-        height="auto"
-        defaultLanguage="javascript"
+      <EditorWithXStateImports
         defaultValue="// some comment"
-        theme="vs-dark"
-        onMount={(editor) => (ref.current = editor)}
+        onChange={(code) => {
+          send({ type: 'EDITOR_CHANGED_VALUE', code });
+        }}
       />
       <div>
         <button
           onClick={() => {
-            console.log(ref.current?.getValue());
             send({
-              type: 'UPDATE',
-              code: ref.current?.getValue(),
+              type: 'UPDATE_MACHINE_PRESSED',
             });
           }}
         >
-          Click me
+          Update Chart
         </button>
       </div>
     </div>
