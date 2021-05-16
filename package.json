@@ -7,9 +7,10 @@
     "lint": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.1.1",
+    "@monaco-editor/react": "^4.1.3",
     "@xstate/graph": "^1.3.0",
     "@xstate/react": "^1.3.2",
+    "monaco-editor": "^0.24.0",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
     "xstate": "^4.19.1"

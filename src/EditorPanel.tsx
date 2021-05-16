@@ -1,9 +1,9 @@
-import Editor from '@monaco-editor/react';
 import { useMachine } from '@xstate/react';
-import React, { useEffect, useRef } from 'react';
-import { assign, createMachine, StateMachine } from 'xstate';
+import React from 'react';
+import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import './EditorPanel.scss';
+import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
 
@@ -13,7 +13,8 @@ const editorPanelModel = createModel(
   },
   {
     events: {
-      UPDATE: (code: string) => ({ code }),
+      UPDATE: () => ({}),
+      SEND_CURRENT_FILE_VALUE: (code: string) => ({ code }),
     },
   },
 );
@@ -21,11 +22,11 @@ const editorPanelModel = createModel(
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
   on: {
+    SEND_CURRENT_FILE_VALUE: {
+      actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
+    },
     UPDATE: {
-      actions: [
-        editorPanelModel.assign({ code: (_, e) => e.code }),
-        'onChange',
-      ],
+      actions: 'onChange',
     },
   },
 });
@@ -42,28 +43,25 @@ export const EditorPanel: React.FC<{
     },
   });
 
-  const ref = useRef<any>(null);
-
   return (
     <div data-panel="editor">
-      <Editor
-        height="auto"
-        defaultLanguage="javascript"
+      <EditorWithXStateImports
         defaultValue="// some comment"
-        theme="vs-dark"
-        onMount={(editor) => (ref.current = editor)}
+        onChange={(code) => {
+          if (code) {
+            send({ type: 'SEND_CURRENT_FILE_VALUE', code });
+          }
+        }}
       />
       <div>
         <button
           onClick={() => {
-            console.log(ref.current?.getValue());
             send({
               type: 'UPDATE',
-              code: ref.current?.getValue(),
             });
           }}
         >
-          Click me
+          Update Chart
         </button>
       </div>
     </div>
