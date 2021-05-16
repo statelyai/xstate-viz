@@ -1,13 +1,11 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 
 import './base.scss';
 
-import Editor from '@monaco-editor/react';
 import {
   AnyEventObject,
   assign,
   createMachine,
-  createSchema,
   interpret,
   Interpreter,
   send,
@@ -18,10 +16,9 @@ import { useInterpret, useMachine, useService } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { toDirectedGraph } from '@xstate/graph';
 import { MachineViz } from './MachineViz';
-import { Edge, getAllEdges } from './utils';
-import { getRect, useGetRect } from './getRect';
-import { getPath, pathToD } from './pathUtils';
+import { getAllEdges } from './utils';
 import { EditorPanel } from './EditorPanel';
+import { EdgeViz } from './EdgeViz';
 
 const testMachine = createMachine({
   schema: {
@@ -277,32 +274,6 @@ const canvasMachine = createMachine<typeof model>({
     },
   },
 });
-
-const EdgeViz: React.FC<{ edge: Edge<any, any, any> }> = ({ edge }) => {
-  const sourceRect = useGetRect(`${edge.source.id}`);
-  const edgeRect = useGetRect(`${edge.source.id}:${edge.order}`);
-  const targetRect = useGetRect(`${edge.target.id}`);
-
-  if (!sourceRect || !targetRect || !edgeRect) {
-    return null;
-  }
-
-  const edgeCenterY = edgeRect.top + edgeRect.height / 2;
-
-  const path = getPath(edgeRect, targetRect);
-
-  // const path = [
-  //   `M ${sourceRect.right},${edgeCenterY}`,
-  //   `L ${edgeRect.left},${edgeCenterY}`,
-  //   `M ${edgeRect.right},${edgeCenterY}`,
-  //   `L ${edgeRect.right + 10},${edgeCenterY}`,
-  //   `L ${targetRect.left},${targetRect.top}`,
-  // ];
-
-  return path ? (
-    <path stroke="#fff4" strokeWidth={2} fill="none" d={pathToD(path)}></path>
-  ) : null;
-};
 
 function Edges() {
   const service = useContext(SimulationContext);

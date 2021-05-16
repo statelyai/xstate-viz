@@ -268,9 +268,7 @@ export function getPath(
     ];
   }
 
-  // sourcePoint.x += 10;
-
-  const ix = closestRectIntersections(
+  const intersections = closestRectIntersections(
     [
       sourcePoint,
       {
@@ -281,16 +279,35 @@ export function getPath(
     targetRect,
   );
 
-  if (!ix) {
+  if (!intersections) {
     return undefined;
   }
 
-  targetPoint = targetPoint ?? ix[0].point;
+  targetPoint = targetPoint ?? intersections[0].point;
 
   const endPoint = targetPoint;
-  const endSide = ix[0].side;
+  const endSide = intersections[0].side;
 
-  return getSvgPath(sourcePoint, endPoint, endSide);
+  switch (endSide) {
+    case Sides.Top:
+      endPoint.y -= 10;
+      break;
+    case Sides.Left:
+      endPoint.x -= 10;
+      break;
+    case Sides.Bottom:
+      endPoint.y += 10;
+      break;
+    case Sides.Right:
+      endPoint.x += 10;
+      break;
+    default:
+      break;
+  }
+
+  const svgPath = getSvgPath(sourcePoint, endPoint, endSide);
+
+  return svgPath;
 }
 
 export function pathToD(path: SvgPath): string {

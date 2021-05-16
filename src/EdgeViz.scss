@@ -1,0 +1,15 @@
+[data-viz='edgeGroup'] {
+  --stroke: #fff;
+
+  &:not([data-viz-active]) {
+    --stroke: #fff1;
+  }
+}
+
+[data-viz='edge'] {
+  stroke: var(--stroke);
+}
+
+[data-viz='edge-arrow'] {
+  fill: var(--stroke);
+}
