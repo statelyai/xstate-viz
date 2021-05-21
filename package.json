@@ -1,36 +1,51 @@
 {
-  "scripts": {
-    "start": "snowpack dev",
-    "build": "snowpack build",
-    "test": "web-test-runner \"src/**/*.test.tsx\"",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "lint": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\""
-  },
+  "name": "new-xstate-viz",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
     "@monaco-editor/react": "^4.1.3",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
     "@xstate/graph": "^1.3.0",
     "@xstate/react": "^1.3.2",
+    "elkjs": "^0.7.1",
     "monaco-editor": "^0.24.0",
-    "react": "^17.0.0",
-    "react-dom": "^17.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "web-vitals": "^1.0.1",
+    "web-worker": "^1.0.0",
     "xstate": "^4.19.1"
   },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
-    "@snowpack/plugin-dotenv": "^2.0.5",
-    "@snowpack/plugin-react-refresh": "^2.4.0",
-    "@snowpack/plugin-sass": "^1.4.0",
-    "@snowpack/plugin-typescript": "^1.2.0",
-    "@snowpack/web-test-runner-plugin": "^0.2.0",
-    "@testing-library/react": "^11.0.0",
-    "@types/chai": "^4.2.13",
-    "@types/mocha": "^8.2.0",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
-    "@types/snowpack-env": "^2.3.2",
-    "@web/test-runner": "^0.12.0",
-    "chai": "^4.2.0",
-    "prettier": "^2.0.5",
-    "snowpack": "^3.0.1",
-    "typescript": "^4.0.0"
+    "@types/react": "^17.0.6",
+    "@types/react-dom": "^17.0.5",
+    "sass": "^1.33.0",
+    "typescript": "^4.2.4"
   }
 }

@@ -26,7 +26,7 @@ export const EdgeViz: React.FC<{ edge: Edge<any, any, any> }> = ({ edge }) => {
 
   const path = getPath(edgeRect, targetRect);
 
-  const markerId = edge.event + edge.order;
+  const markerId = `${edge.source.order}-${edge.order}`;
 
   // const path = [
   //   `M ${sourceRect.right},${edgeCenterY}`,
