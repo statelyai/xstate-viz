@@ -5,9 +5,6 @@ import { SimulationContext } from './App';
 
 export const MachineViz = () => {
   const simService = useContext(SimulationContext);
-  if (!simService) {
-    return null;
-  }
   const [state, send] = useService(simService);
 
   return (

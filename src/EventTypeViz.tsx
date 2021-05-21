@@ -11,7 +11,13 @@ export function toDelayString(delay: string | number): string {
 
 export function formatInvocationId(id: string): string {
   if (isUnnamed(id)) {
-    const [, index] = id.match(/:invocation\[(\d+)\]$/);
+    const match = id.match(/:invocation\[(\d+)\]$/);
+
+    if (!match) {
+      return id;
+    }
+
+    const [, index] = match;
 
     return `anonymous [${index}]`;
   }
@@ -74,7 +80,13 @@ export const EventTypeViz: React.FC<{
   }
 
   if (event.startsWith('xstate.after')) {
-    const [, delay] = event.match(/^xstate\.after\((.*)\)#.*$/);
+    const match = event.match(/^xstate\.after\((.*)\)#.*$/);
+
+    if (!match) {
+      return <div data-viz="eventType">{event}</div>;
+    }
+
+    const [, delay] = match;
 
     return (
       <div data-viz="eventType" data-viz-keyword="after">

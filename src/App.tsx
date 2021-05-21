@@ -20,7 +20,26 @@ import { getAllEdges } from './utils';
 import { EditorPanel } from './EditorPanel';
 import { EdgeViz } from './EdgeViz';
 
-const testMachine = createMachine({
+import ELK from 'elkjs/lib/main';
+const elk = new ELK();
+
+const graph = {
+  id: 'root',
+  layoutOptions: { 'elk.algorithm': 'layered' },
+  children: [
+    { id: 'n1', width: 30, height: 30 },
+    { id: 'n2', width: 30, height: 30 },
+    { id: 'n3', width: 30, height: 30 },
+  ],
+  edges: [
+    { id: 'e1', sources: ['n1'], targets: ['n2'] },
+    { id: 'e2', sources: ['n1'], targets: ['n3'] },
+  ],
+};
+
+elk.layout(graph).then(console.log).catch(console.error);
+
+const testMachine = createMachine<{ count: number }>({
   schema: {
     events: {
       INC: {
@@ -133,19 +152,7 @@ const model = createModel(
       'POSITION.SET': ({ x, y }: Point) => ({ position: { x, y } }),
       PAN: (dx: number, dy: number) => ({ dx, dy }),
     },
-  },
-);
-
-export const SimulationContext = createContext(
-  (null as any) as Interpreter<
-    {
-      state: State<any, any, any, any>;
-      machine: any;
-    },
-    any,
-    any,
-    any
-  >,
+  }
 );
 
 const createSimModel = (machine: StateMachine<any, any, any>) =>
@@ -165,7 +172,7 @@ const createSimModel = (machine: StateMachine<any, any, any>) =>
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
       },
-    },
+    }
   );
 
 const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
@@ -232,7 +239,7 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
             if (eventSchema) {
               Object.keys(eventSchema.properties).forEach((prop) => {
                 const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`
                 );
 
                 eventToSend[prop] = value;
@@ -240,12 +247,20 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
             }
             return eventToSend;
           },
-          { to: 'machine' },
+          { to: 'machine' }
         ),
       },
     },
   });
 };
+
+type InterpreterOf<T> = T extends StateMachine<infer C, any, infer E>
+  ? Interpreter<C, any, E>
+  : never;
+
+export const SimulationContext = createContext<
+  InterpreterOf<ReturnType<typeof createSimulationMachine>>
+>(null as any);
 
 const canvasMachine = createMachine<typeof model>({
   context: model.initialContext,
@@ -304,7 +319,7 @@ function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
 
   return (
-    <SimulationContext.Provider value={simService}>
+    <SimulationContext.Provider value={simService as any}>
       <main data-viz="app" data-viz-theme="dark">
         <div
           data-panel="viz"
