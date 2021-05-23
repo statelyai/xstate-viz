@@ -67,6 +67,8 @@ export const StateNodeViz: React.FC<{
     }
   }, []);
 
+  console.log(definition.meta?.layout);
+
   return (
     <div
       data-viz="stateNodeGroup"
@@ -79,6 +81,14 @@ export const StateNodeViz: React.FC<{
         previewState?.configuration.find((n) => n.id === definition.id) ||
         undefined
       }
+      style={{
+        // outline: '1px solid blue',
+        position: 'absolute',
+        // height: `${layout.height!}px`,
+        // width: `${layout.width!}px`,
+        // left: `${layout.x!}px`,
+        // top: `${layout.y!}px`,
+      }}
     >
       <div
         ref={ref}

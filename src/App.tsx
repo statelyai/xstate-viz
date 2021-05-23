@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
 import './base.scss';
 
@@ -19,25 +19,8 @@ import { MachineViz } from './MachineViz';
 import { getAllEdges } from './utils';
 import { EditorPanel } from './EditorPanel';
 import { EdgeViz } from './EdgeViz';
-
-import ELK from 'elkjs/lib/main';
-const elk = new ELK();
-
-const graph = {
-  id: 'root',
-  layoutOptions: { 'elk.algorithm': 'layered' },
-  children: [
-    { id: 'n1', width: 30, height: 30 },
-    { id: 'n2', width: 30, height: 30 },
-    { id: 'n3', width: 30, height: 30 },
-  ],
-  edges: [
-    { id: 'e1', sources: ['n1'], targets: ['n2'] },
-    { id: 'e2', sources: ['n1'], targets: ['n3'] },
-  ],
-};
-
-elk.layout(graph).then(console.log).catch(console.error);
+import './Graph';
+import { getElkGraph, Graph } from './Graph';
 
 const testMachine = createMachine<{ count: number }>({
   schema: {
@@ -152,7 +135,7 @@ const model = createModel(
       'POSITION.SET': ({ x, y }: Point) => ({ position: { x, y } }),
       PAN: (dx: number, dy: number) => ({ dx, dy }),
     },
-  }
+  },
 );
 
 const createSimModel = (machine: StateMachine<any, any, any>) =>
@@ -172,7 +155,7 @@ const createSimModel = (machine: StateMachine<any, any, any>) =>
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
       },
-    }
+    },
   );
 
 const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
@@ -239,7 +222,7 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
             if (eventSchema) {
               Object.keys(eventSchema.properties).forEach((prop) => {
                 const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`
+                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
                 );
 
                 eventToSend[prop] = value;
@@ -247,7 +230,7 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
             }
             return eventToSend;
           },
-          { to: 'machine' }
+          { to: 'machine' },
         ),
       },
     },
@@ -317,6 +300,30 @@ function Edges() {
 function App() {
   const [state, send] = useMachine(canvasMachine);
   const simService = useInterpret(createSimulationMachine(testMachine));
+  const digraph = useMemo(() => toDirectedGraph(testMachine), []);
+
+  const [graphState] = useMachine(
+    createMachine({
+      context: {
+        elkGraph: undefined,
+      },
+      initial: 'loading',
+      states: {
+        loading: {
+          invoke: {
+            src: () => getElkGraph(digraph),
+            onDone: {
+              target: 'success',
+              actions: assign({
+                elkGraph: (_, e) => e.data,
+              }),
+            },
+          },
+        },
+        success: {},
+      },
+    }),
+  );
 
   return (
     <SimulationContext.Provider value={simService as any}>
@@ -350,6 +357,7 @@ function App() {
             }}
           >
             <MachineViz />
+            <Graph digraph={digraph} />
           </div>
           <Edges />
         </div>

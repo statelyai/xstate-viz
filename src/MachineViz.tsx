@@ -10,7 +10,6 @@ export const MachineViz = () => {
   return (
     <div>
       <StateNodeViz definition={state.context.machine.definition} />
-      <svg></svg>
     </div>
   );
 };

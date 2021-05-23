@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 type RectListener = (rect: ClientRect) => void;
 
-const rectMap: Map<string, ClientRect> = new Map();
+export const rectMap: Map<string, ClientRect> = new Map();
 const rectListenersMap = new Map<string, Set<RectListener>>();
 
 (window as any).rectMap = rectMap;
