@@ -356,7 +356,7 @@ function App() {
               transform: `translate(${state.context.pan.dx}px, ${state.context.pan.dy}px) scale(${state.context.zoom})`,
             }}
           >
-            <MachineViz />
+            <MachineViz key={JSON.stringify(graphState.value)} />
             <Graph digraph={digraph} />
           </div>
           <Edges />

@@ -23,7 +23,6 @@
   border-style: var(--viz-node-border-style);
   border-radius: var(--viz-radius);
   color: var(--viz-color-fg);
-  display: inline-grid;
   align-self: start;
   opacity: calc(0.5 * (1 - var(--viz-node-active)) + var(--viz-node-active));
   font-size: 1em;
@@ -49,7 +48,6 @@
 }
 
 [data-viz='stateNode-content'] {
-  padding: 0.5rem;
   background: var(--viz-node-color-bg);
 
   &:empty {
@@ -62,6 +60,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
+  position: absolute;
+  top: 0;
+  left: 0;
 
   &:empty {
     display: none;

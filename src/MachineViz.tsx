@@ -8,8 +8,11 @@ export const MachineViz = () => {
   const [state, send] = useService(simService);
 
   return (
-    <div>
-      <StateNodeViz definition={state.context.machine.definition} />
+    <div style={{ opacity: 0.1 }}>
+      <StateNodeViz
+        stateNode={state.context.machine}
+        key={state.context.machine.version}
+      />
     </div>
   );
 };

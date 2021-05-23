@@ -11420,6 +11420,11 @@ ws@^7.2.3:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.3.tgz#1f9643de34a543b8edb124bdcbc457ae55a6e5cd"
   integrity sha512-hr6vCR76GsossIRsr8OLR9acVVm1jyfEWvhbNjtgPOrfvAlKzvyeg/P6r8RuDjRyrcQoPQT7K0DGEPc7Ae6jzA==
 
+xactor@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/xactor/-/xactor-0.3.1.tgz#6de52ae1c95fcf1b438f6b50565ad89d91bb0092"
+  integrity sha512-3FRCPkrmELioFiEervjKkk73ReRY0OyTUKIqD6eTXaOdGgu+PsXwKVTYNThpXiKMDOvXxVJTdjnJXbENQZf7cw==
+
 xml-name-validator@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/xml-name-validator/-/xml-name-validator-3.0.0.tgz#6ae73e06de4d8c6e47f9fb181f78d648ad457c6a"

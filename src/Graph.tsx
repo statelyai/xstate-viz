@@ -3,7 +3,7 @@ import { useMachine } from '@xstate/react';
 import ELK, { ElkNode } from 'elkjs/lib/main';
 import { createMachine, StateNode } from 'xstate';
 import { assign } from 'xstate/lib/actions';
-import { getRect, onRect, rectMap } from './getRect';
+import { getRect, onRect, readRect, rectMap } from './getRect';
 import { StateNodeViz } from './StateNodeViz';
 const elk = new ELK();
 
@@ -32,8 +32,7 @@ const graph = {
 
 function getElkChild(node: DirectedGraphNode): ElkNode {
   const nodeRect = getRect(node.id);
-
-  console.log(node.id, nodeRect);
+  const contentRect = readRect(`${node.id}:content`);
 
   return {
     id: node.id,
@@ -46,7 +45,7 @@ function getElkChild(node: DirectedGraphNode): ElkNode {
     // width: node.rects.full.width,
     // height: node.rects.full.height,
     // @ts-ignore
-    node: node,
+    node: node.stateNode,
     ...(node.children.length ? { children: getElkChildren(node) } : undefined),
     // edges: map.get(node)?.map((edge) => {
     //   return {
@@ -66,6 +65,9 @@ function getElkChild(node: DirectedGraphNode): ElkNode {
 
     layoutOptions: {
       'elk.algorithm': 'layered',
+      'elk.padding': `[top=${
+        (contentRect?.height || 0) + 30
+      }, left=30, right=30, bottom=30]`,
       // 'elk.padding': `[top=${
       //   node.rects.self.height + 30
       // }, right=30, bottom=30, left=30]`,
@@ -78,29 +80,10 @@ function getElkChildren(node: DirectedGraphNode): ElkNode[] {
   });
 }
 
-export function digraphToElkNode(digraph: DirectedGraphNode): ElkNode {
-  return getElkChild(digraph);
-}
-
 type StateElkNode = ElkNode & { node: StateNode<any, any, any> };
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
-  return (
-    <div
-      style={{
-        outline: '1px solid blue',
-        position: 'absolute',
-        height: `${elkNode.height!}px`,
-        width: `${elkNode.width!}px`,
-        left: `${elkNode.x!}px`,
-        top: `${elkNode.y!}px`,
-      }}
-    >
-      {elkNode.children?.map((child) => {
-        return <GraphNode elkNode={child as StateElkNode} key={child.id} />;
-      })}
-    </div>
-  );
+  return <StateNodeViz stateNode={elkNode.node} />;
 };
 
 export async function getElkGraph(
@@ -108,16 +91,16 @@ export async function getElkGraph(
 ): Promise<ElkNode> {
   await new Promise((res) => {
     onRect(digraph.id, (data) => {
-      console.log('>>>', data);
       res(void 0);
     });
   });
 
-  const elkNode = digraphToElkNode(digraph);
+  const elkNode = getElkChild(digraph);
 
   const layoutNode = await elk.layout(elkNode);
 
   const setLayout = (n: StateElkNode) => {
+    n.node.version = `${Math.random()}`;
     n.node.meta = {
       layout: {
         width: n.width!,
@@ -133,8 +116,6 @@ export async function getElkGraph(
   };
 
   setLayout(layoutNode as StateElkNode);
-
-  console.log(layoutNode);
 
   return layoutNode;
 }
