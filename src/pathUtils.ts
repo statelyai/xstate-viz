@@ -94,7 +94,7 @@ export function withMidpoints(points: Point[]): Point[] {
 export function getSvgPath(
   sourcePoint: Point,
   targetPoint: Point,
-  side: Sides = Sides.Top
+  side: Sides = Sides.Top,
 ): SvgPath {
   const preStartPoint = sourcePoint;
   const startPoint = { x: sourcePoint.x + 20, y: sourcePoint.y };
@@ -200,7 +200,7 @@ export const roundOneCorner = (
   p1: Point,
   corner: Point,
   p2: Point,
-  radius: number = 20
+  radius: number = 20,
 ): CubicCurve => {
   const corner_to_p1 = lineToVector(corner, p1);
   const corner_to_p2 = lineToVector(corner, p2);
@@ -236,47 +236,52 @@ export const roundOneCorner = (
 
 export function getPath(
   sourceRect: ClientRect,
+  labelRect: ClientRect,
   targetRect: ClientRect,
-  targetPoint?: Point
+  targetPoint?: Point,
 ): SvgPath | undefined {
   // const sourcePoint = r.point('right', 'center');
-  const sourcePoint = {
-    x: sourceRect.right,
-    y: sourceRect.top + sourceRect.height / 2,
+  const edgeEntryPoint = {
+    x: labelRect.left,
+    y: labelRect.top + labelRect.height / 2,
+  };
+  const edgeExitPoint = {
+    x: labelRect.right,
+    y: labelRect.top + labelRect.height / 2,
   };
 
   // self-transition
-  if (sourceRect === targetRect) {
+  if (labelRect === targetRect) {
     return [
-      ['M', sourcePoint],
+      ['M', edgeExitPoint],
       [
         'Q',
         {
-          x: sourcePoint.x + 10,
-          y: sourcePoint.y - 10,
+          x: edgeExitPoint.x + 10,
+          y: edgeExitPoint.y - 10,
         },
-        { x: sourcePoint.x + 20, y: sourcePoint.y },
+        { x: edgeExitPoint.x + 20, y: edgeExitPoint.y },
       ],
       [
         'Q',
         {
-          x: sourcePoint.x + 10,
-          y: sourcePoint.y + 10,
+          x: edgeExitPoint.x + 10,
+          y: edgeExitPoint.y + 10,
         },
-        sourcePoint,
+        edgeExitPoint,
       ],
     ];
   }
 
   const intersections = closestRectIntersections(
     [
-      sourcePoint,
+      edgeExitPoint,
       {
         x: targetRect.left + targetRect.width / 2,
         y: targetRect.top + targetRect.height / 2,
       },
     ],
-    targetRect
+    targetRect,
   );
 
   if (!intersections) {
@@ -305,15 +310,23 @@ export function getPath(
       break;
   }
 
-  const svgPath = getSvgPath(sourcePoint, endPoint, endSide);
+  const preSvgPath = getSvgPath(
+    { x: sourceRect.right, y: sourceRect.top },
+    edgeEntryPoint,
+    Sides.Left,
+  );
 
-  return svgPath;
+  const svgPath = getSvgPath(edgeExitPoint, endPoint, endSide);
+
+  // @ts-ignore
+  // return svgPath;
+  return preSvgPath.concat(svgPath);
 }
 
 export function pathToD(path: SvgPath): string {
   return path
     .map(([cmd, ...points]) =>
-      [cmd, ...points.map((point: Point) => `${point.x},${point.y}`)].join(' ')
+      [cmd, ...points.map((point: Point) => `${point.x},${point.y}`)].join(' '),
     )
     .join(' ');
 }
@@ -325,7 +338,7 @@ type RectIntersection = {
 
 function segmentIntersection(
   ls1: LineSegment,
-  ls2: LineSegment
+  ls2: LineSegment,
 ): Point | false {
   const [{ x: x1, y: y1 }, { x: x2, y: y2 }] = ls1;
   const [{ x: x3, y: y3 }, { x: x4, y: y4 }] = ls2;
@@ -359,7 +372,7 @@ function segmentIntersection(
 
 function rectIntersection(
   ls: LineSegment,
-  rect: ClientRect
+  rect: ClientRect,
 ): RectIntersection[] {
   const top = {
     point: segmentIntersection(ls, [
@@ -391,13 +404,13 @@ function rectIntersection(
   };
 
   return [top, right, bottom, left].filter(
-    (ix): ix is RectIntersection => ix.point !== false
+    (ix): ix is RectIntersection => ix.point !== false,
   );
 }
 
 export function closestRectIntersections(
   ls: LineSegment,
-  rect: ClientRect
+  rect: ClientRect,
 ): RectIntersection[] | false {
   const intersections = rectIntersection(ls, rect);
 
@@ -410,7 +423,7 @@ export function closestRectIntersections(
 
     const distance = Math.hypot(
       intersection.x - ls[0].x,
-      intersection.y - ls[0].y
+      intersection.y - ls[0].y,
     );
 
     const rectIntersection = {

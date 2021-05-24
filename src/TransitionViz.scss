@@ -17,12 +17,12 @@
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  border: 2px solid var(--viz-transition-color);
+  border: 2px solid var(--viz-color-active);
   overflow: hidden;
 }
 
 [data-viz='transition-event'] {
-  background: var(--viz-transition-color);
+  background: var(--viz-color-active);
   padding: 0.25rem 0.5rem;
 }
 

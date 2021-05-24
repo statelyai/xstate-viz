@@ -14,115 +14,14 @@ import {
 } from 'xstate';
 import { useInterpret, useMachine, useService } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
-import { toDirectedGraph } from '@xstate/graph';
+import { DirectedGraphNode, toDirectedGraph } from '@xstate/graph';
 import { MachineViz } from './MachineViz';
-import { getAllEdges } from './utils';
 import { EditorPanel } from './EditorPanel';
 import { EdgeViz } from './EdgeViz';
 import './Graph';
 import { getElkGraph, Graph } from './Graph';
-
-// const testMachine = createMachine({
-//   initial: 'foo',
-//   states: {
-//     foo: {
-//       on: { NEXT: 'bar' },
-//     },
-//     bar: {},
-//   },
-// });
-
-const testMachine = createMachine<{ count: number }>({
-  schema: {
-    events: {
-      INC: {
-        properties: {
-          value: {
-            type: 'number',
-          },
-        },
-      },
-    } as any,
-  },
-  context: {
-    count: 0,
-  },
-  initial: 'simple',
-  entry: ['rootAction1'],
-  exit: ['rootAction1'],
-  on: {
-    'ROOT.EVENT': {},
-  },
-  states: {
-    simple: {
-      entry: ['action1', 'really long action', 'action3'],
-      exit: ['anotherAction', 'action4'],
-      on: {
-        NEXT: 'compound',
-        INC: [
-          { target: 'compound', cond: (_, e) => e.value > 10 },
-          { target: 'final' },
-        ],
-        EVENT: {
-          target: 'final',
-          cond: function somethingIsTrue() {
-            return true;
-          },
-        },
-      },
-    },
-    compound: {
-      invoke: {
-        src: 'fooSrc',
-        onDone: 'final',
-        onError: 'failure',
-      },
-      initial: 'one',
-      states: {
-        one: {
-          on: {
-            NEXT: 'two',
-          },
-        },
-        two: {
-          on: {
-            PREV: 'one',
-            NEXT: 'three',
-          },
-        },
-        three: {
-          initial: 'atomic',
-          always: {
-            target: 'one',
-            cond: () => false,
-          },
-          states: {
-            atomic: {},
-            history: {
-              type: 'history',
-            },
-            deepHist: {
-              type: 'history',
-              history: 'deep',
-            },
-          },
-        },
-      },
-    },
-    parallel: {
-      type: 'parallel',
-      states: {
-        three: {},
-        four: {},
-        five: {},
-      },
-    },
-    final: {
-      type: 'final',
-    },
-    failure: {},
-  },
-});
+import { testMachine } from './testMachine';
+import { getAllEdges } from './Graph';
 
 interface Point {
   x: number;
@@ -283,12 +182,11 @@ const canvasMachine = createMachine<typeof model>({
   },
 });
 
-function Edges() {
+const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({ digraph }) => {
   const service = useContext(SimulationContext);
   const [state] = useService(service);
-  const digraph = toDirectedGraph(state.context.machine);
 
-  const edges = getAllEdges(state.context.machine);
+  const edges = getAllEdges(digraph);
   return (
     <svg
       style={{
@@ -301,11 +199,11 @@ function Edges() {
       }}
     >
       {edges.map((edge, i) => {
-        return <EdgeViz edge={edge} />;
+        return <EdgeViz edge={edge} order={i} />;
       })}
     </svg>
   );
-}
+};
 
 function App() {
   const [state, send] = useMachine(canvasMachine);
@@ -369,7 +267,7 @@ function App() {
             <MachineViz digraph={digraph} />
             <Graph digraph={digraph} />
           </div>
-          <Edges />
+          <Edges digraph={digraph} />
         </div>
         {/* <EditorPanel
           onChange={(machines) => {

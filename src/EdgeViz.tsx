@@ -6,12 +6,17 @@ import { getPath, pathToD } from './pathUtils';
 import type { Edge } from './utils';
 import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
+import { DirectedGraphEdge } from '@xstate/graph';
 
-export const EdgeViz: React.FC<{ edge: Edge<any, any, any> }> = ({ edge }) => {
+export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
+  edge,
+  order,
+}) => {
+  const transition = edge.transition;
   const service = useContext(SimulationContext);
   const [state, send] = useService(service);
   const sourceRect = useGetRect(`${edge.source.id}`);
-  const edgeRect = useGetRect(`${edge.source.id}:${edge.order}`);
+  const edgeRect = useGetRect(edge.id);
   const targetRect = useGetRect(`${edge.target.id}`);
 
   const isActive = useMemo(() => {
@@ -24,9 +29,9 @@ export const EdgeViz: React.FC<{ edge: Edge<any, any, any> }> = ({ edge }) => {
 
   const edgeCenterY = edgeRect.top + edgeRect.height / 2;
 
-  const path = getPath(edgeRect, targetRect);
+  const path = getPath(sourceRect, edgeRect, targetRect);
 
-  const markerId = `${edge.source.order}-${edge.order}`;
+  const markerId = `${edge.source.order}-${order}`;
 
   // const path = [
   //   `M ${sourceRect.right},${edgeCenterY}`,

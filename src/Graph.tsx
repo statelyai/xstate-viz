@@ -100,14 +100,11 @@ function getElkChild(
       ? { children: getElkChildren(node, rMap) }
       : undefined),
     absolutePosition: { x: 0, y: 0 },
-    edges: edges.map((edge, i) => {
-      console.log(edge.id);
-      const edgeRect = readRect(
-        `${edge.source.id}:${edge.source.transitions.indexOf(edge.transition)}`,
-      );
+    edges: edges.map((edge) => {
+      const edgeRect = readRect(edge.id);
 
       if (!edgeRect) {
-        console.log('not found', `${node.id}:${i}`);
+        console.log('not found', edge.id);
       }
 
       return {

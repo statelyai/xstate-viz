@@ -4,7 +4,7 @@ import { flatten } from 'xstate/lib/utils';
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string
+  TEventType extends TEvent['type'] = string,
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;
@@ -50,11 +50,11 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
   return edges;
 }
 
-export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
-  const children = getChildren(stateNode);
+// export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
+//   const children = getChildren(stateNode);
 
-  return flatten([
-    ...getEdges(stateNode),
-    ...children.map((child) => getAllEdges(child)),
-  ]);
-}
+//   return flatten([
+//     ...getEdges(stateNode),
+//     ...children.map((child) => getAllEdges(child)),
+//   ]);
+// }

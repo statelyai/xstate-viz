@@ -24,7 +24,7 @@ export const TransitionViz: React.FC<{
   const ref = useRef<any>(null);
   useEffect(() => {
     if (ref.current) {
-      setRect(`${definition.source.id}:${index}`, ref.current);
+      setRect(edge.id, ref.current);
     }
   }, []);
 
