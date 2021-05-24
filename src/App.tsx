@@ -22,6 +22,16 @@ import { EdgeViz } from './EdgeViz';
 import './Graph';
 import { getElkGraph, Graph } from './Graph';
 
+// const testMachine = createMachine({
+//   initial: 'foo',
+//   states: {
+//     foo: {
+//       on: { NEXT: 'bar' },
+//     },
+//     bar: {},
+//   },
+// });
+
 const testMachine = createMachine<{ count: number }>({
   schema: {
     events: {
@@ -356,12 +366,12 @@ function App() {
               transform: `translate(${state.context.pan.dx}px, ${state.context.pan.dy}px) scale(${state.context.zoom})`,
             }}
           >
-            <MachineViz key={JSON.stringify(graphState.value)} />
+            <MachineViz digraph={digraph} />
             <Graph digraph={digraph} />
           </div>
           <Edges />
         </div>
-        <EditorPanel
+        {/* <EditorPanel
           onChange={(machines) => {
             simService.send({
               type: 'MACHINE.UPDATE',
@@ -369,7 +379,7 @@ function App() {
             });
             console.log(machines);
           }}
-        />
+        /> */}
       </main>
     </SimulationContext.Provider>
   );

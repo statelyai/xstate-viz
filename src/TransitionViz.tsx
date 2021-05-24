@@ -1,9 +1,11 @@
+import { DirectedGraphEdge } from '@xstate/graph';
 import { useSelector } from '@xstate/react';
 import React, { useContext, useEffect, useRef } from 'react';
 import type { Guard, TransitionDefinition } from 'xstate';
 import { SimulationContext } from './App';
 import { EventTypeViz } from './EventTypeViz';
 import { setRect } from './getRect';
+import { Point } from './pathUtils';
 import './TransitionViz.scss';
 
 const getGuardType = (guard: Guard<any, any>) => {
@@ -11,9 +13,11 @@ const getGuardType = (guard: Guard<any, any>) => {
 };
 
 export const TransitionViz: React.FC<{
-  definition: TransitionDefinition<any, any>;
+  edge: DirectedGraphEdge;
+  position?: Point;
   index: number;
-}> = ({ definition, index }) => {
+}> = ({ edge, index, position }) => {
+  const definition = edge.transition;
   const service = useContext(SimulationContext);
   // const state = useSelector(service, (s) => s);
 
@@ -25,7 +29,13 @@ export const TransitionViz: React.FC<{
   }, []);
 
   return (
-    <div data-viz="transition">
+    <div
+      data-viz="transition"
+      style={{
+        position: 'absolute',
+        ...(position && { left: `${position.x}px`, top: `${position.y}px` }),
+      }}
+    >
       <div
         data-viz="transition-label"
         ref={ref}

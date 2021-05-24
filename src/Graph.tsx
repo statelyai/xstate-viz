@@ -1,38 +1,88 @@
-import { DirectedGraphNode } from '@xstate/graph';
+import { DirectedGraphEdge, DirectedGraphNode } from '@xstate/graph';
 import { useMachine } from '@xstate/react';
-import ELK, { ElkNode } from 'elkjs/lib/main';
-import { createMachine, StateNode } from 'xstate';
+import ELK, { ElkEdge, ElkNode } from 'elkjs/lib/main';
+import { createMachine, StateNode, TransitionDefinition } from 'xstate';
 import { assign } from 'xstate/lib/actions';
 import { getRect, onRect, readRect, rectMap } from './getRect';
+import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
 const elk = new ELK();
 
-const graph = {
-  id: 'root',
-  layoutOptions: { algorithm: 'layered' },
-  children: [
-    { id: 'n1', width: 30, height: 30 },
-    { id: 'n2', width: 30, height: 30 },
-    {
-      id: 'n3',
-      width: 30,
-      height: 30,
-      children: [
-        { id: 'a1', width: 30, height: 30 },
-        { id: 'a2', width: 30, height: 30 },
-        { id: 'a3', width: 30, height: 30 },
-      ],
-    },
-  ],
-  edges: [
-    { id: 'e1', sources: ['n1'], targets: ['n2'] },
-    { id: 'e2', sources: ['n1'], targets: ['n3'] },
-  ],
-};
+type RelativeNodeEdgeMap = [
+  Map<StateNode<any, any>, DirectedGraphEdge[]>,
+  Map<string, StateNode<any, any>>,
+];
 
-function getElkChild(node: DirectedGraphNode): ElkNode {
+export function getAllEdges(digraph: DirectedGraphNode): DirectedGraphEdge[] {
+  const edges: DirectedGraphEdge[] = [];
+  const getEdgesRecursive = (dnode: DirectedGraphNode) => {
+    edges.push(...dnode.edges);
+
+    dnode.children.forEach(getEdgesRecursive);
+  };
+  getEdgesRecursive(digraph);
+
+  return edges;
+}
+
+function getRelativeNodeEdgeMap(
+  digraph: DirectedGraphNode,
+): RelativeNodeEdgeMap {
+  const edges = getAllEdges(digraph);
+
+  const map: RelativeNodeEdgeMap[0] = new Map();
+  const edgeMap: RelativeNodeEdgeMap[1] = new Map();
+
+  const getLCA = (
+    a: StateNode<any, any>,
+    b: StateNode<any, any>,
+  ): StateNode<any, any> => {
+    if (a === b) {
+      return a;
+    }
+
+    const set = new Set([a]);
+
+    let m = a.parent;
+
+    while (m) {
+      set.add(m);
+      m = m.parent;
+    }
+
+    m = b;
+
+    while (m) {
+      if (set.has(m)) {
+        return m;
+      }
+      m = m.parent;
+    }
+
+    return a.machine; // root
+  };
+
+  edges.forEach((edge) => {
+    const lca = getLCA(edge.source, edge.target);
+    if (!map.has(lca)) {
+      map.set(lca, []);
+    }
+
+    map.get(lca)!.push(edge);
+    edgeMap.set(edge.id, lca);
+  });
+
+  return [map, edgeMap];
+}
+
+function getElkChild(
+  node: DirectedGraphNode,
+  rMap: RelativeNodeEdgeMap,
+): StateElkNode {
   const nodeRect = getRect(node.id);
   const contentRect = readRect(`${node.id}:content`);
+
+  const edges = rMap[0].get(node.stateNode) || [];
 
   return {
     id: node.id,
@@ -44,43 +94,69 @@ function getElkChild(node: DirectedGraphNode): ElkNode {
       : undefined),
     // width: node.rects.full.width,
     // height: node.rects.full.height,
-    // @ts-ignore
+
     node: node.stateNode,
-    ...(node.children.length ? { children: getElkChildren(node) } : undefined),
-    // edges: map.get(node)?.map((edge) => {
-    //   return {
-    //     id: edge.id,
-    //     sources: [edge.source.id],
-    //     targets: [edge.target.id],
-    //     labels: [
-    //       {
-    //         id: edge.id,
-    //         width: edge.rects.self.width,
-    //         height: edge.rects.self.height,
-    //         text: '??',
-    //       },
-    //     ],
-    //   };
-    // }),
+    ...(node.children.length
+      ? { children: getElkChildren(node, rMap) }
+      : undefined),
+    absolutePosition: { x: 0, y: 0 },
+    edges: edges.map((edge, i) => {
+      console.log(edge.id);
+      const edgeRect = readRect(
+        `${edge.source.id}:${edge.source.transitions.indexOf(edge.transition)}`,
+      );
+
+      if (!edgeRect) {
+        console.log('not found', `${node.id}:${i}`);
+      }
+
+      return {
+        id: edge.id,
+        sources: [edge.source.id],
+        targets: [edge.target.id],
+        labels: [
+          {
+            id: edge.id,
+            width: edgeRect?.width ?? 0,
+            height: edgeRect?.height ?? 0,
+            text: edge.label.text,
+          },
+        ],
+        edge,
+      };
+    }),
 
     layoutOptions: {
-      'elk.algorithm': 'layered',
+      algorithm: 'layered',
       'elk.padding': `[top=${
         (contentRect?.height || 0) + 30
       }, left=30, right=30, bottom=30]`,
+      'elk.spacing.nodeNode': '70.0',
+      'elk.edgeRouting': 'POLYLINE',
+      // 'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
       // 'elk.padding': `[top=${
       //   node.rects.self.height + 30
       // }, right=30, bottom=30, left=30]`,
     },
   };
 }
-function getElkChildren(node: DirectedGraphNode): ElkNode[] {
+function getElkChildren(
+  node: DirectedGraphNode,
+  rMap: RelativeNodeEdgeMap,
+): ElkNode[] {
   return node.children.map((childNode) => {
-    return getElkChild(childNode);
+    return getElkChild(childNode, rMap);
   });
 }
 
-type StateElkNode = ElkNode & { node: StateNode<any, any, any> };
+interface StateElkNode extends ElkNode {
+  node: StateNode<any, any, any>;
+  absolutePosition: Point;
+  edges: StateElkEdge[];
+}
+interface StateElkEdge extends ElkEdge {
+  edge: DirectedGraphEdge;
+}
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
   return <StateNodeViz stateNode={elkNode.node} />;
@@ -95,11 +171,17 @@ export async function getElkGraph(
     });
   });
 
-  const elkNode = getElkChild(digraph);
+  const rMap = getRelativeNodeEdgeMap(digraph);
+  const elkNode = getElkChild(digraph, rMap);
+  const layoutElkNode = await elk.layout(elkNode);
+  const stateNodeToElkNodeMap = new Map<StateNode<any, any>, StateElkNode>();
 
-  const layoutNode = await elk.layout(elkNode);
-
-  const setLayout = (n: StateElkNode) => {
+  const setLayout = (n: StateElkNode, parent: StateElkNode | undefined) => {
+    stateNodeToElkNodeMap.set(n.node, n);
+    n.absolutePosition = {
+      x: (parent?.absolutePosition.x ?? 0) + n.x!,
+      y: (parent?.absolutePosition.y ?? 0) + n.y!,
+    };
     n.node.version = `${Math.random()}`;
     n.node.meta = {
       layout: {
@@ -110,14 +192,26 @@ export async function getElkGraph(
       },
     };
 
+    n.edges?.forEach((edge) => {
+      const lca = rMap[1].get(edge.id);
+
+      if (lca) {
+        const elkLca = stateNodeToElkNodeMap.get(lca);
+        (edge.edge.label as any).x =
+          (edge.labels?.[0].x || 0) + (elkLca!.absolutePosition.x || 0);
+        (edge.edge.label as any).y =
+          (edge.labels?.[0].y || 0) + (elkLca!.absolutePosition.y || 0);
+      }
+    });
+
     n.children?.forEach((cn) => {
-      setLayout(cn as StateElkNode);
+      setLayout(cn as StateElkNode, n);
     });
   };
 
-  setLayout(layoutNode as StateElkNode);
+  setLayout(layoutElkNode as StateElkNode, undefined);
 
-  return layoutNode;
+  return layoutElkNode;
 }
 
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({

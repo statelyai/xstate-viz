@@ -67,8 +67,6 @@ export const StateNodeViz: React.FC<{
     }
   }, []);
 
-  console.log(stateNode);
-
   return (
     <div
       data-viz="stateNodeGroup"
@@ -161,11 +159,7 @@ export const StateNodeViz: React.FC<{
           </div>
         )}
       </div>
-      <div data-viz="transitions">
-        {stateNode.transitions.map((transition, i) => {
-          return <TransitionViz definition={transition} key={i} index={i} />;
-        })}
-      </div>
+      <div data-viz="transitions"></div>
     </div>
   );
 };
