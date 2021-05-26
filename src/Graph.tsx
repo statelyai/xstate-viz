@@ -1,11 +1,14 @@
 import { DirectedGraphEdge, DirectedGraphNode } from '@xstate/graph';
 import { useMachine } from '@xstate/react';
 import ELK, { ElkEdge, ElkNode } from 'elkjs/lib/main';
+import { useMemo } from 'react';
 import { createMachine, StateNode, TransitionDefinition } from 'xstate';
 import { assign } from 'xstate/lib/actions';
+import { Edges } from './App';
 import { getRect, onRect, readRect, rectMap } from './getRect';
 import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
+import { TransitionViz } from './TransitionViz';
 const elk = new ELK();
 
 type RelativeNodeEdgeMap = [
@@ -115,8 +118,12 @@ function getElkChild(
           {
             id: edge.id,
             width: edgeRect?.width ?? 0,
-            height: edgeRect?.height ?? 0,
+            height: edgeRect?.height ?? 100,
             text: edge.label.text,
+            layoutOptions: {
+              'edgeLabels.inline': 'true',
+              'edgeLabels.placement': 'CENTER',
+            },
           },
         ],
         edge,
@@ -129,11 +136,7 @@ function getElkChild(
         (contentRect?.height || 0) + 30
       }, left=30, right=30, bottom=30]`,
       'elk.spacing.nodeNode': '70.0',
-      'elk.edgeRouting': 'POLYLINE',
-      // 'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
-      // 'elk.padding': `[top=${
-      //   node.rects.self.height + 30
-      // }, right=30, bottom=30, left=30]`,
+      'elk.edgeRouting': 'ORTHOGONAL',
     },
   };
 }
@@ -193,11 +196,19 @@ export async function getElkGraph(
       const lca = rMap[1].get(edge.id);
 
       if (lca) {
-        const elkLca = stateNodeToElkNodeMap.get(lca);
+        const elkLca = stateNodeToElkNodeMap.get(lca)!;
+        (edge.edge as any).lcaPosition = {
+          x: elkLca.absolutePosition.x || 0,
+          y: elkLca.absolutePosition.y || 0,
+        };
+        (edge.edge as any).elkEdge = edge;
         (edge.edge.label as any).x =
-          (edge.labels?.[0].x || 0) + (elkLca!.absolutePosition.x || 0);
+          (edge.labels?.[0].x || 0) + (elkLca.absolutePosition.x || 0);
         (edge.edge.label as any).y =
-          (edge.labels?.[0].y || 0) + (elkLca!.absolutePosition.y || 0);
+          (edge.labels?.[0].y || 0) + (elkLca.absolutePosition.y || 0);
+        const { x, y } = edge.labels?.[0] || { x: -1, y: -1 };
+        console.log(edge.id, { x, y }, (edge.edge as any).lcaPosition);
+        console.log('>>', (edge.edge as any).label);
       }
     });
 
@@ -207,6 +218,8 @@ export async function getElkGraph(
   };
 
   setLayout(layoutElkNode as StateElkNode, undefined);
+
+  console.log(layoutElkNode);
 
   return layoutElkNode;
 }
@@ -239,8 +252,30 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
 
   console.log(state.context.elkGraph);
 
+  const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
+
   if (state.matches('success')) {
-    return <GraphNode elkNode={state.context.elkGraph as any} />;
+    return (
+      <div>
+        <Edges digraph={digraph} />
+        <GraphNode elkNode={state.context.elkGraph as any} />
+        {allEdges.map((edge, i) => {
+          return (
+            <TransitionViz
+              edge={edge}
+              key={edge.id}
+              index={i}
+              position={
+                edge.label && {
+                  x: (edge.label as any).x,
+                  y: (edge.label as any).y,
+                }
+              }
+            />
+          );
+        })}
+      </div>
+    );
   }
 
   return null;

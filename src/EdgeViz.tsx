@@ -2,11 +2,30 @@ import { useService } from '@xstate/react';
 import React, { useContext, useMemo } from 'react';
 import { SimulationContext } from './App';
 import { useGetRect } from './getRect';
-import { getPath, pathToD } from './pathUtils';
-import type { Edge } from './utils';
+import { getPath, pathToD, Point, SvgPath } from './pathUtils';
 import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
 import { DirectedGraphEdge } from '@xstate/graph';
+
+function translatePoint(point: Point, vector: Point): Point {
+  return {
+    x: point.x + vector.x,
+    y: point.y + vector.y,
+  };
+}
+
+function translate(path: SvgPath, vector: Point): SvgPath {
+  return path.map((cmd) => {
+    switch (cmd[0]) {
+      case 'M':
+        return ['M', translatePoint(cmd[1], vector)];
+      case 'L':
+        return ['L', translatePoint(cmd[1], vector)];
+      default:
+        return cmd;
+    }
+  }) as SvgPath;
+}
 
 export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
   edge,
@@ -27,9 +46,26 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
     return null;
   }
 
-  const edgeCenterY = edgeRect.top + edgeRect.height / 2;
+  // elk
+  const { elkEdge } = edge as any;
+  let path: SvgPath | undefined;
 
-  const path = getPath(sourceRect, edgeRect, targetRect);
+  if (elkEdge && elkEdge.sections?.length) {
+    const section = elkEdge.sections[0];
+
+    path = [
+      ['M', section.startPoint],
+      ...(section.bendPoints?.map((point: Point) => ['L', point]) || []),
+      ['L', section.endPoint],
+    ];
+    if ((edge as any).lcaPosition) {
+      path = translate(path, (edge as any).lcaPosition);
+    }
+  } else {
+    path = getPath(sourceRect, edgeRect, targetRect);
+  }
+
+  const edgeCenterY = edgeRect.top + edgeRect.height / 2;
 
   const markerId = `${edge.source.order}-${order}`;
 
@@ -42,7 +78,7 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
   // ];
 
   return path ? (
-    <g data-viz="edgeGroup" data-viz-active={isActive}>
+    <g data-viz="edgeGroup" data-viz-edge={edge.id} data-viz-active={isActive}>
       <defs>
         <ArrowMarker id={markerId} />
       </defs>

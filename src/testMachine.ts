@@ -1,14 +1,14 @@
 import { createMachine } from 'xstate';
 
-// const testMachine = createMachine({
-//   initial: 'foo',
-//   states: {
-//     foo: {
-//       on: { NEXT: 'bar' },
-//     },
-//     bar: {},
-//   },
-// });
+export const xtestMachine = createMachine({
+  initial: 'foo',
+  states: {
+    foo: {
+      on: { NEXT: 'bar' },
+    },
+    bar: {},
+  },
+});
 
 export const testMachine = createMachine<{ count: number }>({
   schema: {

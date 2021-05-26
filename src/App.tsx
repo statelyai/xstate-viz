@@ -182,7 +182,9 @@ const canvasMachine = createMachine<typeof model>({
   },
 });
 
-const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({ digraph }) => {
+export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
+  digraph,
+}) => {
   const service = useContext(SimulationContext);
   const [state] = useService(service);
 
@@ -190,9 +192,9 @@ const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({ digraph }) => {
   return (
     <svg
       style={{
-        position: 'fixed',
-        height: '100%',
-        width: '100%',
+        position: 'absolute',
+        height: '100vh',
+        width: '100vw',
         top: 0,
         left: 0,
         pointerEvents: 'none',
@@ -267,7 +269,6 @@ function App() {
             <MachineViz digraph={digraph} />
             <Graph digraph={digraph} />
           </div>
-          <Edges digraph={digraph} />
         </div>
         {/* <EditorPanel
           onChange={(machines) => {

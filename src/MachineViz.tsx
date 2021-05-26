@@ -1,7 +1,7 @@
 import React, { useContext, useMemo } from 'react';
 import { StateNodeViz } from './StateNodeViz';
 import { useService } from '@xstate/react';
-import { SimulationContext } from './App';
+import { Edges, SimulationContext } from './App';
 import { DirectedGraphNode } from '@xstate/graph';
 import { getAllEdges } from './Graph';
 import { TransitionViz } from './TransitionViz';
