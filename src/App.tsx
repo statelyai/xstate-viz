@@ -14,14 +14,15 @@ import {
 } from 'xstate';
 import { useInterpret, useMachine, useService } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
-import { DirectedGraphNode, toDirectedGraph } from '@xstate/graph';
+import { DirectedGraphNode } from '@xstate/graph';
 import { MachineViz } from './MachineViz';
-import { EditorPanel } from './EditorPanel';
+
 import { EdgeViz } from './EdgeViz';
 import './Graph';
 import { getElkGraph, Graph } from './Graph';
 import { testMachine } from './testMachine';
 import { getAllEdges } from './Graph';
+import { toDirectedGraph } from './directedGraph';
 
 interface Point {
   x: number;
