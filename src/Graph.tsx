@@ -189,6 +189,21 @@ export async function getElkGraph(
   const layoutElkNode = await elk.layout(elkNode);
   const stateNodeToElkNodeMap = new Map<StateNode<any, any>, StateElkNode>();
 
+  const setEdgeLayout = (edge: StateElkEdge) => {
+    const lca = rMap[1].get(edge.id);
+    (edge.edge as any).elkEdge = edge;
+
+    const elkLca = lca && stateNodeToElkNodeMap.get(lca)!;
+    (edge.edge as any).lcaPosition = {
+      x: elkLca?.absolutePosition.x || 0,
+      y: elkLca?.absolutePosition.y || 0,
+    };
+    (edge.edge.label as any).x =
+      (edge.labels?.[0].x || 0) + (elkLca?.absolutePosition.x || 0);
+    (edge.edge.label as any).y =
+      (edge.labels?.[0].y || 0) + (elkLca?.absolutePosition.y || 0);
+  };
+
   const setLayout = (n: StateElkNode, parent: StateElkNode | undefined) => {
     stateNodeToElkNodeMap.set(n.node, n);
     n.absolutePosition = {
@@ -206,26 +221,15 @@ export async function getElkGraph(
     };
 
     n.edges?.forEach((edge) => {
-      const lca = rMap[1].get(edge.id);
-
-      if (lca) {
-        const elkLca = stateNodeToElkNodeMap.get(lca)!;
-        (edge.edge as any).lcaPosition = {
-          x: elkLca.absolutePosition.x || 0,
-          y: elkLca.absolutePosition.y || 0,
-        };
-        (edge.edge as any).elkEdge = edge;
-        (edge.edge.label as any).x =
-          (edge.labels?.[0].x || 0) + (elkLca.absolutePosition.x || 0);
-        (edge.edge.label as any).y =
-          (edge.labels?.[0].y || 0) + (elkLca.absolutePosition.y || 0);
-      }
+      setEdgeLayout(edge);
     });
 
     n.children?.forEach((cn) => {
       setLayout(cn as StateElkNode, n);
     });
   };
+
+  (layoutElkNode.edges as StateElkEdge[])?.forEach(setEdgeLayout);
 
   setLayout(layoutElkNode.children![0] as StateElkNode, undefined);
 
@@ -257,8 +261,6 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
       },
     }),
   );
-
-  console.log(state.context.elkGraph);
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 

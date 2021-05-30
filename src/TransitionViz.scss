@@ -19,6 +19,7 @@
   justify-content: flex-start;
   border: 2px solid var(--viz-color-active);
   overflow: hidden;
+  background: var(--viz-color-bg);
 }
 
 [data-viz='transition-event'] {

@@ -199,6 +199,7 @@ export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
         top: 0,
         left: 0,
         pointerEvents: 'none',
+        overflow: 'visible',
       }}
     >
       {edges.map((edge, i) => {

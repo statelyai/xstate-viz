@@ -56,8 +56,16 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
     path = [
       ['M', section.startPoint],
       ...(section.bendPoints?.map((point: Point) => ['L', point]) || []),
-      ['L', section.endPoint],
     ];
+
+    const preLastPoint = path[path.length - 1][1]!;
+    const xSign = Math.sign(section.endPoint.x - preLastPoint.x);
+    const ySign = Math.sign(section.endPoint.y - preLastPoint.y);
+    const endPoint = {
+      x: section.endPoint.x - 5 * xSign,
+      y: section.endPoint.y - 5 * ySign,
+    };
+    path.push(['L', endPoint]);
     if ((edge as any).lcaPosition) {
       path = translate(path, (edge as any).lcaPosition);
     }
