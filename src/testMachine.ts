@@ -47,6 +47,7 @@ export const testMachine = createMachine<{ count: number }>({
             return true;
           },
         },
+        SELF: '.',
       },
     },
     compound: {
@@ -86,11 +87,18 @@ export const testMachine = createMachine<{ count: number }>({
           },
         },
       },
+      on: {
+        SELF: '.',
+      },
     },
     parallel: {
       type: 'parallel',
       states: {
-        three: {},
+        three: {
+          on: {
+            SELF: '.',
+          },
+        },
         four: {},
         five: {},
       },

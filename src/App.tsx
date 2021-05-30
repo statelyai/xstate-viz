@@ -213,6 +213,8 @@ function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
   const digraph = useMemo(() => toDirectedGraph(testMachine), []);
 
+  console.log({ digraph });
+
   const [graphState] = useMachine(
     createMachine({
       context: {
