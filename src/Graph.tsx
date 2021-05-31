@@ -11,10 +11,11 @@ import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
 const elk = new ELK({
   defaultLayoutOptions: {
-    algorithm: 'layered',
-    'elk.spacing.nodeNode': '70.0',
-    'elk.edgeRouting': 'ORTHOGONAL',
-    'elk.edgeLabels.inline': 'true',
+    // algorithm: 'layered',
+    'elk.spacing.labelEdge': '1000',
+    // 'elk.edgeRouting': 'ORTHOGONAL',
+    // 'elk.edgeLabels.inline': 'true',
+    // hierarchyHandling: 'INCLUDE_CHILDREN',
   },
 });
 
@@ -51,7 +52,7 @@ function getRelativeNodeEdgeMap(
       return a.parent;
     }
 
-    const set = new Set([a]);
+    const set = new Set();
 
     let m = a.parent;
 
@@ -74,6 +75,7 @@ function getRelativeNodeEdgeMap(
 
   edges.forEach((edge) => {
     const lca = getLCA(edge.source, edge.target);
+
     if (!map.has(lca)) {
       map.set(lca, []);
     }
@@ -98,7 +100,7 @@ function getElkEdge(edge: DirectedGraphEdge) {
     targets: [edge.target.id],
     labels: [
       {
-        id: edge.id,
+        id: edge.id + '--label',
         width: edgeRect?.width ?? 0,
         height: edgeRect?.height ?? 100,
         text: edge.label.text || 'always',
@@ -144,6 +146,7 @@ function getElkChild(
       'elk.padding': `[top=${
         (contentRect?.height || 0) + 30
       }, left=30, right=30, bottom=30]`,
+      hierarchyHandling: 'INCLUDE_CHILDREN',
     },
   };
 }
@@ -184,9 +187,30 @@ export async function getElkGraph(
     id: 'root',
     edges: rootEdges.map(getElkEdge),
     children: [getElkChild(digraph, rMap)],
+    layoutOptions: {
+      'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+      'elk.algorithm': 'layered',
+      'elk.layered.crossingMinimization.semiInteractive': 'true',
+    },
   };
 
+  console.log(
+    'BEFORE',
+    JSON.stringify(
+      elkNode,
+      (prop, value) => {
+        if (['node', 'absolutePosition'].includes(prop)) {
+          return undefined;
+        }
+        return value;
+      },
+      2,
+    ),
+  );
+
   const layoutElkNode = await elk.layout(elkNode);
+  console.log('AFTER', elkNode);
+
   const stateNodeToElkNodeMap = new Map<StateNode<any, any>, StateElkNode>();
 
   const setEdgeLayout = (edge: StateElkEdge) => {

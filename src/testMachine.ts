@@ -1,12 +1,24 @@
 import { createMachine } from 'xstate';
 
 export const xtestMachine = createMachine({
+  id: 'm',
+  delimiter: '_',
   initial: 'foo',
   states: {
     foo: {
+      id: 'foo',
       on: { NEXT: 'bar' },
     },
-    bar: {},
+    bar: {
+      initial: 'one',
+      states: {
+        one: {
+          on: {
+            OUT: '#foo',
+          },
+        },
+      },
+    },
   },
 });
 
@@ -85,6 +97,9 @@ export const testMachine = createMachine<{ count: number }>({
               history: 'deep',
             },
           },
+          on: {
+            TO_PARALLEL: '#parallel',
+          },
         },
       },
       on: {
@@ -92,6 +107,7 @@ export const testMachine = createMachine<{ count: number }>({
       },
     },
     parallel: {
+      id: 'parallel',
       type: 'parallel',
       states: {
         three: {

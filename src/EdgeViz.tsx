@@ -48,6 +48,9 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
 
   // elk
   const { elkEdge } = edge as any;
+  if (!elkEdge) {
+    console.log(edge);
+  }
   let path: SvgPath | undefined;
 
   if (elkEdge && elkEdge.sections?.length) {

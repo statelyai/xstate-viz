@@ -23,13 +23,14 @@ import { getElkGraph, Graph } from './Graph';
 import { testMachine } from './testMachine';
 import { getAllEdges } from './Graph';
 import { toDirectedGraph } from './directedGraph';
+import { CanvasPanel } from './CanvasPanel';
 
 interface Point {
   x: number;
   y: number;
 }
 
-const model = createModel(
+export const canvasModel = createModel(
   {
     zoom: 1,
     pan: {
@@ -155,18 +156,18 @@ export const SimulationContext = createContext<
   InterpreterOf<ReturnType<typeof createSimulationMachine>>
 >(null as any);
 
-const canvasMachine = createMachine<typeof model>({
-  context: model.initialContext,
+export const canvasMachine = createMachine<typeof canvasModel>({
+  context: canvasModel.initialContext,
   on: {
     'ZOOM.OUT': {
-      actions: model.assign({ zoom: (ctx) => ctx.zoom - 0.1 }),
+      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom - 0.1 }),
       cond: (ctx) => ctx.zoom > 0.5,
     },
     'ZOOM.IN': {
-      actions: model.assign({ zoom: (ctx) => ctx.zoom + 0.1 }),
+      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom + 0.1 }),
     },
     PAN: {
-      actions: model.assign({
+      actions: canvasModel.assign({
         pan: (ctx, e) => {
           return {
             dx: ctx.pan.dx - e.dx,
@@ -176,7 +177,7 @@ const canvasMachine = createMachine<typeof model>({
       }),
     },
     'POSITION.SET': {
-      actions: model.assign({
+      actions: canvasModel.assign({
         initialPosition: (_, e) => e.position,
       }),
     },
@@ -210,70 +211,38 @@ export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
 };
 
 function App() {
-  const [state, send] = useMachine(canvasMachine);
   const simService = useInterpret(createSimulationMachine(testMachine));
   const digraph = useMemo(() => toDirectedGraph(testMachine), []);
 
   console.log({ digraph });
 
-  const [graphState] = useMachine(
-    createMachine({
-      context: {
-        elkGraph: undefined,
-      },
-      initial: 'loading',
-      states: {
-        loading: {
-          invoke: {
-            src: () => getElkGraph(digraph),
-            onDone: {
-              target: 'success',
-              actions: assign({
-                elkGraph: (_, e) => e.data,
-              }),
-            },
-          },
-        },
-        success: {},
-      },
-    }),
-  );
+  // const [graphState] = useMachine(
+  //   createMachine({
+  //     context: {
+  //       elkGraph: undefined,
+  //     },
+  //     initial: 'loading',
+  //     states: {
+  //       loading: {
+  //         invoke: {
+  //           src: () => getElkGraph(digraph),
+  //           onDone: {
+  //             target: 'success',
+  //             actions: assign({
+  //               elkGraph: (_, e) => e.data,
+  //             }),
+  //           },
+  //         },
+  //       },
+  //       success: {},
+  //     },
+  //   }),
+  // );
 
   return (
     <SimulationContext.Provider value={simService as any}>
       <main data-viz="app" data-viz-theme="dark">
-        <div
-          data-panel="viz"
-          onWheel={(e) => {
-            send(model.events.PAN(e.deltaX, e.deltaY));
-          }}
-        >
-          <div>
-            <button onClick={() => send('ZOOM.OUT')}>-</button>
-            <button onClick={() => send('ZOOM.IN')}>+</button>
-            <button
-              onClick={() =>
-                simService.send({
-                  type: 'EVENT',
-                  event: { type: 'NEXT' },
-                })
-              }
-            >
-              NEXT
-            </button>
-            <button onClick={() => simService.send('MACHINE.UPDATE')}>
-              MACHINE
-            </button>
-          </div>
-          <div
-            style={{
-              transform: `translate(${state.context.pan.dx}px, ${state.context.pan.dy}px) scale(${state.context.zoom})`,
-            }}
-          >
-            <MachineViz digraph={digraph} />
-            <Graph digraph={digraph} />
-          </div>
-        </div>
+        <CanvasPanel digraph={digraph} />
         {/* <EditorPanel
           onChange={(machines) => {
             simService.send({

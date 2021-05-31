@@ -41,7 +41,6 @@
 }
 
 [data-viz='stateNode-header'] {
-  background: var(--viz-node-color-bg);
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
@@ -91,7 +90,8 @@
 }
 
 [data-viz='stateNode-actions'] {
-  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+
   &:empty {
     display: none;
   }
@@ -102,4 +102,8 @@
     font-weight: bold;
     opacity: 0.5;
   }
+}
+
+[data-viz='stateNode-invocations'] {
+  padding: 0.5rem;
 }
