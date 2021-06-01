@@ -6,7 +6,7 @@ import './InvokeViz.scss';
 import './ActionViz.scss';
 import { SimulationContext } from './App';
 import { useMachine, useService } from '@xstate/react';
-import { setRect, useGetRect } from './getRect';
+import { deleteRect, setRect, useGetRect } from './getRect';
 
 interface BaseStateNodeDef {
   key: string;
@@ -65,6 +65,9 @@ export const StateNodeViz: React.FC<{
     if (ref.current) {
       setRect(stateNode.id, ref.current);
     }
+    return () => {
+      deleteRect(stateNode.id);
+    };
   }, []);
 
   return (

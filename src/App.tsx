@@ -12,7 +12,12 @@ import {
   State,
   StateMachine,
 } from 'xstate';
-import { useInterpret, useMachine, useService } from '@xstate/react';
+import {
+  useInterpret,
+  useMachine,
+  useSelector,
+  useService,
+} from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { DirectedGraphNode } from '@xstate/graph';
 import { MachineViz } from './MachineViz';
@@ -24,6 +29,7 @@ import { testMachine } from './testMachine';
 import { getAllEdges } from './Graph';
 import { toDirectedGraph } from './directedGraph';
 import { CanvasPanel } from './CanvasPanel';
+import { EditorPanel } from './EditorPanel';
 
 interface Point {
   x: number;
@@ -79,7 +85,6 @@ const createSimulationMachine = (machine: StateMachine<any, any, any>) => {
         invoke: {
           id: 'machine',
           src: (ctx) => (sendBack, onReceive) => {
-            console.log('starting again');
             const service = interpret(ctx.machine)
               .onTransition((state) => {
                 sendBack({
@@ -188,7 +193,6 @@ export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
   const service = useContext(SimulationContext);
-  const [state] = useService(service);
 
   const edges = getAllEdges(digraph);
   return (
@@ -212,38 +216,14 @@ export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
-  const digraph = useMemo(() => toDirectedGraph(testMachine), []);
-
-  console.log({ digraph });
-
-  // const [graphState] = useMachine(
-  //   createMachine({
-  //     context: {
-  //       elkGraph: undefined,
-  //     },
-  //     initial: 'loading',
-  //     states: {
-  //       loading: {
-  //         invoke: {
-  //           src: () => getElkGraph(digraph),
-  //           onDone: {
-  //             target: 'success',
-  //             actions: assign({
-  //               elkGraph: (_, e) => e.data,
-  //             }),
-  //           },
-  //         },
-  //       },
-  //       success: {},
-  //     },
-  //   }),
-  // );
+  const machine = useSelector(simService, (state) => state.context.machine);
+  const digraph = useMemo(() => toDirectedGraph(machine), [machine]);
 
   return (
     <SimulationContext.Provider value={simService as any}>
       <main data-viz="app" data-viz-theme="dark">
-        <CanvasPanel digraph={digraph} />
-        {/* <EditorPanel
+        <CanvasPanel digraph={digraph} key={JSON.stringify(digraph)} />
+        <EditorPanel
           onChange={(machines) => {
             simService.send({
               type: 'MACHINE.UPDATE',
@@ -251,7 +231,7 @@ function App() {
             });
             console.log(machines);
           }}
-        /> */}
+        />
       </main>
     </SimulationContext.Provider>
   );

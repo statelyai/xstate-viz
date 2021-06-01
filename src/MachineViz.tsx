@@ -13,7 +13,7 @@ export const MachineViz: React.FC<{ digraph: DirectedGraphNode }> = ({
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
   return (
-    <div style={{ opacity: 0.1 }}>
+    <div style={{ opacity: 0.001 }}>
       <StateNodeViz stateNode={digraph.stateNode} />
       {allEdges.map((edge, i) => {
         return (

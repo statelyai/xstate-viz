@@ -1,7 +1,7 @@
 import { DirectedGraphEdge, DirectedGraphNode } from '@xstate/graph';
 import { useMachine } from '@xstate/react';
 import ELK, { ElkEdge, ElkExtendedEdge, ElkNode } from 'elkjs/lib/main';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { createMachine, StateNode, TransitionDefinition } from 'xstate';
 import { assign } from 'xstate/lib/actions';
 import { Edges } from './App';
@@ -194,22 +194,7 @@ export async function getElkGraph(
     },
   };
 
-  console.log(
-    'BEFORE',
-    JSON.stringify(
-      elkNode,
-      (prop, value) => {
-        if (['node', 'absolutePosition'].includes(prop)) {
-          return undefined;
-        }
-        return value;
-      },
-      2,
-    ),
-  );
-
   const layoutElkNode = await elk.layout(elkNode);
-  console.log('AFTER', elkNode);
 
   const stateNodeToElkNodeMap = new Map<StateNode<any, any>, StateElkNode>();
 
@@ -263,16 +248,18 @@ export async function getElkGraph(
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const [state] = useMachine(
+  const [state, send] = useMachine<any, any>(
     createMachine({
       context: {
+        digraph,
         elkGraph: undefined,
       },
       initial: 'loading',
       states: {
+        pre: { after: { 1000: 'loading' } },
         loading: {
           invoke: {
-            src: () => getElkGraph(digraph),
+            src: (ctx) => getElkGraph(ctx.digraph),
             onDone: {
               target: 'success',
               actions: assign({

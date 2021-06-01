@@ -22,6 +22,13 @@ export const xtestMachine = createMachine({
   },
 });
 
+// export const testMachine = createMachine({
+//   initial: 'foo',
+//   states: {
+//     foo: {},
+//   },
+// });
+
 export const testMachine = createMachine<{ count: number }>({
   schema: {
     events: {

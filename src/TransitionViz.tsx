@@ -4,7 +4,7 @@ import React, { useContext, useEffect, useRef } from 'react';
 import type { Guard, TransitionDefinition } from 'xstate';
 import { SimulationContext } from './App';
 import { EventTypeViz } from './EventTypeViz';
-import { setRect } from './getRect';
+import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 
@@ -19,18 +19,26 @@ export const TransitionViz: React.FC<{
 }> = ({ edge, index, position }) => {
   const definition = edge.transition;
   const service = useContext(SimulationContext);
-  // const state = useSelector(service, (s) => s);
+  const state = useSelector(service, (s) => s.context.state);
 
   const ref = useRef<any>(null);
   useEffect(() => {
     if (ref.current) {
       setRect(edge.id, ref.current);
     }
-  }, []);
+    return () => {
+      deleteRect(edge.id);
+    };
+  }, [edge.id]);
 
   return (
     <div
       data-viz="transition"
+      data-viz-potential={
+        (state.nextEvents.includes(edge.transition.eventType) &&
+          !!state.configuration.find((sn) => sn === edge.source)) ||
+        undefined
+      }
       style={{
         position: 'absolute',
         ...(position && { left: `${position.x}px`, top: `${position.y}px` }),
