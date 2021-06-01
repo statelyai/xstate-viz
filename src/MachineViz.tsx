@@ -1,8 +1,7 @@
 import React, { useContext, useMemo } from 'react';
 import { StateNodeViz } from './StateNodeViz';
-import { useService } from '@xstate/react';
-import { Edges, SimulationContext } from './App';
-import { DirectedGraphNode } from '@xstate/graph';
+import { SimulationContext } from './App';
+import { DirectedGraphNode } from './directedGraph';
 import { getAllEdges } from './Graph';
 import { TransitionViz } from './TransitionViz';
 
@@ -23,8 +22,8 @@ export const MachineViz: React.FC<{ digraph: DirectedGraphNode }> = ({
             index={i}
             position={
               edge.label && {
-                x: (edge.label as any).x,
-                y: (edge.label as any).y,
+                x: edge.label.x,
+                y: edge.label.y,
               }
             }
           />

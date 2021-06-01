@@ -1,11 +1,11 @@
-import { DirectedGraphEdge, DirectedGraphNode } from '@xstate/graph';
+import { DirectedGraphEdge, DirectedGraphNode } from './directedGraph';
 import { useMachine } from '@xstate/react';
-import ELK, { ElkEdge, ElkExtendedEdge, ElkNode } from 'elkjs/lib/main';
-import { useEffect, useMemo } from 'react';
-import { createMachine, StateNode, TransitionDefinition } from 'xstate';
+import ELK, { ElkExtendedEdge, ElkNode } from 'elkjs/lib/main';
+import { useMemo } from 'react';
+import { createMachine, StateNode } from 'xstate';
 import { assign } from 'xstate/lib/actions';
 import { Edges } from './App';
-import { getRect, onRect, readRect, rectMap } from './getRect';
+import { getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
@@ -111,6 +111,7 @@ function getElkEdge(edge: DirectedGraphEdge) {
       },
     ],
     edge,
+    sections: [],
   };
 }
 
@@ -164,7 +165,7 @@ interface StateElkNode extends ElkNode {
   absolutePosition: Point;
   edges: StateElkEdge[];
 }
-interface StateElkEdge extends ElkEdge {
+interface StateElkEdge extends ElkExtendedEdge {
   edge: DirectedGraphEdge;
 }
 
@@ -200,16 +201,17 @@ export async function getElkGraph(
 
   const setEdgeLayout = (edge: StateElkEdge) => {
     const lca = rMap[1].get(edge.id);
-    (edge.edge as any).elkEdge = edge;
+
+    edge.edge.sections = edge.sections;
 
     const elkLca = lca && stateNodeToElkNodeMap.get(lca)!;
     (edge.edge as any).lcaPosition = {
       x: elkLca?.absolutePosition.x || 0,
       y: elkLca?.absolutePosition.y || 0,
     };
-    (edge.edge.label as any).x =
+    edge.edge.label.x =
       (edge.labels?.[0].x || 0) + (elkLca?.absolutePosition.x || 0);
-    (edge.edge.label as any).y =
+    edge.edge.label.y =
       (edge.labels?.[0].y || 0) + (elkLca?.absolutePosition.y || 0);
   };
 
@@ -288,8 +290,8 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
               index={i}
               position={
                 edge.label && {
-                  x: (edge.label as any).x,
-                  y: (edge.label as any).y,
+                  x: edge.label.x,
+                  y: edge.label.y,
                 }
               }
             />

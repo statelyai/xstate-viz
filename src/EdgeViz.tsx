@@ -2,10 +2,10 @@ import { useService } from '@xstate/react';
 import React, { useContext, useMemo } from 'react';
 import { SimulationContext } from './App';
 import { useGetRect } from './getRect';
-import { getPath, pathToD, Point, SvgPath } from './pathUtils';
+import { getPath, LPathParam, pathToD, Point, SvgPath } from './pathUtils';
 import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
-import { DirectedGraphEdge } from '@xstate/graph';
+import { DirectedGraphEdge } from './directedGraph';
 
 function translatePoint(point: Point, vector: Point): Point {
   return {
@@ -46,19 +46,16 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
     return null;
   }
 
-  // elk
-  const { elkEdge } = edge as any;
-  if (!elkEdge) {
-    console.log(edge);
-  }
   let path: SvgPath | undefined;
 
-  if (elkEdge && elkEdge.sections?.length) {
-    const section = elkEdge.sections[0];
+  if (edge.sections.length) {
+    const section = edge.sections[0];
 
     path = [
       ['M', section.startPoint],
-      ...(section.bendPoints?.map((point: Point) => ['L', point]) || []),
+      ...(section.bendPoints?.map(
+        (point: Point) => ['L', point] as LPathParam,
+      ) || []),
     ];
 
     const preLastPoint = path[path.length - 1][1]!;

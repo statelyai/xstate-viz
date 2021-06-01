@@ -1,7 +1,30 @@
-import { DirectedGraphNode, DirectedGraphEdge } from '@xstate/graph';
-import { StateNode } from 'xstate';
+import { ElkExtendedEdge } from 'elkjs';
+import { StateNode, TransitionDefinition } from 'xstate';
 import { flatten } from 'xstate/lib/utils';
 import { getChildren } from './utils';
+
+export type DirectedGraphLabel = {
+  text: string;
+  x: number;
+  y: number;
+};
+export type DirectedGraphEdge = {
+  id: string;
+  source: StateNode;
+  target: StateNode;
+  label: DirectedGraphLabel;
+  transition: TransitionDefinition<any, any>;
+  sections: ElkExtendedEdge['sections'];
+};
+export type DirectedGraphNode = {
+  id: string;
+  stateNode: StateNode;
+  children: DirectedGraphNode[];
+  /**
+   * The edges representing all transitions from this `stateNode`.
+   */
+  edges: DirectedGraphEdge[];
+};
 
 export function toDirectedGraph(stateNode: StateNode): DirectedGraphNode {
   const edges: DirectedGraphEdge[] = flatten(
@@ -16,13 +39,10 @@ export function toDirectedGraph(stateNode: StateNode): DirectedGraphNode {
           transition: t,
           label: {
             text: t.eventType,
-            toJSON: () => ({ text: t.eventType }),
+            x: 0,
+            y: 0,
           },
-          toJSON: () => {
-            const { label } = edge;
-
-            return { source: stateNode.id, target: target.id, label };
-          },
+          sections: [],
         };
 
         return edge;
@@ -35,10 +55,6 @@ export function toDirectedGraph(stateNode: StateNode): DirectedGraphNode {
     stateNode,
     children: getChildren(stateNode).map((sn) => toDirectedGraph(sn)),
     edges,
-    toJSON: () => {
-      const { id, children, edges: graphEdges } = graph;
-      return { id, children, edges: graphEdges };
-    },
   };
 
   return graph;

@@ -12,22 +12,14 @@ import {
   State,
   StateMachine,
 } from 'xstate';
-import {
-  useInterpret,
-  useMachine,
-  useSelector,
-  useService,
-} from '@xstate/react';
+import { useInterpret, useSelector } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
-import { DirectedGraphNode } from '@xstate/graph';
-import { MachineViz } from './MachineViz';
 
 import { EdgeViz } from './EdgeViz';
 import './Graph';
-import { getElkGraph, Graph } from './Graph';
 import { testMachine } from './testMachine';
 import { getAllEdges } from './Graph';
-import { toDirectedGraph } from './directedGraph';
+import { DirectedGraphNode, toDirectedGraph } from './directedGraph';
 import { CanvasPanel } from './CanvasPanel';
 import { EditorPanel } from './EditorPanel';
 
