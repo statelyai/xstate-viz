@@ -1,4 +1,4 @@
-import { useService } from '@xstate/react';
+import { useSelector, useService } from '@xstate/react';
 import React, { useContext, useMemo } from 'react';
 import { SimulationContext } from './App';
 import { useGetRect } from './getRect';
@@ -31,16 +31,13 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
   edge,
   order,
 }) => {
-  const transition = edge.transition;
   const service = useContext(SimulationContext);
-  const [state, send] = useService(service);
+  const isActive = useSelector(service, (state) => {
+    return state.context.state.configuration.includes(edge.source) || undefined;
+  });
   const sourceRect = useGetRect(`${edge.source.id}`);
   const edgeRect = useGetRect(edge.id);
   const targetRect = useGetRect(`${edge.target.id}`);
-
-  const isActive = useMemo(() => {
-    return state.context.state.configuration.includes(edge.source) || undefined;
-  }, [state]);
 
   if (!sourceRect || !targetRect || !edgeRect) {
     return null;
@@ -66,24 +63,11 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
       y: section.endPoint.y - 5 * ySign,
     };
     path.push(['L', endPoint]);
-    if ((edge as any).lcaPosition) {
-      path = translate(path, (edge as any).lcaPosition);
-    }
   } else {
     path = getPath(sourceRect, edgeRect, targetRect);
   }
 
-  const edgeCenterY = edgeRect.top + edgeRect.height / 2;
-
   const markerId = `${edge.source.order}-${order}`;
-
-  // const path = [
-  //   `M ${sourceRect.right},${edgeCenterY}`,
-  //   `L ${edgeRect.left},${edgeCenterY}`,
-  //   `M ${edgeRect.right},${edgeCenterY}`,
-  //   `L ${edgeRect.right + 10},${edgeCenterY}`,
-  //   `L ${targetRect.left},${targetRect.top}`,
-  // ];
 
   return path ? (
     <g data-viz="edgeGroup" data-viz-edge={edge.id} data-viz-active={isActive}>

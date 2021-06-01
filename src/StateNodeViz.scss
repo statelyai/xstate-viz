@@ -1,7 +1,4 @@
 [data-viz='stateNodeGroup'] {
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-column-gap: 1rem;
   --viz-node-border-color: var(--viz-border-color);
   --viz-node-active: 0;
   --viz-transition-color: #555;
@@ -18,14 +15,26 @@
 }
 
 [data-viz='stateNode'] {
-  border: var(--viz-border);
-  border-color: var(--viz-node-border-color);
-  border-style: var(--viz-node-border-style);
-  border-radius: var(--viz-radius);
   color: var(--viz-color-fg);
   align-self: start;
   opacity: calc(0.5 * (1 - var(--viz-node-active)) + var(--viz-node-active));
   font-size: 1em;
+  border-radius: var(--viz-radius);
+  overflow: hidden;
+
+  // Border in a pseudoelement to not affect positioning
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: var(--viz-border);
+    border-color: var(--viz-node-border-color);
+    border-style: var(--viz-node-border-style);
+    border-radius: inherit;
+  }
 
   &[data-viz-type='history'] {
     --viz-stateNode-type: 'H';

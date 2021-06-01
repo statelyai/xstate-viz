@@ -215,7 +215,7 @@ function App() {
     <SimulationContext.Provider value={simService as any}>
       <main data-viz="app" data-viz-theme="dark">
         <CanvasPanel digraph={digraph} key={JSON.stringify(digraph)} />
-        <EditorPanel
+        {/* <EditorPanel
           onChange={(machines) => {
             simService.send({
               type: 'MACHINE.UPDATE',
@@ -223,7 +223,7 @@ function App() {
             });
             console.log(machines);
           }}
-        />
+        /> */}
       </main>
     </SimulationContext.Provider>
   );

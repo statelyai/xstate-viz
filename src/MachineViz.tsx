@@ -8,7 +8,6 @@ import { TransitionViz } from './TransitionViz';
 export const MachineViz: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const simService = useContext(SimulationContext);
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
   return (

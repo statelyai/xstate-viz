@@ -1,6 +1,6 @@
 import { DirectedGraphEdge, DirectedGraphNode } from './directedGraph';
 import { useMachine } from '@xstate/react';
-import ELK, { ElkExtendedEdge, ElkNode } from 'elkjs/lib/main';
+import ELK, { ElkEdgeSection, ElkExtendedEdge, ElkNode } from 'elkjs/lib/main';
 import { useMemo } from 'react';
 import { createMachine, StateNode } from 'xstate';
 import { assign } from 'xstate/lib/actions';
@@ -201,42 +201,62 @@ export async function getElkGraph(
 
   const setEdgeLayout = (edge: StateElkEdge) => {
     const lca = rMap[1].get(edge.id);
-
-    edge.edge.sections = edge.sections;
-
     const elkLca = lca && stateNodeToElkNodeMap.get(lca)!;
-    (edge.edge as any).lcaPosition = {
-      x: elkLca?.absolutePosition.x || 0,
-      y: elkLca?.absolutePosition.y || 0,
-    };
+
+    const translatedSections: ElkEdgeSection[] = elkLca
+      ? edge.sections.map((section) => {
+          return {
+            ...section,
+            startPoint: {
+              x: section.startPoint.x + elkLca.absolutePosition.x,
+              y: section.startPoint.y + elkLca.absolutePosition.y,
+            },
+            endPoint: {
+              x: section.endPoint.x + elkLca.absolutePosition.x,
+              y: section.endPoint.y + elkLca.absolutePosition.y,
+            },
+            bendPoints: section.bendPoints?.map((bendPoint) => {
+              return {
+                x: bendPoint.x + elkLca.absolutePosition.x,
+                y: bendPoint.y + elkLca.absolutePosition.y,
+              };
+            }),
+          };
+        })
+      : edge.sections;
+
+    edge.edge.sections = translatedSections;
     edge.edge.label.x =
       (edge.labels?.[0].x || 0) + (elkLca?.absolutePosition.x || 0);
     edge.edge.label.y =
       (edge.labels?.[0].y || 0) + (elkLca?.absolutePosition.y || 0);
   };
 
-  const setLayout = (n: StateElkNode, parent: StateElkNode | undefined) => {
-    stateNodeToElkNodeMap.set(n.node, n);
-    n.absolutePosition = {
-      x: (parent?.absolutePosition.x ?? 0) + n.x!,
-      y: (parent?.absolutePosition.y ?? 0) + n.y!,
+  const setLayout = (
+    elkNode: StateElkNode,
+    parent: StateElkNode | undefined,
+  ) => {
+    stateNodeToElkNodeMap.set(elkNode.node, elkNode);
+    elkNode.absolutePosition = {
+      x: (parent?.absolutePosition.x ?? 0) + elkNode.x!,
+      y: (parent?.absolutePosition.y ?? 0) + elkNode.y!,
     };
-    n.node.version = `${Math.random()}`;
-    n.node.meta = {
+    elkNode.node.version = `${Math.random()}`;
+    elkNode.node.meta = {
       layout: {
-        width: n.width!,
-        height: n.height!,
-        x: n.x!,
-        y: n.y!,
+        width: elkNode.width!,
+        height: elkNode.height!,
+        x: elkNode.x!,
+        y: elkNode.y!,
       },
     };
 
-    n.edges?.forEach((edge) => {
+    elkNode.edges?.forEach((edge) => {
       setEdgeLayout(edge);
     });
 
-    n.children?.forEach((cn) => {
-      setLayout(cn as StateElkNode, n);
+    elkNode.children?.forEach((cn) => {
+      setLayout(cn as StateElkNode, elkNode);
     });
   };
 
