@@ -1,6 +1,11 @@
 import { DirectedGraphEdge, DirectedGraphNode } from './directedGraph';
 import { useMachine } from '@xstate/react';
-import ELK, { ElkEdgeSection, ElkExtendedEdge, ElkNode } from 'elkjs/lib/main';
+import ELK, {
+  ElkEdgeSection,
+  ElkExtendedEdge,
+  ElkNode,
+  LayoutOptions,
+} from 'elkjs/lib/main';
 import { useMemo } from 'react';
 import { createMachine, StateNode } from 'xstate';
 import { assign } from 'xstate/lib/actions';
@@ -18,6 +23,15 @@ const elk = new ELK({
     // hierarchyHandling: 'INCLUDE_CHILDREN',
   },
 });
+
+const rootLayoutOptions: LayoutOptions = {
+  'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+  'elk.algorithm': 'layered',
+  'elk.layered.crossingMinimization.semiInteractive': 'true',
+  // 'elk.layering.strategy': 'NIKOLOV',
+  // 'elk.wrapping.strategy': 'SINGLE_EDGE',
+  // 'elk.direction': 'DOWN',
+};
 
 type RelativeNodeEdgeMap = [
   Map<StateNode<any, any> | undefined, DirectedGraphEdge[]>,
@@ -188,14 +202,7 @@ export async function getElkGraph(
     id: 'root',
     edges: rootEdges.map(getElkEdge),
     children: [getElkChild(digraph, rMap)],
-    layoutOptions: {
-      'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
-      'elk.algorithm': 'layered',
-      'elk.layered.crossingMinimization.semiInteractive': 'true',
-      // 'elk.layering.strategy': 'NIKOLOV',
-      // 'elk.wrapping.strategy': 'SINGLE_EDGE',
-      // 'elk.direction': 'DOWN',
-    },
+    layoutOptions: rootLayoutOptions,
   };
 
   const layoutElkNode = await elk.layout(elkNode);
@@ -280,7 +287,6 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
       },
       initial: 'loading',
       states: {
-        pre: { after: { 1000: 'loading' } },
         loading: {
           invoke: {
             src: (ctx) => getElkGraph(ctx.digraph),
