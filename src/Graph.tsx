@@ -276,32 +276,33 @@ export async function getElkGraph(
   return layoutElkNode.children![0];
 }
 
+const createElkMachine = (digraph: DirectedGraphNode) =>
+  createMachine({
+    context: {
+      digraph,
+      elkGraph: undefined,
+    },
+    initial: 'loading',
+    states: {
+      loading: {
+        invoke: {
+          src: (ctx) => getElkGraph(ctx.digraph),
+          onDone: {
+            target: 'success',
+            actions: assign({
+              elkGraph: (_, e) => e.data,
+            }),
+          },
+        },
+      },
+      success: {},
+    },
+  });
+
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const [state, send] = useMachine<any, any>(
-    createMachine({
-      context: {
-        digraph,
-        elkGraph: undefined,
-      },
-      initial: 'loading',
-      states: {
-        loading: {
-          invoke: {
-            src: (ctx) => getElkGraph(ctx.digraph),
-            onDone: {
-              target: 'success',
-              actions: assign({
-                elkGraph: (_, e) => e.data,
-              }),
-            },
-          },
-        },
-        success: {},
-      },
-    }),
-  );
+  const [state, send] = useMachine(() => createElkMachine(digraph));
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
