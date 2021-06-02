@@ -8,6 +8,9 @@ export type DirectedGraphLabel = {
   x: number;
   y: number;
 };
+export type DirectedGraphPort = {
+  id: string;
+};
 export type DirectedGraphEdge = {
   id: string;
   source: StateNode;
@@ -20,6 +23,7 @@ export type DirectedGraphNode = {
   id: string;
   stateNode: StateNode;
   children: DirectedGraphNode[];
+  ports: DirectedGraphPort[];
   /**
    * The edges representing all transitions from this `stateNode`.
    */
@@ -55,6 +59,7 @@ export function toDirectedGraph(stateNode: StateNode): DirectedGraphNode {
     stateNode,
     children: getChildren(stateNode).map((sn) => toDirectedGraph(sn)),
     edges,
+    ports: [],
   };
 
   return graph;

@@ -34,6 +34,8 @@
     border-color: var(--viz-node-border-color);
     border-style: var(--viz-node-border-style);
     border-radius: inherit;
+    z-index: 1;
+    pointer-events: none;
   }
 
   &[data-viz-type='history'] {

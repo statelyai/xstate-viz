@@ -12,7 +12,7 @@ import { TransitionViz } from './TransitionViz';
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
-    'elk.spacing.labelEdge': '1000',
+    // 'elk.spacing.labelEdge': '1000',
     // 'elk.edgeRouting': 'ORTHOGONAL',
     // 'elk.edgeLabels.inline': 'true',
     // hierarchyHandling: 'INCLUDE_CHILDREN',
@@ -135,7 +135,7 @@ function getElkChild(
     // width: node.rects.full.width,
     // height: node.rects.full.height,
 
-    node: node.stateNode,
+    node,
     ...(node.children.length
       ? { children: getElkChildren(node, rMap) }
       : undefined),
@@ -161,7 +161,7 @@ function getElkChildren(
 }
 
 interface StateElkNode extends ElkNode {
-  node: StateNode<any, any, any>;
+  node: DirectedGraphNode;
   absolutePosition: Point;
   edges: StateElkEdge[];
 }
@@ -170,7 +170,7 @@ interface StateElkEdge extends ElkExtendedEdge {
 }
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
-  return <StateNodeViz stateNode={elkNode.node} />;
+  return <StateNodeViz stateNode={elkNode.node.stateNode} />;
 };
 
 export async function getElkGraph(
@@ -192,6 +192,9 @@ export async function getElkGraph(
       'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
       'elk.algorithm': 'layered',
       'elk.layered.crossingMinimization.semiInteractive': 'true',
+      // 'elk.layering.strategy': 'NIKOLOV',
+      // 'elk.wrapping.strategy': 'SINGLE_EDGE',
+      // 'elk.direction': 'DOWN',
     },
   };
 
@@ -236,13 +239,12 @@ export async function getElkGraph(
     elkNode: StateElkNode,
     parent: StateElkNode | undefined,
   ) => {
-    stateNodeToElkNodeMap.set(elkNode.node, elkNode);
+    stateNodeToElkNodeMap.set(elkNode.node.stateNode, elkNode);
     elkNode.absolutePosition = {
       x: (parent?.absolutePosition.x ?? 0) + elkNode.x!,
       y: (parent?.absolutePosition.y ?? 0) + elkNode.y!,
     };
-    elkNode.node.version = `${Math.random()}`;
-    elkNode.node.meta = {
+    elkNode.node.stateNode.meta = {
       layout: {
         width: elkNode.width!,
         height: elkNode.height!,
