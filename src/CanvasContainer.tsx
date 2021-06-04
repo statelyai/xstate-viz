@@ -1,6 +1,7 @@
 import { useMachine } from '@xstate/react';
 import * as React from 'react';
-import { canvasMachine, canvasModel } from './App';
+
+import { canvasMachine, canvasModel } from './canvasMachine';
 
 export const CanvasContainer: React.FC = ({ children }) => {
   const [state, send] = useMachine(canvasMachine);

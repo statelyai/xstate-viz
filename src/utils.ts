@@ -1,5 +1,4 @@
 import type { AnyEventObject, StateNode, TransitionDefinition } from 'xstate';
-import { flatten } from 'xstate/lib/utils';
 
 export interface Edge<
   TContext,

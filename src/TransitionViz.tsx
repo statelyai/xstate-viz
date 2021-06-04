@@ -1,7 +1,7 @@
 import { useSelector } from '@xstate/react';
 import React, { useContext, useEffect, useRef } from 'react';
 import type { Guard } from 'xstate';
-import { SimulationContext } from './App';
+import { SimulationContext } from './SimulationContext';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz } from './EventTypeViz';
 import { deleteRect, setRect } from './getRect';

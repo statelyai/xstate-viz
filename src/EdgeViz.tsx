@@ -1,6 +1,6 @@
-import { useSelector, useService } from '@xstate/react';
-import React, { useContext, useMemo } from 'react';
-import { SimulationContext } from './App';
+import { useSelector } from '@xstate/react';
+import React, { useContext } from 'react';
+import { SimulationContext } from './SimulationContext';
 import { useGetRect } from './getRect';
 import { getPath, LPathParam, pathToD, Point, SvgPath } from './pathUtils';
 import './EdgeViz.scss';
@@ -14,7 +14,7 @@ function translatePoint(point: Point, vector: Point): Point {
   };
 }
 
-function translate(path: SvgPath, vector: Point): SvgPath {
+export function translate(path: SvgPath, vector: Point): SvgPath {
   return path.map((cmd) => {
     switch (cmd[0]) {
       case 'M':

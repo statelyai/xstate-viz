@@ -7,13 +7,13 @@ import ELK, {
   LayoutOptions,
 } from 'elkjs/lib/main';
 import { useMemo } from 'react';
-import { createMachine, StateNode } from 'xstate';
-import { assign } from 'xstate/lib/actions';
-import { Edges } from './App';
+import { StateNode } from 'xstate';
+import { Edges } from './Edges';
 import { getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
+import { createElkMachine } from './elkMachine';
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
@@ -276,33 +276,10 @@ export async function getElkGraph(
   return layoutElkNode.children![0];
 }
 
-const createElkMachine = (digraph: DirectedGraphNode) =>
-  createMachine({
-    context: {
-      digraph,
-      elkGraph: undefined,
-    },
-    initial: 'loading',
-    states: {
-      loading: {
-        invoke: {
-          src: (ctx) => getElkGraph(ctx.digraph),
-          onDone: {
-            target: 'success',
-            actions: assign({
-              elkGraph: (_, e) => e.data,
-            }),
-          },
-        },
-      },
-      success: {},
-    },
-  });
-
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const [state, send] = useMachine(() => createElkMachine(digraph));
+  const [state] = useMachine(() => createElkMachine(digraph));
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
@@ -310,7 +287,7 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
     return (
       <div>
         <Edges digraph={digraph} />
-        <GraphNode elkNode={state.context.elkGraph as any} />
+        <GraphNode elkNode={state.context.elkGraph} />
         {allEdges.map((edge, i) => {
           return (
             <TransitionViz

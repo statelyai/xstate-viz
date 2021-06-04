@@ -1,12 +1,11 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import type { StateNode, StateNodeDefinition } from 'xstate';
-import { TransitionViz } from './TransitionViz';
+import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import type { StateNode } from 'xstate';
 import './StateNodeViz.scss';
 import './InvokeViz.scss';
 import './ActionViz.scss';
-import { SimulationContext } from './App';
-import { useMachine, useService } from '@xstate/react';
-import { deleteRect, setRect, useGetRect } from './getRect';
+import { SimulationContext } from './SimulationContext';
+import { useService } from '@xstate/react';
+import { deleteRect, setRect } from './getRect';
 
 interface BaseStateNodeDef {
   key: string;
@@ -48,7 +47,7 @@ export const StateNodeViz: React.FC<{
   parent?: StateNodeDef;
 }> = ({ stateNode, parent }) => {
   const service = useContext(SimulationContext);
-  const [state, send] = useService(service);
+  const [state] = useService(service);
   const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
@@ -68,7 +67,7 @@ export const StateNodeViz: React.FC<{
     return () => {
       deleteRect(stateNode.id);
     };
-  }, []);
+  }, [stateNode]);
 
   return (
     <div
