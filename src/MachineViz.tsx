@@ -11,7 +11,7 @@ export const MachineViz: React.FC<{ digraph: DirectedGraphNode }> = ({
 
   return (
     <div style={{ opacity: 0.001 }}>
-      <StateNodeViz stateNode={digraph.stateNode} />
+      <StateNodeViz stateNode={digraph.data} />
       {allEdges.map((edge, i) => {
         return (
           <TransitionViz

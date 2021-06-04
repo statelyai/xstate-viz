@@ -133,7 +133,7 @@ function getElkChild(
   const nodeRect = getRect(node.id);
   const contentRect = readRect(`${node.id}:content`);
 
-  const edges = rMap[0].get(node.stateNode) || [];
+  const edges = rMap[0].get(node.data) || [];
 
   return {
     id: node.id,
@@ -181,7 +181,7 @@ interface StateElkEdge extends ElkExtendedEdge {
 }
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
-  return <StateNodeViz stateNode={elkNode.node.stateNode} />;
+  return <StateNodeViz stateNode={elkNode.node.data} />;
 };
 
 export async function getElkGraph(
@@ -243,12 +243,12 @@ export async function getElkGraph(
     elkNode: StateElkNode,
     parent: StateElkNode | undefined,
   ) => {
-    stateNodeToElkNodeMap.set(elkNode.node.stateNode, elkNode);
+    stateNodeToElkNodeMap.set(elkNode.node.data, elkNode);
     elkNode.absolutePosition = {
       x: (parent?.absolutePosition.x ?? 0) + elkNode.x!,
       y: (parent?.absolutePosition.y ?? 0) + elkNode.y!,
     };
-    elkNode.node.stateNode.meta = {
+    elkNode.node.data.meta = {
       layout: {
         width: elkNode.width!,
         height: elkNode.height!,
