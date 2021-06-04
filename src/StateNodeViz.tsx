@@ -43,7 +43,7 @@ type StateNodeDef =
   | HistoryStateNodeDef;
 
 export const StateNodeViz: React.FC<{
-  stateNode: StateNode<any, any, any>;
+  stateNode: StateNode;
   parent?: StateNodeDef;
 }> = ({ stateNode, parent }) => {
   const service = useContext(SimulationContext);

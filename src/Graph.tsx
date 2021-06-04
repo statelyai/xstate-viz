@@ -7,13 +7,13 @@ import ELK, {
   LayoutOptions,
 } from 'elkjs/lib/main';
 import { useMemo } from 'react';
-import { StateNode } from 'xstate';
 import { Edges } from './Edges';
 import { getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
 import { createElkMachine } from './elkMachine';
+import { StateNode } from 'xstate';
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
@@ -34,8 +34,8 @@ const rootLayoutOptions: LayoutOptions = {
 };
 
 type RelativeNodeEdgeMap = [
-  Map<StateNode<any, any> | undefined, DirectedGraphEdge[]>,
-  Map<string, StateNode<any, any> | undefined>,
+  Map<StateNode | undefined, DirectedGraphEdge[]>,
+  Map<string, StateNode | undefined>,
 ];
 
 export function getAllEdges(digraph: DirectedGraphNode): DirectedGraphEdge[] {
@@ -58,10 +58,7 @@ function getRelativeNodeEdgeMap(
   const map: RelativeNodeEdgeMap[0] = new Map();
   const edgeMap: RelativeNodeEdgeMap[1] = new Map();
 
-  const getLCA = (
-    a: StateNode<any, any>,
-    b: StateNode<any, any>,
-  ): StateNode<any, any> | undefined => {
+  const getLCA = (a: StateNode, b: StateNode): StateNode | undefined => {
     if (a === b) {
       return a.parent;
     }
@@ -207,7 +204,7 @@ export async function getElkGraph(
 
   const layoutElkNode = await elk.layout(elkNode);
 
-  const stateNodeToElkNodeMap = new Map<StateNode<any, any>, StateElkNode>();
+  const stateNodeToElkNodeMap = new Map<StateNode, StateElkNode>();
 
   const setEdgeLayout = (edge: StateElkEdge) => {
     const lca = rMap[1].get(edge.id);
