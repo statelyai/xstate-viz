@@ -14,6 +14,7 @@ import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
 import { createElkMachine } from './elkMachine';
 import { StateNode } from 'xstate';
+import { MachineViz } from './MachineViz';
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
@@ -300,5 +301,5 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
     );
   }
 
-  return null;
+  return <MachineViz digraph={digraph} />;
 };
