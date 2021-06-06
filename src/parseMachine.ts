@@ -25,7 +25,7 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
     sourceJs,
   );
 
-  const machines: Array<StateNode<any>> = [];
+  const machines: Array<StateNode> = [];
 
   const machineProxy = (config: any, options: any) => {
     const machine = createMachine(config, options);

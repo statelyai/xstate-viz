@@ -1,12 +1,11 @@
 import React, { useContext, useEffect, useMemo, useRef } from 'react';
-import type { StateNodeDefinition } from 'xstate';
-import { TransitionViz } from './TransitionViz';
+import type { StateNode } from 'xstate';
 import './StateNodeViz.scss';
 import './InvokeViz.scss';
 import './ActionViz.scss';
-import { SimulationContext } from './App';
-import { useMachine, useService } from '@xstate/react';
-import { setRect } from './getRect';
+import { SimulationContext } from './SimulationContext';
+import { useService } from '@xstate/react';
+import { deleteRect, setRect } from './getRect';
 
 interface BaseStateNodeDef {
   key: string;
@@ -44,11 +43,11 @@ type StateNodeDef =
   | HistoryStateNodeDef;
 
 export const StateNodeViz: React.FC<{
-  definition: StateNodeDefinition<any, any, any>;
+  stateNode: StateNode;
   parent?: StateNodeDef;
-}> = ({ definition, parent }) => {
+}> = ({ stateNode, parent }) => {
   const service = useContext(SimulationContext);
-  const [state, send] = useService(service);
+  const [state] = useService(service);
   const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
@@ -63,46 +62,66 @@ export const StateNodeViz: React.FC<{
 
   useEffect(() => {
     if (ref.current) {
-      setRect(definition.id, ref.current);
+      setRect(stateNode.id, ref.current);
     }
-  }, []);
+    return () => {
+      deleteRect(stateNode.id);
+    };
+  }, [stateNode]);
 
   return (
     <div
       data-viz="stateNodeGroup"
       data-viz-active={
         !!state.context.state.configuration.find(
-          (n) => n.id === definition.id,
+          (n) => n.id === stateNode.id,
         ) || undefined
       }
       data-viz-previewed={
-        previewState?.configuration.find((n) => n.id === definition.id) ||
+        previewState?.configuration.find((n) => n.id === stateNode.id) ||
         undefined
       }
+      style={{
+        // outline: '1px solid blue',
+        position: 'absolute',
+        // height: `${layout.height!}px`,
+        // width: `${layout.width!}px`,
+        ...(stateNode.meta && {
+          left: `${stateNode.meta.layout.x}px`,
+          top: `${stateNode.meta.layout.y}px`,
+        }),
+      }}
     >
       <div
         ref={ref}
         data-viz="stateNode"
-        data-viz-type={definition.type}
+        data-viz-type={stateNode.type}
         data-viz-atomic={
-          ['atomic', 'final'].includes(definition.type) || undefined
+          ['atomic', 'final'].includes(stateNode.type) || undefined
         }
         data-viz-parent-type={parent?.type}
-        title={`#${definition.id}`}
+        title={`#${stateNode.id}`}
+        style={{
+          // position: 'absolute',
+          ...(stateNode.meta && {
+            width: `${stateNode.meta.layout.width}px`,
+            height: `${stateNode.meta.layout.height}px`,
+          }),
+        }}
       >
-        <div data-viz="stateNode-header">
-          {['history', 'final'].includes(definition.type) && (
-            <div
-              data-viz="stateNode-type"
-              data-viz-type={definition.type}
-            ></div>
-          )}
-          <div data-viz="stateNode-key">{definition.key}</div>
-        </div>
-        <div data-viz="stateNode-content">
-          {definition.invoke.length > 0 && (
+        <div data-viz="stateNode-content" data-rect={`${stateNode.id}:content`}>
+          <div data-viz="stateNode-header">
+            {['history', 'final'].includes(stateNode.type) && (
+              <div
+                data-viz="stateNode-type"
+                data-viz-type={stateNode.type}
+              ></div>
+            )}
+            <div data-viz="stateNode-key">{stateNode.key}</div>
+          </div>
+          {stateNode.definition.invoke.length > 0 && (
             <div data-viz="stateNode-invocations">
-              {definition.invoke.map((invocation) => {
+              {stateNode.definition.invoke.map((invocation) => {
                 return (
                   <div data-viz="invoke">
                     <div data-viz="invoke-id">{invocation.id}</div>
@@ -111,9 +130,9 @@ export const StateNodeViz: React.FC<{
               })}
             </div>
           )}
-          {definition.entry.length > 0 && (
+          {stateNode.definition.entry.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="entry">
-              {definition.entry.map((action) => {
+              {stateNode.definition.entry.map((action) => {
                 return (
                   <div data-viz="action" data-viz-action="entry">
                     <div data-viz="action-type">{action.type}</div>
@@ -122,9 +141,9 @@ export const StateNodeViz: React.FC<{
               })}
             </div>
           )}
-          {definition.exit.length > 0 && (
+          {stateNode.definition.exit.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="exit">
-              {definition.exit.map((action) => {
+              {stateNode.definition.exit.map((action) => {
                 return (
                   <div data-viz="action" data-viz-action="exit">
                     <div data-viz="action-type">{action.type}</div>
@@ -134,19 +153,15 @@ export const StateNodeViz: React.FC<{
             </div>
           )}
         </div>
-        {'states' in definition && (
+        {'states' in stateNode && (
           <div data-viz="stateNode-states">
-            {Object.entries(definition.states!).map(([key, value]) => {
-              return <StateNodeViz key={key} definition={value} />;
+            {Object.entries(stateNode.states!).map(([key, value]) => {
+              return <StateNodeViz key={value.version} stateNode={value} />;
             })}
           </div>
         )}
       </div>
-      <div data-viz="transitions">
-        {definition.transitions.map((transition, i) => {
-          return <TransitionViz definition={transition} key={i} index={i} />;
-        })}
-      </div>
+      <div data-viz="transitions"></div>
     </div>
   );
 };

@@ -1,16 +1,32 @@
-import React, { useContext } from 'react';
+import React, { useMemo } from 'react';
 import { StateNodeViz } from './StateNodeViz';
-import { useService } from '@xstate/react';
-import { SimulationContext } from './App';
+import { DirectedGraphNode } from './directedGraph';
+import { getAllEdges } from './Graph';
+import { TransitionViz } from './TransitionViz';
 
-export const MachineViz = () => {
-  const simService = useContext(SimulationContext);
-  const [state, send] = useService(simService);
+export const MachineViz: React.FC<{ digraph: DirectedGraphNode }> = ({
+  digraph,
+}) => {
+  const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
   return (
-    <div>
-      <StateNodeViz definition={state.context.machine.definition} />
-      <svg></svg>
+    <div style={{ opacity: 0.001 }}>
+      <StateNodeViz stateNode={digraph.data} />
+      {allEdges.map((edge, i) => {
+        return (
+          <TransitionViz
+            edge={edge}
+            key={edge.id}
+            index={i}
+            position={
+              edge.label && {
+                x: edge.label.x,
+                y: edge.label.y,
+              }
+            }
+          />
+        );
+      })}
     </div>
   );
 };

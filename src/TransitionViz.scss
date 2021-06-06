@@ -8,6 +8,14 @@
   gap: 0.5rem;
 }
 
+[data-viz='transition'] {
+  --viz-transition-color: gray;
+
+  &[data-viz-potential] {
+    --viz-transition-color: var(--viz-color-active);
+  }
+}
+
 [data-viz='transition-label'] {
   font-size: var(--viz-font-size-sm);
   font-weight: bold;
@@ -19,6 +27,7 @@
   justify-content: flex-start;
   border: 2px solid var(--viz-transition-color);
   overflow: hidden;
+  background: var(--viz-color-bg);
 }
 
 [data-viz='transition-event'] {

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-type RectListener = (rect: ClientRect) => void;
+type RectListener = (rect: ClientRect | undefined) => void;
 
-const rectMap: Map<string, ClientRect> = new Map();
+export const rectMap: Map<string, ClientRect> = new Map();
 const rectListenersMap = new Map<string, Set<RectListener>>();
 
 (window as any).rectMap = rectMap;
@@ -49,6 +49,11 @@ export const setRect = (id: string, el: HTMLElement) => {
   if (!prevRect || !rectsEqual(prevRect, rect)) {
     rectListenersMap.get(id)?.forEach((listener) => listener(rect));
   }
+};
+
+export const deleteRect = (id: string) => {
+  rectMap.delete(id);
+  rectListenersMap.get(id)?.forEach((listener) => listener(undefined));
 };
 
 export const onRect = (id: string, listener: RectListener) => {
