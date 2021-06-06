@@ -33,7 +33,7 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
 }) => {
   const service = useContext(SimulationContext);
   const isActive = useSelector(service, (state) => {
-    return state.context.state.configuration.includes(edge.source) || undefined;
+    return state.context.state.configuration.includes(edge.source);
   });
   const sourceRect = useGetRect(`${edge.source.id}`);
   const edgeRect = useGetRect(edge.id);
@@ -70,7 +70,11 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
   const markerId = `${edge.source.order}-${order}`;
 
   return path ? (
-    <g data-viz="edgeGroup" data-viz-edge={edge.id} data-viz-active={isActive}>
+    <g
+      data-viz="edgeGroup"
+      data-viz-edge={edge.id}
+      data-viz-active={isActive || undefined}
+    >
       <defs>
         <ArrowMarker id={markerId} />
       </defs>
