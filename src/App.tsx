@@ -11,6 +11,7 @@ import { EditorPanel } from './EditorPanel';
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
+import { StatePanel } from './StatePanel';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
@@ -41,7 +42,7 @@ function App() {
                 />
               </TabPanel>
               <TabPanel>
-                <p>two!</p>
+                <StatePanel />
               </TabPanel>
               <TabPanel>
                 <p>three!</p>

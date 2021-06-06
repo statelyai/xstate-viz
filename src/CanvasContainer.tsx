@@ -1,7 +1,15 @@
 import { useMachine } from '@xstate/react';
 import * as React from 'react';
+import {
+  Button,
+  ButtonGroup,
+  IconButton,
+  ChakraProvider,
+} from '@chakra-ui/react';
+import { AddIcon, MinusIcon } from '@chakra-ui/icons';
 
 import { canvasMachine, canvasModel } from './canvasMachine';
+import { theme } from './theme';
 
 export const CanvasContainer: React.FC = ({ children }) => {
   const [state, send] = useMachine(canvasMachine);
@@ -13,10 +21,6 @@ export const CanvasContainer: React.FC = ({ children }) => {
         send(canvasModel.events.PAN(e.deltaX, e.deltaY));
       }}
     >
-      <div>
-        <button onClick={() => send('ZOOM.OUT')}>-</button>
-        <button onClick={() => send('ZOOM.IN')}>+</button>
-      </div>
       <div
         style={{
           transform: `translate(${state.context.pan.dx}px, ${state.context.pan.dy}px) scale(${state.context.zoom})`,
@@ -24,6 +28,21 @@ export const CanvasContainer: React.FC = ({ children }) => {
       >
         {children}
       </div>
+      <ChakraProvider theme={theme}>
+        <ButtonGroup size="sm" isAttached>
+          <IconButton
+            aria-label="Add to friends"
+            icon={<MinusIcon />}
+            onClick={() => send('ZOOM.OUT')}
+          />
+
+          <IconButton
+            aria-label="Add to friends"
+            icon={<AddIcon />}
+            onClick={() => send('ZOOM.IN')}
+          />
+        </ButtonGroup>
+      </ChakraProvider>
     </div>
   );
 };
