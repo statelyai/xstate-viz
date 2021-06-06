@@ -101,10 +101,6 @@ function getRelativeNodeEdgeMap(
 function getElkEdge(edge: DirectedGraphEdge) {
   const edgeRect = readRect(edge.id);
 
-  if (!edgeRect) {
-    console.log('not found', edge.id);
-  }
-
   return {
     id: edge.id,
     sources: [edge.source.id],

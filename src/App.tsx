@@ -7,6 +7,7 @@ import { CanvasPanel } from './CanvasPanel';
 import { createSimulationMachine } from './simulationMachine';
 import { SimulationContext } from './SimulationContext';
 import './base.scss';
+import { EditorPanel } from './EditorPanel';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
@@ -17,15 +18,14 @@ function App() {
     <SimulationContext.Provider value={simService as any}>
       <main data-viz="app" data-viz-theme="dark">
         <CanvasPanel digraph={digraph} key={JSON.stringify(digraph)} />
-        {/* <EditorPanel
+        <EditorPanel
           onChange={(machines) => {
             simService.send({
               type: 'MACHINE.UPDATE',
               machine: machines[0],
             });
-            console.log(machines);
           }}
-        /> */}
+        />
       </main>
     </SimulationContext.Provider>
   );
