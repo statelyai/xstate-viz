@@ -11,6 +11,7 @@ import {
 } from 'xstate';
 
 export function parseMachines(sourceJs: string): Array<StateNode> {
+  // eslint-disable-next-line no-new-func
   const makeMachine = new Function(
     'Machine',
     'createMachine',
@@ -27,16 +28,15 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
 
   const machines: Array<StateNode> = [];
 
-  const machineProxy = (config: any, options: any) => {
-    const machine = createMachine(config, options);
+  const interpretProxy = (machine: any, ...args: any[]) => {
     machines.push(machine);
-    return machine;
+    return interpret(machine, ...args);
   };
 
   makeMachine(
-    machineProxy,
-    machineProxy,
-    interpret,
+    createMachine,
+    createMachine,
+    interpretProxy,
     assign,
     send,
     sendParent,

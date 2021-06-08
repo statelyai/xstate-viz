@@ -32,7 +32,7 @@ function App() {
             </TabList>
 
             <TabPanels>
-              <TabPanel>
+              <TabPanel padding={0}>
                 <EditorPanel
                   onChange={(machines) => {
                     simService.send({

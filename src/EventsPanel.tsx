@@ -5,13 +5,15 @@ import { SimulationContext } from './SimulationContext';
 export const EventsPanel: React.FC = () => {
   const [state] = useService(useContext(SimulationContext));
 
-  console.log(state);
-
   return (
     <div>
       <ul>
-        {state.context.machines.map((machine) => {
-          return <li key={machine.id}>{machine.id}</li>;
+        {state.context.events.map((event, i) => {
+          return (
+            <li key={i}>
+              <pre>{JSON.stringify(event, null, 2)}</pre>
+            </li>
+          );
         })}
       </ul>
     </div>

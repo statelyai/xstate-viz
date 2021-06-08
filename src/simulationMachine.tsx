@@ -2,6 +2,7 @@ import {
   AnyEventObject,
   assign,
   createMachine,
+  EventObject,
   interpret,
   send,
   State,
@@ -16,6 +17,7 @@ export const createSimModel = (machine: StateMachine<any, any, any>) =>
       state: machine.initialState,
       machine,
       machines: [] as AnyStateMachine[],
+      events: [] as EventObject[],
       previewEvent: undefined as string | undefined,
     },
     {
@@ -89,24 +91,29 @@ export const createSimulationMachine = (
       },
 
       EVENT: {
-        actions: send(
-          (ctx, e) => {
-            const eventSchema = ctx.machine.schema?.events?.[e.event.type];
-            const eventToSend = { ...e.event };
+        actions: [
+          simModel.assign({
+            events: (ctx, e) => ctx.events.concat(e.event),
+          }),
+          send(
+            (ctx, e) => {
+              const eventSchema = ctx.machine.schema?.events?.[e.event.type];
+              const eventToSend = { ...e.event };
 
-            if (eventSchema) {
-              Object.keys(eventSchema.properties).forEach((prop) => {
-                const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                );
+              if (eventSchema) {
+                Object.keys(eventSchema.properties).forEach((prop) => {
+                  const value = prompt(
+                    `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+                  );
 
-                eventToSend[prop] = value;
-              });
-            }
-            return eventToSend;
-          },
-          { to: 'machine' },
-        ),
+                  eventToSend[prop] = value;
+                });
+              }
+              return eventToSend;
+            },
+            { to: 'machine' },
+          ),
+        ],
       },
     },
   });
