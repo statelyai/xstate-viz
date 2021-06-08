@@ -54,6 +54,9 @@ export const testMachine = createMachine<{ count: number }>({
     simple: {
       entry: ['action1', 'really long action', 'action3'],
       exit: ['anotherAction', 'action4'],
+      invoke: {
+        src: () => xtestMachine,
+      },
       on: {
         NEXT: 'compound',
         INC: [

@@ -8,20 +8,22 @@ import {
   StateMachine,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { AnyStateMachine } from './types';
 
 export const createSimModel = (machine: StateMachine<any, any, any>) =>
   createModel(
     {
       state: machine.initialState,
       machine,
+      machines: [] as AnyStateMachine[],
       previewEvent: undefined as string | undefined,
     },
     {
       events: {
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
         EVENT: (event: AnyEventObject) => ({ event }),
-        'MACHINE.UPDATE': (machine: StateMachine<any, any, any>) => ({
-          machine,
+        'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
+          machines,
         }),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
@@ -60,12 +62,13 @@ export const createSimulationMachine = (
           },
         },
         on: {
-          'MACHINE.UPDATE': {
+          'MACHINES.UPDATE': {
             target: 'active',
             internal: false,
             actions: [
               simModel.assign({
-                machine: (_, e) => e.machine,
+                machine: (_, e) => e.machines[0],
+                machines: (_, e) => e.machines,
               }),
             ],
           },

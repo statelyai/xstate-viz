@@ -12,6 +12,7 @@ import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
 import { StatePanel } from './StatePanel';
+import { EventsPanel } from './EventsPanel';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
@@ -35,8 +36,8 @@ function App() {
                 <EditorPanel
                   onChange={(machines) => {
                     simService.send({
-                      type: 'MACHINE.UPDATE',
-                      machine: machines[0],
+                      type: 'MACHINES.UPDATE',
+                      machines,
                     });
                   }}
                 />
@@ -45,7 +46,7 @@ function App() {
                 <StatePanel />
               </TabPanel>
               <TabPanel>
-                <p>three!</p>
+                <EventsPanel />
               </TabPanel>
             </TabPanels>
           </Tabs>
