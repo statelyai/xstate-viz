@@ -123,7 +123,7 @@ export const StateNodeViz: React.FC<{
             <div data-viz="stateNode-invocations">
               {stateNode.definition.invoke.map((invocation) => {
                 return (
-                  <div data-viz="invoke">
+                  <div data-viz="invoke" key={invocation.id}>
                     <div data-viz="invoke-id">{invocation.id}</div>
                   </div>
                 );
@@ -132,9 +132,9 @@ export const StateNodeViz: React.FC<{
           )}
           {stateNode.definition.entry.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="entry">
-              {stateNode.definition.entry.map((action) => {
+              {stateNode.definition.entry.map((action, idx) => {
                 return (
-                  <div data-viz="action" data-viz-action="entry">
+                  <div data-viz="action" data-viz-action="entry" key={idx}>
                     <div data-viz="action-type">{action.type}</div>
                   </div>
                 );
@@ -143,9 +143,9 @@ export const StateNodeViz: React.FC<{
           )}
           {stateNode.definition.exit.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="exit">
-              {stateNode.definition.exit.map((action) => {
+              {stateNode.definition.exit.map((action, idx) => {
                 return (
-                  <div data-viz="action" data-viz-action="exit">
+                  <div data-viz="action" data-viz-action="exit" key={idx}>
                     <div data-viz="action-type">{action.type}</div>
                   </div>
                 );
@@ -156,7 +156,7 @@ export const StateNodeViz: React.FC<{
         {'states' in stateNode && (
           <div data-viz="stateNode-states">
             {Object.entries(stateNode.states!).map(([key, value]) => {
-              return <StateNodeViz key={value.version} stateNode={value} />;
+              return <StateNodeViz key={value.id} stateNode={value} />;
             })}
           </div>
         )}
