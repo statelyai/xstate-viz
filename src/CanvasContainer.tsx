@@ -31,13 +31,13 @@ export const CanvasContainer: React.FC = ({ children }) => {
       <ChakraProvider theme={theme}>
         <ButtonGroup size="sm" isAttached>
           <IconButton
-            aria-label="Add to friends"
+            aria-label="Zoom out"
             icon={<MinusIcon />}
             onClick={() => send('ZOOM.OUT')}
           />
 
           <IconButton
-            aria-label="Add to friends"
+            aria-label="Zoom in"
             icon={<AddIcon />}
             onClick={() => send('ZOOM.IN')}
           />
