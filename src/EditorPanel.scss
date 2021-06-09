@@ -3,3 +3,7 @@
   display: grid;
   grid-template-rows: 1fr 3rem;
 }
+
+.vscode-editor {
+  height: 75vh; // TODO: figure out how to do this in Chakra
+}

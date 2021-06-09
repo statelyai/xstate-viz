@@ -16,6 +16,7 @@ export const EditorWithXStateImports = (
       defaultLanguage="typescript"
       defaultValue={props.defaultValue}
       theme="vs-dark"
+      className="vscode-editor"
       onChange={(text) => {
         if (text) {
           props.onChange?.(text);
