@@ -34,7 +34,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
 export const EditorPanel: React.FC<{
   onChange: (machine: AnyStateMachine[]) => void;
 }> = ({ onChange }) => {
-  const [state, send] = useMachine(editorPanelMachine, {
+  const [, send] = useMachine(editorPanelMachine, {
     actions: {
       onChange: (ctx) => {
         const machines = parseMachines(ctx.code);

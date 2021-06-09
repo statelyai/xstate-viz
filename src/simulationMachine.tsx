@@ -2,26 +2,30 @@ import {
   AnyEventObject,
   assign,
   createMachine,
+  EventObject,
   interpret,
   send,
   State,
   StateMachine,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { AnyStateMachine } from './types';
 
 export const createSimModel = (machine: StateMachine<any, any, any>) =>
   createModel(
     {
       state: machine.initialState,
       machine,
+      machines: [] as AnyStateMachine[],
+      events: [] as EventObject[],
       previewEvent: undefined as string | undefined,
     },
     {
       events: {
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
         EVENT: (event: AnyEventObject) => ({ event }),
-        'MACHINE.UPDATE': (machine: StateMachine<any, any, any>) => ({
-          machine,
+        'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
+          machines,
         }),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
@@ -60,12 +64,13 @@ export const createSimulationMachine = (
           },
         },
         on: {
-          'MACHINE.UPDATE': {
+          'MACHINES.UPDATE': {
             target: 'active',
             internal: false,
             actions: [
               simModel.assign({
-                machine: (_, e) => e.machine,
+                machine: (_, e) => e.machines[0],
+                machines: (_, e) => e.machines,
               }),
             ],
           },
@@ -86,24 +91,29 @@ export const createSimulationMachine = (
       },
 
       EVENT: {
-        actions: send(
-          (ctx, e) => {
-            const eventSchema = ctx.machine.schema?.events?.[e.event.type];
-            const eventToSend = { ...e.event };
+        actions: [
+          simModel.assign({
+            events: (ctx, e) => ctx.events.concat(e.event),
+          }),
+          send(
+            (ctx, e) => {
+              const eventSchema = ctx.machine.schema?.events?.[e.event.type];
+              const eventToSend = { ...e.event };
 
-            if (eventSchema) {
-              Object.keys(eventSchema.properties).forEach((prop) => {
-                const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                );
+              if (eventSchema) {
+                Object.keys(eventSchema.properties).forEach((prop) => {
+                  const value = prompt(
+                    `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+                  );
 
-                eventToSend[prop] = value;
-              });
-            }
-            return eventToSend;
-          },
-          { to: 'machine' },
-        ),
+                  eventToSend[prop] = value;
+                });
+              }
+              return eventToSend;
+            },
+            { to: 'machine' },
+          ),
+        ],
       },
     },
   });

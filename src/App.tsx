@@ -8,6 +8,11 @@ import { createSimulationMachine } from './simulationMachine';
 import { SimulationContext } from './SimulationContext';
 import './base.scss';
 import { EditorPanel } from './EditorPanel';
+import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
+import { ChakraProvider } from '@chakra-ui/react';
+import { theme } from './theme';
+import { StatePanel } from './StatePanel';
+import { EventsPanel } from './EventsPanel';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
@@ -18,14 +23,34 @@ function App() {
     <SimulationContext.Provider value={simService as any}>
       <main data-viz="app" data-viz-theme="dark">
         <CanvasPanel digraph={digraph} key={JSON.stringify(digraph)} />
-        <EditorPanel
-          onChange={(machines) => {
-            simService.send({
-              type: 'MACHINE.UPDATE',
-              machine: machines[0],
-            });
-          }}
-        />
+        <ChakraProvider theme={theme}>
+          <Tabs bg="gray.800">
+            <TabList>
+              <Tab>Code</Tab>
+              <Tab>State</Tab>
+              <Tab>Events</Tab>
+            </TabList>
+
+            <TabPanels>
+              <TabPanel padding={0}>
+                <EditorPanel
+                  onChange={(machines) => {
+                    simService.send({
+                      type: 'MACHINES.UPDATE',
+                      machines,
+                    });
+                  }}
+                />
+              </TabPanel>
+              <TabPanel>
+                <StatePanel />
+              </TabPanel>
+              <TabPanel>
+                <EventsPanel />
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
+        </ChakraProvider>
       </main>
     </SimulationContext.Provider>
   );
