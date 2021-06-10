@@ -28,15 +28,16 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
 
   const machines: Array<StateNode> = [];
 
-  const interpretProxy = (machine: any, ...args: any[]) => {
+  const machineProxy = (config: any, options: any) => {
+    const machine = createMachine(config, options);
     machines.push(machine);
-    return interpret(machine, ...args);
+    return machine;
   };
 
   makeMachine(
-    createMachine,
-    createMachine,
-    interpretProxy,
+    machineProxy,
+    machineProxy,
+    interpret,
     assign,
     send,
     sendParent,
