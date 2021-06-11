@@ -20,7 +20,7 @@ export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
       }}
     >
       {edges.map((edge, i) => {
-        return <EdgeViz edge={edge} order={i} />;
+        return <EdgeViz key={edge.id} edge={edge} order={i} />;
       })}
     </svg>
   );
