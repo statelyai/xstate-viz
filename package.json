@@ -12,7 +12,7 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@xstate/graph": "^1.3.0",
-    "@xstate/react": "^1.3.2",
+    "@xstate/react": "^1.3.4",
     "elkjs": "^0.7.1",
     "framer-motion": "^4",
     "monaco-editor": "^0.24.0",
@@ -22,7 +22,7 @@
     "react-scripts": "4.0.3",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
-    "xstate": "^4.19.1"
+    "xstate": "^4.20.0"
   },
   "scripts": {
     "start": "react-scripts start",

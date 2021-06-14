@@ -2860,10 +2860,10 @@
   resolved "https://registry.yarnpkg.com/@xstate/graph/-/graph-1.3.0.tgz#710a7f24a86c81ff27d6cc6766102a15f3b23f7b"
   integrity sha512-/gPDHcXvNm+DY0Cw+wHVza+6eebmqji6u5rEYKOIAUWuAFBn7svVY6VxtRnWnjGl9B3rHTioenV0ELH8GzK3eA==
 
-"@xstate/react@^1.3.2":
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/@xstate/react/-/react-1.3.3.tgz#5faf7604b8076d06883348f93b241c38ed0e71f6"
-  integrity sha512-10QfCZr3dxahYmpykQ5iGtzjtKJ5dkiu1P4JyD0dGnmQLbBD6XDKCnzfOe5MWD8CocErgsaEMmsTMVsnxIAuYQ==
+"@xstate/react@^1.3.4":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@xstate/react/-/react-1.3.4.tgz#d79126c9eecc9a1225d553e3421aaad68eb5ee5e"
+  integrity sha512-uKbKriFYjgeqMeEAqOv8IWRM8WBx5i/4pMPGpqo58wd7sInhFmmK6HWfV7eX3nD/vJPfxWielNMxAUCUdVh1pA==
   dependencies:
     use-isomorphic-layout-effect "^1.0.0"
     use-subscription "^1.3.0"
@@ -12483,10 +12483,10 @@ xmlchars@^2.2.0:
   resolved "https://registry.yarnpkg.com/xmlchars/-/xmlchars-2.2.0.tgz#060fe1bcb7f9c76fe2a17db86a9bc3ab894210cb"
   integrity sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
 
-xstate@^4.19.1:
-  version "4.19.1"
-  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.19.1.tgz#6d6b5388b11a0297894be0caaef2299891c6fb6a"
-  integrity sha512-tnBh6ue9MiyoMkE2+w1IqfvJm4nBe3S4Ky/RLvlo9vka8FdO4WyyT3M7PA0pQoM/FZ9aJVWFOlsNw0Nc7E+4Bw==
+xstate@^4.20.0:
+  version "4.20.0"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.20.0.tgz#6f241f2b49c840cb6e05b32544a6048362f558e2"
+  integrity sha512-u5Ou1CMo/oWApasmv1TYTHgj38k69DJdTqQdBBwt+/ooNhPJQiSIKTB3Y3HvX0h5tulwfSo6xAwZgBgjRsK3LA==
 
 xtend@^4.0.0, xtend@~4.0.1:
   version "4.0.2"

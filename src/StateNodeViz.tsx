@@ -118,6 +118,15 @@ export const StateNodeViz: React.FC<{
               ></div>
             )}
             <div data-viz="stateNode-key">{stateNode.key}</div>
+            <div data-viz="stateNode-tags">
+              {stateNode.tags.map((tag, i) => {
+                return (
+                  <div data-viz="stateNode-tag" key={i}>
+                    {tag}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           {stateNode.definition.invoke.length > 0 && (
             <div data-viz="stateNode-invocations">
