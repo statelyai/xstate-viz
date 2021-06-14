@@ -53,8 +53,17 @@
 
 [data-viz='stateNode-header'] {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'type key tags';
   align-items: center;
+
+  > [data-viz='stateNode-key'] {
+    grid-area: key;
+  }
+
+  > [data-viz='stateNode-tags'] {
+    grid-area: tags;
+  }
 }
 
 [data-viz='stateNode-content'] {
@@ -117,4 +126,22 @@
 
 [data-viz='stateNode-invocations'] {
   padding: 0.5rem;
+}
+
+[data-viz='stateNode-tags'] {
+  text-overflow: ellipsis;
+  padding: 0.5rem;
+}
+
+[data-viz='stateNode-tag'] {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  background-color: #fff5;
+
+  & + & {
+    margin-left: 1ch;
+  }
 }

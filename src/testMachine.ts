@@ -52,6 +52,7 @@ export const testMachine = createMachine<{ count: number }>({
   },
   states: {
     simple: {
+      tags: ['tag1', 'tag2'],
       entry: ['action1', 'really long action', 'action3'],
       exit: ['anotherAction', 'action4'],
       invoke: {
