@@ -1,11 +1,11 @@
 import { useSelector } from '@xstate/react';
-import React, { useContext } from 'react';
-import { SimulationContext } from './SimulationContext';
+import React from 'react';
 import { useGetRect } from './getRect';
 import { getPath, LPathParam, pathToD, Point, SvgPath } from './pathUtils';
 import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
 import { DirectedGraphEdge } from './directedGraph';
+import { useSimulation } from './useSimulation';
 
 function translatePoint(point: Point, vector: Point): Point {
   return {
@@ -31,7 +31,7 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
   edge,
   order,
 }) => {
-  const service = useContext(SimulationContext);
+  const service = useSimulation();
   const isActive = useSelector(service, (state) => {
     return state.context.state.configuration.includes(edge.source);
   });
