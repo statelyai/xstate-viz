@@ -22,7 +22,7 @@ function App() {
   return (
     <SimulationContext.Provider value={simService as any}>
       <main data-viz="app" data-viz-theme="dark">
-        <CanvasPanel digraph={digraph} key={JSON.stringify(digraph)} />
+        <CanvasPanel digraph={digraph} />
         <ChakraProvider theme={theme}>
           <Tabs bg="gray.800">
             <TabList>

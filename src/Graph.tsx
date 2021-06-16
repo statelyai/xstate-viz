@@ -6,7 +6,7 @@ import ELK, {
   ElkNode,
   LayoutOptions,
 } from 'elkjs/lib/main';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Edges } from './Edges';
 import { getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
@@ -273,7 +273,11 @@ export async function getElkGraph(
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const [state] = useMachine(() => createElkMachine(digraph));
+  const [state, send] = useMachine(() => createElkMachine(digraph));
+
+  useEffect(() => {
+    send({ type: 'GRAPH_UPDATED', digraph });
+  }, [digraph, send]);
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
