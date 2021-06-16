@@ -1,18 +1,15 @@
 import { useMachine } from '@xstate/react';
-import * as React from 'react';
-import {
-  Button,
-  ButtonGroup,
-  IconButton,
-  ChakraProvider,
-} from '@chakra-ui/react';
-import { AddIcon, MinusIcon } from '@chakra-ui/icons';
+import React, { useContext } from 'react';
+import { ButtonGroup, IconButton, ChakraProvider } from '@chakra-ui/react';
+import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
 
 import { canvasMachine, canvasModel } from './canvasMachine';
 import { theme } from './theme';
+import { SimulationContext } from './SimulationContext';
 
 export const CanvasContainer: React.FC = ({ children }) => {
   const [state, send] = useMachine(canvasMachine);
+  const simService = useContext(SimulationContext);
 
   return (
     <div
@@ -42,6 +39,12 @@ export const CanvasContainer: React.FC = ({ children }) => {
             onClick={() => send('ZOOM.IN')}
           />
         </ButtonGroup>
+
+        <IconButton
+          aria-label="Reset"
+          icon={<RepeatIcon />}
+          onClick={() => simService.send('MACHINES.RESET')}
+        />
       </ChakraProvider>
     </div>
   );
