@@ -27,6 +27,7 @@ export const createSimModel = (machine: StateMachine<any, any, any>) =>
         'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
           machines,
         }),
+        'MACHINES.RESET': () => ({}),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
       },
@@ -71,6 +72,16 @@ export const createSimulationMachine = (
               simModel.assign({
                 machine: (_, e) => e.machines[0],
                 machines: (_, e) => e.machines,
+              }),
+            ],
+          },
+          'MACHINES.RESET': {
+            target: 'active',
+            internal: false,
+            actions: [
+              simModel.assign({
+                events: [],
+                previewEvent: undefined,
               }),
             ],
           },
