@@ -1,12 +1,12 @@
 import { useSelector } from '@xstate/react';
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { Guard } from 'xstate';
-import { SimulationContext } from './SimulationContext';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz } from './EventTypeViz';
 import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
+import { useSimulation } from './useSimulation';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -18,7 +18,7 @@ export const TransitionViz: React.FC<{
   index: number;
 }> = ({ edge, index, position }) => {
   const definition = edge.transition;
-  const service = useContext(SimulationContext);
+  const service = useSimulation();
   const state = useSelector(service, (s) => s.context.state);
 
   const ref = useRef<any>(null);

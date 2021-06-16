@@ -1,9 +1,9 @@
 import { useService } from '@xstate/react';
-import React, { useContext } from 'react';
-import { SimulationContext } from './SimulationContext';
+import React from 'react';
+import { useSimulation } from './useSimulation';
 
 export const EventsPanel: React.FC = () => {
-  const [state] = useService(useContext(SimulationContext));
+  const [state] = useService(useSimulation());
 
   return (
     <div>

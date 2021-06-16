@@ -1,11 +1,12 @@
-import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import type { StateNode } from 'xstate';
 import './StateNodeViz.scss';
 import './InvokeViz.scss';
 import './ActionViz.scss';
-import { SimulationContext } from './SimulationContext';
+
 import { useService } from '@xstate/react';
 import { deleteRect, setRect } from './getRect';
+import { useSimulation } from './useSimulation';
 
 interface BaseStateNodeDef {
   key: string;
@@ -46,7 +47,7 @@ export const StateNodeViz: React.FC<{
   stateNode: StateNode;
   parent?: StateNodeDef;
 }> = ({ stateNode, parent }) => {
-  const service = useContext(SimulationContext);
+  const service = useSimulation();
   const [state] = useService(service);
   const ref = useRef<HTMLDivElement>(null);
 

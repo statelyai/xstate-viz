@@ -1,11 +1,11 @@
-import React, { useCallback, useContext } from 'react';
-import { SimulationContext } from './SimulationContext';
+import React from 'react';
 import ReactJson from 'react-json-view';
-import { useSelector, useService } from '@xstate/react';
+import { useSelector } from '@xstate/react';
+import { useSimulation } from './useSimulation';
 
 const selectState = (state: any) => state.context.state;
 export const StatePanel: React.FC = () => {
-  const state = useSelector(useContext(SimulationContext), selectState);
+  const state = useSelector(useSimulation(), selectState);
 
   return (
     <div>
