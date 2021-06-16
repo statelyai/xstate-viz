@@ -273,7 +273,7 @@ export async function getElkGraph(
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const [state, send] = useMachine(createElkMachine(digraph));
+  const [state, send] = useMachine(() => createElkMachine(digraph));
 
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
