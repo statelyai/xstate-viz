@@ -4,16 +4,20 @@ import { DirectedGraphNode } from './directedGraph';
 import { getElkGraph } from './Graph';
 
 export const createElkMachine = (digraph: DirectedGraphNode) => {
-  const elkModel = createModel({
-    digraph,
-    elkGraph: undefined as any,
-  });
+  const elkModel = createModel(
+    {
+      digraph,
+      elkGraph: undefined as any,
+    },
+    {
+      events: {
+        GRAPH_UPDATED: (digraph: DirectedGraphNode) => ({ digraph }),
+      },
+    },
+  );
 
   return createMachine<typeof elkModel>({
-    context: {
-      digraph,
-      elkGraph: undefined,
-    },
+    context: elkModel.initialContext,
     initial: 'loading',
     states: {
       loading: {
@@ -27,7 +31,18 @@ export const createElkMachine = (digraph: DirectedGraphNode) => {
           },
         },
       },
-      success: {},
+      success: {
+        on: {
+          GRAPH_UPDATED: {
+            target: 'loading',
+            actions: [
+              elkModel.assign({
+                digraph: (_, e) => e.digraph,
+              }),
+            ],
+          },
+        },
+      },
     },
   });
 };
