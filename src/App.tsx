@@ -36,7 +36,7 @@ function App() {
                 <EditorPanel
                   onChange={(machines) => {
                     simService.send({
-                      type: 'MACHINES.UPDATE',
+                      type: 'MACHINES.VERIFY',
                       machines,
                     });
                   }}
