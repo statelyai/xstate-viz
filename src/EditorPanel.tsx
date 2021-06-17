@@ -17,6 +17,7 @@ const editorPanelModel = createModel(
   {
     events: {
       UPDATE_MACHINE_PRESSED: () => ({}),
+      EDITOR_ENCOUNTERED_ERROR: (message: string) => ({ message }),
       EDITOR_CHANGED_VALUE: (code: string) => ({ code }),
     },
   },
@@ -28,6 +29,11 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   on: {
     EDITOR_CHANGED_VALUE: {
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
+    },
+    EDITOR_ENCOUNTERED_ERROR: {
+      actions: sendAction((_, e) => ({ type: 'ERROR', message: e.message }), {
+        to: (ctx) => ctx.notifRef,
+      }),
     },
     UPDATE_MACHINE_PRESSED: {
       actions: 'onChange',
@@ -45,12 +51,10 @@ export const EditorPanel: React.FC<{
           const machines = parseMachines(ctx.code);
           onChange(machines);
         } catch (err) {
-          console.log(err);
-          console.log(ctx);
-          ctx.notifRef.send({ type: 'ERROR', message: err.toString() });
-          // send({ type: 'ERROR', message: err.toString() } as any, {
-          //   to: (ctx: any) => ctx.notifRef,
-          // });
+          send({
+            type: 'EDITOR_ENCOUNTERED_ERROR',
+            message: err.message,
+          });
         }
       },
     },

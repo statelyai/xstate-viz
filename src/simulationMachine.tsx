@@ -19,7 +19,6 @@ export const createSimModel = (machine: StateMachine<any, any, any>) =>
     {
       state: machine.initialState,
       notifRef: undefined as any,
-      error: undefined,
       machine,
       machines: [] as AnyStateMachine[],
       events: [] as EventObject[],
