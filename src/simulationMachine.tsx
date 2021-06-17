@@ -1,3 +1,4 @@
+import { ActorRefFrom } from 'xstate';
 import {
   AnyEventObject,
   assign,
@@ -18,7 +19,7 @@ export const createSimModel = (machine: StateMachine<any, any, any>) =>
   createModel(
     {
       state: machine.initialState,
-      notifRef: undefined as any,
+      notifRef: undefined as ActorRefFrom<typeof notifMachine>,
       machine,
       machines: [] as AnyStateMachine[],
       events: [] as EventObject[],

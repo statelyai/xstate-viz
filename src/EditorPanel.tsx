@@ -1,5 +1,6 @@
 import { useMachine } from '@xstate/react';
 import React from 'react';
+import { ActorRefFrom } from 'xstate';
 import { assign } from 'xstate';
 import { createMachine, send as sendAction, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
@@ -12,7 +13,7 @@ import type { AnyStateMachine } from './types';
 const editorPanelModel = createModel(
   {
     code: '',
-    notifRef: undefined as any,
+    notifRef: undefined as ActorRefFrom<typeof notifMachine>,
   },
   {
     events: {
