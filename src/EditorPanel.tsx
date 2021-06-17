@@ -48,6 +48,7 @@ export const EditorPanel: React.FC<{
   const [, send] = useMachine(editorPanelMachine, {
     actions: {
       onChange: (ctx) => {
+        // TODO: refactor to invoke
         try {
           const machines = parseMachines(ctx.code);
           onChange(machines);
