@@ -13,7 +13,7 @@ import type { AnyStateMachine } from './types';
 const editorPanelModel = createModel(
   {
     code: '',
-    notifRef: undefined as ActorRefFrom<typeof notifMachine>,
+    notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
   },
   {
     events: {

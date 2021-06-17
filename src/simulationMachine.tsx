@@ -19,7 +19,7 @@ export const createSimModel = (machine: StateMachine<any, any, any>) =>
   createModel(
     {
       state: machine.initialState,
-      notifRef: undefined as ActorRefFrom<typeof notifMachine>,
+      notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
       machine,
       machines: [] as AnyStateMachine[],
       events: [] as EventObject[],

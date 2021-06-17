@@ -4,14 +4,11 @@ import { createModel } from 'xstate/lib/model';
 
 const toast = createStandaloneToast();
 
-const notifModel = createModel(
-  {},
-  {
-    events: {
-      ERROR: (message: string) => ({ message }),
-    },
+const notifModel = createModel(undefined, {
+  events: {
+    ERROR: (message: string) => ({ message }),
   },
-);
+});
 export const notifMachine = createMachine<typeof notifModel>({
   initial: 'running',
   on: {
