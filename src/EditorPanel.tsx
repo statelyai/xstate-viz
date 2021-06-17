@@ -1,19 +1,24 @@
 import { useMachine } from '@xstate/react';
 import React from 'react';
-import { createMachine } from 'xstate';
+import { ActorRefFrom } from 'xstate';
+import { assign } from 'xstate';
+import { createMachine, send as sendAction, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import './EditorPanel.scss';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
+import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
 
 const editorPanelModel = createModel(
   {
     code: '',
+    notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
   },
   {
     events: {
       UPDATE_MACHINE_PRESSED: () => ({}),
+      EDITOR_ENCOUNTERED_ERROR: (message: string) => ({ message }),
       EDITOR_CHANGED_VALUE: (code: string) => ({ code }),
     },
   },
@@ -21,9 +26,15 @@ const editorPanelModel = createModel(
 
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
+  entry: assign({ notifRef: () => spawn(notifMachine) }),
   on: {
     EDITOR_CHANGED_VALUE: {
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
+    },
+    EDITOR_ENCOUNTERED_ERROR: {
+      actions: sendAction((_, e) => ({ type: 'ERROR', message: e.message }), {
+        to: (ctx) => ctx.notifRef,
+      }),
     },
     UPDATE_MACHINE_PRESSED: {
       actions: 'onChange',
@@ -37,8 +48,16 @@ export const EditorPanel: React.FC<{
   const [, send] = useMachine(editorPanelMachine, {
     actions: {
       onChange: (ctx) => {
-        const machines = parseMachines(ctx.code);
-        onChange(machines);
+        // TODO: refactor to invoke
+        try {
+          const machines = parseMachines(ctx.code);
+          onChange(machines);
+        } catch (err) {
+          send({
+            type: 'EDITOR_ENCOUNTERED_ERROR',
+            message: err.message,
+          });
+        }
       },
     },
   });
