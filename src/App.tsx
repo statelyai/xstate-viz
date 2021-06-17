@@ -24,14 +24,19 @@ function App() {
       <main data-viz="app" data-viz-theme="dark">
         <CanvasPanel digraph={digraph} />
         <ChakraProvider theme={theme}>
-          <Tabs bg="gray.800">
+          <Tabs
+            bg="gray.800"
+            display="grid"
+            gridTemplateRows="auto 1fr"
+            height="100vh"
+          >
             <TabList>
               <Tab>Code</Tab>
               <Tab>State</Tab>
               <Tab>Events</Tab>
             </TabList>
 
-            <TabPanels>
+            <TabPanels overflowY="auto">
               <TabPanel padding={0}>
                 <EditorPanel
                   onChange={(machines) => {

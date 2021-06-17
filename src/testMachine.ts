@@ -50,6 +50,10 @@ export const testMachine = createMachine<{ count: number }>({
   on: {
     'ROOT.EVENT': {},
   },
+  invoke: {
+    id: 'test-invocation',
+    src: xtestMachine,
+  },
   states: {
     simple: {
       tags: ['tag1', 'tag2'],

@@ -70,7 +70,7 @@ export const createSimulationMachine = (
             internal: false,
             actions: [
               simModel.assign({
-                machine: (_, e) => e.machines[0],
+                machine: (_, e) => e.machines[e.machines.length - 1],
                 machines: (_, e) => e.machines,
               }),
             ],
