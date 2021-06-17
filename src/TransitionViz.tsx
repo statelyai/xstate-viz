@@ -44,7 +44,7 @@ export const TransitionViz: React.FC<{
         ...(position && { left: `${position.x}px`, top: `${position.y}px` }),
       }}
     >
-      <div
+      <button
         data-viz="transition-label"
         ref={ref}
         onMouseEnter={() => {
@@ -68,13 +68,15 @@ export const TransitionViz: React.FC<{
           });
         }}
       >
-        <div data-viz="transition-event">
+        <span data-viz="transition-event">
           <EventTypeViz eventType={definition.eventType} />
-        </div>
+        </span>
         {definition.cond && (
-          <div data-viz="transition-guard">{getGuardType(definition.cond)}</div>
+          <span data-viz="transition-guard">
+            {getGuardType(definition.cond)}
+          </span>
         )}
-      </div>
+      </button>
     </div>
   );
 };
