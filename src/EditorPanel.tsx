@@ -1,15 +1,18 @@
 import { useMachine } from '@xstate/react';
 import React from 'react';
-import { createMachine } from 'xstate';
+import { assign } from 'xstate';
+import { createMachine, send as sendAction, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import './EditorPanel.scss';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
+import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
 
 const editorPanelModel = createModel(
   {
     code: '',
+    notifRef: undefined as any,
   },
   {
     events: {
@@ -21,6 +24,7 @@ const editorPanelModel = createModel(
 
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
+  entry: assign({ notifRef: () => spawn(notifMachine) }),
   on: {
     EDITOR_CHANGED_VALUE: {
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
@@ -37,8 +41,17 @@ export const EditorPanel: React.FC<{
   const [, send] = useMachine(editorPanelMachine, {
     actions: {
       onChange: (ctx) => {
-        const machines = parseMachines(ctx.code);
-        onChange(machines);
+        try {
+          const machines = parseMachines(ctx.code);
+          onChange(machines);
+        } catch (err) {
+          console.log(err);
+          console.log(ctx);
+          ctx.notifRef.send({ type: 'ERROR', message: err.toString() });
+          // send({ type: 'ERROR', message: err.toString() } as any, {
+          //   to: (ctx: any) => ctx.notifRef,
+          // });
+        }
       },
     },
   });
