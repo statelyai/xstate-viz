@@ -87,7 +87,7 @@ export const StateNodeViz: React.FC<{
         position: 'absolute',
         // height: `${layout.height!}px`,
         // width: `${layout.width!}px`,
-        ...(stateNode.meta && {
+        ...(stateNode.meta?.layout && {
           left: `${stateNode.meta.layout.x}px`,
           top: `${stateNode.meta.layout.y}px`,
         }),
@@ -104,7 +104,7 @@ export const StateNodeViz: React.FC<{
         title={`#${stateNode.id}`}
         style={{
           // position: 'absolute',
-          ...(stateNode.meta && {
+          ...(stateNode.meta?.layout && {
             width: `${stateNode.meta.layout.width}px`,
             height: `${stateNode.meta.layout.height}px`,
           }),
