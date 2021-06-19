@@ -1,7 +1,6 @@
 import { useSelector } from '@xstate/react';
 import React from 'react';
-import { useGetRect } from './getRect';
-import { getPath, LPathParam, pathToD, Point, SvgPath } from './pathUtils';
+import { LPathParam, pathToD, Point, SvgPath } from './pathUtils';
 import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
 import { DirectedGraphEdge } from './directedGraph';
@@ -35,13 +34,6 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
   const isActive = useSelector(service, (state) => {
     return state.context.state.configuration.includes(edge.source);
   });
-  const sourceRect = useGetRect(`${edge.source.id}`);
-  const edgeRect = useGetRect(edge.id);
-  const targetRect = useGetRect(`${edge.target.id}`);
-
-  if (!sourceRect || !targetRect || !edgeRect) {
-    return null;
-  }
 
   let path: SvgPath | undefined;
 
@@ -63,8 +55,6 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
       y: section.endPoint.y - 5 * ySign,
     };
     path.push(['L', endPoint]);
-  } else {
-    path = getPath(sourceRect, edgeRect, targetRect);
   }
 
   const markerId = `${edge.source.order}-${order}`;
