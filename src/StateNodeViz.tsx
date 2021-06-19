@@ -7,6 +7,7 @@ import './ActionViz.scss';
 import { useService } from '@xstate/react';
 import { deleteRect, setRect } from './getRect';
 import { useSimulation } from './useSimulation';
+import { DirectedGraphNode } from './directedGraph';
 
 interface BaseStateNodeDef {
   key: string;
@@ -44,9 +45,10 @@ type StateNodeDef =
   | HistoryStateNodeDef;
 
 export const StateNodeViz: React.FC<{
+  node: DirectedGraphNode;
   stateNode: StateNode;
   parent?: StateNodeDef;
-}> = ({ stateNode, parent }) => {
+}> = ({ stateNode, node, parent }) => {
   const service = useSimulation();
   const [state] = useService(service);
   const ref = useRef<HTMLDivElement>(null);
@@ -87,9 +89,9 @@ export const StateNodeViz: React.FC<{
         position: 'absolute',
         // height: `${layout.height!}px`,
         // width: `${layout.width!}px`,
-        ...(stateNode.meta && {
-          left: `${stateNode.meta.layout.x}px`,
-          top: `${stateNode.meta.layout.y}px`,
+        ...(node.layout && {
+          left: `${node.layout.x}px`,
+          top: `${node.layout.y}px`,
         }),
       }}
     >
@@ -104,9 +106,9 @@ export const StateNodeViz: React.FC<{
         title={`#${stateNode.id}`}
         style={{
           // position: 'absolute',
-          ...(stateNode.meta && {
-            width: `${stateNode.meta.layout.width}px`,
-            height: `${stateNode.meta.layout.height}px`,
+          ...(node.layout && {
+            width: `${node.layout.width}px`,
+            height: `${node.layout.height}px`,
           }),
         }}
       >
@@ -165,8 +167,14 @@ export const StateNodeViz: React.FC<{
         </div>
         {'states' in stateNode && (
           <div data-viz="stateNode-states">
-            {Object.entries(stateNode.states!).map(([key, value]) => {
-              return <StateNodeViz key={value.id} stateNode={value} />;
+            {node.children.map((childNode) => {
+              return (
+                <StateNodeViz
+                  key={childNode.id}
+                  stateNode={childNode.data}
+                  node={childNode}
+                />
+              );
             })}
           </div>
         )}
