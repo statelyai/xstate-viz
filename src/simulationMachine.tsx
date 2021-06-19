@@ -11,12 +11,12 @@ import {
 import { createModel } from 'xstate/lib/model';
 import { AnyStateMachine } from './types';
 
-export const createSimModel = (machine: StateMachine<any, any, any>) =>
+export const createSimModel = (machine: AnyStateMachine) =>
   createModel(
     {
       state: machine.initialState,
-      machine,
-      machines: [] as AnyStateMachine[],
+      machine: 0,
+      machines: [machine],
       events: [] as EventObject[],
       previewEvent: undefined as string | undefined,
     },
@@ -28,6 +28,7 @@ export const createSimModel = (machine: StateMachine<any, any, any>) =>
           machines,
         }),
         'MACHINES.RESET': () => ({}),
+        'MACHINES.SET': (index: number) => ({ index }),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
       },
@@ -46,7 +47,7 @@ export const createSimulationMachine = (
         invoke: {
           id: 'machine',
           src: (ctx) => (sendBack, onReceive) => {
-            const service = interpret(ctx.machine)
+            const service = interpret(ctx.machines[ctx.machine])
               .onTransition((state) => {
                 sendBack({
                   type: 'STATE.UPDATE',
@@ -70,7 +71,7 @@ export const createSimulationMachine = (
             internal: false,
             actions: [
               simModel.assign({
-                machine: (_, e) => e.machines[e.machines.length - 1],
+                machine: (_, e) => e.machines.length - 1,
                 machines: (_, e) => e.machines,
               }),
             ],
@@ -84,6 +85,11 @@ export const createSimulationMachine = (
                 previewEvent: undefined,
               }),
             ],
+          },
+          'MACHINES.SET': {
+            actions: simModel.assign({
+              machine: (_, e) => e.index,
+            }),
           },
           'EVENT.PREVIEW': {
             actions: simModel.assign({
@@ -108,7 +114,8 @@ export const createSimulationMachine = (
           }),
           send(
             (ctx, e) => {
-              const eventSchema = ctx.machine.schema?.events?.[e.event.type];
+              const eventSchema =
+                ctx.machines[ctx.machine].schema?.events?.[e.event.type];
               const eventToSend = { ...e.event };
 
               if (eventSchema) {

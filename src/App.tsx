@@ -13,10 +13,14 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
 import { StatePanel } from './StatePanel';
 import { EventsPanel } from './EventsPanel';
+import { ActorsPanel } from './ActorsPanel';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
-  const machine = useSelector(simService, (state) => state.context.machine);
+  const machine = useSelector(
+    simService,
+    (state) => state.context.machines[state.context.machine],
+  );
   const digraph = useMemo(() => toDirectedGraph(machine), [machine]);
 
   return (
@@ -34,6 +38,7 @@ function App() {
               <Tab>Code</Tab>
               <Tab>State</Tab>
               <Tab>Events</Tab>
+              <Tab>Actors</Tab>
             </TabList>
 
             <TabPanels overflowY="auto">
@@ -52,6 +57,9 @@ function App() {
               </TabPanel>
               <TabPanel>
                 <EventsPanel />
+              </TabPanel>
+              <TabPanel>
+                <ActorsPanel />
               </TabPanel>
             </TabPanels>
           </Tabs>

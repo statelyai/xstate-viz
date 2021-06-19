@@ -1,5 +1,4 @@
-import React from 'react';
-import ReactJson from 'react-json-view';
+import React, { useCallback, useMemo } from 'react';
 import { useSelector } from '@xstate/react';
 import { useSimulation } from './useSimulation';
 import { State } from 'xstate';
@@ -9,42 +8,54 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  Button,
+  Box,
 } from '@chakra-ui/react';
+import { AnyStateMachine } from './types';
 
 const selectState = (state: any) => state.context.state as State<any, any>; // TODO: select() method on model
+const selectMachines = (state: any) =>
+  state.context.machines as AnyStateMachine[];
 
-const ActorState: React.FC<{ state: any }> = ({ state }) => {
-  return (
-    <ReactJson
-      src={state}
-      theme="monokai"
-      collapsed={1}
-      onEdit={false}
-      displayDataTypes={false}
-      displayObjectSize={false}
-    />
-  );
-};
-
-const StateAccordion: React.FC<{ state: any; title: string }> = ({
+const ActorDetails: React.FC<{ state: any; title: string }> = ({
   state,
   title,
 }) => {
+  const sim = useSimulation();
+
   return (
     <Accordion allowMultiple={true} allowToggle={true}>
       <AccordionItem>
         <AccordionButton>
           <AccordionIcon />
-          {title}
+          <Box
+            flexGrow={1}
+            textAlign="left"
+            textOverflow="ellipsis"
+            overflow="hidden"
+            whiteSpace="nowrap"
+            title={title}
+          >
+            {title}
+          </Box>
+          <Button
+            colorScheme="blue"
+            size="xs"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+            }}
+          >
+            Button
+          </Button>
         </AccordionButton>
         <AccordionPanel>
-          <ActorState state={state} />
           {state &&
             'children' in state &&
             Object.keys(state.children).map((key) => {
               const child = state.children[key];
               return (
-                <StateAccordion
+                <ActorDetails
                   key={key}
                   state={(child as any).getSnapshot()}
                   title={child.id}
@@ -57,8 +68,8 @@ const StateAccordion: React.FC<{ state: any; title: string }> = ({
   );
 };
 
-export const StatePanel: React.FC = () => {
+export const ActorsPanel: React.FC = () => {
   const state = useSelector(useSimulation(), selectState);
 
-  return <ActorState state={state} />;
+  return <ActorDetails state={state} title={state._sessionid!} />;
 };
