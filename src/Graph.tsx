@@ -245,7 +245,9 @@ export async function getElkGraph(
       x: (parent?.absolutePosition.x ?? 0) + elkNode.x!,
       y: (parent?.absolutePosition.y ?? 0) + elkNode.y!,
     };
+
     elkNode.node.data.meta = {
+      ...elkNode.node.data.meta,
       layout: {
         width: elkNode.width!,
         height: elkNode.height!,
