@@ -36,6 +36,13 @@ export class DirectedGraphNode {
   public children: DirectedGraphNode[];
   public ports: DirectedGraphPort[];
   public edges: DirectedGraphEdge[];
+  public layout?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+
   constructor(config: DirectedGraphNodeConfig) {
     this.id = config.id;
     this.data = config.stateNode;

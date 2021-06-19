@@ -1,6 +1,7 @@
 import { createContext } from 'react';
-import { State, Interpreter } from 'xstate';
+import { canvasMachine } from './canvasMachine';
+import { InterpreterOf } from './types';
 
-export const CanvasContext = createContext<
-  [State<any, any, any>, Interpreter<any, any, any>['send']]
->(null as any);
+export const CanvasContext = createContext<InterpreterOf<typeof canvasMachine>>(
+  null as any,
+);

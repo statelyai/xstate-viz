@@ -136,8 +136,8 @@ function getElkChild(
     id: node.id,
     ...(!node.children.length
       ? {
-          width: nodeRect?.width,
-          height: nodeRect?.height,
+          width: nodeRect?.width!,
+          height: nodeRect?.height!,
         }
       : undefined),
     // width: node.rects.full.width,
@@ -178,24 +178,24 @@ interface StateElkEdge extends ElkExtendedEdge {
 }
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
-  return <StateNodeViz stateNode={elkNode.node.data} />;
+  return <StateNodeViz stateNode={elkNode.node.data} node={elkNode.node} />;
 };
 
 export async function getElkGraph(
-  digraph: DirectedGraphNode,
+  digraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
   await new Promise((res) => {
-    onRect(digraph.id, (data) => {
+    onRect(digraphNode.id, (data) => {
       res(void 0);
     });
   });
 
-  const rMap = getRelativeNodeEdgeMap(digraph);
+  const rMap = getRelativeNodeEdgeMap(digraphNode);
   const rootEdges = rMap[0].get(undefined) || [];
   const elkNode: ElkNode = {
     id: 'root',
     edges: rootEdges.map(getElkEdge),
-    children: [getElkChild(digraph, rMap)],
+    children: [getElkChild(digraphNode, rMap)],
     layoutOptions: rootLayoutOptions,
   };
 
@@ -219,12 +219,13 @@ export async function getElkGraph(
               x: section.endPoint.x + elkLca.absolutePosition.x,
               y: section.endPoint.y + elkLca.absolutePosition.y,
             },
-            bendPoints: section.bendPoints?.map((bendPoint) => {
-              return {
-                x: bendPoint.x + elkLca.absolutePosition.x,
-                y: bendPoint.y + elkLca.absolutePosition.y,
-              };
-            }),
+            bendPoints:
+              section.bendPoints?.map((bendPoint) => {
+                return {
+                  x: bendPoint.x + elkLca.absolutePosition.x,
+                  y: bendPoint.y + elkLca.absolutePosition.y,
+                };
+              }) ?? [],
           };
         })
       : edge.sections;
@@ -246,14 +247,11 @@ export async function getElkGraph(
       y: (parent?.absolutePosition.y ?? 0) + elkNode.y!,
     };
 
-    elkNode.node.data.meta = {
-      ...elkNode.node.data.meta,
-      layout: {
-        width: elkNode.width!,
-        height: elkNode.height!,
-        x: elkNode.x!,
-        y: elkNode.y!,
-      },
+    elkNode.node.layout = {
+      width: elkNode.width!,
+      height: elkNode.height!,
+      x: elkNode.x!,
+      y: elkNode.y!,
     };
 
     elkNode.edges?.forEach((edge) => {
@@ -267,9 +265,11 @@ export async function getElkGraph(
 
   (layoutElkNode.edges as StateElkEdge[])?.forEach(setEdgeLayout);
 
-  setLayout(layoutElkNode.children![0] as StateElkNode, undefined);
+  const rootElkNode = layoutElkNode.children![0] as StateElkNode;
 
-  return layoutElkNode.children![0];
+  setLayout(rootElkNode, undefined);
+
+  return rootElkNode;
 }
 
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
