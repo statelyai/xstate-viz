@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactJson from 'react-json-view';
 import { useSelector } from '@xstate/react';
-import { useSimulation } from './useSimulation';
 import { State } from 'xstate';
 import {
   Accordion,
@@ -10,6 +9,7 @@ import {
   AccordionPanel,
   AccordionIcon,
 } from '@chakra-ui/react';
+import { useSimulation } from './SimulationContext';
 
 const selectState = (state: any) => state.context.state as State<any, any>; // TODO: select() method on model
 

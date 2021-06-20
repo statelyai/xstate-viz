@@ -5,7 +5,7 @@ import { testMachine } from './testMachine';
 import { toDirectedGraph } from './directedGraph';
 import { CanvasPanel } from './CanvasPanel';
 import { createSimulationMachine } from './simulationMachine';
-import { SimulationContext } from './SimulationContext';
+import { SimulationProvider } from './SimulationContext';
 import './base.scss';
 import { EditorPanel } from './EditorPanel';
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
@@ -24,7 +24,7 @@ function App() {
   const digraph = useMemo(() => toDirectedGraph(machine), [machine]);
 
   return (
-    <SimulationContext.Provider value={simService as any}>
+    <SimulationProvider value={simService}>
       <main data-viz="app" data-viz-theme="dark">
         <CanvasPanel digraph={digraph} />
         <ChakraProvider theme={theme}>
@@ -46,7 +46,7 @@ function App() {
                 <EditorPanel
                   onChange={(machines) => {
                     simService.send({
-                      type: 'MACHINES.UPDATE',
+                      type: 'MACHINES.VERIFY',
                       machines,
                     });
                   }}
@@ -65,7 +65,7 @@ function App() {
           </Tabs>
         </ChakraProvider>
       </main>
-    </SimulationContext.Provider>
+    </SimulationProvider>
   );
 }
 

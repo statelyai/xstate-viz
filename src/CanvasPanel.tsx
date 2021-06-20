@@ -2,23 +2,24 @@ import { DirectedGraphNode } from './directedGraph';
 import React from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { Graph } from './Graph';
-import { useMachine } from '@xstate/react';
+import { useInterpret } from '@xstate/react';
 import { canvasMachine } from './canvasMachine';
 import { MinusIcon, AddIcon, RepeatIcon } from '@chakra-ui/icons';
 import { ChakraProvider, ButtonGroup, IconButton, Box } from '@chakra-ui/react';
 import { theme } from './theme';
 
-import { CanvasContext } from './CanvasContext';
-import { useSimulation } from './useSimulation';
+import { CanvasProvider } from './CanvasContext';
+import { useSimulation } from './SimulationContext';
 
 export const CanvasPanel: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const [state, send] = useMachine(canvasMachine);
+  const canvasService = useInterpret(canvasMachine);
   const simService = useSimulation();
+
   return (
     <Box>
-      <CanvasContext.Provider value={[state, send]}>
+      <CanvasProvider value={canvasService}>
         <Box zIndex={1} bg="black">
           <ChakraProvider theme={theme}>
             <ButtonGroup size="sm" spacing={2} padding={2}>
@@ -26,13 +27,13 @@ export const CanvasPanel: React.FC<{ digraph: DirectedGraphNode }> = ({
                 aria-label="Zoom out"
                 title="Zoom out"
                 icon={<MinusIcon />}
-                onClick={() => send('ZOOM.OUT')}
+                onClick={() => canvasService.send('ZOOM.OUT')}
               />
               <IconButton
                 aria-label="Zoom in"
                 title="Zoom in"
                 icon={<AddIcon />}
-                onClick={() => send('ZOOM.IN')}
+                onClick={() => canvasService.send('ZOOM.IN')}
               />
               <IconButton
                 aria-label="Reset"
@@ -46,7 +47,7 @@ export const CanvasPanel: React.FC<{ digraph: DirectedGraphNode }> = ({
         <CanvasContainer>
           <Graph digraph={digraph} />
         </CanvasContainer>
-      </CanvasContext.Provider>
+      </CanvasProvider>
     </Box>
   );
 };

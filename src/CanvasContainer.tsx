@@ -1,20 +1,23 @@
+import { useSelector } from '@xstate/react';
 import React from 'react';
 
 import { canvasModel } from './canvasMachine';
-import { useCanvas } from './useCanvas';
+import { useCanvas } from './CanvasContext';
 
 export const CanvasContainer: React.FC = ({ children }) => {
-  const [state, send] = useCanvas();
+  const canvasService = useCanvas();
+  const { pan, zoom } = useSelector(canvasService, (s) => s.context);
+
   return (
     <div
       data-panel="viz"
       onWheel={(e) => {
-        send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+        canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
       }}
     >
       <div
         style={{
-          transform: `translate(${state.context.pan.dx}px, ${state.context.pan.dy}px) scale(${state.context.zoom})`,
+          transform: `translate(${pan.dx}px, ${pan.dy}px) scale(${zoom})`,
         }}
       >
         {children}

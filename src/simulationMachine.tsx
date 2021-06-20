@@ -1,3 +1,4 @@
+import { ActorRefFrom } from 'xstate';
 import {
   AnyEventObject,
   assign,
@@ -5,16 +6,20 @@ import {
   EventObject,
   interpret,
   send,
+  spawn,
   State,
   StateMachine,
 } from 'xstate';
+
 import { createModel } from 'xstate/lib/model';
+import { notifMachine } from './notificationMachine';
 import { AnyStateMachine } from './types';
 
 export const createSimModel = (machine: AnyStateMachine) =>
   createModel(
     {
       state: machine.initialState,
+      notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
       machine: 0,
       machines: [machine],
       events: [] as EventObject[],
@@ -25,6 +30,9 @@ export const createSimModel = (machine: AnyStateMachine) =>
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
         EVENT: (event: AnyEventObject) => ({ event }),
         'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
+          machines,
+        }),
+        'MACHINES.VERIFY': (machines: Array<AnyStateMachine>) => ({
           machines,
         }),
         'MACHINES.RESET': () => ({}),
@@ -42,7 +50,43 @@ export const createSimulationMachine = (
   return createMachine<typeof simModel>({
     context: simModel.initialContext,
     initial: 'active',
+    entry: assign({ notifRef: () => spawn(notifMachine) }),
     states: {
+      verifying: {
+        invoke: {
+          src: (_, e) =>
+            new Promise((resolve, reject) => {
+              const machines = (e as any).machines;
+              try {
+                interpret(machines[0]).start();
+                resolve(machines);
+              } catch (err) {
+                reject(err);
+              }
+            }),
+          onDone: {
+            target: 'active',
+            actions: [
+              simModel.assign((_, e) => ({
+                machine: (e as any).data[0],
+                machines: (e as any).data,
+              })) as any,
+            ],
+          },
+          onError: {
+            target: 'active',
+            actions: [
+              send(
+                (_, e) => ({
+                  type: 'ERROR',
+                  message: e.data.toString(),
+                }),
+                { to: (ctx) => ctx.notifRef },
+              ),
+            ],
+          },
+        },
+      },
       active: {
         invoke: {
           id: 'machine',
@@ -75,6 +119,9 @@ export const createSimulationMachine = (
                 machines: (_, e) => e.machines,
               }),
             ],
+          },
+          'MACHINES.VERIFY': {
+            target: 'verifying',
           },
           'MACHINES.RESET': {
             target: 'active',
