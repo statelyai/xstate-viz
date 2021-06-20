@@ -4,7 +4,7 @@ import { LPathParam, pathToD, Point, SvgPath } from './pathUtils';
 import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
 import { DirectedGraphEdge } from './directedGraph';
-import { useSimulation } from './useSimulation';
+import { useSimulation } from './SimulationContext';
 
 function translatePoint(point: Point, vector: Point): Point {
   return {

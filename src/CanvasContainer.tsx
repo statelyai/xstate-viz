@@ -2,7 +2,7 @@ import { useSelector } from '@xstate/react';
 import React from 'react';
 
 import { canvasModel } from './canvasMachine';
-import { useCanvas } from './useCanvas';
+import { useCanvas } from './CanvasContext';
 
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();

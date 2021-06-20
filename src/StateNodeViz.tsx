@@ -6,7 +6,7 @@ import './ActionViz.scss';
 
 import { useService } from '@xstate/react';
 import { deleteRect, setRect } from './getRect';
-import { useSimulation } from './useSimulation';
+import { useSimulation } from './SimulationContext';
 import { DirectedGraphNode } from './directedGraph';
 
 interface BaseStateNodeDef {

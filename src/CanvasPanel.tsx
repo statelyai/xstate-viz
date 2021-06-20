@@ -8,8 +8,8 @@ import { MinusIcon, AddIcon, RepeatIcon } from '@chakra-ui/icons';
 import { ChakraProvider, ButtonGroup, IconButton, Box } from '@chakra-ui/react';
 import { theme } from './theme';
 
-import { CanvasContext } from './CanvasContext';
-import { useSimulation } from './useSimulation';
+import { CanvasProvider } from './CanvasContext';
+import { useSimulation } from './SimulationContext';
 
 export const CanvasPanel: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
@@ -19,7 +19,7 @@ export const CanvasPanel: React.FC<{ digraph: DirectedGraphNode }> = ({
 
   return (
     <Box>
-      <CanvasContext.Provider value={canvasService}>
+      <CanvasProvider value={canvasService}>
         <Box zIndex={1} bg="black">
           <ChakraProvider theme={theme}>
             <ButtonGroup size="sm" spacing={2} padding={2}>
@@ -47,7 +47,7 @@ export const CanvasPanel: React.FC<{ digraph: DirectedGraphNode }> = ({
         <CanvasContainer>
           <Graph digraph={digraph} />
         </CanvasContainer>
-      </CanvasContext.Provider>
+      </CanvasProvider>
     </Box>
   );
 };

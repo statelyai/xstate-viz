@@ -1,9 +1,27 @@
+import * as React from 'react';
 import type { AnyEventObject, StateNode, TransitionDefinition } from 'xstate';
+
+export function createRequiredContext<T>(displayName: string) {
+  const context = React.createContext<T | null>(null);
+  context.displayName = displayName;
+
+  const useContext = () => {
+    const ctx = React.useContext(context);
+    if (!ctx) {
+      throw new Error(
+        `use${displayName} must be used inside ${displayName}Provider`,
+      );
+    }
+    return ctx;
+  };
+
+  return [context.Provider, useContext] as const;
+}
 
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string,
+  TEventType extends TEvent['type'] = string
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;

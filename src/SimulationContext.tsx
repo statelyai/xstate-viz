@@ -1,7 +1,7 @@
-import { createContext } from 'react';
-import { InterpreterOf } from './types';
+import { InterpreterFrom } from 'xstate';
 import { createSimulationMachine } from './simulationMachine';
+import { createRequiredContext } from './utils';
 
-export const SimulationContext = createContext<
-  InterpreterOf<ReturnType<typeof createSimulationMachine>>
->(null as any);
+export const [SimulationProvider, useSimulation] = createRequiredContext<
+  InterpreterFrom<ReturnType<typeof createSimulationMachine>>
+>('Simulation');
