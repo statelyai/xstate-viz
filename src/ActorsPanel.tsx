@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useSelector } from '@xstate/react';
-import { useSimulation } from './useSimulation';
+import { useSimulation } from './SimulationContext';
 import { State } from 'xstate';
 import {
   Accordion,

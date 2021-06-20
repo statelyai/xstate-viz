@@ -51,13 +51,14 @@ export const StateNodeViz: React.FC<{
 }> = ({ stateNode, node, parent }) => {
   const service = useSimulation();
   const [state] = useService(service);
+  const { machines, machine } = state.context;
   const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {
       return undefined;
     }
-    return state.context.machine.transition(
+    return machines[machine].transition(
       state.context.state,
       state.context.previewEvent,
     );
