@@ -6,7 +6,7 @@ import { EventTypeViz } from './EventTypeViz';
 import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
-import { useSimulation } from './useSimulation';
+import { useSimulation } from './SimulationContext';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4

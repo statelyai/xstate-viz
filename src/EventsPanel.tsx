@@ -1,6 +1,6 @@
 import { useService } from '@xstate/react';
 import React from 'react';
-import { useSimulation } from './useSimulation';
+import { useSimulation } from './SimulationContext';
 
 export const EventsPanel: React.FC = () => {
   const [state] = useService(useSimulation());
