@@ -10,7 +10,12 @@ import {
   AccordionIcon,
   Button,
   Box,
+  List,
+  ListItem,
+  ListIcon,
+  Text,
 } from '@chakra-ui/react';
+import { ArrowForwardIcon } from '@chakra-ui/icons';
 
 const selectServices = (state: any) =>
   state.context.services as Record<string, AnyInterpreter>; // TODO: select() method on model
@@ -67,23 +72,40 @@ const ActorDetails: React.FC<{ state: any; title: string }> = ({
 export const ActorsPanel: React.FC = () => {
   const simActor = useSimulation();
   const services = useSelector(simActor, selectServices);
+  const currentSessionId = useSelector(simActor, (s) => s.context.service);
 
   return (
-    <ul>
+    <List>
       {Object.entries(services).map(([sessionId, service]) => {
         return (
-          <li key={sessionId}>
-            <span>{sessionId}</span>
+          <ListItem
+            key={sessionId}
+            display="flex"
+            flexDirection="row"
+            alignItems="center"
+            padding={2}
+            borderBottom="1px solid"
+            borderBottomColor="gray.500"
+            marginTop="0"
+          >
+            <ListIcon
+              as={ArrowForwardIcon}
+              color={currentSessionId === sessionId ? 'green.500' : 'gray.500'}
+            />
+            <Text flexGrow={1}>
+              <strong>{service.id}</strong> ({sessionId})
+            </Text>
             <Button
+              size="xs"
               onClick={() => {
                 simActor.send({ type: 'SERVICE.FOCUS', sessionId });
               }}
             >
               Focus
             </Button>
-          </li>
+          </ListItem>
         );
       })}
-    </ul>
+    </List>
   );
 };

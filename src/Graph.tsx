@@ -8,7 +8,7 @@ import ELK, {
 } from 'elkjs/lib/main';
 import { useEffect, useMemo } from 'react';
 import { Edges } from './Edges';
-import { getRect, onRect, readRect } from './getRect';
+import { deleteRect, getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
@@ -181,9 +181,17 @@ const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
   return <StateNodeViz stateNode={elkNode.node.data} node={elkNode.node} />;
 };
 
+function sleep(ms: number) {
+  return new Promise((res) => {
+    setTimeout(res, ms);
+  });
+}
+
 export async function getElkGraph(
   digraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
+  // The below timeout allows for the layout to change so we can measure the DOM nodes
+  await sleep(100); // TODO: temporary fix
   await new Promise((res) => {
     onRect(digraphNode.id, (data) => {
       res(void 0);
@@ -280,6 +288,12 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
   }, [digraph, send]);
+
+  useEffect(() => {
+    return () => {
+      deleteRect(digraph.id);
+    };
+  }, [digraph.id]);
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
