@@ -4,7 +4,7 @@ import './StateNodeViz.scss';
 import './InvokeViz.scss';
 import './ActionViz.scss';
 
-import { useService } from '@xstate/react';
+import { useSelector, useService } from '@xstate/react';
 import { deleteRect, setRect } from './getRect';
 import { useSimulation } from './SimulationContext';
 import { DirectedGraphNode } from './directedGraph';
@@ -52,16 +52,17 @@ export const StateNodeViz: React.FC<{
   const service = useSimulation();
   const [state] = useService(service);
   const { machines, machine } = state.context;
+
+  const simState = useSelector(service, (state) =>
+    state.context.services[state.context.service!].getSnapshot(),
+  );
   const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {
       return undefined;
     }
-    return machines[machine].transition(
-      state.context.state,
-      state.context.previewEvent,
-    );
+    return machines[machine].transition(simState, state.context.previewEvent);
   }, [state]);
 
   useEffect(() => {
@@ -77,9 +78,7 @@ export const StateNodeViz: React.FC<{
     <div
       data-viz="stateNodeGroup"
       data-viz-active={
-        !!state.context.state.configuration.find(
-          (n) => n.id === stateNode.id,
-        ) || undefined
+        !!simState.configuration.find((n) => n.id === stateNode.id) || undefined
       }
       data-viz-previewed={
         previewState?.configuration.find((n) => n.id === stateNode.id) ||

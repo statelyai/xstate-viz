@@ -191,7 +191,7 @@ export async function getElkGraph(
   digraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
   // The below timeout allows for the layout to change so we can measure the DOM nodes
-  await sleep(100); // TODO: temporary fix
+  await sleep(20); // TODO: temporary fix
   await new Promise((res) => {
     onRect(digraphNode.id, (data) => {
       res(void 0);
