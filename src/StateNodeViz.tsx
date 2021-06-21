@@ -51,10 +51,13 @@ export const StateNodeViz: React.FC<{
 }> = ({ stateNode, node, parent }) => {
   const service = useSimulation();
   const [state] = useService(service);
-  const { machines, machine } = state.context;
 
   const simState = useSelector(service, (state) =>
     state.context.services[state.context.service!].getSnapshot(),
+  );
+  const simMachine = useSelector(
+    service,
+    (state) => state.context.services[state.context.service!].machine,
   );
   const ref = useRef<HTMLDivElement>(null);
 
@@ -62,8 +65,8 @@ export const StateNodeViz: React.FC<{
     if (!state.context.previewEvent) {
       return undefined;
     }
-    return machines[machine].transition(simState, state.context.previewEvent);
-  }, [state]);
+    return simMachine.transition(simState, state.context.previewEvent);
+  }, [state, simState, simMachine]);
 
   useEffect(() => {
     if (ref.current) {

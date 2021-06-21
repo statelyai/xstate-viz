@@ -32,7 +32,7 @@ export const createSimModel = (machine: AnyStateMachine) =>
     {
       events: {
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
-        EVENT: (event: AnyEventObject) => ({ event }),
+        'SERVICE.SEND': (event: AnyEventObject) => ({ event }),
         'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
           machines,
         }),
@@ -205,13 +205,14 @@ export const createSimulationMachine = (
         actions: assign({ state: (_, e) => e.state }),
       },
 
-      EVENT: {
+      'SERVICE.SEND': {
         actions: [
           simModel.assign({
             events: (ctx, e) => ctx.events.concat(e.event),
           }),
           send(
             (ctx, e) => {
+              console.log(e, ctx.services[ctx.service!]);
               const eventSchema =
                 ctx.machines[ctx.machine].schema?.events?.[e.event.type];
               const eventToSend = { ...e.event };
@@ -227,7 +228,7 @@ export const createSimulationMachine = (
               }
               return eventToSend;
             },
-            { to: 'machine' },
+            { to: (ctx) => ctx.services[ctx.service!] },
           ),
         ],
       },

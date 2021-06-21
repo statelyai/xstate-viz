@@ -14,6 +14,7 @@ import {
   ListItem,
   ListIcon,
   Text,
+  Link,
 } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 
@@ -87,22 +88,19 @@ export const ActorsPanel: React.FC = () => {
             borderBottom="1px solid"
             borderBottomColor="gray.500"
             marginTop="0"
+            opacity={currentSessionId === sessionId ? 1 : 0.5}
           >
-            <ListIcon
-              as={ArrowForwardIcon}
-              color={currentSessionId === sessionId ? 'green.500' : 'gray.500'}
-            />
+            <ListIcon as={ArrowForwardIcon} />
             <Text flexGrow={1}>
-              <strong>{service.id}</strong> ({sessionId})
+              <Link
+                onClick={() => {
+                  simActor.send({ type: 'SERVICE.FOCUS', sessionId });
+                }}
+              >
+                {service.id}
+              </Link>{' '}
+              ({sessionId})
             </Text>
-            <Button
-              size="xs"
-              onClick={() => {
-                simActor.send({ type: 'SERVICE.FOCUS', sessionId });
-              }}
-            >
-              Focus
-            </Button>
           </ListItem>
         );
       })}
