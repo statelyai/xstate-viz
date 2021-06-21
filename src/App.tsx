@@ -14,19 +14,25 @@ import { theme } from './theme';
 import { StatePanel } from './StatePanel';
 import { EventsPanel } from './EventsPanel';
 import { ActorsPanel } from './ActorsPanel';
+import { devTools } from './devInterface';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
-  const machine = useSelector(
-    simService,
-    (state) => state.context.machines[state.context.machine],
+  const machine = useSelector(simService, (state) => {
+    console.log(state);
+    return state.context.service
+      ? state.context.services[state.context.service!].machine
+      : undefined;
+  });
+  const digraph = useMemo(
+    () => (machine ? toDirectedGraph(machine) : undefined),
+    [machine],
   );
-  const digraph = useMemo(() => toDirectedGraph(machine), [machine]);
 
   return (
     <SimulationProvider value={simService}>
       <main data-viz="app" data-viz-theme="dark">
-        <CanvasPanel digraph={digraph} />
+        {digraph && <CanvasPanel digraph={digraph} />}
         <ChakraProvider theme={theme}>
           <Tabs
             bg="gray.800"

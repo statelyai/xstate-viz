@@ -1,4 +1,5 @@
-import { ActorRefFrom } from 'xstate';
+import produce from 'immer';
+import { ActorRefFrom, AnyInterpreter } from 'xstate';
 import {
   AnyEventObject,
   assign,
@@ -12,6 +13,7 @@ import {
 } from 'xstate';
 
 import { createModel } from 'xstate/lib/model';
+import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
 import { AnyStateMachine } from './types';
 
@@ -22,6 +24,8 @@ export const createSimModel = (machine: AnyStateMachine) =>
       notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
       machine: 0,
       machines: [machine],
+      services: {} as Record<string, AnyInterpreter>,
+      service: null as string | null,
       events: [] as EventObject[],
       previewEvent: undefined as string | undefined,
     },
@@ -39,6 +43,9 @@ export const createSimModel = (machine: AnyStateMachine) =>
         'MACHINES.SET': (index: number) => ({ index }),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
+        'SERVICE.REGISTER': (service: any) => ({ service }),
+        'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
+        'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
       },
     },
   );
@@ -88,27 +95,45 @@ export const createSimulationMachine = (
         },
       },
       active: {
-        invoke: {
-          id: 'machine',
-          src: (ctx) => (sendBack, onReceive) => {
-            const service = interpret(ctx.machines[ctx.machine])
-              .onTransition((state) => {
-                sendBack({
-                  type: 'STATE.UPDATE',
-                  state,
-                });
+        invoke: [
+          {
+            id: 'machine',
+            src: (ctx) => (sendBack, onReceive) => {
+              const service = interpret(ctx.machines[ctx.machine], {
+                devTools: true,
               })
-              .start();
+                .onTransition((state) => {
+                  sendBack({
+                    type: 'STATE.UPDATE',
+                    state,
+                  });
+                })
+                .start();
 
-            onReceive((event) => {
-              service.send(event);
-            });
+              onReceive((event) => {
+                service.send(event);
+              });
 
-            return () => {
-              service.stop();
-            };
+              return () => {
+                service.stop();
+              };
+            },
           },
-        },
+          {
+            id: 'services',
+            src: (ctx) => (sendBack) => {
+              devTools.onRegister((service) => {
+                sendBack(simModel.events['SERVICE.REGISTER'](service));
+
+                service.onStop(() => {
+                  sendBack(
+                    simModel.events['SERVICE.UNREGISTER'](service.sessionId),
+                  );
+                });
+              });
+            },
+          },
+        ],
         on: {
           'MACHINES.UPDATE': {
             target: 'active',
@@ -145,6 +170,32 @@ export const createSimulationMachine = (
           },
           'PREVIEW.CLEAR': {
             actions: simModel.assign({ previewEvent: undefined }),
+          },
+          'SERVICE.REGISTER': {
+            actions: simModel.assign({
+              services: (ctx, e) => {
+                return produce(ctx.services, (draft) => {
+                  draft[e.service.sessionId] = e.service;
+                });
+              },
+              service: (ctx, e) => {
+                return ctx.service ?? e.service.sessionId;
+              },
+            }),
+          },
+          'SERVICE.UNREGISTER': {
+            actions: simModel.assign({
+              services: (ctx, e) => {
+                return produce(ctx.services, (draft) => {
+                  delete draft[e.sessionId];
+                });
+              },
+            }),
+          },
+          'SERVICE.FOCUS': {
+            actions: simModel.assign({
+              service: (_, e) => e.sessionId,
+            }),
           },
         },
       },

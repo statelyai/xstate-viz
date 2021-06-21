@@ -1,6 +1,6 @@
 import { createMachine } from 'xstate';
 
-export const xtestMachine = createMachine({
+export const testInvokedMachine = createMachine({
   id: 'm',
   delimiter: '_',
   initial: 'foo',
@@ -22,12 +22,12 @@ export const xtestMachine = createMachine({
   },
 });
 
-// export const testMachine = createMachine({
-//   initial: 'foo',
-//   states: {
-//     foo: {},
-//   },
-// });
+const simpleMachine = createMachine({
+  initial: 'foo',
+  states: {
+    foo: {},
+  },
+});
 
 export const testMachine = createMachine<{ count: number }>({
   schema: {
@@ -52,7 +52,7 @@ export const testMachine = createMachine<{ count: number }>({
   },
   invoke: {
     id: 'test-invocation',
-    src: xtestMachine,
+    src: testInvokedMachine,
   },
   states: {
     simple: {
@@ -60,7 +60,7 @@ export const testMachine = createMachine<{ count: number }>({
       entry: ['action1', 'really long action', 'action3'],
       exit: ['anotherAction', 'action4'],
       invoke: {
-        src: () => xtestMachine,
+        src: () => simpleMachine,
       },
       on: {
         NEXT: 'compound',

@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo } from 'react';
+import React from 'react';
 import { useSelector } from '@xstate/react';
 import { useSimulation } from './SimulationContext';
-import { State } from 'xstate';
+import { AnyInterpreter } from 'xstate';
 import {
   Accordion,
   AccordionItem,
@@ -11,18 +11,14 @@ import {
   Button,
   Box,
 } from '@chakra-ui/react';
-import { AnyStateMachine } from './types';
 
-const selectState = (state: any) => state.context.state as State<any, any>; // TODO: select() method on model
-const selectMachines = (state: any) =>
-  state.context.machines as AnyStateMachine[];
+const selectServices = (state: any) =>
+  state.context.services as Record<string, AnyInterpreter>; // TODO: select() method on model
 
 const ActorDetails: React.FC<{ state: any; title: string }> = ({
   state,
   title,
 }) => {
-  const sim = useSimulation();
-
   return (
     <Accordion allowMultiple={true} allowToggle={true}>
       <AccordionItem>
@@ -69,7 +65,25 @@ const ActorDetails: React.FC<{ state: any; title: string }> = ({
 };
 
 export const ActorsPanel: React.FC = () => {
-  const state = useSelector(useSimulation(), selectState);
+  const simActor = useSimulation();
+  const services = useSelector(simActor, selectServices);
 
-  return <ActorDetails state={state} title={state._sessionid!} />;
+  return (
+    <ul>
+      {Object.entries(services).map(([sessionId, service]) => {
+        return (
+          <li key={sessionId}>
+            <span>{sessionId}</span>
+            <Button
+              onClick={() => {
+                simActor.send({ type: 'SERVICE.FOCUS', sessionId });
+              }}
+            >
+              Focus
+            </Button>
+          </li>
+        );
+      })}
+    </ul>
+  );
 };
