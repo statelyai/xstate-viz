@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactJson from 'react-json-view';
 import { useSelector } from '@xstate/react';
-import { State } from 'xstate';
+import { State, StateFrom } from 'xstate';
 import {
   Accordion,
   AccordionItem,
@@ -10,8 +10,14 @@ import {
   AccordionIcon,
 } from '@chakra-ui/react';
 import { useSimulation } from './SimulationContext';
+import { createSimulationMachine } from './simulationMachine';
 
-const selectState = (state: any) => state.context.state as State<any, any>; // TODO: select() method on model
+const selectState = (
+  state: StateFrom<ReturnType<typeof createSimulationMachine>>,
+) =>
+  state.context.service
+    ? state.context.services[state.context.service].getSnapshot()
+    : undefined; // TODO: select() method on model
 
 const ActorState: React.FC<{ state: any }> = ({ state }) => {
   return (
