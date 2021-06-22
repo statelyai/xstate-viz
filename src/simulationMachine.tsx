@@ -1,4 +1,5 @@
-import { ActorRefFrom } from 'xstate';
+import produce from 'immer';
+import { ActorRefFrom, AnyInterpreter } from 'xstate';
 import {
   AnyEventObject,
   assign,
@@ -12,23 +13,26 @@ import {
 } from 'xstate';
 
 import { createModel } from 'xstate/lib/model';
+import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
 import { AnyStateMachine } from './types';
 
-export const createSimModel = (machine: StateMachine<any, any, any>) =>
+export const createSimModel = (machine: AnyStateMachine) =>
   createModel(
     {
       state: machine.initialState,
       notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
-      machine,
-      machines: [] as AnyStateMachine[],
+      machineIndex: 0,
+      machines: [machine],
+      services: {} as Partial<Record<string, AnyInterpreter>>,
+      service: null as string | null,
       events: [] as EventObject[],
       previewEvent: undefined as string | undefined,
     },
     {
       events: {
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
-        EVENT: (event: AnyEventObject) => ({ event }),
+        'SERVICE.SEND': (event: AnyEventObject) => ({ event }),
         'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
           machines,
         }),
@@ -36,8 +40,12 @@ export const createSimModel = (machine: StateMachine<any, any, any>) =>
           machines,
         }),
         'MACHINES.RESET': () => ({}),
+        'MACHINES.SET': (index: number) => ({ index }),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
+        'SERVICE.REGISTER': (service: any) => ({ service }),
+        'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
+        'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
       },
     },
   );
@@ -50,6 +58,18 @@ export const createSimulationMachine = (
     context: simModel.initialContext,
     initial: 'active',
     entry: assign({ notifRef: () => spawn(notifMachine) }),
+    invoke: {
+      id: 'services',
+      src: (ctx) => (sendBack) => {
+        devTools.onRegister((service) => {
+          sendBack(simModel.events['SERVICE.REGISTER'](service));
+
+          service.onStop(() => {
+            sendBack(simModel.events['SERVICE.UNREGISTER'](service.sessionId));
+          });
+        });
+      },
+    },
     states: {
       verifying: {
         invoke: {
@@ -57,7 +77,8 @@ export const createSimulationMachine = (
             new Promise((resolve, reject) => {
               const machines = (e as any).machines;
               try {
-                interpret(machines[0]).start();
+                // TODO: verify without interpreting
+                interpret(machines[0]).start().stop();
                 resolve(machines);
               } catch (err) {
                 reject(err);
@@ -67,7 +88,7 @@ export const createSimulationMachine = (
             target: 'active',
             actions: [
               simModel.assign((_, e) => ({
-                machine: (e as any).data[0],
+                machineIndex: (e as any).data[0],
                 machines: (e as any).data,
               })) as any,
             ],
@@ -87,28 +108,44 @@ export const createSimulationMachine = (
         },
       },
       active: {
-        invoke: {
-          id: 'machine',
-          src: (ctx) => (sendBack, onReceive) => {
-            const service = interpret(ctx.machine)
-              .onTransition((state) => {
-                sendBack({
-                  type: 'STATE.UPDATE',
-                  state,
-                });
+        invoke: [
+          {
+            id: 'machine',
+            src: (ctx) => (sendBack, onReceive) => {
+              const service = interpret(ctx.machines[ctx.machineIndex], {
+                devTools: true,
               })
-              .start();
+                .onTransition((state) => {
+                  sendBack({
+                    type: 'STATE.UPDATE',
+                    state,
+                  });
+                })
+                .start();
 
-            onReceive((event) => {
-              service.send(event);
-            });
+              sendBack(simModel.events['SERVICE.FOCUS'](service.sessionId));
 
-            return () => {
-              service.stop();
-            };
+              onReceive((event) => {
+                service.send(event);
+              });
+
+              return () => {
+                service.stop();
+              };
+            },
           },
-        },
+        ],
         on: {
+          'MACHINES.UPDATE': {
+            target: 'active',
+            internal: false,
+            actions: [
+              simModel.assign({
+                machineIndex: (_, e) => e.machines.length - 1,
+                machines: (_, e) => e.machines,
+              }),
+            ],
+          },
           'MACHINES.VERIFY': {
             target: 'verifying',
           },
@@ -122,6 +159,11 @@ export const createSimulationMachine = (
               }),
             ],
           },
+          'MACHINES.SET': {
+            actions: simModel.assign({
+              machineIndex: (_, e) => e.index,
+            }),
+          },
           'EVENT.PREVIEW': {
             actions: simModel.assign({
               previewEvent: (_, event) => event.eventType,
@@ -129,6 +171,32 @@ export const createSimulationMachine = (
           },
           'PREVIEW.CLEAR': {
             actions: simModel.assign({ previewEvent: undefined }),
+          },
+          'SERVICE.REGISTER': {
+            actions: simModel.assign({
+              services: (ctx, e) => {
+                return produce(ctx.services, (draft) => {
+                  draft[e.service.sessionId] = e.service;
+                });
+              },
+              service: (ctx, e) => {
+                return ctx.service ?? e.service.sessionId;
+              },
+            }),
+          },
+          'SERVICE.UNREGISTER': {
+            actions: simModel.assign({
+              services: (ctx, e) => {
+                return produce(ctx.services, (draft) => {
+                  delete draft[e.sessionId];
+                });
+              },
+            }),
+          },
+          'SERVICE.FOCUS': {
+            actions: simModel.assign({
+              service: (_, e) => e.sessionId,
+            }),
           },
         },
       },
@@ -138,14 +206,15 @@ export const createSimulationMachine = (
         actions: assign({ state: (_, e) => e.state }),
       },
 
-      EVENT: {
+      'SERVICE.SEND': {
         actions: [
           simModel.assign({
             events: (ctx, e) => ctx.events.concat(e.event),
           }),
           send(
             (ctx, e) => {
-              const eventSchema = ctx.machine.schema?.events?.[e.event.type];
+              const eventSchema =
+                ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
               const eventToSend = { ...e.event };
 
               if (eventSchema) {
@@ -159,7 +228,7 @@ export const createSimulationMachine = (
               }
               return eventToSend;
             },
-            { to: 'machine' },
+            { to: (ctx) => ctx.services[ctx.service!]! },
           ),
         ],
       },

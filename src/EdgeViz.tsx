@@ -32,7 +32,9 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
 }) => {
   const service = useSimulation();
   const isActive = useSelector(service, (state) => {
-    return state.context.state.configuration.includes(edge.source);
+    return state.context.services[state.context.service!]
+      ?.getSnapshot()
+      .configuration.includes(edge.source);
   });
 
   let path: SvgPath | undefined;

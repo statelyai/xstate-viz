@@ -51,17 +51,18 @@ export const StateNodeViz: React.FC<{
 }> = ({ stateNode, node, parent }) => {
   const service = useSimulation();
   const [state] = useService(service);
+
+  const simState =
+    state.context.services[state.context.service!]?.getSnapshot();
+  const simMachine = state.context.services[state.context.service!]?.machine;
   const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {
       return undefined;
     }
-    return state.context.machine.transition(
-      state.context.state,
-      state.context.previewEvent,
-    );
-  }, [state]);
+    return simMachine?.transition(simState, state.context.previewEvent);
+  }, [state, simState, simMachine]);
 
   useEffect(() => {
     if (ref.current) {
@@ -72,13 +73,15 @@ export const StateNodeViz: React.FC<{
     };
   }, [stateNode]);
 
+  if (!simState) {
+    return null;
+  }
+
   return (
     <div
       data-viz="stateNodeGroup"
       data-viz-active={
-        !!state.context.state.configuration.find(
-          (n) => n.id === stateNode.id,
-        ) || undefined
+        !!simState.configuration.find((n) => n.id === stateNode.id) || undefined
       }
       data-viz-previewed={
         previewState?.configuration.find((n) => n.id === stateNode.id) ||

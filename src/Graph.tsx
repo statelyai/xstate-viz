@@ -1,5 +1,5 @@
 import { DirectedGraphEdge, DirectedGraphNode } from './directedGraph';
-import { useMachine } from '@xstate/react';
+import { useMachine, useSelector } from '@xstate/react';
 import ELK, {
   ElkEdgeSection,
   ElkExtendedEdge,
@@ -8,13 +8,14 @@ import ELK, {
 } from 'elkjs/lib/main';
 import { useEffect, useMemo } from 'react';
 import { Edges } from './Edges';
-import { getRect, onRect, readRect } from './getRect';
+import { deleteRect, getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
 import { createElkMachine } from './elkMachine';
 import { StateNode } from 'xstate';
 import { MachineViz } from './MachineViz';
+import { useCanvas } from './CanvasContext';
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
@@ -181,9 +182,17 @@ const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
   return <StateNodeViz stateNode={elkNode.node.data} node={elkNode.node} />;
 };
 
+function sleep(ms: number) {
+  return new Promise((res) => {
+    setTimeout(res, ms);
+  });
+}
+
 export async function getElkGraph(
   digraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
+  // The below timeout allows for the layout to change so we can measure the DOM nodes
+  await sleep(20); // TODO: temporary fix
   await new Promise((res) => {
     onRect(digraphNode.id, (data) => {
       res(void 0);
@@ -276,16 +285,28 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
   const [state, send] = useMachine(() => createElkMachine(digraph));
+  const canvasService = useCanvas();
+  const { pan, zoom } = useSelector(canvasService, (s) => s.context);
 
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
   }, [digraph, send]);
 
+  useEffect(() => {
+    return () => {
+      deleteRect(digraph.id);
+    };
+  }, [digraph.id]);
+
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
   if (state.matches('success')) {
     return (
-      <div>
+      <div
+        style={{
+          transform: `translate(${pan.dx}px, ${pan.dy}px) scale(${zoom})`,
+        }}
+      >
         <Edges digraph={digraph} />
         <GraphNode elkNode={state.context.elkGraph} />
         {allEdges.map((edge, i) => {

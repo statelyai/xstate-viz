@@ -19,7 +19,9 @@ export const TransitionViz: React.FC<{
 }> = ({ edge, index, position }) => {
   const definition = edge.transition;
   const service = useSimulation();
-  const state = useSelector(service, (s) => s.context.state);
+  const state = useSelector(service, (s) =>
+    s.context.services[s.context.service!]?.getSnapshot(),
+  );
 
   const ref = useRef<any>(null);
   useEffect(() => {
@@ -30,6 +32,10 @@ export const TransitionViz: React.FC<{
       deleteRect(edge.id);
     };
   }, [edge.id]);
+
+  if (!state) {
+    return null;
+  }
 
   return (
     <div
@@ -61,7 +67,7 @@ export const TransitionViz: React.FC<{
         onClick={() => {
           // TODO: only if no parameters/schema
           service.send({
-            type: 'EVENT',
+            type: 'SERVICE.SEND',
             event: {
               type: definition.eventType,
             },

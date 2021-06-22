@@ -18,7 +18,7 @@ export const CanvasPanel: React.FC<{ digraph: DirectedGraphNode }> = ({
   const simService = useSimulation();
 
   return (
-    <Box>
+    <Box display="grid" gridTemplateRows="auto 1fr">
       <CanvasProvider value={canvasService}>
         <Box zIndex={1} bg="black">
           <ChakraProvider theme={theme}>

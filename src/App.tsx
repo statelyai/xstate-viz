@@ -13,25 +13,40 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
 import { StatePanel } from './StatePanel';
 import { EventsPanel } from './EventsPanel';
+import { ActorsPanel } from './ActorsPanel';
+import { devTools } from './devInterface';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
-  const machine = useSelector(simService, (state) => state.context.machine);
-  const digraph = useMemo(() => toDirectedGraph(machine), [machine]);
+  const machine = useSelector(simService, (state) => {
+    return state.context.service
+      ? state.context.services[state.context.service!]?.machine
+      : undefined;
+  });
+  const digraph = useMemo(
+    () => (machine ? toDirectedGraph(machine) : undefined),
+    [machine],
+  );
 
   return (
     <SimulationProvider value={simService}>
       <main data-viz="app" data-viz-theme="dark">
-        <CanvasPanel digraph={digraph} />
+        {digraph && <CanvasPanel digraph={digraph} />}
         <ChakraProvider theme={theme}>
-          <Tabs bg="gray.800">
+          <Tabs
+            bg="gray.800"
+            display="grid"
+            gridTemplateRows="auto 1fr"
+            height="100vh"
+          >
             <TabList>
               <Tab>Code</Tab>
               <Tab>State</Tab>
               <Tab>Events</Tab>
+              <Tab>Actors</Tab>
             </TabList>
 
-            <TabPanels>
+            <TabPanels overflowY="auto">
               <TabPanel padding={0}>
                 <EditorPanel
                   onChange={(machines) => {
@@ -47,6 +62,9 @@ function App() {
               </TabPanel>
               <TabPanel>
                 <EventsPanel />
+              </TabPanel>
+              <TabPanel>
+                <ActorsPanel />
               </TabPanel>
             </TabPanels>
           </Tabs>
