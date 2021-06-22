@@ -22,7 +22,7 @@ export const createSimModel = (machine: AnyStateMachine) =>
     {
       state: machine.initialState,
       notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
-      machine: 0,
+      machineIndex: 0,
       machines: [machine],
       services: {} as Record<string, AnyInterpreter>,
       service: null as string | null,
@@ -75,7 +75,7 @@ export const createSimulationMachine = (
             target: 'active',
             actions: [
               simModel.assign((_, e) => ({
-                machine: (e as any).data[0],
+                machineIndex: (e as any).data[0],
                 machines: (e as any).data,
               })) as any,
             ],
@@ -99,7 +99,7 @@ export const createSimulationMachine = (
           {
             id: 'machine',
             src: (ctx) => (sendBack, onReceive) => {
-              const service = interpret(ctx.machines[ctx.machine], {
+              const service = interpret(ctx.machines[ctx.machineIndex], {
                 devTools: true,
               })
                 .onTransition((state) => {
@@ -140,7 +140,7 @@ export const createSimulationMachine = (
             internal: false,
             actions: [
               simModel.assign({
-                machine: (_, e) => e.machines.length - 1,
+                machineIndex: (_, e) => e.machines.length - 1,
                 machines: (_, e) => e.machines,
               }),
             ],
@@ -160,7 +160,7 @@ export const createSimulationMachine = (
           },
           'MACHINES.SET': {
             actions: simModel.assign({
-              machine: (_, e) => e.index,
+              machineIndex: (_, e) => e.index,
             }),
           },
           'EVENT.PREVIEW': {
@@ -213,7 +213,7 @@ export const createSimulationMachine = (
           send(
             (ctx, e) => {
               const eventSchema =
-                ctx.machines[ctx.machine].schema?.events?.[e.event.type];
+                ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
               const eventToSend = { ...e.event };
 
               if (eventSchema) {
