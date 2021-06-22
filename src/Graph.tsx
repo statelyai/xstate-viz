@@ -1,5 +1,5 @@
 import { DirectedGraphEdge, DirectedGraphNode } from './directedGraph';
-import { useMachine } from '@xstate/react';
+import { useMachine, useSelector } from '@xstate/react';
 import ELK, {
   ElkEdgeSection,
   ElkExtendedEdge,
@@ -15,6 +15,7 @@ import { TransitionViz } from './TransitionViz';
 import { createElkMachine } from './elkMachine';
 import { StateNode } from 'xstate';
 import { MachineViz } from './MachineViz';
+import { useCanvas } from './CanvasContext';
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
@@ -284,6 +285,8 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
   const [state, send] = useMachine(() => createElkMachine(digraph));
+  const canvasService = useCanvas();
+  const { pan, zoom } = useSelector(canvasService, (s) => s.context);
 
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
@@ -299,7 +302,11 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
 
   if (state.matches('success')) {
     return (
-      <div>
+      <div
+        style={{
+          transform: `translate(${pan.dx}px, ${pan.dy}px) scale(${zoom})`,
+        }}
+      >
         <Edges digraph={digraph} />
         <GraphNode elkNode={state.context.elkGraph} />
         {allEdges.map((edge, i) => {
