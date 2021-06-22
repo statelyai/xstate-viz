@@ -19,7 +19,6 @@ import { devTools } from './devInterface';
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
   const machine = useSelector(simService, (state) => {
-    console.log(state);
     return state.context.service
       ? state.context.services[state.context.service!].machine
       : undefined;

@@ -212,7 +212,6 @@ export const createSimulationMachine = (
           }),
           send(
             (ctx, e) => {
-              console.log(e, ctx.services[ctx.service!]);
               const eventSchema =
                 ctx.machines[ctx.machine].schema?.events?.[e.event.type];
               const eventToSend = { ...e.event };
