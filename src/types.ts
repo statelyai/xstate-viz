@@ -6,3 +6,5 @@ export type StateFrom<TMachine extends AnyStateMachine> =
   TMachine extends StateMachine<infer TContext, any, infer TEvent>
     ? State<TContext, TEvent>
     : never;
+
+export type AnyState = State<any, any>;

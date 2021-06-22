@@ -8,7 +8,7 @@ import { createSimulationMachine } from './simulationMachine';
 import { SimulationProvider } from './SimulationContext';
 import './base.scss';
 import { EditorPanel } from './EditorPanel';
-import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
+import { Tabs, TabList, TabPanels, Tab, TabPanel, Box } from '@chakra-ui/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
 import { StatePanel } from './StatePanel';
@@ -30,7 +30,14 @@ function App() {
 
   return (
     <SimulationProvider value={simService}>
-      <main data-viz="app" data-viz-theme="dark">
+      <Box
+        data-viz="app"
+        data-viz-theme="dark"
+        as="main"
+        display="grid"
+        gridTemplateColumns="1fr minmax(50%, auto)"
+        gridTemplateAreas="'canvas tabs'"
+      >
         {digraph && <CanvasPanel digraph={digraph} />}
         <ChakraProvider theme={theme}>
           <Tabs
@@ -38,6 +45,7 @@ function App() {
             display="grid"
             gridTemplateRows="auto 1fr"
             height="100vh"
+            gridArea="tabs"
           >
             <TabList>
               <Tab>Code</Tab>
@@ -69,7 +77,7 @@ function App() {
             </TabPanels>
           </Tabs>
         </ChakraProvider>
-      </main>
+      </Box>
     </SimulationProvider>
   );
 }
