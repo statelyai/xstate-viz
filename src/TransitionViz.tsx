@@ -20,7 +20,7 @@ export const TransitionViz: React.FC<{
   const definition = edge.transition;
   const service = useSimulation();
   const state = useSelector(service, (s) =>
-    s.context.services[s.context.service!].getSnapshot(),
+    s.context.services[s.context.service!]?.getSnapshot(),
   );
 
   const ref = useRef<any>(null);
@@ -32,6 +32,10 @@ export const TransitionViz: React.FC<{
       deleteRect(edge.id);
     };
   }, [edge.id]);
+
+  if (!state) {
+    return null;
+  }
 
   return (
     <div

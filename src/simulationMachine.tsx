@@ -24,7 +24,7 @@ export const createSimModel = (machine: AnyStateMachine) =>
       notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
       machineIndex: 0,
       machines: [machine],
-      services: {} as Record<string, AnyInterpreter>,
+      services: {} as Partial<Record<string, AnyInterpreter>>,
       service: null as string | null,
       events: [] as EventObject[],
       previewEvent: undefined as string | undefined,
@@ -58,6 +58,18 @@ export const createSimulationMachine = (
     context: simModel.initialContext,
     initial: 'active',
     entry: assign({ notifRef: () => spawn(notifMachine) }),
+    invoke: {
+      id: 'services',
+      src: (ctx) => (sendBack) => {
+        devTools.onRegister((service) => {
+          sendBack(simModel.events['SERVICE.REGISTER'](service));
+
+          service.onStop(() => {
+            sendBack(simModel.events['SERVICE.UNREGISTER'](service.sessionId));
+          });
+        });
+      },
+    },
     states: {
       verifying: {
         invoke: {
@@ -65,7 +77,8 @@ export const createSimulationMachine = (
             new Promise((resolve, reject) => {
               const machines = (e as any).machines;
               try {
-                interpret(machines[0]).start();
+                // TODO: verify without interpreting
+                interpret(machines[0]).start().stop();
                 resolve(machines);
               } catch (err) {
                 reject(err);
@@ -110,6 +123,8 @@ export const createSimulationMachine = (
                 })
                 .start();
 
+              sendBack(simModel.events['SERVICE.FOCUS'](service.sessionId));
+
               onReceive((event) => {
                 service.send(event);
               });
@@ -117,20 +132,6 @@ export const createSimulationMachine = (
               return () => {
                 service.stop();
               };
-            },
-          },
-          {
-            id: 'services',
-            src: (ctx) => (sendBack) => {
-              devTools.onRegister((service) => {
-                sendBack(simModel.events['SERVICE.REGISTER'](service));
-
-                service.onStop(() => {
-                  sendBack(
-                    simModel.events['SERVICE.UNREGISTER'](service.sessionId),
-                  );
-                });
-              });
             },
           },
         ],
@@ -227,7 +228,7 @@ export const createSimulationMachine = (
               }
               return eventToSend;
             },
-            { to: (ctx) => ctx.services[ctx.service!] },
+            { to: (ctx) => ctx.services[ctx.service!]! },
           ),
         ],
       },

@@ -20,7 +20,7 @@ function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
   const machine = useSelector(simService, (state) => {
     return state.context.service
-      ? state.context.services[state.context.service!].machine
+      ? state.context.services[state.context.service!]?.machine
       : undefined;
   });
   const digraph = useMemo(
