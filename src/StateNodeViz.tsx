@@ -4,7 +4,7 @@ import './StateNodeViz.scss';
 import './InvokeViz.scss';
 import './ActionViz.scss';
 
-import { useSelector, useService } from '@xstate/react';
+import { useService } from '@xstate/react';
 import { deleteRect, setRect } from './getRect';
 import { useSimulation } from './SimulationContext';
 import { DirectedGraphNode } from './directedGraph';
@@ -52,13 +52,9 @@ export const StateNodeViz: React.FC<{
   const service = useSimulation();
   const [state] = useService(service);
 
-  const simState = useSelector(service, (state) =>
-    state.context.services[state.context.service!]?.getSnapshot(),
-  );
-  const simMachine = useSelector(
-    service,
-    (state) => state.context.services[state.context.service!]?.machine,
-  );
+  const simState =
+    state.context.services[state.context.service!]?.getSnapshot();
+  const simMachine = state.context.services[state.context.service!]?.machine;
   const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
