@@ -17,8 +17,9 @@ export const EventsPanel: React.FC = () => {
               opacity={event.origin === state.context.service ? 1 : 0.5}
             >
               <HStack spacing="4">
-                <Tag>{event.origin}</Tag>
+                <Tag>{event.sessionId}</Tag>
                 <Text as="strong">{event.name}</Text>
+                {event.origin && <em>from {event.origin}</em>}
               </HStack>
             </ListItem>
           );

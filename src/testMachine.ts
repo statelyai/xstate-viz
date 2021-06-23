@@ -1,4 +1,4 @@
-import { createMachine } from 'xstate';
+import { createMachine, sendParent } from 'xstate';
 
 export const testInvokedMachine = createMachine({
   id: 'm',
@@ -10,6 +10,7 @@ export const testInvokedMachine = createMachine({
       on: { NEXT: 'bar' },
     },
     bar: {
+      entry: sendParent('EVENT_FROM_CHILD'),
       initial: 'one',
       states: {
         one: {

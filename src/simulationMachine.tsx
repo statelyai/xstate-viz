@@ -18,6 +18,7 @@ import { AnyStateMachine } from './types';
 
 interface SimEvent extends SCXML.Event<any> {
   timestamp: number;
+  sessionId: string;
 }
 
 export const createSimModel = (machine: AnyStateMachine) =>
@@ -49,7 +50,10 @@ export const createSimModel = (machine: AnyStateMachine) =>
         'SERVICE.REGISTER': (service: any) => ({ service }),
         'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
         'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
-        'SERVICE.EVENT': (event: SCXML.Event<any>) => ({ event }),
+        'SERVICE.EVENT': (event: SCXML.Event<any>, sessionId: string) => ({
+          event,
+          sessionId,
+        }),
       },
     },
   );
@@ -72,11 +76,10 @@ export const createSimulationMachine = (
             if (!state) {
               return;
             }
-            const event = {
-              ...state._event,
-              origin: state._sessionid,
-            };
-            sendBack(simModel.events['SERVICE.EVENT'](event as any));
+
+            sendBack(
+              simModel.events['SERVICE.EVENT'](state._event, service.sessionId),
+            );
           });
 
           service.onStop(() => {
@@ -226,7 +229,11 @@ export const createSimulationMachine = (
         actions: assign({
           events: (ctx, e) =>
             produce(ctx.events, (draft) => {
-              draft.push({ ...e.event, timestamp: Date.now() });
+              draft.push({
+                ...e.event,
+                timestamp: Date.now(),
+                sessionId: e.sessionId,
+              });
             }),
         }),
       },
