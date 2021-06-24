@@ -239,25 +239,23 @@ export const createSimulationMachine = (
       },
       'SERVICE.SEND': {
         actions: [
-          send(
-            (ctx, e) => {
-              const eventSchema =
-                ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
-              const eventToSend = { ...e.event };
+          (ctx, e) => {
+            const eventSchema =
+              ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
+            const eventToSend = { ...e.event };
 
-              if (eventSchema) {
-                Object.keys(eventSchema.properties).forEach((prop) => {
-                  const value = prompt(
-                    `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                  );
+            if (eventSchema) {
+              Object.keys(eventSchema.properties).forEach((prop) => {
+                const value = prompt(
+                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+                );
 
-                  eventToSend[prop] = value;
-                });
-              }
-              return eventToSend;
-            },
-            { to: (ctx) => ctx.services[ctx.service!]! },
-          ),
+                eventToSend[prop] = value;
+              });
+            }
+
+            ctx.services[ctx.service!]!.send(eventToSend);
+          },
         ],
       },
     },
