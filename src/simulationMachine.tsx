@@ -60,7 +60,7 @@ export const createSimulationMachine = (
     entry: assign({ notifRef: () => spawn(notifMachine) }),
     invoke: {
       id: 'services',
-      src: (ctx) => (sendBack) => {
+      src: () => (sendBack) => {
         devTools.onRegister((service) => {
           sendBack(simModel.events['SERVICE.REGISTER'](service));
 
@@ -88,7 +88,7 @@ export const createSimulationMachine = (
             target: 'active',
             actions: [
               simModel.assign((_, e) => ({
-                machineIndex: (e as any).data[0],
+                machineIndex: (e as any).data.length - 1,
                 machines: (e as any).data,
               })) as any,
             ],
