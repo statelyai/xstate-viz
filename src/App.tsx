@@ -16,6 +16,8 @@ import { EventsPanel } from './EventsPanel';
 import { ActorsPanel } from './ActorsPanel';
 import { Login } from './Login';
 import { initAPIClient } from './APIClient';
+import { clientMachine } from './clientMachine';
+import { ClientProvider } from './clientContext';
 
 initAPIClient();
 
@@ -30,51 +32,54 @@ function App() {
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
+  const clientService = useInterpret(clientMachine);
 
   return (
     <SimulationProvider value={simService}>
       <main data-viz="app" data-viz-theme="dark">
         {digraph && <CanvasPanel digraph={digraph} />}
-        <ChakraProvider theme={theme}>
-          <Box>
-            <Login />
-            <Tabs
-              bg="gray.800"
-              display="grid"
-              gridTemplateRows="auto 1fr"
-              height="100vh"
-            >
-              <TabList>
-                <Tab>Code</Tab>
-                <Tab>State</Tab>
-                <Tab>Events</Tab>
-                <Tab>Actors</Tab>
-              </TabList>
+        <ClientProvider value={clientService}>
+          <ChakraProvider theme={theme}>
+            <Box>
+              <Login />
+              <Tabs
+                bg="gray.800"
+                display="grid"
+                gridTemplateRows="auto 1fr"
+                height="100vh"
+              >
+                <TabList>
+                  <Tab>Code</Tab>
+                  <Tab>State</Tab>
+                  <Tab>Events</Tab>
+                  <Tab>Actors</Tab>
+                </TabList>
 
-              <TabPanels overflowY="auto">
-                <TabPanel padding={0}>
-                  <EditorPanel
-                    onChange={(machines) => {
-                      simService.send({
-                        type: 'MACHINES.VERIFY',
-                        machines,
-                      });
-                    }}
-                  />
-                </TabPanel>
-                <TabPanel>
-                  <StatePanel />
-                </TabPanel>
-                <TabPanel>
-                  <EventsPanel />
-                </TabPanel>
-                <TabPanel>
-                  <ActorsPanel />
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          </Box>
-        </ChakraProvider>
+                <TabPanels overflowY="auto">
+                  <TabPanel padding={0}>
+                    <EditorPanel
+                      onChange={(machines) => {
+                        simService.send({
+                          type: 'MACHINES.VERIFY',
+                          machines,
+                        });
+                      }}
+                    />
+                  </TabPanel>
+                  <TabPanel>
+                    <StatePanel />
+                  </TabPanel>
+                  <TabPanel>
+                    <EventsPanel />
+                  </TabPanel>
+                  <TabPanel>
+                    <ActorsPanel />
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
+            </Box>
+          </ChakraProvider>
+        </ClientProvider>
       </main>
     </SimulationProvider>
   );

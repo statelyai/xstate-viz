@@ -14,13 +14,16 @@ import {
   Box,
   Image,
 } from '@chakra-ui/react';
+import { useSelector } from '@xstate/react';
 import React from 'react';
-import { client } from './APIClient';
-import { useSession } from './useSession';
+import { useClient } from './clientContext';
 
 export const Login: React.FC = () => {
   const { isOpen, onClose, onOpen } = useDisclosure();
-  const session = useSession();
+  const clientService = useClient();
+  const s = useSelector(clientService, (s) => s);
+  console.log(s);
+  const session = useSelector(clientService, (state) => state.context.session);
 
   return (
     <Box
@@ -72,7 +75,7 @@ export const Login: React.FC = () => {
           <MenuList>
             <MenuItem
               onClick={() => {
-                client.auth.signOut();
+                clientService.send('LOGOUT');
               }}
             >
               Logout
@@ -97,7 +100,7 @@ export const Login: React.FC = () => {
             <HStack>
               <Button
                 onClick={() => {
-                  client.auth.signIn({ provider: 'github' });
+                  clientService.send({ type: 'LOGIN', provider: 'github' });
                 }}
               >
                 Github

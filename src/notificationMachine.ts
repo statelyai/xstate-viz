@@ -30,6 +30,6 @@ export const notifMachine = createMachine<typeof notifModel>({
     },
   },
   states: {
-    running: { entry: 'notif is running' },
+    running: {},
   },
 });

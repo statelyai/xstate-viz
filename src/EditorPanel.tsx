@@ -1,9 +1,12 @@
-import { useMachine } from '@xstate/react';
+import { Button, HStack, useInterval } from '@chakra-ui/react';
+import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom } from 'xstate';
 import { assign } from 'xstate';
 import { createMachine, send as sendAction, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { useClient } from './clientContext';
+import { clientMachine } from './clientMachine';
 import './EditorPanel.scss';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
@@ -45,7 +48,8 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
 export const EditorPanel: React.FC<{
   onChange: (machine: AnyStateMachine[]) => void;
 }> = ({ onChange }) => {
-  const [, send] = useMachine(editorPanelMachine, {
+  const clientService = useClient();
+  const [current, send] = useMachine(editorPanelMachine, {
     actions: {
       onChange: (ctx) => {
         // TODO: refactor to invoke
@@ -70,8 +74,8 @@ export const EditorPanel: React.FC<{
           send({ type: 'EDITOR_CHANGED_VALUE', code });
         }}
       />
-      <div>
-        <button
+      <HStack>
+        <Button
           onClick={() => {
             send({
               type: 'UPDATE_MACHINE_PRESSED',
@@ -79,8 +83,18 @@ export const EditorPanel: React.FC<{
           }}
         >
           Update Chart
-        </button>
-      </div>
+        </Button>
+        <Button
+          onClick={() => {
+            clientService.send({
+              type: 'PERSIST_MACHINE',
+              definition: current.context.code,
+            });
+          }}
+        >
+          Save/Update
+        </Button>
+      </HStack>
     </div>
   );
 };
