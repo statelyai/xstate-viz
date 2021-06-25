@@ -1,12 +1,11 @@
-import { Button, HStack, useInterval } from '@chakra-ui/react';
-import { useInterpret, useMachine, useSelector } from '@xstate/react';
+import { Button, HStack } from '@chakra-ui/react';
+import { useMachine } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom } from 'xstate';
 import { assign } from 'xstate';
 import { createMachine, send as sendAction, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useClient } from './clientContext';
-import { clientMachine } from './clientMachine';
 import './EditorPanel.scss';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
@@ -56,7 +55,7 @@ export const EditorPanel: React.FC<{
         try {
           const machines = parseMachines(ctx.code);
           onChange(machines);
-        } catch (err) {
+        } catch (err: any) {
           send({
             type: 'EDITOR_ENCOUNTERED_ERROR',
             message: err.message,
