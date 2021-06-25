@@ -16,7 +16,7 @@ import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
 import { AnyStateMachine } from './types';
 
-interface SimEvent extends SCXML.Event<any> {
+export interface SimEvent extends SCXML.Event<any> {
   timestamp: number;
   sessionId: string;
 }
