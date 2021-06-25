@@ -83,7 +83,7 @@ export const createSimulationMachine = (
           });
 
           service.onStop(() => {
-            sendBack(simModel.events['SERVICE.UNREGISTER'](service.sessionId));
+            // sendBack(simModel.events['SERVICE.UNREGISTER'](service.sessionId));
           });
         });
       },
