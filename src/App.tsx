@@ -54,7 +54,7 @@ function App() {
               <Tab>Actors</Tab>
             </TabList>
 
-            <TabPanels overflowY="auto">
+            <TabPanels overflow="hidden">
               <TabPanel padding={0}>
                 <EditorPanel
                   onChange={(machines) => {
@@ -68,7 +68,7 @@ function App() {
               <TabPanel>
                 <StatePanel />
               </TabPanel>
-              <TabPanel>
+              <TabPanel overflow="hidden" height="100%">
                 <EventsPanel />
               </TabPanel>
               <TabPanel>

@@ -1,6 +1,16 @@
-import { Text, Box, Input, Table, Tbody, Tr, Td } from '@chakra-ui/react';
+import {
+  Text,
+  Box,
+  Input,
+  Table,
+  Tbody,
+  Tr,
+  Td,
+  Thead,
+  Th,
+} from '@chakra-ui/react';
 import { useService } from '@xstate/react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
@@ -8,7 +18,7 @@ import { SimEvent } from './simulationMachine';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   return (
-    <Box display="flex" flexDirection="row" gap="1ch">
+    <Box display="inline-flex" flexDirection="row" gap="1ch">
       {event.origin && (
         <Text whiteSpace="nowrap">
           {event.origin} →{'\u00A0'}
@@ -24,38 +34,64 @@ export const EventsPanel: React.FC = () => {
   const events = useMemo(() => {
     return state.context.events.filter((event) => event.name !== 'xstate.init');
   }, [state]);
+  const [filter, setFilter] = useState('');
 
   return (
-    <Box display="grid" gridTemplateRows="auto 1fr" gridRowGap="2">
+    <Box
+      display="grid"
+      gridTemplateRows="auto 1fr"
+      gridRowGap="2"
+      height="100%"
+    >
       <Box>
-        <Input placeholder="Filter events" />
+        <Input
+          placeholder="Filter events"
+          onChange={(e) => setFilter(e.target.value)}
+        />
       </Box>
       <Box overflowY="auto">
         <Table width="100%">
+          <Thead>
+            <Tr>
+              <Th width="100%">Event type</Th>
+              <Th>To</Th>
+              <Th>Time</Th>
+            </Tr>
+          </Thead>
           <Tbody>
             {events.map((event, i) => {
-              return (
-                <>
-                  <Tr>
-                    <Td>{event.name}</Td>
-                    <Td color="gray.500">
-                      <EventConnection event={event} />
-                    </Td>
-                    <Td color="gray.500">
-                      {format(event.timestamp, 'hh:mm:ss')}
-                    </Td>
-                  </Tr>
-                  <Tr>
-                    <Td colSpan={3}>
-                      <ReactJson src={event.data} theme="monokai" />
-                    </Td>
-                  </Tr>
-                </>
-              );
+              return <EventRow event={event} filter={filter} key={i} />;
             })}
           </Tbody>
         </Table>
       </Box>
     </Box>
+  );
+};
+
+const EventRow: React.FC<{ event: SimEvent; filter: string }> = ({
+  event,
+  filter,
+}) => {
+  const visibility = event.name.toUpperCase().includes(filter.toUpperCase());
+  const [show, setShow] = useState(false);
+
+  return (
+    <>
+      <Tr hidden={!visibility || undefined}>
+        <Td onClick={() => setShow(!show)}>{event.name}</Td>
+        <Td color="gray.500" textAlign="right">
+          <EventConnection event={event} />
+        </Td>
+        <Td color="gray.500">{format(event.timestamp, 'hh:mm:ss')}</Td>
+      </Tr>
+      {visibility && show ? (
+        <Tr>
+          <Td colSpan={3}>
+            <ReactJson src={event.data} theme="monokai" />
+          </Td>
+        </Tr>
+      ) : null}
+    </>
   );
 };
