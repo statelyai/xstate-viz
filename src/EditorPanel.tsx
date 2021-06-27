@@ -1,3 +1,4 @@
+import { Button } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom } from 'xstate';
@@ -52,7 +53,7 @@ export const EditorPanel: React.FC<{
         try {
           const machines = parseMachines(ctx.code);
           onChange(machines);
-        } catch (err) {
+        } catch (err: any) {
           send({
             type: 'EDITOR_ENCOUNTERED_ERROR',
             message: err.message,
@@ -71,7 +72,7 @@ export const EditorPanel: React.FC<{
         }}
       />
       <div>
-        <button
+        <Button
           onClick={() => {
             send({
               type: 'UPDATE_MACHINE_PRESSED',
@@ -79,7 +80,7 @@ export const EditorPanel: React.FC<{
           }}
         >
           Update Chart
-        </button>
+        </Button>
       </div>
     </div>
   );
