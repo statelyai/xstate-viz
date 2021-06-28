@@ -1,4 +1,33 @@
+[data-viz='transition-actions'] {
+  background-color: var(--viz-color-bg);
+  padding: 0.5rem;
+
+  &:empty {
+    display: none;
+  }
+}
+
 [data-viz='action'] {
-  // color: black;
   color: var(--viz-color-fg);
+  display: flex;
+  flex-direction: row;
+  gap: 1ch;
+  align-items: baseline;
+  justify-content: flex-start;
+
+  &[data-viz-action] {
+    &:before {
+      content: attr(data-viz-action) ' / ';
+      font-size: var(--viz-font-size-sm);
+      text-transform: uppercase;
+      font-weight: bold;
+      opacity: 0.5;
+      display: inline-block;
+      white-space: nowrap;
+    }
+  }
+}
+
+[data-viz='action-text'] {
+  display: inline-block;
 }
