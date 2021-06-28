@@ -44,7 +44,7 @@ export const createSimModel = (machine: AnyStateMachine) =>
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
         'SERVICE.REGISTER': (service: any) => ({ service }),
-        'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
+        'SERVICE.STOP': (sessionId: string) => ({ sessionId }),
         'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
       },
     },
@@ -65,7 +65,7 @@ export const createSimulationMachine = (
           sendBack(simModel.events['SERVICE.REGISTER'](service));
 
           service.onStop(() => {
-            sendBack(simModel.events['SERVICE.UNREGISTER'](service.sessionId));
+            sendBack(simModel.events['SERVICE.STOP'](service.sessionId));
           });
         });
       },
@@ -90,6 +90,7 @@ export const createSimulationMachine = (
               simModel.assign((_, e) => ({
                 machineIndex: (e as any).data.length - 1,
                 machines: (e as any).data,
+                services: {},
               })) as any,
             ],
           },
@@ -184,15 +185,7 @@ export const createSimulationMachine = (
               },
             }),
           },
-          'SERVICE.UNREGISTER': {
-            actions: simModel.assign({
-              services: (ctx, e) => {
-                return produce(ctx.services, (draft) => {
-                  delete draft[e.sessionId];
-                });
-              },
-            }),
-          },
+          'SERVICE.STOP': {},
           'SERVICE.FOCUS': {
             actions: simModel.assign({
               service: (_, e) => e.sessionId,

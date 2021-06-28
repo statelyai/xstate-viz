@@ -70,6 +70,34 @@ const ActorDetails: React.FC<{ state: any; title: string }> = ({
   );
 };
 
+const ServiceInfo: React.FC<{
+  service: AnyInterpreter;
+  highlighted?: boolean;
+  onClick?: () => void;
+}> = ({ service, highlighted, onClick }) => {
+  const isDone = useSelector(service, (state) => state.done);
+
+  return (
+    <ListItem
+      key={service.sessionId}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      padding={2}
+      borderBottom="1px solid"
+      borderBottomColor="gray.500"
+      marginTop="0"
+      opacity={highlighted ? 1 : 0.5}
+      textDecoration={isDone ? 'line-through' : undefined}
+    >
+      <ListIcon as={ArrowForwardIcon} />
+      <Text flexGrow={1}>
+        <Link onClick={onClick}>{service.id}</Link> ({service.sessionId})
+      </Text>
+    </ListItem>
+  );
+};
+
 export const ActorsPanel: React.FC = () => {
   const simActor = useSimulation();
   const services = useSelector(simActor, selectServices);
@@ -79,29 +107,14 @@ export const ActorsPanel: React.FC = () => {
     <List>
       {Object.entries(services).map(([sessionId, service]) => {
         return (
-          <ListItem
+          <ServiceInfo
+            service={service}
             key={sessionId}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            padding={2}
-            borderBottom="1px solid"
-            borderBottomColor="gray.500"
-            marginTop="0"
-            opacity={currentSessionId === sessionId ? 1 : 0.5}
-          >
-            <ListIcon as={ArrowForwardIcon} />
-            <Text flexGrow={1}>
-              <Link
-                onClick={() => {
-                  simActor.send({ type: 'SERVICE.FOCUS', sessionId });
-                }}
-              >
-                {service.id}
-              </Link>{' '}
-              ({sessionId})
-            </Text>
-          </ListItem>
+            highlighted={sessionId === currentSessionId}
+            onClick={() => {
+              simActor.send({ type: 'SERVICE.FOCUS', sessionId });
+            }}
+          />
         );
       })}
     </List>
