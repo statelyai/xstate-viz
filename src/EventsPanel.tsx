@@ -9,7 +9,7 @@ import {
   Thead,
   Th,
 } from '@chakra-ui/react';
-import { useService } from '@xstate/react';
+import { useActor } from '@xstate/react';
 import React, { useMemo, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
@@ -26,7 +26,7 @@ const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
 };
 
 export const EventsPanel: React.FC = () => {
-  const [state] = useService(useSimulation());
+  const [state] = useActor(useSimulation());
   const events = useMemo(() => {
     return state.context.events.filter((event) => event.name !== 'xstate.init');
   }, [state]);
