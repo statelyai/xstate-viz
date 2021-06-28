@@ -19,11 +19,7 @@ import { SimEvent } from './simulationMachine';
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   return (
     <Box display="inline-flex" flexDirection="row" gap="1ch">
-      {event.origin && (
-        <Text whiteSpace="nowrap">
-          {event.origin} →{'\u00A0'}
-        </Text>
-      )}
+      {event.origin && <Text whiteSpace="nowrap">{event.origin} →&nbsp;</Text>}
       <Text whiteSpace="nowrap">{event.sessionId}</Text>
     </Box>
   );
