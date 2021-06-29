@@ -81,6 +81,7 @@ export const createSimulationMachine = (
                 interpret(machines[0]).start().stop();
                 resolve(machines);
               } catch (err) {
+                console.error(err);
                 reject(err);
               }
             }),
