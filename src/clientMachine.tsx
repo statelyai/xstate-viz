@@ -154,6 +154,7 @@ export const clientMachine = createMachine<typeof clientModel>(
         },
       },
       signed_in: {
+        tags: ['authorized'],
         on: {
           SIGN_OUT: 'signing_out',
           SAVE: 'saving',
@@ -204,7 +205,7 @@ export const clientMachine = createMachine<typeof clientModel>(
         },
       },
       saving: {
-        tags: ['persisting'],
+        tags: ['persisting', 'authorized'],
         invoke: {
           src: 'saveMachines',
           onDone: {
@@ -227,7 +228,7 @@ export const clientMachine = createMachine<typeof clientModel>(
         },
       },
       updating: {
-        tags: ['persisting'],
+        tags: ['persisting', 'authorized'],
         invoke: {
           src: 'updateMachines',
           onDone: {

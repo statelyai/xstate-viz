@@ -33,7 +33,7 @@ export const Login: React.FC = () => {
       height="42"
       display="flex"
     >
-      {!state.matches('signed_in') && (
+      {!state.hasTag('authorized') && (
         <Button
           position="absolute"
           top="0"
@@ -50,7 +50,7 @@ export const Login: React.FC = () => {
         </Button>
       )}
 
-      {state.matches('signed_in') && (
+      {state.hasTag('authorized') && (
         <Menu closeOnSelect={true}>
           <MenuButton>
             <Image
