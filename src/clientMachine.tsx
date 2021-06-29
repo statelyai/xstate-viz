@@ -4,16 +4,19 @@ import {
   Session,
   SupabaseClient,
 } from '@supabase/supabase-js';
-import { assign, MachineOptions } from 'xstate';
+import { ActorRefFrom, assign, MachineOptions } from 'xstate';
+import { spawn } from 'xstate';
+import { send } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel, ModelEventsFrom } from 'xstate/lib/model';
+import { notifMachine } from './notificationMachine';
 import { gQuery } from './utils';
 
 const clientModel = createModel(
   {
     client: null! as SupabaseClient,
-    session: null! as Session,
     createdMachine: null! as any,
+    notifRef: null! as ActorRefFrom<typeof notifMachine>,
   },
   {
     events: {
@@ -92,6 +95,11 @@ export const clientMachine = createMachine<typeof clientModel>(
     id: 'client',
     initial: 'initializing',
     context: clientModel.initialContext,
+    entry: [
+      assign({
+        notifRef: () => spawn(notifMachine),
+      }),
+    ],
     invoke: {
       src: (ctx) => (sendBack) => {
         ctx.client.auth.onAuthStateChange((state, session) => {
@@ -161,7 +169,16 @@ export const clientMachine = createMachine<typeof clientModel>(
           },
           onError: {
             target: 'signed_out',
-            actions: ['showError'],
+            actions: [
+              send(
+                (_, e) => ({
+                  type: 'BROADCAST',
+                  status: 'error',
+                  message: e.data,
+                }),
+                { to: (ctx) => ctx.notifRef },
+              ),
+            ],
           },
         },
       },
@@ -173,7 +190,16 @@ export const clientMachine = createMachine<typeof clientModel>(
           },
           onError: {
             target: 'signed_in',
-            actions: ['showError'],
+            actions: [
+              send(
+                (_, e) => ({
+                  type: 'BROADCAST',
+                  status: 'error',
+                  message: e.data,
+                }),
+                { to: (ctx) => ctx.notifRef },
+              ),
+            ],
           },
         },
       },
@@ -186,7 +212,16 @@ export const clientMachine = createMachine<typeof clientModel>(
           },
           onError: {
             target: 'signed_in',
-            actions: ['showError'],
+            actions: [
+              send(
+                (_, e) => ({
+                  type: 'BROADCAST',
+                  status: 'error',
+                  message: e.data,
+                }),
+                { to: (ctx) => ctx.notifRef },
+              ),
+            ],
           },
         },
       },
@@ -198,7 +233,16 @@ export const clientMachine = createMachine<typeof clientModel>(
           },
           onError: {
             target: 'signed_in',
-            actions: ['showError'],
+            actions: [
+              send(
+                (_, e) => ({
+                  type: 'BROADCAST',
+                  status: 'error',
+                  message: e.data,
+                }),
+                { to: (ctx) => ctx.notifRef },
+              ),
+            ],
           },
         },
       },
