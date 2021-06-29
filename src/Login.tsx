@@ -5,25 +5,24 @@ import {
   ModalBody,
   ModalContent,
   ModalHeader,
-  useDisclosure,
   HStack,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
   Box,
+  Text,
   Image,
+  ModalFooter,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React from 'react';
 import { useClient } from './clientContext';
 
 export const Login: React.FC = () => {
-  const { isOpen, onClose, onOpen } = useDisclosure();
   const clientService = useClient();
-  const s = useSelector(clientService, (s) => s);
-  console.log(s);
-  const session = useSelector(clientService, (state) => state.context.session);
+  const state = useSelector(clientService, (state) => state);
+  const session = state.context.client.auth.session();
 
   return (
     <Box
@@ -34,7 +33,7 @@ export const Login: React.FC = () => {
       height="42"
       display="flex"
     >
-      {!session && (
+      {!state.matches('signed_in') && (
         <Button
           position="absolute"
           top="0"
@@ -43,21 +42,23 @@ export const Login: React.FC = () => {
           zIndex="1"
           colorScheme="blue"
           rounded="false"
-          onClick={onOpen}
+          onClick={() => {
+            clientService.send('CHOOSE_PROVIDER');
+          }}
         >
           Login
         </Button>
       )}
 
-      {session && (
-        <Menu colorScheme="blue">
+      {state.matches('signed_in') && (
+        <Menu closeOnSelect={true}>
           <MenuButton>
             <Image
               display="inline-flex"
               marginRight="2"
               boxSize="30px"
-              src={session.user?.user_metadata?.avatar_url}
-              alt={session.user?.email}
+              src={session?.user?.user_metadata?.avatar_url}
+              alt={session?.user?.email}
             />
             {/* Madness to get text ellipsis working with inline-flex */}
             <Box as="span" display="inline-flex">
@@ -68,14 +69,14 @@ export const Login: React.FC = () => {
                 overflowX="hidden"
                 whiteSpace="nowrap"
               >
-                {session.user?.user_metadata?.full_name}
+                {session?.user?.user_metadata?.full_name}
               </Box>
             </Box>
           </MenuButton>
           <MenuList>
             <MenuItem
               onClick={() => {
-                clientService.send('LOGOUT');
+                clientService.send('SIGN_OUT');
               }}
             >
               Logout
@@ -85,28 +86,41 @@ export const Login: React.FC = () => {
                 marginLeft="1"
                 textTransform="capitalize"
               >
-                ({session.user?.app_metadata.provider})
+                ({session?.user?.app_metadata.provider})
               </Box>
             </MenuItem>
           </MenuList>
         </Menu>
       )}
 
-      <Modal isOpen={isOpen} onClose={onClose} colorScheme="blackAlpha">
+      <Modal
+        isOpen={clientService.state?.matches({
+          signed_out: 'choosing_provider',
+        })}
+        onClose={() => {
+          clientService.send('CANCEL_PROVIDER');
+        }}
+        // colorScheme="blackAlpha"
+      >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Login to Stately Regsitry</ModalHeader>
+          <ModalHeader>Sign in</ModalHeader>
           <ModalBody>
+            <Text>
+              Sign in to Stately Registry to be able to save machines.
+            </Text>
+          </ModalBody>
+          <ModalFooter justifyContent="flex-start">
             <HStack>
               <Button
                 onClick={() => {
-                  clientService.send({ type: 'LOGIN', provider: 'github' });
+                  clientService.send({ type: 'SIGN_IN', provider: 'github' });
                 }}
               >
                 Github
               </Button>
             </HStack>
-          </ModalBody>
+          </ModalFooter>
         </ModalContent>
       </Modal>
     </Box>

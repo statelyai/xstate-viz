@@ -86,8 +86,8 @@ export const EditorPanel: React.FC<{
         <Button
           onClick={() => {
             clientService.send({
-              type: 'PERSIST_MACHINE',
-              definition: current.context.code,
+              type: 'SAVE',
+              rawJSSource: current.context.code,
             });
           }}
         >

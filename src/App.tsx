@@ -15,11 +15,9 @@ import { StatePanel } from './StatePanel';
 import { EventsPanel } from './EventsPanel';
 import { ActorsPanel } from './ActorsPanel';
 import { Login } from './Login';
-import { initAPIClient } from './APIClient';
+
 import { clientMachine } from './clientMachine';
 import { ClientProvider } from './clientContext';
-
-initAPIClient();
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
@@ -32,7 +30,7 @@ function App() {
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
-  const clientService = useInterpret(clientMachine);
+  const clientService = useInterpret(clientMachine).start();
 
   return (
     <SimulationProvider value={simService}>

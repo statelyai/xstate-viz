@@ -1,93 +1,184 @@
-import { Provider, Session } from '@supabase/supabase-js';
-import { assign } from 'xstate';
-import { createMachine, send } from 'xstate';
-import { createModel } from 'xstate/lib/model';
-import { client } from './APIClient';
+import {
+  createClient,
+  Provider,
+  Session,
+  SupabaseClient,
+} from '@supabase/supabase-js';
+import { assign, MachineOptions } from 'xstate';
+import { createMachine } from 'xstate';
+import { createModel, ModelEventsFrom } from 'xstate/lib/model';
 
 const clientModel = createModel(
   {
+    client: null! as SupabaseClient,
     session: null! as Session,
     createdMachine: null! as any,
   },
   {
     events: {
-      LOGIN: (provider: Provider) => ({ provider }),
-      LOGOUT: () => ({}),
-      PERSIST_MACHINE: (definition: string) => ({ definition }),
-      SAVE_MACHINE: (definition: string) => ({ definition }),
-      UPDATE_MACHINE: (definition: string) => ({ definition }),
+      SIGNED_OUT: () => ({}),
+      SIGNED_IN: (session: Session) => ({ session }),
+      SIGN_IN: (provider: Provider) => ({ provider }),
+      SIGN_OUT: () => ({}),
+      CHOOSE_PROVIDER: () => ({}),
+      CANCEL_PROVIDER: () => ({}),
+      SAVE: (rawJSSource: string) => ({ rawJSSource }),
     },
   },
 );
 
-export const clientMachine = createMachine<typeof clientModel>({
-  id: 'clientMachine',
-  initial: 'checking_auth',
-  context: clientModel.initialContext,
-  states: {
-    checking_auth: {
-      invoke: {
-        src: () =>
-          new Promise((resolve, reject) => {
-            const session = client.auth.session();
-            if (session) {
-              resolve(session);
-            } else {
-              reject();
-            }
+const clientOptions: Partial<
+  MachineOptions<
+    typeof clientModel['initialContext'],
+    ModelEventsFrom<typeof clientModel>
+  >
+> = {
+  guards: {
+    hasSaveSignal: () => !!localStorage.getItem('save'),
+  },
+  actions: {
+    saveCreatedMachine: assign({
+      createdMachine: (_, e) => (e as any).data,
+    }),
+    setSaveSignal: () => {
+      localStorage.setItem('save', '1');
+    },
+    removeSaveSignal: () => {
+      localStorage.removeItem('save');
+    },
+  },
+  services: {
+    saveMachines: () => Promise.resolve(),
+    checkUserSession: (ctx) =>
+      new Promise((resolve, reject) => {
+        const session = ctx.client.auth.session();
+        if (session) {
+          resolve(session);
+        } else {
+          reject();
+        }
+      }),
+    signinUser: (ctx, e) =>
+      ctx.client.auth.signIn({ provider: (e as any).provider }),
+    signoutUser: (ctx) => {
+      console.log('signoutuser service');
+      return ctx.client.auth.signOut();
+    },
+  },
+};
+
+export const clientMachine = createMachine<typeof clientModel>(
+  {
+    id: 'client',
+    initial: 'initializing',
+    context: clientModel.initialContext,
+    invoke: {
+      src: (ctx) => (sendBack) => {
+        ctx.client.auth.onAuthStateChange((_, session) => {
+          console.log({ session });
+          if (session) {
+            sendBack({ type: 'SIGNED_IN', session });
+          } else {
+            sendBack('SIGNED_OUT');
+          }
+        });
+      },
+    },
+    on: {
+      SIGNED_OUT: { target: 'signed_out', internal: true },
+      SIGNED_IN: {
+        target: 'signed_in',
+        internal: true,
+      },
+    },
+    states: {
+      initializing: {
+        entry: [
+          assign({
+            client: createClient(
+              process.env.REACT_APP_SUPABASE_API_URL,
+              process.env.REACT_APP_SUPABASE_ANON_API_KEY,
+            ),
           }),
-        onDone: {
-          target: 'signedin',
-          actions: [
-            assign({
-              session: (_, e) => (e as any).data,
-            }),
-          ],
+        ],
+        always: 'checking_for_save',
+      },
+      checking_for_save: {
+        always: [
+          {
+            target: 'saving',
+            cond: 'hasSaveSignal',
+          },
+          { target: 'signed_out' },
+        ],
+      },
+      signed_out: {
+        on: {
+          SAVE: {
+            target: '.choosing_provider',
+            actions: ['setSaveSignal'],
+          },
+          CHOOSE_PROVIDER: '.choosing_provider',
         },
-        onError: {
-          target: 'signedout',
+        initial: 'idle',
+        states: {
+          idle: {},
+          choosing_provider: {
+            on: {
+              SIGN_IN: '#client.signing_in',
+              CANCEL_PROVIDER: {
+                target: 'idle',
+                actions: ['removeSaveSignal'],
+              },
+            },
+          },
         },
       },
-    },
-    authenticating: {
-      invoke: {
-        src: (_, e) => client.auth.signIn({ provider: (e as any).provider }),
-        onDone: 'signedin',
-        onError: 'signedout',
-      },
-    },
-    signedin: {
-      on: {
-        PERSIST_MACHINE: 'persisting',
-      },
-    },
-    signedout: {
-      on: {
-        LOGIN: 'authenticating',
-        PERSIST_MACHINE: {
-          actions: send('LOGIN'),
+      signed_in: {
+        on: {
+          SIGN_OUT: 'signing_out',
+          SAVE: 'saving',
         },
       },
-    },
-    persisting: {
-      invoke: {
-        src: (_, e) =>
-          fetch(
-            'https://registry-omega.vercel.app/api/graphql?query=' +
-              encodeURIComponent((e as any).definition),
-          ),
-        onDone: {
-          target: 'signedin',
-          actions: [
-            assign({
-              createdMachine: (_, e) => (e as any).definition,
-            }),
-          ],
+      signing_in: {
+        invoke: {
+          src: 'signinUser',
+          // No need, eventual consistency from the auth listener
+          onDone: {
+            target: 'signed_in',
+          },
+          onError: {
+            target: 'signed_out',
+            actions: ['showError'],
+          },
         },
-        onError: {
-          target: 'signedin', // TODO: handle errors with notification machine
+      },
+      signing_out: {
+        invoke: {
+          src: 'signoutUser',
+          onDone: {
+            target: 'signed_out',
+          },
+          onError: {
+            target: 'signed_in',
+            actions: ['showError'],
+          },
+        },
+      },
+      saving: {
+        invoke: {
+          src: 'saveMachines',
+          onDone: {
+            target: 'signed_in',
+            actions: ['saveCreatedMachine', 'removeSaveSignal'],
+          },
+          onError: {
+            target: 'signed_in',
+            actions: ['showError'],
+          },
         },
       },
     },
   },
-});
+  clientOptions,
+);
