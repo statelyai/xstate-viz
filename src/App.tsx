@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useInterpret, useSelector } from '@xstate/react';
+import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import './Graph';
 import { testMachine } from './testMachine';
 import { toDirectedGraph } from './directedGraph';
@@ -18,6 +18,8 @@ import { Login } from './Login';
 
 import { clientMachine } from './clientMachine';
 import { ClientProvider } from './clientContext';
+import { gistMachine } from './gistMachine';
+import { SpinnerWithText } from './SpinnerWithText';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
@@ -31,6 +33,7 @@ function App() {
     [machine],
   );
   const clientService = useInterpret(clientMachine).start();
+  const [gistState] = useMachine(gistMachine);
 
   return (
     <SimulationProvider value={simService}>
@@ -55,14 +58,24 @@ function App() {
 
                 <TabPanels overflowY="auto">
                   <TabPanel padding={0}>
-                    <EditorPanel
-                      onChange={(machines) => {
-                        simService.send({
-                          type: 'MACHINES.VERIFY',
-                          machines,
-                        });
-                      }}
-                    />
+                    {gistState.matches({ with_gist: 'loading_content' }) && (
+                      <SpinnerWithText text="Loading from gist" />
+                    )}
+                    {!gistState.matches({ with_gist: 'loading_content' }) && (
+                      <EditorPanel
+                        defaultValue={
+                          gistState.matches({ with_gist: 'gist_loaded' })
+                            ? (gistState.context.gistRawContent as string)
+                            : '// some comment'
+                        }
+                        onChange={(machines) => {
+                          simService.send({
+                            type: 'MACHINES.VERIFY',
+                            machines,
+                          });
+                        }}
+                      />
+                    )}
                   </TabPanel>
                   <TabPanel>
                     <StatePanel />

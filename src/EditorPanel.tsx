@@ -45,30 +45,39 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
 });
 
 export const EditorPanel: React.FC<{
+  defaultValue: string;
   onChange: (machine: AnyStateMachine[]) => void;
-}> = ({ onChange }) => {
+}> = ({ defaultValue, onChange }) => {
   const clientService = useClient();
-  const [current, send] = useMachine(editorPanelMachine, {
-    actions: {
-      onChange: (ctx) => {
-        // TODO: refactor to invoke
-        try {
-          const machines = parseMachines(ctx.code);
-          onChange(machines);
-        } catch (err: any) {
-          send({
-            type: 'EDITOR_ENCOUNTERED_ERROR',
-            message: err.message,
-          });
-        }
+  const [current, send] = useMachine(
+    // TODO: had to shut up TS by extending model.initialContext
+    editorPanelMachine.withContext({
+      ...editorPanelModel.initialContext,
+      code: defaultValue,
+    }),
+    {
+      actions: {
+        onChange: (ctx) => {
+          // TODO: refactor to invoke
+          try {
+            const machines = parseMachines(ctx.code);
+            onChange(machines);
+          } catch (err: any) {
+            console.error(err);
+            send({
+              type: 'EDITOR_ENCOUNTERED_ERROR',
+              message: err.message,
+            });
+          }
+        },
       },
     },
-  });
+  );
 
   return (
     <div data-panel="editor">
       <EditorWithXStateImports
-        defaultValue="// some comment"
+        defaultValue={defaultValue}
         onChange={(code) => {
           send({ type: 'EDITOR_CHANGED_VALUE', code });
         }}
