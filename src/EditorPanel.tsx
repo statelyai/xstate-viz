@@ -66,6 +66,8 @@ export const EditorPanel: React.FC<{
     clientState.matches('signed_out'),
     isUpdateMode,
   );
+  const isPersistPending =
+    clientState.matches('saving') || clientState.matches('updating');
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
@@ -110,6 +112,9 @@ export const EditorPanel: React.FC<{
           Update Chart
         </Button>
         <Button
+          isLoading={isPersistPending}
+          loadingText={persistText}
+          disabled={isPersistPending}
           onClick={() => {
             onSave(current.context.code);
           }}
