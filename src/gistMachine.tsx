@@ -35,9 +35,10 @@ export const gistMachine = createMachine(
             entry: [
               'saveGistContent',
               send(
-                (_, e: any) => ({
-                  type: 'SUCCESS',
-                  message: e.data.toString(),
+                () => ({
+                  type: 'BROADCAST',
+                  status: 'success',
+                  message: 'Machine loaded successfully from Gist ',
                 }),
                 { to: (ctx: any) => ctx.notifRef },
               ),
@@ -47,7 +48,8 @@ export const gistMachine = createMachine(
             entry: [
               send(
                 (_, e: any) => ({
-                  type: 'ERROR',
+                  type: 'BROADCAST',
+                  status: 'error',
                   message: e.data.toString(),
                 }),
                 { to: (ctx: any) => ctx.notifRef },
@@ -69,13 +71,6 @@ export const gistMachine = createMachine(
       }),
       //   @ts-ignore
       saveGistContent: assign({ gistRawContent: (_, e: any) => e.data }),
-      showMessage: send(
-        (_, e: any) => ({
-          type: e.messageType,
-          message: e.data.toString(),
-        }),
-        { to: (ctx) => ctx.notifRef },
-      ),
     },
     guards: {
       isGistIDAvailable: (ctx) => !!ctx.gistID,

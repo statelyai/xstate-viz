@@ -34,9 +34,12 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
     },
     EDITOR_ENCOUNTERED_ERROR: {
-      actions: sendAction((_, e) => ({ type: 'ERROR', message: e.message }), {
-        to: (ctx) => ctx.notifRef,
-      }),
+      actions: sendAction(
+        (_, e) => ({ type: 'BROADCAST', status: 'error', message: e.message }),
+        {
+          to: (ctx) => ctx.notifRef,
+        },
+      ),
     },
     UPDATE_MACHINE_PRESSED: {
       actions: 'onChange',

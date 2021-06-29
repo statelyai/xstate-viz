@@ -99,7 +99,8 @@ export const createSimulationMachine = (
             actions: [
               send(
                 (_, e) => ({
-                  type: 'ERROR',
+                  type: 'BROADCAST',
+                  status: 'error',
                   message: e.data.toString(),
                 }),
                 { to: (ctx) => ctx.notifRef },
