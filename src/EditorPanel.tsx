@@ -66,8 +66,7 @@ export const EditorPanel: React.FC<{
     clientState.matches('signed_out'),
     isUpdateMode,
   );
-  const isPersistPending =
-    clientState.matches('saving') || clientState.matches('updating');
+  const isPersistPending = clientState.hasTag('persisting');
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({

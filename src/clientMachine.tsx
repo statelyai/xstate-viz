@@ -204,6 +204,7 @@ export const clientMachine = createMachine<typeof clientModel>(
         },
       },
       saving: {
+        tags: ['persisting'],
         invoke: {
           src: 'saveMachines',
           onDone: {
@@ -226,6 +227,7 @@ export const clientMachine = createMachine<typeof clientModel>(
         },
       },
       updating: {
+        tags: ['persisting'],
         invoke: {
           src: 'updateMachines',
           onDone: {
