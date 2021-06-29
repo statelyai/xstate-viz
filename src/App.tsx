@@ -18,7 +18,7 @@ import { Login } from './Login';
 
 import { clientMachine } from './clientMachine';
 import { ClientProvider } from './clientContext';
-import { gistMachine } from './gistMachine';
+import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 
 function App() {
@@ -33,7 +33,9 @@ function App() {
     [machine],
   );
   const clientService = useInterpret(clientMachine).start();
-  const [gistState] = useMachine(gistMachine);
+  const [sourceState] = useMachine(sourceMachine);
+
+  console.log(sourceState);
 
   return (
     <SimulationProvider value={simService}>
@@ -58,14 +60,20 @@ function App() {
 
                 <TabPanels overflowY="auto">
                   <TabPanel padding={0}>
-                    {gistState.matches({ with_gist: 'loading_content' }) && (
-                      <SpinnerWithText text="Loading from gist" />
+                    {sourceState.matches({
+                      with_source: 'loading_content',
+                    }) && (
+                      <SpinnerWithText
+                        text={`Loading source from ${sourceState.context.sourceProvider}`}
+                      />
                     )}
-                    {!gistState.matches({ with_gist: 'loading_content' }) && (
+                    {!sourceState.matches({
+                      with_source: 'loading_content',
+                    }) && (
                       <EditorPanel
                         defaultValue={
-                          gistState.matches({ with_gist: 'gist_loaded' })
-                            ? (gistState.context.gistRawContent as string)
+                          sourceState.matches({ with_source: 'source_loaded' })
+                            ? (sourceState.context.sourceRawContent as string)
                             : '// some comment'
                         }
                         onChange={(machines) => {

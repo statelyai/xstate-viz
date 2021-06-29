@@ -22,7 +22,7 @@ const clientModel = createModel(
       SIGN_OUT: () => ({}),
       CHOOSE_PROVIDER: () => ({}),
       CANCEL_PROVIDER: () => ({}),
-      SAVE: (rawJSSource: string) => ({ rawJSSource }),
+      SAVE: (rawSource: string) => ({ rawSource }),
     },
   },
 );
@@ -46,9 +46,34 @@ const clientOptions: Partial<
     removeSaveSignal: () => {
       localStorage.removeItem('save');
     },
+    updateURLWithMachineID: (_, e: any) => {
+      // const queries = new URLSearchParams(window.location.search);
+      // queries.delete('gist');
+      // queries.set('id', e.data.id);
+      const newURL = new URL(window.location.href);
+      newURL.searchParams.delete('gist');
+      console.log(e);
+      newURL.searchParams.set('id', e.data.data.createSourceFile.id);
+      window.history.pushState({ path: newURL.href }, '', newURL.href);
+    },
   },
   services: {
-    saveMachines: () => Promise.resolve(),
+    saveMachines: (ctx, e: any) =>
+      fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'content-type': 'application/json',
+          authorization: 'Bearer ' + ctx.client.auth.session()?.access_token,
+        },
+        body: JSON.stringify({
+          query: `mutation {
+  createSourceFile(text: ${JSON.stringify(e.rawSource)}) {
+    id
+  }
+}`,
+        }),
+      }).then((resp) => resp.json()),
     checkUserSession: (ctx) =>
       new Promise((resolve, reject) => {
         const session = ctx.client.auth.session();
@@ -61,7 +86,6 @@ const clientOptions: Partial<
     signinUser: (ctx, e) =>
       ctx.client.auth.signIn({ provider: (e as any).provider }),
     signoutUser: (ctx) => {
-      console.log('signoutuser service');
       return ctx.client.auth.signOut();
     },
   },
@@ -74,8 +98,8 @@ export const clientMachine = createMachine<typeof clientModel>(
     context: clientModel.initialContext,
     invoke: {
       src: (ctx) => (sendBack) => {
-        ctx.client.auth.onAuthStateChange((_, session) => {
-          console.log({ session });
+        ctx.client.auth.onAuthStateChange((state, session) => {
+          console.log(state, { session });
           if (session) {
             sendBack({ type: 'SIGNED_IN', session });
           } else {
@@ -101,17 +125,17 @@ export const clientMachine = createMachine<typeof clientModel>(
             ),
           }),
         ],
-        always: 'checking_for_save',
+        always: 'signed_out',
       },
-      checking_for_save: {
-        always: [
-          {
-            target: 'saving',
-            cond: 'hasSaveSignal',
-          },
-          { target: 'signed_out' },
-        ],
-      },
+      // checking_for_save: {
+      //   always: [
+      //     {
+      //       target: 'saving',
+      //       cond: 'hasSaveSignal',
+      //     },
+      //     { target: 'signed_out' },
+      //   ],
+      // },
       signed_out: {
         on: {
           SAVE: {
@@ -170,7 +194,11 @@ export const clientMachine = createMachine<typeof clientModel>(
           src: 'saveMachines',
           onDone: {
             target: 'signed_in',
-            actions: ['saveCreatedMachine', 'removeSaveSignal'],
+            actions: [
+              'saveCreatedMachine',
+              'removeSaveSignal',
+              'updateURLWithMachineID',
+            ],
           },
           onError: {
             target: 'signed_in',

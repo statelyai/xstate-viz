@@ -99,7 +99,7 @@ export const EditorPanel: React.FC<{
           onClick={() => {
             clientService.send({
               type: 'SAVE',
-              rawJSSource: current.context.code,
+              rawSource: current.context.code,
             });
           }}
         >
