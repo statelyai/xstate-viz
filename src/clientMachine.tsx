@@ -22,7 +22,13 @@ const clientModel = createModel(
       SIGN_OUT: () => ({}),
       CHOOSE_PROVIDER: () => ({}),
       CANCEL_PROVIDER: () => ({}),
-      SAVE: (rawSource: string) => ({ rawSource }),
+      SAVE: (rawSource: string) => ({
+        rawSource,
+      }),
+      UPDATE: (id: string, rawSource: string) => ({
+        id,
+        rawSource,
+      }),
     },
   },
 );
@@ -33,35 +39,21 @@ const clientOptions: Partial<
     ModelEventsFrom<typeof clientModel>
   >
 > = {
-  guards: {
-    hasSaveSignal: () => !!localStorage.getItem('save'),
-  },
   actions: {
     saveCreatedMachine: assign({
       createdMachine: (_, e) => (e as any).data,
     }),
-    setSaveSignal: () => {
-      localStorage.setItem('save', '1');
-    },
-    removeSaveSignal: () => {
-      localStorage.removeItem('save');
-    },
     updateURLWithMachineID: (_, e: any) => {
-      // const queries = new URLSearchParams(window.location.search);
-      // queries.delete('gist');
-      // queries.set('id', e.data.id);
       const newURL = new URL(window.location.href);
       newURL.searchParams.delete('gist');
-      console.log(e);
-      newURL.searchParams.set('id', e.data.data.createSourceFile.id);
+      newURL.searchParams.set('id', e.data.id);
       window.history.pushState({ path: newURL.href }, '', newURL.href);
     },
   },
   services: {
-    saveMachines: (ctx, e: any) =>
-      fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
+    saveMachines: (ctx, e: any) => {
+      return fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
         method: 'POST',
-        credentials: 'same-origin',
         headers: {
           'content-type': 'application/json',
           authorization: 'Bearer ' + ctx.client.auth.session()?.access_token,
@@ -73,7 +65,30 @@ const clientOptions: Partial<
   }
 }`,
         }),
-      }).then((resp) => resp.json()),
+      })
+        .then((resp) => resp.json())
+        .then((data) => data.data.createSourceFile);
+    },
+    updateMachines: (ctx, e: any) => {
+      return fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: 'Bearer ' + ctx.client.auth.session()?.access_token,
+        },
+        body: JSON.stringify({
+          query: `mutation {
+  updateSourceFile(id: ${JSON.stringify(e.id)}, text: ${JSON.stringify(
+            e.rawSource,
+          )}) {
+    id
+  }
+}`,
+        }),
+      })
+        .then((resp) => resp.json())
+        .then((data) => data.data.updateSourceFile);
+    },
     checkUserSession: (ctx) =>
       new Promise((resolve, reject) => {
         const session = ctx.client.auth.session();
@@ -84,7 +99,10 @@ const clientOptions: Partial<
         }
       }),
     signinUser: (ctx, e) =>
-      ctx.client.auth.signIn({ provider: (e as any).provider }),
+      ctx.client.auth.signIn(
+        { provider: (e as any).provider },
+        { redirectTo: window.location.href },
+      ),
     signoutUser: (ctx) => {
       return ctx.client.auth.signOut();
     },
@@ -99,7 +117,6 @@ export const clientMachine = createMachine<typeof clientModel>(
     invoke: {
       src: (ctx) => (sendBack) => {
         ctx.client.auth.onAuthStateChange((state, session) => {
-          console.log(state, { session });
           if (session) {
             sendBack({ type: 'SIGNED_IN', session });
           } else {
@@ -127,20 +144,13 @@ export const clientMachine = createMachine<typeof clientModel>(
         ],
         always: 'signed_out',
       },
-      // checking_for_save: {
-      //   always: [
-      //     {
-      //       target: 'saving',
-      //       cond: 'hasSaveSignal',
-      //     },
-      //     { target: 'signed_out' },
-      //   ],
-      // },
       signed_out: {
         on: {
           SAVE: {
             target: '.choosing_provider',
-            actions: ['setSaveSignal'],
+          },
+          UPDATE: {
+            target: '.choosing_provider',
           },
           CHOOSE_PROVIDER: '.choosing_provider',
         },
@@ -152,7 +162,6 @@ export const clientMachine = createMachine<typeof clientModel>(
               SIGN_IN: '#client.signing_in',
               CANCEL_PROVIDER: {
                 target: 'idle',
-                actions: ['removeSaveSignal'],
               },
             },
           },
@@ -162,6 +171,7 @@ export const clientMachine = createMachine<typeof clientModel>(
         on: {
           SIGN_OUT: 'signing_out',
           SAVE: 'saving',
+          UPDATE: 'updating',
         },
       },
       signing_in: {
@@ -194,11 +204,19 @@ export const clientMachine = createMachine<typeof clientModel>(
           src: 'saveMachines',
           onDone: {
             target: 'signed_in',
-            actions: [
-              'saveCreatedMachine',
-              'removeSaveSignal',
-              'updateURLWithMachineID',
-            ],
+            actions: ['saveCreatedMachine', 'updateURLWithMachineID'],
+          },
+          onError: {
+            target: 'signed_in',
+            actions: ['showError'],
+          },
+        },
+      },
+      updating: {
+        invoke: {
+          src: 'updateMachines',
+          onDone: {
+            target: 'signed_in',
           },
           onError: {
             target: 'signed_in',

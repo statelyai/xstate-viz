@@ -95,7 +95,6 @@ export const sourceMachine = createMachine(
     services: {
       loadSourceContent: (ctx) => {
         let sourceFetcher: () => Promise<any>;
-        console.log(ctx);
         switch (ctx.sourceProvider) {
           case 'gist':
             sourceFetcher = () =>
@@ -117,7 +116,6 @@ export const sourceMachine = createMachine(
             sourceFetcher = () =>
               fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
                 method: 'POST',
-                credentials: 'same-origin',
                 headers: {
                   'content-type': 'application/json',
                 },
@@ -131,7 +129,12 @@ export const sourceMachine = createMachine(
                 }),
               })
                 .then((resp) => resp.json())
-                .then((data) => data.data.getSourceFile.text);
+                .then((data) => {
+                  if (data.data.getSourceFile) {
+                    return data.data.getSourceFile.text;
+                  }
+                  return Promise.reject(Error('Source not found in Registry'));
+                });
             break;
         }
 

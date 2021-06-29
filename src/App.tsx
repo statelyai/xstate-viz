@@ -33,9 +33,18 @@ function App() {
     [machine],
   );
   const clientService = useInterpret(clientMachine).start();
+  const createdMachine = useSelector(
+    clientService,
+    (state) => state.context.createdMachine,
+  );
   const [sourceState] = useMachine(sourceMachine);
 
-  console.log(sourceState);
+  const isUpdateMode =
+    sourceState.context.sourceProvider === 'registry' || !!createdMachine;
+  const sourceID =
+    sourceState.context.sourceProvider === 'registry'
+      ? sourceState.context.sourceID
+      : createdMachine?.id;
 
   return (
     <SimulationProvider value={simService}>
@@ -76,6 +85,21 @@ function App() {
                             ? (sourceState.context.sourceRawContent as string)
                             : '// some comment'
                         }
+                        isUpdateMode={isUpdateMode}
+                        onSave={(code: string) => {
+                          if (isUpdateMode) {
+                            clientService.send({
+                              type: 'UPDATE',
+                              id: sourceID,
+                              rawSource: code,
+                            });
+                          } else {
+                            clientService.send({
+                              type: 'SAVE',
+                              rawSource: code,
+                            });
+                          }
+                        }}
                         onChange={(machines) => {
                           simService.send({
                             type: 'MACHINES.VERIFY',

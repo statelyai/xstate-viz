@@ -1,5 +1,5 @@
 import { Button, HStack } from '@chakra-ui/react';
-import { useMachine } from '@xstate/react';
+import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom } from 'xstate';
 import { assign } from 'xstate';
@@ -47,11 +47,25 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   },
 });
 
+const getPersistText = (isSignedOut: boolean, isUpdateMode: boolean) => {
+  if (isSignedOut) {
+    return 'Login to save';
+  }
+  return isUpdateMode ? 'Update' : 'Save';
+};
+
 export const EditorPanel: React.FC<{
   defaultValue: string;
+  isUpdateMode: boolean;
+  onSave: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
-}> = ({ defaultValue, onChange }) => {
+}> = ({ defaultValue, isUpdateMode, onSave, onChange }) => {
   const clientService = useClient();
+  const clientState = useSelector(clientService, (state) => state);
+  const persistText = getPersistText(
+    clientState.matches('signed_out'),
+    isUpdateMode,
+  );
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
@@ -97,13 +111,10 @@ export const EditorPanel: React.FC<{
         </Button>
         <Button
           onClick={() => {
-            clientService.send({
-              type: 'SAVE',
-              rawSource: current.context.code,
-            });
+            onSave(current.context.code);
           }}
         >
-          Save/Update
+          {persistText}
         </Button>
       </HStack>
     </div>
