@@ -75,3 +75,15 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
 //     ...children.map((child) => getAllEdges(child)),
 //   ]);
 // }
+
+export const gQuery = (query: string, accessToken?: string) =>
+  fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(accessToken && { authorization: 'Bearer ' + accessToken }),
+    },
+    body: JSON.stringify({
+      query,
+    }),
+  }).then((resp) => resp.json());

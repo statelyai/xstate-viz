@@ -1,6 +1,7 @@
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { notifMachine } from './notificationMachine';
+import { gQuery } from './utils';
 
 type SourceProvider = 'gist' | 'registry';
 
@@ -114,27 +115,16 @@ export const sourceMachine = createMachine(
             break;
           case 'registry':
             sourceFetcher = () =>
-              fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
-                method: 'POST',
-                headers: {
-                  'content-type': 'application/json',
-                },
-                body: JSON.stringify({
-                  query: `query {
-  getSourceFile(id: ${JSON.stringify(ctx.sourceID)}) {
-    id,
-    text
-  }
-}`,
-                }),
-              })
-                .then((resp) => resp.json())
-                .then((data) => {
-                  if (data.data.getSourceFile) {
-                    return data.data.getSourceFile.text;
-                  }
-                  return Promise.reject(Error('Source not found in Registry'));
-                });
+              gQuery(
+                `query {getSourceFile(id: ${JSON.stringify(
+                  ctx.sourceID,
+                )}) {id,text}}`,
+              ).then((data) => {
+                if (data.data.getSourceFile) {
+                  return data.data.getSourceFile.text;
+                }
+                return Promise.reject(Error('Source not found in Registry'));
+              });
             break;
         }
 

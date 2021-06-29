@@ -7,6 +7,7 @@ import {
 import { assign, MachineOptions } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel, ModelEventsFrom } from 'xstate/lib/model';
+import { gQuery } from './utils';
 
 const clientModel = createModel(
   {
@@ -51,43 +52,20 @@ const clientOptions: Partial<
     },
   },
   services: {
-    saveMachines: (ctx, e: any) => {
-      return fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: 'Bearer ' + ctx.client.auth.session()?.access_token,
-        },
-        body: JSON.stringify({
-          query: `mutation {
-  createSourceFile(text: ${JSON.stringify(e.rawSource)}) {
-    id
-  }
-}`,
-        }),
-      })
-        .then((resp) => resp.json())
-        .then((data) => data.data.createSourceFile);
-    },
+    saveMachines: (ctx, e: any) =>
+      gQuery(
+        `mutation {createSourceFile(text: ${JSON.stringify(
+          e.rawSource,
+        )}) {id}}`,
+        ctx.client.auth.session()?.access_token!,
+      ).then((data) => data.data.createSourceFile),
     updateMachines: (ctx, e: any) => {
-      return fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: 'Bearer ' + ctx.client.auth.session()?.access_token,
-        },
-        body: JSON.stringify({
-          query: `mutation {
-  updateSourceFile(id: ${JSON.stringify(e.id)}, text: ${JSON.stringify(
-            e.rawSource,
-          )}) {
-    id
-  }
-}`,
-        }),
-      })
-        .then((resp) => resp.json())
-        .then((data) => data.data.updateSourceFile);
+      return gQuery(
+        `mutation {updateSourceFile(id: ${JSON.stringify(
+          e.id,
+        )}, text: ${JSON.stringify(e.rawSource)}) {id}}`,
+        ctx.client.auth.session()?.access_token!,
+      ).then((data) => data.data.updateSourceFile);
     },
     checkUserSession: (ctx) =>
       new Promise((resolve, reject) => {
