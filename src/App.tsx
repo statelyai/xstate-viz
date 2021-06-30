@@ -32,7 +32,7 @@ function App() {
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
-  const clientService = useInterpret(clientMachine).start();
+  const clientService = useInterpret(clientMachine);
   const createdMachine = useSelector(
     clientService,
     (state) => state.context.createdMachine,
