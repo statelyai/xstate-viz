@@ -1,4 +1,4 @@
-import { createMachine, sendParent } from 'xstate';
+import { createMachine, sendParent, assign } from 'xstate';
 
 export const testInvokedMachine = createMachine({
   id: 'm',
@@ -71,6 +71,13 @@ export const testMachine = createMachine<{ count: number }>({
         ],
         EVENT: {
           target: 'final',
+          actions: [
+            'string action',
+            function namedFnAction() {
+              /* ... */
+            },
+            assign({ count: 0 }),
+          ],
           cond: function somethingIsTrue() {
             return true;
           },
