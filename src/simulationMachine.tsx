@@ -147,9 +147,32 @@ export const createSimulationMachine = (
               }),
             ],
           },
-          'MACHINES.VERIFY': {
-            target: 'verifying',
-          },
+          'MACHINES.VERIFY': [
+            {
+              cond: (_, e) => {
+                console.log(e);
+                return e.machines.length > 0;
+              },
+              target: 'active',
+              internal: false,
+              actions: [
+                simModel.assign((_, e) => ({
+                  machineIndex: e.machines.length - 1,
+                  machines: e.machines,
+                  services: {},
+                })),
+              ],
+            },
+            {
+              actions: send(
+                (_, e) => ({
+                  type: 'ERROR',
+                  message: 'Invalid code for machines',
+                }),
+                { to: (ctx) => ctx.notifRef },
+              ),
+            },
+          ],
           'MACHINES.RESET': {
             target: 'active',
             internal: false,
