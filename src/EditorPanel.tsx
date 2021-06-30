@@ -1,7 +1,7 @@
 import { Button, HStack } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom } from 'xstate';
+import { ActorRefFrom, send } from 'xstate';
 import { assign } from 'xstate';
 import { createMachine, send as sendAction, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
@@ -15,6 +15,7 @@ import type { AnyStateMachine } from './types';
 const editorPanelModel = createModel(
   {
     code: '',
+    immediateUpdate: false,
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
   },
   {
@@ -28,7 +29,14 @@ const editorPanelModel = createModel(
 
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
-  entry: assign({ notifRef: () => spawn(notifMachine) }),
+  entry: [
+    assign({ notifRef: () => spawn(notifMachine) }),
+    send((ctx) =>
+      ctx.immediateUpdate
+        ? { type: 'UPDATE_MACHINE_PRESSED' }
+        : { type: 'NOOP' },
+    ),
+  ],
   on: {
     EDITOR_CHANGED_VALUE: {
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
@@ -57,9 +65,10 @@ const getPersistText = (isSignedOut: boolean, isUpdateMode: boolean) => {
 export const EditorPanel: React.FC<{
   defaultValue: string;
   isUpdateMode: boolean;
+  immediateUpdate: boolean;
   onSave: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
-}> = ({ defaultValue, isUpdateMode, onSave, onChange }) => {
+}> = ({ defaultValue, isUpdateMode, immediateUpdate, onSave, onChange }) => {
   const clientService = useClient();
   const clientState = useSelector(clientService, (state) => state);
   const persistText = getPersistText(
@@ -71,6 +80,7 @@ export const EditorPanel: React.FC<{
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
       ...editorPanelModel.initialContext,
+      immediateUpdate,
       code: defaultValue,
     }),
     {

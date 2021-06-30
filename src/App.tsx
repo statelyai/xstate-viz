@@ -45,6 +45,10 @@ function App() {
     sourceState.context.sourceProvider === 'registry'
       ? sourceState.context.sourceID
       : createdMachine?.id;
+  const isSourceLoaded = useMemo(
+    () => sourceState.matches({ with_source: 'source_loaded' }),
+    [sourceState],
+  );
 
   return (
     <SimulationProvider value={simService}>
@@ -80,8 +84,9 @@ function App() {
                       with_source: 'loading_content',
                     }) && (
                       <EditorPanel
+                        immediateUpdate={isSourceLoaded}
                         defaultValue={
-                          sourceState.matches({ with_source: 'source_loaded' })
+                          isSourceLoaded
                             ? (sourceState.context.sourceRawContent as string)
                             : '// some comment'
                         }
