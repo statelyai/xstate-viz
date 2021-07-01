@@ -6,13 +6,13 @@ import { gQuery } from './utils';
 type SourceProvider = 'gist' | 'registry';
 
 const sourceModel = createModel({
-  sourceID: null,
-  sourceProvider: null! as SourceProvider,
-  sourceRawContent: null! as string,
+  sourceID: null as string | null,
+  sourceProvider: null as SourceProvider | null,
+  sourceRawContent: null as string | null,
   notifRef: null! as ActorRefFrom<typeof notifMachine>,
 });
 
-export const sourceMachine = createMachine(
+export const sourceMachine = createMachine<typeof sourceModel>(
   {
     initial: 'checking_url',
     context: sourceModel.initialContext,
@@ -44,7 +44,7 @@ export const sourceMachine = createMachine(
                   status: 'success',
                   message: `Source loaded successfully from ${ctx.sourceProvider}`,
                 }),
-                { to: (ctx: any) => ctx.notifRef },
+                { to: (ctx) => ctx.notifRef },
               ),
             ],
           },
@@ -69,9 +69,7 @@ export const sourceMachine = createMachine(
   },
   {
     actions: {
-      // TODO: find why sourceModel.assign has typing issues
-      // @ts-ignore
-      parseQueries: assign(() => {
+      parseQueries: assign((ctx) => {
         const queries = new URLSearchParams(window.location.search);
         if (queries.get('gist')) {
           return {
@@ -87,48 +85,50 @@ export const sourceMachine = createMachine(
         }
         return {};
       }),
-      //   @ts-ignore
-      saveSourceContent: assign({ sourceRawContent: (_, e: any) => e.data }),
+      saveSourceContent: assign({
+        sourceRawContent: (_, e) => {
+          if (!('data' in e)) {
+            throw new Error('`data` not available on the event');
+          }
+
+          return (e as any).data;
+        },
+      }),
     },
     guards: {
       isSourceIDAvailable: (ctx) => !!ctx.sourceID,
     },
     services: {
       loadSourceContent: (ctx) => {
-        let sourceFetcher: () => Promise<any>;
         switch (ctx.sourceProvider) {
           case 'gist':
-            sourceFetcher = () =>
-              fetch('https://api.github.com/gists/' + ctx.sourceID)
-                .then((resp) => {
-                  //   fetch doesn't treat 404 as errors by default
-                  if (resp.status === 404) {
-                    return Promise.reject(Error('Gist not found'));
-                  }
-                  return resp.json();
-                })
-                .then((data) => {
-                  return fetch(data.files['machine.js'].raw_url).then((r) =>
-                    r.text(),
-                  );
-                });
-            break;
-          case 'registry':
-            sourceFetcher = () =>
-              gQuery(
-                `query {getSourceFile(id: ${JSON.stringify(
-                  ctx.sourceID,
-                )}) {id,text}}`,
-              ).then((data) => {
-                if (data.data.getSourceFile) {
-                  return data.data.getSourceFile.text;
+            return fetch('https://api.github.com/gists/' + ctx.sourceID)
+              .then((resp) => {
+                //   fetch doesn't treat 404 as errors by default
+                if (resp.status === 404) {
+                  return Promise.reject(Error('Gist not found'));
                 }
-                return Promise.reject(Error('Source not found in Registry'));
+                return resp.json();
+              })
+              .then((data) => {
+                return fetch(data.files['machine.js'].raw_url).then((r) =>
+                  r.text(),
+                );
               });
-            break;
+          case 'registry':
+            return gQuery(
+              `query {getSourceFile(id: ${JSON.stringify(
+                ctx.sourceID,
+              )}) {id,text}}`,
+            ).then((data) => {
+              if (data.data.getSourceFile) {
+                return data.data.getSourceFile.text;
+              }
+              return Promise.reject(Error('Source not found in Registry'));
+            });
+          default:
+            throw new Error('It should be impossible to reach this.');
         }
-
-        return sourceFetcher();
       },
     },
   },
