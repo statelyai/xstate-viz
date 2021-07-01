@@ -49,10 +49,10 @@ export const TransitionViz: React.FC<{
         position: 'absolute',
         ...(position && { left: `${position.x}px`, top: `${position.y}px` }),
       }}
+      ref={ref}
     >
       <button
         data-viz="transition-label"
-        ref={ref}
         onMouseEnter={() => {
           service.send({
             type: 'EVENT.PREVIEW',
@@ -83,6 +83,17 @@ export const TransitionViz: React.FC<{
           </span>
         )}
       </button>
+      {definition.actions.length > 0 && (
+        <div data-viz="transition-actions">
+          {definition.actions.map((action) => {
+            return (
+              <div data-viz="action" data-viz-action="do" key={action.type}>
+                <span data-viz="action-text">{action.type}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
