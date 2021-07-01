@@ -70,7 +70,6 @@ function App() {
                 display="grid"
                 gridTemplateRows="auto 1fr"
                 height="100vh"
-                
               >
                 <TabList>
                   <Tab>Code</Tab>
@@ -136,7 +135,7 @@ function App() {
             </Box>
           </ChakraProvider>
         </ClientProvider>
-      </main>
+      </Box>
     </SimulationProvider>
   );
 }
