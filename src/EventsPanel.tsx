@@ -69,19 +69,19 @@ const EventRow: React.FC<{ event: SimEvent; filter: string }> = ({
   event,
   filter,
 }) => {
-  const visibility = event.name.toUpperCase().includes(filter.toUpperCase());
+  const matchesFilter = event.name.toUpperCase().includes(filter.toUpperCase());
   const [show, setShow] = useState(false);
 
   return (
     <>
-      <Tr hidden={!visibility || undefined}>
+      <Tr hidden={!matchesFilter || undefined}>
         <Td onClick={() => setShow(!show)}>{event.name}</Td>
         <Td color="gray.500" textAlign="right">
           <EventConnection event={event} />
         </Td>
         <Td color="gray.500">{format(event.timestamp, 'hh:mm:ss')}</Td>
       </Tr>
-      {visibility && show ? (
+      {matchesFilter && show ? (
         <Tr>
           <Td colSpan={3}>
             <ReactJson src={event.data} theme="monokai" />
