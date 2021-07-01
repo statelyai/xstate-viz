@@ -1,6 +1,5 @@
 import Editor from '@monaco-editor/react';
-import type { editor } from 'monaco-editor';
-import React, { useRef } from 'react';
+import { SpinnerWithText } from './SpinnerWithText';
 
 interface EditorWithXStateImportsProps {
   onChange?: (text: string) => void;
@@ -17,6 +16,7 @@ export const EditorWithXStateImports = (
       defaultValue={props.defaultValue}
       theme="vs-dark"
       className="vscode-editor"
+      loading={<SpinnerWithText text="Preparing the editor" />}
       onChange={(text) => {
         if (text) {
           props.onChange?.(text);

@@ -8,3 +8,5 @@ export type StateFrom<TMachine extends AnyStateMachine> =
     : never;
 
 export type AnyState = State<any, any>;
+
+export type SourceProvider = 'gist' | 'registry';

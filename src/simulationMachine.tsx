@@ -99,6 +99,7 @@ export const createSimulationMachine = (
                 interpret(machines[0]).start().stop();
                 resolve(machines);
               } catch (err) {
+                console.error(err);
                 reject(err);
               }
             }),
@@ -116,7 +117,8 @@ export const createSimulationMachine = (
             actions: [
               send(
                 (_, e) => ({
-                  type: 'ERROR',
+                  type: 'BROADCAST',
+                  status: 'error',
                   message: e.data.toString(),
                 }),
                 { to: (ctx) => ctx.notifRef },
