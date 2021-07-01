@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactJson from 'react-json-view';
 import { useSelector } from '@xstate/react';
-import { State, StateFrom } from 'xstate';
+import { StateFrom } from 'xstate';
 import {
   Accordion,
   AccordionItem,
@@ -12,6 +12,18 @@ import {
 import { useSimulation } from './SimulationContext';
 import { createSimulationMachine } from './simulationMachine';
 
+const JSONView: React.FC<{ src: object; name: string }> = ({ src, name }) => (
+  <ReactJson
+    src={src}
+    name={name}
+    theme="monokai"
+    collapsed={1}
+    onEdit={false}
+    displayDataTypes={false}
+    displayObjectSize={false}
+  />
+);
+
 const selectState = (
   state: StateFrom<ReturnType<typeof createSimulationMachine>>,
 ) =>
@@ -20,15 +32,17 @@ const selectState = (
     : undefined; // TODO: select() method on model
 
 const ActorState: React.FC<{ state: any }> = ({ state }) => {
+  const value = state?.value;
+  const context = state?.context;
   return (
-    <ReactJson
-      src={state}
-      theme="monokai"
-      collapsed={1}
-      onEdit={false}
-      displayDataTypes={false}
-      displayObjectSize={false}
-    />
+    <>
+      <JSONView
+        src={typeof value === 'string' ? { _: value } : value}
+        name="Value"
+      />
+      <JSONView src={context} name="Context" />
+      <JSONView src={state} name="State" />
+    </>
   );
 };
 
