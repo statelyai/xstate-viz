@@ -1,4 +1,4 @@
-import { createStandaloneToast } from '@chakra-ui/react';
+import { createStandaloneToast, UseToastOptions } from '@chakra-ui/react';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 
@@ -8,7 +8,10 @@ const notifModel = createModel(
   {},
   {
     events: {
-      ERROR: (message: string) => ({ message }),
+      BROADCAST: (message: string, status: UseToastOptions['status']) => ({
+        message,
+        status,
+      }),
     },
   },
 );
@@ -16,14 +19,14 @@ export const notifMachine = createMachine<typeof notifModel>({
   initial: 'running',
   context: {},
   on: {
-    ERROR: {
+    BROADCAST: {
       actions: [
         (_, e) => {
           if (!toast.isActive(e.message)) {
             toast({
               id: e.message,
-              status: 'error',
-              title: 'Error',
+              status: e.status,
+              title: e.status?.toUpperCase(),
               description: e.message,
               isClosable: true,
               position: 'bottom-right',
@@ -34,6 +37,6 @@ export const notifMachine = createMachine<typeof notifModel>({
     },
   },
   states: {
-    running: { entry: 'notif is running' },
+    running: {},
   },
 });
