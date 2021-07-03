@@ -115,13 +115,6 @@
   &:empty {
     display: none;
   }
-  &:before {
-    content: attr(data-viz-actions) ' /';
-    font-size: var(--viz-font-size-sm);
-    text-transform: uppercase;
-    font-weight: bold;
-    opacity: 0.5;
-  }
 }
 
 [data-viz='stateNode-invocations'] {

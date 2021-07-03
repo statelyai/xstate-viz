@@ -10,9 +10,16 @@
 
 [data-viz='transition'] {
   --viz-transition-color: gray;
+  display: inline-flex;
+  flex-direction: row;
+  gap: 0.5rem;
 
   &[data-viz-potential] {
     --viz-transition-color: var(--viz-color-active);
+  }
+
+  > [data-viz='transition-label'] {
+    align-self: center;
   }
 }
 
