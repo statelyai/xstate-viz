@@ -1,15 +1,42 @@
-import { useSelector } from '@xstate/react';
+import { useActor, useSelector } from '@xstate/react';
 import React, { useEffect, useRef } from 'react';
 import type { Guard } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
-import { EventTypeViz } from './EventTypeViz';
+import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
+import { useMemo } from 'react';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
+};
+
+export type DelayedTransitionMetadata =
+  | { status: 'NOT_DELAYED' }
+  | { status: 'DELAYED_INVALID' }
+  | { status: 'DELAYED_VALID'; delay: number; delayMs: string };
+const getDelayFromEventType = (
+  eventType: string,
+): DelayedTransitionMetadata => {
+  const isDelayedEvent = eventType.startsWith('xstate.after');
+
+  if (!isDelayedEvent) return { status: 'NOT_DELAYED' };
+
+  const DELAYED_EVENT_REGEXT = /^xstate\.after\((.*)\)#.*$/;
+  // Validate the delay duration
+  const match = eventType.match(DELAYED_EVENT_REGEXT);
+
+  if (!match) return { status: 'DELAYED_INVALID' };
+
+  const [, delay] = match;
+
+  return {
+    status: 'DELAYED_VALID',
+    delay: +delay,
+    delayMs: toDelayString(delay),
+  };
 };
 
 export const TransitionViz: React.FC<{
@@ -22,6 +49,9 @@ export const TransitionViz: React.FC<{
   const state = useSelector(service, (s) =>
     s.context.services[s.context.service!]?.getSnapshot(),
   );
+  const delay = useMemo(() => getDelayFromEventType(definition.eventType), [
+    definition.eventType,
+  ]);
 
   const ref = useRef<any>(null);
   useEffect(() => {
@@ -53,6 +83,16 @@ export const TransitionViz: React.FC<{
     >
       <button
         data-viz="transition-label"
+        disabled={
+          delay.status === 'DELAYED_INVALID' ||
+          !state.nextEvents.includes(definition.eventType)
+        }
+        style={
+          {
+            '--delay': delay.status === 'DELAYED_VALID' && delay.delay,
+          } as React.CSSProperties
+        }
+        data-is-delayed={delay.status !== 'NOT_DELAYED'}
         onMouseEnter={() => {
           service.send({
             type: 'EVENT.PREVIEW',
@@ -74,8 +114,11 @@ export const TransitionViz: React.FC<{
           });
         }}
       >
-        <span data-viz="transition-event">
-          <EventTypeViz eventType={definition.eventType} />
+        <span
+          data-viz="transition-event"
+          data-is-delayed={delay.status !== 'NOT_DELAYED'}
+        >
+          <EventTypeViz eventType={definition.eventType} delay={delay} />
         </span>
         {definition.cond && (
           <span data-viz="transition-guard">
