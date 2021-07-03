@@ -65,16 +65,13 @@ export const createSimulationMachine = (
           sendBack(simModel.events['SERVICE.REGISTER'](service));
 
           service.onStop(() => {
-            console.log(service);
-            const isServiceStoppedDueToDelayedEvent =
-              service.state.done &&
-              service.state.event?.type.startsWith('xstate.after');
+            const isServiceStoppedDueToReachingFinalState = service.state.done;
 
             /**
-             * Keep service alive if it's reached final state because of a delayed event (timer)
+             * Keep service alive if it's reached final state (wasn't stopped abruptly)
              * This will keep service.machine visualized on the final state in the canvas
              */
-            if (!isServiceStoppedDueToDelayedEvent) {
+            if (!isServiceStoppedDueToReachingFinalState) {
               sendBack(
                 simModel.events['SERVICE.UNREGISTER'](service.sessionId),
               );
