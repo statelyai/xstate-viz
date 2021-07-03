@@ -46,7 +46,7 @@
   }
 }
 
-[data-is-delayed]:not(:disabled):before {
+[data-viz='transition-label'][data-is-delayed]:not(:disabled):before {
   content: '';
   position: absolute;
   top: 0px;
