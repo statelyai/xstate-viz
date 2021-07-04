@@ -52,11 +52,18 @@ function App() {
 
   return (
     <SimulationProvider value={simService}>
-      <main data-viz="app" data-viz-theme="dark">
+      <Box
+        data-viz="app"
+        data-viz-theme="dark"
+        as="main"
+        display="grid"
+        gridTemplateColumns="1fr minmax(50%, auto)"
+        gridTemplateAreas="'canvas tabs'"
+      >
         {digraph && <CanvasPanel digraph={digraph} />}
         <ClientProvider value={clientService}>
           <ChakraProvider theme={theme}>
-            <Box>
+            <Box gridArea="tabs">
               <Login />
               <Tabs
                 bg="gray.800"
@@ -71,7 +78,7 @@ function App() {
                   <Tab>Actors</Tab>
                 </TabList>
 
-                <TabPanels overflowY="auto">
+                <TabPanels overflow="hidden">
                   <TabPanel padding={0}>
                     {sourceState.matches({
                       with_source: 'loading_content',
@@ -117,7 +124,7 @@ function App() {
                   <TabPanel>
                     <StatePanel />
                   </TabPanel>
-                  <TabPanel>
+                  <TabPanel overflow="hidden" height="100%">
                     <EventsPanel />
                   </TabPanel>
                   <TabPanel>
@@ -128,7 +135,7 @@ function App() {
             </Box>
           </ChakraProvider>
         </ClientProvider>
-      </main>
+      </Box>
     </SimulationProvider>
   );
 }
