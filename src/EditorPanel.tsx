@@ -14,7 +14,7 @@ import type { AnyStateMachine } from './types';
 import { Monaco } from '@monaco-editor/react';
 
 function removeExportsImports(code: string) {
-  return code.replace(/^(export default|export|import)/gm, '');
+  return code.replace(/^(export default|export|import(.+)from(.+))/gm, '');
 }
 
 const editorPanelModel = createModel(
