@@ -13,6 +13,10 @@ import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
 import { Monaco } from '@monaco-editor/react';
 
+function removeExportsImports(code: string) {
+  return code.replace(/^(export default|export|import)/gm, '');
+}
+
 const editorPanelModel = createModel(
   {
     code: '',
@@ -55,7 +59,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
             .then((result) => result.outputFiles[0].text) as Promise<string>;
 
           return compiledJSPromise.then((js) => {
-            const machines = parseMachines(js);
+            const machines = parseMachines(removeExportsImports(js));
             return machines;
           });
         },
