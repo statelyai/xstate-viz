@@ -1,6 +1,6 @@
-import { useActor, useSelector } from '@xstate/react';
+import { useSelector } from '@xstate/react';
 import React, { useEffect, useRef } from 'react';
-import type { Guard } from 'xstate';
+import type { AnyStateNodeDefinition, Guard } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { deleteRect, setRect } from './getRect';
@@ -8,6 +8,7 @@ import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
 import { useMemo } from 'react';
+import { AnyStateMachine } from './types';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -19,6 +20,9 @@ export type DelayedTransitionMetadata =
   | { status: 'DELAYED_VALID'; delay: number; delayString: string };
 const getDelayFromEventType = (
   eventType: string,
+  delayOptions: AnyStateMachine['options']['delays'],
+  context: AnyStateNodeDefinition['context'],
+  event: any,
 ): DelayedTransitionMetadata => {
   const isDelayedEvent = eventType.startsWith('xstate.after');
 
@@ -30,14 +34,33 @@ const getDelayFromEventType = (
 
   if (!match) return { status: 'DELAYED_INVALID' };
 
-  const [, delay] = match;
+  let [, delay] = match;
+
+  // normal number or stringified number delays
+  let finalDelay = +delay;
+
+  // if configurable delay, get it from the machine options
+  if (Number.isNaN(finalDelay)) {
+    const delayExpr = delayOptions[delay];
+    // if configured delay is a fixed number value
+    if (typeof delayExpr === 'number') {
+      finalDelay = delayExpr;
+    } else {
+      // if configured delay is getter function
+      // @ts-expect-error
+      finalDelay = delayExpr(context, event);
+    }
+  }
 
   return {
     status: 'DELAYED_VALID',
-    delay: +delay,
+    delay: finalDelay,
     delayString: toDelayString(delay),
   };
 };
+
+const delayOptionsSelector = (state: AnyStateNodeDefinition) =>
+  state.context.services[state.context.service!]?.machine.options.delays;
 
 export const TransitionViz: React.FC<{
   edge: DirectedGraphEdge;
@@ -49,9 +72,17 @@ export const TransitionViz: React.FC<{
   const state = useSelector(service, (s) =>
     s.context.services[s.context.service!]?.getSnapshot(),
   );
-  const delay = useMemo(() => getDelayFromEventType(definition.eventType), [
-    definition.eventType,
-  ]);
+  const delayOptions = useSelector(service, delayOptionsSelector);
+  const delay = useMemo(
+    () =>
+      getDelayFromEventType(
+        definition.eventType,
+        delayOptions,
+        state?.context,
+        state?.event,
+      ),
+    [definition.eventType, delayOptions, state],
+  );
 
   const ref = useRef<any>(null);
   useEffect(() => {

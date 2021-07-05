@@ -2,6 +2,7 @@ import React from 'react';
 import type { InvokeDefinition } from 'xstate/lib/types';
 import './EventTypeViz.scss';
 import type { DelayedTransitionMetadata } from './TransitionViz';
+import { AnyStateMachine } from './types';
 
 export function toDelayString(delay: string | number): string {
   if (typeof delay === 'number' || !isNaN(+delay)) {
