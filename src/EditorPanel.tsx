@@ -157,7 +157,7 @@ export const EditorPanel: React.FC<{
     <div data-panel="editor">
       <EditorWithXStateImports
         defaultValue={defaultValue}
-        isBusy={current.matches('compiling')}
+        readonly={current.matches('compiling')}
         onMount={(_, monaco) => {
           send({ type: 'EDITOR_READY', editorRef: monaco });
         }}

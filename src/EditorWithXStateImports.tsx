@@ -4,7 +4,7 @@ import { SpinnerWithText } from './SpinnerWithText';
 interface EditorWithXStateImportsProps {
   onChange?: (text: string) => void;
   onMount?: OnMount;
-  isBusy?: boolean;
+  readonly?: boolean;
   defaultValue?: string;
 }
 
@@ -19,7 +19,7 @@ export const EditorWithXStateImports = (
       defaultValue={props.defaultValue}
       theme="vs-dark"
       className="vscode-editor"
-      options={{ readOnly: props.isBusy }}
+      options={{ readOnly: props.readonly }}
       loading={<SpinnerWithText text="Preparing the editor" />}
       onChange={(text) => {
         if (text) {
