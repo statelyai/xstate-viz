@@ -17,9 +17,10 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
+import { ServiceRef } from './types';
 
 const selectServices = (state: any) =>
-  state.context.services as Record<string, AnyInterpreter>; // TODO: select() method on model
+  state.context.services as Record<string, ServiceRef>; // TODO: select() method on model
 
 const ActorDetails: React.FC<{ state: any; title: string }> = ({
   state,
@@ -97,7 +98,7 @@ export const ActorsPanel: React.FC = () => {
                   simActor.send({ type: 'SERVICE.FOCUS', sessionId });
                 }}
               >
-                {service.id}
+                {service.id ?? service.machine.id}
               </Link>{' '}
               ({sessionId})
             </Text>

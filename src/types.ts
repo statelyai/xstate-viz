@@ -1,4 +1,4 @@
-import type { State, StateMachine } from 'xstate';
+import type { ActorRef, State, StateMachine } from 'xstate';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
@@ -10,3 +10,8 @@ export type StateFrom<TMachine extends AnyStateMachine> =
 export type AnyState = State<any, any>;
 
 export type SourceProvider = 'gist' | 'registry';
+
+export interface ServiceRef extends ActorRef<any, AnyState> {
+  sessionId: string;
+  machine: AnyStateMachine;
+}

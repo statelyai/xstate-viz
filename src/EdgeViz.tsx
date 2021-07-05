@@ -33,7 +33,7 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
   const service = useSimulation();
   const isActive = useSelector(service, (state) => {
     return state.context.services[state.context.service!]
-      ?.getSnapshot()
+      ?.getSnapshot()!
       .configuration.includes(edge.source);
   });
 

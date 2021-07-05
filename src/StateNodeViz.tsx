@@ -61,7 +61,12 @@ export const StateNodeViz: React.FC<{
     if (!state.context.previewEvent) {
       return undefined;
     }
-    return simMachine?.transition(simState, state.context.previewEvent);
+    try {
+      return simMachine?.transition(simState, state.context.previewEvent);
+    } catch (e) {
+      console.error(e);
+      return undefined;
+    }
   }, [state, simState, simMachine]);
 
   useEffect(() => {

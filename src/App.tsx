@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import './Graph';
-import { testMachine } from './testMachine';
 import { toDirectedGraph } from './directedGraph';
 import { CanvasPanel } from './CanvasPanel';
 import { createSimulationMachine } from './simulationMachine';
@@ -22,7 +21,7 @@ import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 
 function App() {
-  const simService = useInterpret(createSimulationMachine(testMachine));
+  const simService = useInterpret(createSimulationMachine());
   const machine = useSelector(simService, (state) => {
     return state.context.service
       ? state.context.services[state.context.service!]?.machine
