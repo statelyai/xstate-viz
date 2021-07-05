@@ -1,7 +1,7 @@
 import React from 'react';
 import type { InvokeDefinition } from 'xstate/lib/types';
 import './EventTypeViz.scss';
-import { DelayedTransitionMetadata } from './TransitionViz';
+import type { DelayedTransitionMetadata } from './TransitionViz';
 
 export function toDelayString(delay: string | number): string {
   if (typeof delay === 'number' || !isNaN(+delay)) {
@@ -89,7 +89,7 @@ export const EventTypeViz: React.FC<{
     return (
       <div data-viz="eventType" data-viz-keyword="after">
         <em data-viz="eventType-keyword">after</em>{' '}
-        <div data-viz="eventType-text">{delay.delayMs}</div>
+        <div data-viz="eventType-text">{delay.delayString}</div>
       </div>
     );
   }

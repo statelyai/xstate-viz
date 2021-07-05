@@ -16,7 +16,7 @@ const getGuardType = (guard: Guard<any, any>) => {
 export type DelayedTransitionMetadata =
   | { status: 'NOT_DELAYED' }
   | { status: 'DELAYED_INVALID' }
-  | { status: 'DELAYED_VALID'; delay: number; delayMs: string };
+  | { status: 'DELAYED_VALID'; delay: number; delayString: string };
 const getDelayFromEventType = (
   eventType: string,
 ): DelayedTransitionMetadata => {
@@ -35,7 +35,7 @@ const getDelayFromEventType = (
   return {
     status: 'DELAYED_VALID',
     delay: +delay,
-    delayMs: toDelayString(delay),
+    delayString: toDelayString(delay),
   };
 };
 
