@@ -14,7 +14,8 @@
     "@testing-library/user-event": "^12.1.10",
     "@xstate/graph": "^1.3.0",
     "@xstate/inspect": "^0.4.1",
-    "@xstate/react": "^1.3.4",
+    "@xstate/react": "^1.4.0",
+    "date-fns": "^2.22.1",
     "elkjs": "^0.7.1",
     "framer-motion": "^4",
     "immer": "^9.0.3",
@@ -25,7 +26,7 @@
     "react-scripts": "4.0.3",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
-    "xstate": "^4.20.0"
+    "xstate": "^4.20.1"
   },
   "scripts": {
     "start": "react-scripts start",
