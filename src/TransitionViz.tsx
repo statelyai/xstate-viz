@@ -15,9 +15,9 @@ const getGuardType = (guard: Guard<any, any>) => {
 };
 
 export type DelayedTransitionMetadata =
-  | { status: 'NOT_DELAYED' }
-  | { status: 'DELAYED_INVALID' }
-  | { status: 'DELAYED_VALID'; delay: number; delayString: string };
+  | { delayType: 'NOT_DELAYED' }
+  | { delayType: 'DELAYED_INVALID' }
+  | { delayType: 'DELAYED_VALID'; delay: number; delayString: string };
 const getDelayFromEventType = (
   eventType: string,
   delayOptions: AnyStateMachine['options']['delays'],
@@ -26,13 +26,13 @@ const getDelayFromEventType = (
 ): DelayedTransitionMetadata => {
   const isDelayedEvent = eventType.startsWith('xstate.after');
 
-  if (!isDelayedEvent) return { status: 'NOT_DELAYED' };
+  if (!isDelayedEvent) return { delayType: 'NOT_DELAYED' };
 
   const DELAYED_EVENT_REGEXT = /^xstate\.after\((.*)\)#.*$/;
   // Validate the delay duration
   const match = eventType.match(DELAYED_EVENT_REGEXT);
 
-  if (!match) return { status: 'DELAYED_INVALID' };
+  if (!match) return { delayType: 'DELAYED_INVALID' };
 
   let [, delay] = match;
 
@@ -53,7 +53,7 @@ const getDelayFromEventType = (
   }
 
   return {
-    status: 'DELAYED_VALID',
+    delayType: 'DELAYED_VALID',
     delay: finalDelay,
     delayString: toDelayString(delay),
   };
@@ -115,15 +115,15 @@ export const TransitionViz: React.FC<{
       <button
         data-viz="transition-label"
         disabled={
-          delay.status === 'DELAYED_INVALID' ||
+          delay.delayType === 'DELAYED_INVALID' ||
           !state.nextEvents.includes(definition.eventType)
         }
         style={
           {
-            '--delay': delay.status === 'DELAYED_VALID' && delay.delay,
+            '--delay': delay.delayType === 'DELAYED_VALID' && delay.delay,
           } as React.CSSProperties
         }
-        data-is-delayed={delay.status !== 'NOT_DELAYED'}
+        data-is-delayed={delay.delayType !== 'NOT_DELAYED'}
         onMouseEnter={() => {
           service.send({
             type: 'EVENT.PREVIEW',
@@ -147,7 +147,7 @@ export const TransitionViz: React.FC<{
       >
         <span
           data-viz="transition-event"
-          data-is-delayed={delay.status !== 'NOT_DELAYED'}
+          data-is-delayed={delay.delayType !== 'NOT_DELAYED'}
         >
           <EventTypeViz eventType={definition.eventType} delay={delay} />
         </span>

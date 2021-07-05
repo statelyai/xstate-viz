@@ -2,7 +2,6 @@ import React from 'react';
 import type { InvokeDefinition } from 'xstate/lib/types';
 import './EventTypeViz.scss';
 import type { DelayedTransitionMetadata } from './TransitionViz';
-import { AnyStateMachine } from './types';
 
 export function toDelayString(delay: string | number): string {
   if (typeof delay === 'number' || !isNaN(+delay)) {
@@ -82,11 +81,11 @@ export const EventTypeViz: React.FC<{
     );
   }
 
-  if (delay.status === 'DELAYED_INVALID') {
+  if (delay.delayType === 'DELAYED_INVALID') {
     return <div data-viz="eventType">{event}</div>;
   }
 
-  if (delay.status === 'DELAYED_VALID') {
+  if (delay.delayType === 'DELAYED_VALID') {
     return (
       <div data-viz="eventType" data-viz-keyword="after">
         <em data-viz="eventType-keyword">after</em>{' '}
