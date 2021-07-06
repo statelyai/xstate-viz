@@ -6,7 +6,7 @@ import ELK, {
   ElkNode,
   LayoutOptions,
 } from 'elkjs/lib/main';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, memo } from 'react';
 import { Edges } from './Edges';
 import { deleteRect, getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
@@ -281,12 +281,19 @@ export async function getElkGraph(
   return rootElkNode;
 }
 
+const MemoizedEdges = memo(Edges);
+const MemoizedGraphNode = memo(GraphNode);
+const MemoizedTransitionViz = memo(TransitionViz);
+const MemoizedMachineViz = memo(MachineViz);
+
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
   const [state, send] = useMachine(() => createElkMachine(digraph));
   const canvasService = useCanvas();
   const { pan, zoom } = useSelector(canvasService, (s) => s.context);
+
+  console.log('render');
 
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
@@ -304,14 +311,14 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
     return (
       <div
         style={{
-          transform: `translate(${pan.dx}px, ${pan.dy}px) scale(${zoom})`,
+          transform: `translate3d(${pan.dx}px, ${pan.dy}px, 0) scale(${zoom})`,
         }}
       >
-        <Edges digraph={digraph} />
-        <GraphNode elkNode={state.context.elkGraph} />
+        <MemoizedEdges digraph={digraph} />
+        <MemoizedGraphNode elkNode={state.context.elkGraph} />
         {allEdges.map((edge, i) => {
           return (
-            <TransitionViz
+            <MemoizedTransitionViz
               edge={edge}
               key={edge.id}
               index={i}
@@ -328,5 +335,5 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
     );
   }
 
-  return <MachineViz digraph={digraph} />;
+  return <MemoizedMachineViz digraph={digraph} />;
 };
