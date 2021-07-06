@@ -293,7 +293,6 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   const canvasService = useCanvas();
   const { pan, zoom } = useSelector(canvasService, (s) => s.context);
 
-  console.log('render');
 
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
