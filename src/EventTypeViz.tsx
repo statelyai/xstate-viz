@@ -1,6 +1,7 @@
 import React from 'react';
 import type { InvokeDefinition } from 'xstate/lib/types';
 import './EventTypeViz.scss';
+import type { DelayedTransitionMetadata } from './TransitionViz';
 
 export function toDelayString(delay: string | number): string {
   if (typeof delay === 'number' || !isNaN(+delay)) {
@@ -47,8 +48,9 @@ export function InvokeViz({ invoke }: { invoke: InvokeDefinition<any, any> }) {
 
 export const EventTypeViz: React.FC<{
   eventType: string;
+  delay: DelayedTransitionMetadata;
   onChangeEventType?: (eventType: string) => void;
-}> = ({ eventType: event, onChangeEventType }) => {
+}> = ({ eventType: event, delay, onChangeEventType }) => {
   if (event.startsWith('done.state.')) {
     return (
       <div data-viz="eventType" data-viz-keyword="done">
@@ -79,19 +81,15 @@ export const EventTypeViz: React.FC<{
     );
   }
 
-  if (event.startsWith('xstate.after')) {
-    const match = event.match(/^xstate\.after\((.*)\)#.*$/);
+  if (delay.delayType === 'DELAYED_INVALID') {
+    return <div data-viz="eventType">{event}</div>;
+  }
 
-    if (!match) {
-      return <div data-viz="eventType">{event}</div>;
-    }
-
-    const [, delay] = match;
-
+  if (delay.delayType === 'DELAYED_VALID') {
     return (
       <div data-viz="eventType" data-viz-keyword="after">
         <em data-viz="eventType-keyword">after</em>{' '}
-        <div data-viz="eventType-text">{toDelayString(delay)}</div>
+        <div data-viz="eventType-text">{delay.delayString}</div>
       </div>
     );
   }
