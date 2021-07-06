@@ -1,10 +1,9 @@
 import produce from 'immer';
-import { ActorRefFrom, AnyInterpreter } from 'xstate';
+import { ActorRefFrom, AnyInterpreter, SCXML } from 'xstate';
 import {
   AnyEventObject,
   assign,
   createMachine,
-  EventObject,
   interpret,
   send,
   spawn,
@@ -17,6 +16,11 @@ import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
 import { AnyStateMachine } from './types';
 
+export interface SimEvent extends SCXML.Event<any> {
+  timestamp: number;
+  sessionId: string;
+}
+
 export const createSimModel = (machine: AnyStateMachine) =>
   createModel(
     {
@@ -26,7 +30,7 @@ export const createSimModel = (machine: AnyStateMachine) =>
       machines: [machine],
       services: {} as Partial<Record<string, AnyInterpreter>>,
       service: null as string | null,
-      events: [] as EventObject[],
+      events: [] as SimEvent[],
       previewEvent: undefined as string | undefined,
     },
     {
@@ -46,6 +50,10 @@ export const createSimModel = (machine: AnyStateMachine) =>
         'SERVICE.REGISTER': (service: any) => ({ service }),
         'SERVICE.STOP': (sessionId: string) => ({ sessionId }),
         'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
+        'SERVICE.EVENT': (event: SCXML.Event<any>, sessionId: string) => ({
+          event,
+          sessionId,
+        }),
       },
     },
   );
@@ -63,6 +71,16 @@ export const createSimulationMachine = (
       src: () => (sendBack) => {
         devTools.onRegister((service) => {
           sendBack(simModel.events['SERVICE.REGISTER'](service));
+
+          service.subscribe((state) => {
+            if (!state) {
+              return;
+            }
+
+            sendBack(
+              simModel.events['SERVICE.EVENT'](state._event, service.sessionId),
+            );
+          });
 
           service.onStop(() => {
             sendBack(simModel.events['SERVICE.STOP'](service.sessionId));
@@ -221,33 +239,41 @@ export const createSimulationMachine = (
     },
     on: {
       'STATE.UPDATE': {
-        actions: assign({ state: (_, e) => e.state }),
+        actions: assign({
+          state: (_, e) => e.state,
+        }),
       },
-
+      'SERVICE.EVENT': {
+        actions: assign({
+          events: (ctx, e) =>
+            produce(ctx.events, (draft) => {
+              draft.push({
+                ...e.event,
+                timestamp: Date.now(),
+                sessionId: e.sessionId,
+              });
+            }),
+        }),
+      },
       'SERVICE.SEND': {
         actions: [
-          simModel.assign({
-            events: (ctx, e) => ctx.events.concat(e.event),
-          }),
-          send(
-            (ctx, e) => {
-              const eventSchema =
-                ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
-              const eventToSend = { ...e.event };
+          (ctx, e) => {
+            const eventSchema =
+              ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
+            const eventToSend = { ...e.event };
 
-              if (eventSchema) {
-                Object.keys(eventSchema.properties).forEach((prop) => {
-                  const value = prompt(
-                    `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                  );
+            if (eventSchema) {
+              Object.keys(eventSchema.properties).forEach((prop) => {
+                const value = prompt(
+                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+                );
 
-                  eventToSend[prop] = value;
-                });
-              }
-              return eventToSend;
-            },
-            { to: (ctx) => ctx.services[ctx.service!]! },
-          ),
+                eventToSend[prop] = value;
+              });
+            }
+
+            ctx.services[ctx.service!]!.send(eventToSend);
+          },
         ],
       },
     },

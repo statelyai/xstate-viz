@@ -95,11 +95,9 @@ export const clientMachine = createMachine<typeof clientModel>(
     id: 'client',
     initial: 'initializing',
     context: clientModel.initialContext,
-    entry: [
-      assign({
-        notifRef: () => spawn(notifMachine),
-      }),
-    ],
+    entry: assign({
+      notifRef: () => spawn(notifMachine),
+    }),
     invoke: {
       src: (ctx) => (sendBack) => {
         ctx.client.auth.onAuthStateChange((state, session) => {
