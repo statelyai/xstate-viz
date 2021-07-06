@@ -129,59 +129,11 @@ export const createSimulationMachine = () => {
           },
         },
       },
-      verifying: {
-        invoke: {
-          src: (_, e) =>
-            new Promise((resolve, reject) => {
-              const machines = (e as any).machines;
-              try {
-                // TODO: verify without interpreting
-                interpret(machines[0]).start().stop();
-                resolve(machines);
-              } catch (err) {
-                console.error(err);
-                reject(err);
-              }
-            }),
-          onDone: {
-            target: 'active',
-            actions: [
-              simModel.assign((_, e) => ({
-                machineIndex: (e as any).data.length - 1,
-                machines: (e as any).data,
-              })) as any,
-            ],
-          },
-          onError: {
-            target: 'active',
-            actions: [
-              send(
-                (_, e) => ({
-                  type: 'BROADCAST',
-                  status: 'error',
-                  message: e.data.toString(),
-                }),
-                { to: (ctx) => ctx.notifRef },
-              ),
-            ],
-          },
-        },
-      },
       active: {
         invoke: [
           {
             id: 'machine',
             src: (ctx) => (sendBack, onReceive) => {
-              // const service = interpret(ctx.machines[ctx.machineIndex!], {
-              //   devTools: true,
-              // })
-              //   .onTransition((state) => {
-              //     sendBack({
-              //       type: 'STATE.UPDATE',
-              //       state,
-              //     });
-              //   })
-              //   .start();
               const service = ctx.services[ctx.service!]!;
 
               sendBack(simModel.events['SERVICE.FOCUS'](service.sessionId));
@@ -189,10 +141,6 @@ export const createSimulationMachine = () => {
               onReceive((event) => {
                 service.send(event);
               });
-
-              return () => {
-                // service.stop();
-              };
             },
           },
         ],
@@ -206,9 +154,6 @@ export const createSimulationMachine = () => {
                 machines: (_, e) => e.machines,
               }),
             ],
-          },
-          'MACHINES.VERIFY': {
-            target: 'verifying',
           },
           'MACHINES.RESET': {
             target: 'active',
@@ -264,7 +209,9 @@ export const createSimulationMachine = () => {
         actions: [
           (ctx, e) => {
             const eventSchema =
-              ctx.machines[ctx.machineIndex!].schema?.events?.[e.event.type];
+              ctx.services[ctx.service!]!.machine.schema?.events?.[
+                e.event.type
+              ];
             const eventToSend = { ...e.event };
 
             if (eventSchema) {
@@ -300,6 +247,15 @@ export const createSimulationMachine = () => {
               delete draft[e.sessionId];
             });
           },
+        }),
+      },
+      'MACHINES.VERIFY': {
+        actions: assign((_, e) => {
+          const service = interpret(e.machines[0]).start();
+          return {
+            services: { [service.sessionId]: service },
+            service: service.sessionId,
+          };
         }),
       },
     },
