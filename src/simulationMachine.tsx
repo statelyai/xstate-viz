@@ -40,7 +40,7 @@ export const createSimModel = () =>
         'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
           machines,
         }),
-        'MACHINES.VERIFY': (machines: Array<AnyStateMachine>) => ({
+        'MACHINES.REGISTER': (machines: Array<AnyStateMachine>) => ({
           machines,
         }),
         'MACHINES.RESET': () => ({}),
@@ -249,7 +249,7 @@ export const createSimulationMachine = () => {
           },
         }),
       },
-      'MACHINES.VERIFY': {
+      'MACHINES.REGISTER': {
         actions: assign((_, e) => {
           const service = interpret(e.machines[0]).start();
           return {

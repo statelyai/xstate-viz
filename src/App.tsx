@@ -116,7 +116,7 @@ function App() {
                         }}
                         onChange={(machines) => {
                           simService.send({
-                            type: 'MACHINES.VERIFY',
+                            type: 'MACHINES.REGISTER',
                             machines,
                           });
                         }}
