@@ -37,9 +37,34 @@
   background: var(--viz-color-bg);
 }
 
+@keyframes move-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+[data-viz='transition-label'][data-is-delayed]:not(:disabled):before {
+  content: '';
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: var(--viz-transition-color);
+  animation: move-left calc(var(--delay) * 1ms) linear;
+  z-index: 0;
+  opacity: 0.5;
+}
+
 [data-viz='transition-event'] {
-  background: var(--viz-transition-color);
   padding: 0.25rem 0.5rem;
+}
+
+[data-viz='transition-event']:not([data-is-delayed]) {
+  background: var(--viz-transition-color);
 }
 
 [data-viz='transition-guard'] {
