@@ -1,12 +1,13 @@
 import { useSelector } from '@xstate/react';
 import React, { useEffect, useRef } from 'react';
-import type { Guard } from 'xstate';
+import type { ActionObject, Guard } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz } from './EventTypeViz';
 import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
+import { getActionKeyAndLabelByType } from './utils';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -85,10 +86,11 @@ export const TransitionViz: React.FC<{
       </button>
       {definition.actions.length > 0 && (
         <div data-viz="transition-actions">
-          {definition.actions.map((action) => {
+          {definition.actions.map((action, index) => {
+            const { key, label } = getActionKeyAndLabelByType(action, index);
             return (
-              <div data-viz="action" data-viz-action="do" key={action.type}>
-                <span data-viz="action-text">{action.type}</span>
+              <div data-viz="action" data-viz-action="do" key={key}>
+                <span data-viz="action-text">{label}</span>
               </div>
             );
           })}
