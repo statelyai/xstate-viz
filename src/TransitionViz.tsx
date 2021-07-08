@@ -9,6 +9,7 @@ import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
 import { useMemo } from 'react';
 import { AnyStateMachine } from './types';
+import { toSCXMLEvent } from 'xstate/lib/utils';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -139,9 +140,9 @@ export const TransitionViz: React.FC<{
           // TODO: only if no parameters/schema
           service.send({
             type: 'SERVICE.SEND',
-            event: {
+            event: toSCXMLEvent({
               type: definition.eventType,
-            },
+            }),
           });
         }}
       >

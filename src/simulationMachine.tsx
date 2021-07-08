@@ -36,7 +36,7 @@ export const createSimModel = () =>
     {
       events: {
         'STATE.UPDATE': (state: State<any, any, any, any>) => ({ state }),
-        'SERVICE.SEND': (event: AnyEventObject) => ({ event }),
+        'SERVICE.SEND': (event: SCXML.Event<AnyEventObject>) => ({ event }),
         'MACHINES.UPDATE': (machines: Array<AnyStateMachine>) => ({
           machines,
         }),
@@ -92,11 +92,18 @@ export const createSimulationMachine = () => {
       },
       {
         id: 'receiver',
-        src: () => (sendBack) => {
+        src: () => (sendBack, onReceive) => {
           const receiver = createWindowReceiver();
+          (window as any).receiver = receiver;
+
+          onReceive((event) => {
+            if (event.type === 'xstate.event') {
+              receiver.send(event);
+            }
+          });
 
           return receiver.subscribe((event) => {
-            console.log(event);
+            console.log('from receiver', event);
             switch (event.type) {
               case 'service.register':
                 const resolvedState = event.machine.resolveState(event.state);
@@ -220,12 +227,21 @@ export const createSimulationMachine = () => {
                   `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
                 );
 
-                eventToSend[prop] = value;
+                eventToSend.data[prop] = value;
               });
             }
 
             ctx.services[ctx.service!]!.send(eventToSend);
           },
+          send(
+            (_, e) => {
+              return {
+                type: 'xstate.event',
+                event: JSON.stringify(e.event),
+              };
+            },
+            { to: 'receiver' },
+          ),
         ],
       },
       'SERVICE.REGISTER': {
