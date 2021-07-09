@@ -59,6 +59,8 @@ const getDelayFromEventType = (
   };
 };
 
+const isBuiltinEvent = (eventType: string) => eventType.startsWith('xstate.');
+
 const delayOptionsSelector = (state: AnyStateNodeDefinition) =>
   state.context.services[state.context.service!]?.machine.options.delays;
 
@@ -137,12 +139,15 @@ export const TransitionViz: React.FC<{
         }}
         onClick={() => {
           // TODO: only if no parameters/schema
-          service.send({
-            type: 'SERVICE.SEND',
-            event: {
-              type: definition.eventType,
-            },
-          });
+          const { eventType } = definition;
+          if (!isBuiltinEvent(eventType)) {
+            service.send({
+              type: 'SERVICE.SEND',
+              event: {
+                type: eventType,
+              },
+            });
+          }
         }}
       >
         <span
