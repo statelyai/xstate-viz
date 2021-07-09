@@ -14,13 +14,7 @@ import { createWindowReceiver } from '@xstate/inspect';
 import { createModel } from 'xstate/lib/model';
 import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
-import {
-  AnyState,
-  AnyStateMachine,
-  ServiceRef,
-  ServiceRefEvents,
-} from './types';
-import { toEventObject } from 'xstate/lib/utils';
+import { AnyState, AnyStateMachine, ServiceRef } from './types';
 
 export interface SimEvent extends SCXML.Event<any> {
   timestamp: number;
@@ -32,8 +26,6 @@ export const createSimModel = () =>
     {
       state: undefined as AnyState | undefined,
       notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
-      machineIndex: undefined as number | undefined,
-      machines: [] as AnyStateMachine[],
       services: {} as Partial<Record<string, ServiceRef>>,
       service: null as string | null,
       events: [] as SimEvent[],
@@ -79,45 +71,55 @@ export const createSimulationMachine = () => {
         id: 'services',
         src: () => (sendBack, onReceive) => {
           const serviceMap: Map<string, AnyInterpreter> = new Map();
+          let rootMachine: AnyStateMachine;
+          let rootService: AnyInterpreter;
+
+          function locallyInterpret(machine: AnyStateMachine) {
+            rootMachine = machine;
+            // stop all existing services
+            Array.from(serviceMap.values()).forEach((runningService) => {
+              runningService.stop();
+              sendBack({
+                type: 'SERVICE.UNREGISTER',
+                sessionId: runningService.sessionId,
+              });
+            });
+            serviceMap.clear();
+
+            rootService = interpret(machine);
+            serviceMap.set(rootService.sessionId, rootService);
+
+            sendBack({
+              type: 'SERVICE.REGISTER',
+              service: {
+                sessionId: rootService.sessionId,
+                machine: rootService.machine,
+                state: rootService.machine.initialState,
+              },
+            });
+
+            rootService.subscribe((state) => {
+              sendBack({
+                type: 'SERVICE.STATE',
+                state,
+                sessionId: rootService.sessionId,
+              });
+            });
+            rootService.start();
+          }
 
           onReceive((event) => {
             if (event.type === 'INTERPRET') {
-              // stop all existing services
-              Array.from(serviceMap.values()).forEach((runningService) => {
-                runningService.stop();
-                sendBack({
-                  type: 'SERVICE.UNREGISTER',
-                  sessionId: runningService.sessionId,
-                });
-              });
-              serviceMap.clear();
-
-              const service = interpret(event.machine);
-              serviceMap.set(service.sessionId, service);
-
-              sendBack({
-                type: 'SERVICE.REGISTER',
-                service: {
-                  sessionId: service.sessionId,
-                  machine: service.machine,
-                  state: service.machine.initialState,
-                },
-              });
-
-              service.subscribe((state) => {
-                sendBack({
-                  type: 'SERVICE.STATE',
-                  state,
-                  sessionId: service.sessionId,
-                });
-              });
-              service.start();
+              locallyInterpret(event.machine);
             } else if (event.type === 'xstate.event') {
               const service = serviceMap.get(event.sessionId);
 
               if (service) {
                 service.send(event.event);
               }
+            } else if (event.type === 'RESET') {
+              rootService?.stop();
+              locallyInterpret(rootMachine);
             }
           });
 
@@ -216,16 +218,7 @@ export const createSimulationMachine = () => {
           },
         ],
         on: {
-          'MACHINES.UPDATE': {
-            target: 'active',
-            internal: false,
-            actions: [
-              simModel.assign({
-                machineIndex: (_, e) => e.machines.length - 1,
-                machines: (_, e) => e.machines,
-              }),
-            ],
-          },
+          'MACHINES.UPDATE': {},
           'MACHINES.RESET': {
             target: 'active',
             internal: false,
@@ -234,13 +227,10 @@ export const createSimulationMachine = () => {
                 events: [],
                 previewEvent: undefined,
               }),
+              send('RESET', { to: 'services' }),
             ],
           },
-          'MACHINES.SET': {
-            actions: simModel.assign({
-              machineIndex: (_, e) => e.index,
-            }),
-          },
+          'MACHINES.SET': {},
           'EVENT.PREVIEW': {
             actions: simModel.assign({
               previewEvent: (_, event) => event.eventType,
