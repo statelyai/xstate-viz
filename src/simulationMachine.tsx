@@ -82,6 +82,16 @@ export const createSimulationMachine = () => {
 
           onReceive((event) => {
             if (event.type === 'INTERPRET') {
+              // stop all existing services
+              Array.from(serviceMap.values()).forEach((runningService) => {
+                runningService.stop();
+                sendBack({
+                  type: 'SERVICE.UNREGISTER',
+                  sessionId: runningService.sessionId,
+                });
+              });
+              serviceMap.clear();
+
               const service = interpret(event.machine);
               serviceMap.set(service.sessionId, service);
 
@@ -343,6 +353,13 @@ export const createSimulationMachine = () => {
             return produce(ctx.services, (draft) => {
               delete draft[e.sessionId];
             });
+          },
+          service: (ctx, e) => {
+            if (ctx.service === e.sessionId) {
+              return null;
+            }
+
+            return ctx.service;
           },
         }),
       },
