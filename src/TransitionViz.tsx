@@ -1,5 +1,5 @@
 import { useSelector } from '@xstate/react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import type { AnyStateNodeDefinition, Guard } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
@@ -7,7 +7,7 @@ import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
-import { useMemo } from 'react';
+import { getActionLabel } from './utils';
 import { AnyStateMachine } from './types';
 
 const getGuardType = (guard: Guard<any, any>) => {
@@ -159,10 +159,10 @@ export const TransitionViz: React.FC<{
       </button>
       {definition.actions.length > 0 && (
         <div data-viz="transition-actions">
-          {definition.actions.map((action) => {
+          {definition.actions.map((action, index) => {
             return (
-              <div data-viz="action" data-viz-action="do" key={action.type}>
-                <span data-viz="action-text">{action.type}</span>
+              <div data-viz="action" data-viz-action="do" key={index}>
+                <span data-viz="action-text">{getActionLabel(action)}</span>
               </div>
             );
           })}

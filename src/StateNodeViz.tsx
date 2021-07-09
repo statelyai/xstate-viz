@@ -8,6 +8,7 @@ import { useActor } from '@xstate/react';
 import { deleteRect, setRect } from './getRect';
 import { useSimulation } from './SimulationContext';
 import { DirectedGraphNode } from './directedGraph';
+import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {
   key: string;
@@ -52,8 +53,9 @@ export const StateNodeViz: React.FC<{
   const service = useSimulation();
   const [state] = useActor(service);
 
-  const simState =
-    state.context.services[state.context.service!]?.getSnapshot();
+  const simState = state.context.services[
+    state.context.service!
+  ]?.getSnapshot();
   const simMachine = state.context.services[state.context.service!]?.machine;
   const ref = useRef<HTMLDivElement>(null);
 
@@ -150,7 +152,7 @@ export const StateNodeViz: React.FC<{
               {stateNode.definition.entry.map((action, idx) => {
                 return (
                   <div data-viz="action" data-viz-action="entry" key={idx}>
-                    <div data-viz="action-type">{action.type}</div>
+                    <div data-viz="action-type">{getActionLabel(action)}</div>
                   </div>
                 );
               })}
@@ -161,7 +163,7 @@ export const StateNodeViz: React.FC<{
               {stateNode.definition.exit.map((action, idx) => {
                 return (
                   <div data-viz="action" data-viz-action="exit" key={idx}>
-                    <div data-viz="action-type">{action.type}</div>
+                    <div data-viz="action-type">{getActionLabel(action)}</div>
                   </div>
                 );
               })}

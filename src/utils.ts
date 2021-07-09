@@ -1,5 +1,10 @@
 import * as React from 'react';
-import type { AnyEventObject, StateNode, TransitionDefinition } from 'xstate';
+import type {
+  ActionObject,
+  AnyEventObject,
+  StateNode,
+  TransitionDefinition,
+} from 'xstate';
 
 export function createRequiredContext<T>(displayName: string) {
   const context = React.createContext<T | null>(null);
@@ -66,6 +71,20 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
 
   return edges;
 }
+
+export const getActionLabel = (action: ActionObject<any, any>) => {
+  if (action.type !== 'xstate.assign') {
+    return action.type;
+  }
+
+  switch (typeof action.assignment) {
+    case 'object':
+      const keys = Object.keys(action.assignment).join();
+      return `assign ${keys}`;
+    default:
+      return 'assign';
+  }
+};
 
 // export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
 //   const children = getChildren(stateNode);
