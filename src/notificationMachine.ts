@@ -22,12 +22,13 @@ export const notifMachine = createMachine<typeof notifModel>({
     BROADCAST: {
       actions: [
         (_, e) => {
-          if (!toast.isActive(e.message)) {
+          const id = e.message.toString();
+          if (!toast.isActive(id)) {
             toast({
-              id: e.message,
+              id,
               status: e.status,
               title: e.status?.toUpperCase(),
-              description: e.message,
+              description: id,
               isClosable: true,
               position: 'bottom-right',
             });

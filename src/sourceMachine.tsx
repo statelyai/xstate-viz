@@ -1,7 +1,8 @@
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
+import { pure } from 'xstate/lib/actions';
 import { createModel } from 'xstate/lib/model';
 import { notifMachine } from './notificationMachine';
-import { gQuery } from './utils';
+import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 type SourceProvider = 'gist' | 'registry';
 
@@ -11,6 +12,17 @@ const sourceModel = createModel({
   sourceRawContent: null as string | null,
   notifRef: null! as ActorRefFrom<typeof notifMachine>,
 });
+
+class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+
+  toString() {
+    return this.message;
+  }
+}
 
 export const sourceMachine = createMachine<typeof sourceModel>(
   {
@@ -58,6 +70,14 @@ export const sourceMachine = createMachine<typeof sourceModel>(
                 }),
                 { to: (ctx: any) => ctx.notifRef },
               ),
+              (_, e: any) => {
+                if (e.data instanceof NotFoundError) {
+                  updateQueryParamsWithoutReload((queries) => {
+                    queries.delete('id');
+                    queries.delete('gist');
+                  });
+                }
+              },
             ],
           },
         },
@@ -106,7 +126,7 @@ export const sourceMachine = createMachine<typeof sourceModel>(
               .then((resp) => {
                 //   fetch doesn't treat 404 as errors by default
                 if (resp.status === 404) {
-                  return Promise.reject(Error('Gist not found'));
+                  return Promise.reject(new NotFoundError('Gist not found'));
                 }
                 return resp.json();
               })
@@ -124,7 +144,9 @@ export const sourceMachine = createMachine<typeof sourceModel>(
               if (data.data.getSourceFile) {
                 return data.data.getSourceFile.text;
               }
-              return Promise.reject(Error('Source not found in Registry'));
+              return Promise.reject(
+                new NotFoundError('Source not found in Registry'),
+              );
             });
           default:
             throw new Error('It should be impossible to reach this.');
