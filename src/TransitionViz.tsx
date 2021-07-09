@@ -70,8 +70,9 @@ export const TransitionViz: React.FC<{
 }> = ({ edge, index, position }) => {
   const definition = edge.transition;
   const service = useSimulation();
-  const state = useSelector(service, (s) =>
-    s.context.services[s.context.service!]?.getSnapshot(),
+  const state = useSelector(
+    service,
+    (s) => s.context.services[s.context.service!]?.state,
   );
   const delayOptions = useSelector(service, delayOptionsSelector);
   const delay = useMemo(

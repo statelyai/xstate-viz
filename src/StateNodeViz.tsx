@@ -52,10 +52,10 @@ export const StateNodeViz: React.FC<{
   const service = useSimulation();
   const [state] = useActor(service);
 
-  const simState =
-    state.context.services[state.context.service!]?.getSnapshot();
+  const simState = state.context.services[state.context.service!]?.state;
   const simMachine = state.context.services[state.context.service!]?.machine;
   const ref = useRef<HTMLDivElement>(null);
+  console.log('UPDATE', simState);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {

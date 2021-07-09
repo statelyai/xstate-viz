@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { ActorRefFrom, SCXML } from 'xstate';
+import { ActorRefFrom, AnyInterpreter, SCXML } from 'xstate';
 import {
   AnyEventObject,
   assign,
@@ -14,7 +14,13 @@ import { createWindowReceiver } from '@xstate/inspect';
 import { createModel } from 'xstate/lib/model';
 import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
-import { AnyState, AnyStateMachine, ServiceRef } from './types';
+import {
+  AnyState,
+  AnyStateMachine,
+  ServiceRef,
+  ServiceRefEvents,
+} from './types';
+import { toEventObject } from 'xstate/lib/utils';
 
 export interface SimEvent extends SCXML.Event<any> {
   timestamp: number;
@@ -54,6 +60,10 @@ export const createSimModel = () =>
           event,
           sessionId,
         }),
+        'SERVICE.STATE': (sessionId: string, state: AnyState) => ({
+          sessionId,
+          state,
+        }),
       },
     },
   );
@@ -67,7 +77,40 @@ export const createSimulationMachine = () => {
     invoke: [
       {
         id: 'services',
-        src: () => (sendBack) => {
+        src: () => (sendBack, onReceive) => {
+          const serviceMap: Map<string, AnyInterpreter> = new Map();
+
+          onReceive((event) => {
+            if (event.type === 'INTERPRET') {
+              const service = interpret(event.machine);
+              serviceMap.set(service.sessionId, service);
+
+              sendBack({
+                type: 'SERVICE.REGISTER',
+                service: {
+                  sessionId: service.sessionId,
+                  machine: service.machine,
+                  state: service.machine.initialState,
+                },
+              });
+
+              service.subscribe((state) => {
+                sendBack({
+                  type: 'SERVICE.STATE',
+                  state,
+                  sessionId: service.sessionId,
+                });
+              });
+              service.start();
+            } else if (event.type === 'xstate.event') {
+              const service = serviceMap.get(event.sessionId);
+
+              if (service) {
+                service.send(event.event);
+              }
+            }
+          });
+
           devTools.onRegister((service) => {
             sendBack(simModel.events['SERVICE.REGISTER'](service));
 
@@ -98,27 +141,38 @@ export const createSimulationMachine = () => {
 
           onReceive((event) => {
             if (event.type === 'xstate.event') {
-              receiver.send(event);
+              receiver.send({
+                ...event,
+                type: 'xstate.event',
+                event: JSON.stringify(event.event),
+              });
             }
           });
 
+          const stateMap: Map<string, AnyState> = new Map();
+
           return receiver.subscribe((event) => {
-            console.log('from receiver', event);
             switch (event.type) {
               case 'service.register':
-                const resolvedState = event.machine.resolveState(event.state);
+                stateMap.set(event.sessionId, event.state);
+                let state = event.machine.resolveState(event.state);
+
                 sendBack(
                   simModel.events['SERVICE.REGISTER']({
-                    send: () => void 0,
-                    subscribe: () => {
-                      return { unsubscribe: () => void 0 };
-                    },
                     sessionId: event.sessionId,
                     machine: event.machine,
-                    getSnapshot: () => resolvedState,
-                    id: event.id,
+                    state,
                   }),
                 );
+                break;
+              case 'service.state':
+                sendBack(
+                  simModel.events['SERVICE.STATE'](
+                    event.sessionId,
+                    event.state,
+                  ),
+                );
+                // stateMap.set(event.sessionId, event.state);
                 break;
               default:
                 break;
@@ -146,7 +200,7 @@ export const createSimulationMachine = () => {
               sendBack(simModel.events['SERVICE.FOCUS'](service.sessionId));
 
               onReceive((event) => {
-                service.send(event);
+                // service.send(event);
               });
             },
           },
@@ -212,6 +266,24 @@ export const createSimulationMachine = () => {
             }),
         }),
       },
+      'SERVICE.STATE': {
+        actions: [
+          simModel.assign({
+            services: (ctx, e) =>
+              produce(ctx.services, (draft) => {
+                const service = ctx.services[e.sessionId]!;
+                draft[e.sessionId]!.state = service?.machine.resolveState(
+                  e.state,
+                );
+              }),
+          }),
+          send((_, e) => ({
+            type: 'SERVICE.EVENT',
+            event: e.state._event,
+            sessionId: e.sessionId,
+          })),
+        ],
+      },
       'SERVICE.SEND': {
         actions: [
           (ctx, e) => {
@@ -230,14 +302,23 @@ export const createSimulationMachine = () => {
                 eventToSend.data[prop] = value;
               });
             }
-
-            ctx.services[ctx.service!]!.send(eventToSend);
           },
           send(
-            (_, e) => {
+            (ctx, e) => {
               return {
                 type: 'xstate.event',
-                event: JSON.stringify(e.event),
+                event: e.event,
+                sessionId: ctx.service,
+              };
+            },
+            { to: 'services' },
+          ),
+          send(
+            (ctx, e) => {
+              return {
+                type: 'xstate.event',
+                event: e.event,
+                sessionId: ctx.service,
               };
             },
             { to: 'receiver' },
@@ -266,13 +347,15 @@ export const createSimulationMachine = () => {
         }),
       },
       'MACHINES.REGISTER': {
-        actions: assign((_, e) => {
-          const service = interpret(e.machines[0]).start();
-          return {
-            services: { [service.sessionId]: service },
-            service: service.sessionId,
-          };
-        }),
+        actions: [
+          send(
+            (_, e) => ({
+              type: 'INTERPRET',
+              machine: e.machines[0],
+            }),
+            { to: 'services' },
+          ),
+        ],
       },
     },
   });

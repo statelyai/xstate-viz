@@ -28,7 +28,7 @@ const selectState = (
   state: StateFrom<ReturnType<typeof createSimulationMachine>>,
 ) =>
   state.context.service
-    ? state.context.services[state.context.service]?.getSnapshot()
+    ? state.context.services[state.context.service]?.state
     : undefined; // TODO: select() method on model
 
 const ActorState: React.FC<{ state: any }> = ({ state }) => {

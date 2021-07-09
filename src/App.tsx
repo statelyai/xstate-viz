@@ -22,9 +22,9 @@ import { SpinnerWithText } from './SpinnerWithText';
 
 function App() {
   const simService = useInterpret(createSimulationMachine());
-  useEffect(() => {
-    return simService.subscribe((s) => console.log(s)).unsubscribe;
-  }, []);
+  // useEffect(() => {
+  //   return simService.subscribe((s) => console.log('EFFECT', s)).unsubscribe;
+  // }, []);
   const machine = useSelector(simService, (state) => {
     return state.context.service
       ? state.context.services[state.context.service!]?.machine
