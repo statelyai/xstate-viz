@@ -10,7 +10,7 @@ import { send } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel, ModelEventsFrom } from 'xstate/lib/model';
 import { notifMachine } from './notificationMachine';
-import { gQuery } from './utils';
+import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 const clientModel = createModel(
   {
@@ -48,10 +48,10 @@ const clientOptions: Partial<
       createdMachine: (_, e) => (e as any).data,
     }),
     updateURLWithMachineID: (_, e: any) => {
-      const newURL = new URL(window.location.href);
-      newURL.searchParams.delete('gist');
-      newURL.searchParams.set('id', e.data.id);
-      window.history.pushState({ path: newURL.href }, '', newURL.href);
+      updateQueryParamsWithoutReload((queries) => {
+        queries.delete('gist');
+        queries.set('id', e.data.id);
+      });
     },
   },
   services: {

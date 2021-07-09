@@ -76,6 +76,14 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
 //   ]);
 // }
 
+export const updateQueryParamsWithoutReload = (
+  mutator: (queries: URLSearchParams) => void,
+) => {
+  const newURL = new URL(window.location.href);
+  mutator(newURL.searchParams);
+  window.history.pushState({ path: newURL.href }, '', newURL.href);
+};
+
 export const gQuery = (query: string, accessToken?: string) =>
   fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
     method: 'POST',
