@@ -7,7 +7,7 @@ import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
-import { getActionKeyAndLabelByType } from './utils';
+import { getActionLabel } from './utils';
 import { AnyStateMachine } from './types';
 
 const getGuardType = (guard: Guard<any, any>) => {
@@ -160,10 +160,9 @@ export const TransitionViz: React.FC<{
       {definition.actions.length > 0 && (
         <div data-viz="transition-actions">
           {definition.actions.map((action, index) => {
-            const { key, label } = getActionKeyAndLabelByType(action, index);
             return (
-              <div data-viz="action" data-viz-action="do" key={key}>
-                <span data-viz="action-text">{label}</span>
+              <div data-viz="action" data-viz-action="do" key={index}>
+                <span data-viz="action-text">{getActionLabel(action)}</span>
               </div>
             );
           })}

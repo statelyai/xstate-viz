@@ -8,7 +8,7 @@ import { useActor } from '@xstate/react';
 import { deleteRect, setRect } from './getRect';
 import { useSimulation } from './SimulationContext';
 import { DirectedGraphNode } from './directedGraph';
-import { getActionKeyAndLabelByType } from './utils';
+import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {
   key: string;
@@ -150,10 +150,9 @@ export const StateNodeViz: React.FC<{
           {stateNode.definition.entry.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="entry">
               {stateNode.definition.entry.map((action, idx) => {
-                const { key, label } = getActionKeyAndLabelByType(action, idx);
                 return (
-                  <div data-viz="action" data-viz-action="entry" key={key}>
-                    <div data-viz="action-type">{label}</div>
+                  <div data-viz="action" data-viz-action="entry" key={idx}>
+                    <div data-viz="action-type">{getActionLabel(action)}</div>
                   </div>
                 );
               })}
@@ -162,10 +161,9 @@ export const StateNodeViz: React.FC<{
           {stateNode.definition.exit.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="exit">
               {stateNode.definition.exit.map((action, idx) => {
-                const { key, label } = getActionKeyAndLabelByType(action, idx);
                 return (
-                  <div data-viz="action" data-viz-action="exit" key={key}>
-                    <div data-viz="action-type">{label}</div>
+                  <div data-viz="action" data-viz-action="exit" key={idx}>
+                    <div data-viz="action-type">{getActionLabel(action)}</div>
                   </div>
                 );
               })}

@@ -72,29 +72,17 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
   return edges;
 }
 
-export const getActionKeyAndLabelByType = (
-  action: ActionObject<any, any>,
-  index: number,
-) => {
+export const getActionLabel = (action: ActionObject<any, any>) => {
   if (action.type !== 'xstate.assign') {
-    return {
-      key: `${action.type} ${index}`,
-      label: action.type,
-    };
+    return action.type;
   }
 
   switch (typeof action.assignment) {
     case 'object':
       const keys = Object.keys(action.assignment).join();
-      return {
-        key: `assign ${keys} ${index}`,
-        label: `assign ${keys}`,
-      };
+      return `assign ${keys}`;
     default:
-      return {
-        key: `assign ${index}`,
-        label: 'assign',
-      };
+      return 'assign';
   }
 };
 
