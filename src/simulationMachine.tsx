@@ -203,20 +203,6 @@ export const createSimulationMachine = () => {
         },
       },
       active: {
-        invoke: [
-          {
-            id: 'machine',
-            src: (ctx) => (sendBack, onReceive) => {
-              const service = ctx.services[ctx.service!]!;
-
-              sendBack(simModel.events['SERVICE.FOCUS'](service.sessionId));
-
-              onReceive((event) => {
-                // service.send(event);
-              });
-            },
-          },
-        ],
         on: {
           'MACHINES.UPDATE': {},
           'MACHINES.RESET': {
@@ -226,6 +212,7 @@ export const createSimulationMachine = () => {
               simModel.assign({
                 events: [],
                 previewEvent: undefined,
+                service: null,
               }),
               send('RESET', { to: 'services' }),
             ],
