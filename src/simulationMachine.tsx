@@ -62,7 +62,7 @@ export const createSimModel = () =>
 
 export const createSimulationMachine = () => {
   const simModel = createSimModel();
-  return createMachine<typeof simModel>({
+  return simModel.createMachine({
     context: simModel.initialContext,
     initial: 'pending',
     entry: assign({ notifRef: () => spawn(notifMachine) }),
@@ -164,6 +164,7 @@ export const createSimulationMachine = () => {
           const stateMap: Map<string, AnyState> = new Map();
 
           return receiver.subscribe((event) => {
+            console.log('>>>', event);
             switch (event.type) {
               case 'service.register':
                 stateMap.set(event.sessionId, event.state);
