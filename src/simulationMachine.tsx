@@ -10,6 +10,7 @@ import {
   State,
   StateMachine,
 } from 'xstate';
+import { pure } from 'xstate/lib/actions';
 
 import { createModel } from 'xstate/lib/model';
 import { devTools } from './devInterface';
@@ -241,23 +242,36 @@ export const createSimulationMachine = (
       },
       'SERVICE.SEND': {
         actions: [
-          (ctx, e) => {
-            const eventSchema =
-              ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
-            const eventToSend = { ...e.event };
+          pure((ctx, e) => {
+            // Catch runtime exceptions of executing transitions actions and guards
+            try {
+              const eventSchema =
+                ctx.machines[ctx.machineIndex].schema?.events?.[e.event.type];
+              const eventToSend = { ...e.event };
 
-            if (eventSchema) {
-              Object.keys(eventSchema.properties).forEach((prop) => {
-                const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                );
+              if (eventSchema) {
+                Object.keys(eventSchema.properties).forEach((prop) => {
+                  const value = prompt(
+                    `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+                  );
 
-                eventToSend[prop] = value;
-              });
+                  eventToSend[prop] = value;
+                });
+              }
+
+              ctx.services[ctx.service!]!.send(eventToSend);
+            } catch (err) {
+              console.error(err);
+              return send(
+                {
+                  type: 'BROADCAST',
+                  status: 'error',
+                  message: err.toString(),
+                },
+                { to: () => ctx.notifRef },
+              );
             }
-
-            ctx.services[ctx.service!]!.send(eventToSend);
-          },
+          }),
         ],
       },
     },
