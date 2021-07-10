@@ -15,6 +15,7 @@ import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
 import { SimEvent } from './simulationMachine';
+import { ChevronDownIcon, ChevronRightIcon } from '@chakra-ui/icons';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   return (
@@ -69,13 +70,21 @@ const EventRow: React.FC<{ event: SimEvent; filter: string }> = ({
   event,
   filter,
 }) => {
+  console.log(event);
   const matchesFilter = event.name.toUpperCase().includes(filter.toUpperCase());
   const [show, setShow] = useState(false);
 
   return (
     <>
-      <Tr hidden={!matchesFilter || undefined}>
-        <Td onClick={() => setShow(!show)}>{event.name}</Td>
+      <Tr
+        hidden={!matchesFilter || undefined}
+        cursor="pointer"
+        onClick={() => setShow(!show)}
+      >
+        <Td>
+          {show ? <ChevronDownIcon /> : <ChevronRightIcon />}
+          {event.name}
+        </Td>
         <Td color="gray.500" textAlign="right">
           <EventConnection event={event} />
         </Td>
