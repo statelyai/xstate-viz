@@ -26,6 +26,14 @@ const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   );
 };
 
+// To keep the table header sticky, the trick is to make all `th` elements sticky
+const stickyProps = {
+  position: 'sticky' as any,
+  top: 0,
+  backgroundColor: 'var(--chakra-colors-gray-800)',
+  zIndex: 1,
+};
+
 export const EventsPanel: React.FC = () => {
   const [state] = useActor(useSimulation());
   const events = useMemo(() => {
@@ -50,9 +58,11 @@ export const EventsPanel: React.FC = () => {
         <Table width="100%">
           <Thead>
             <Tr>
-              <Th width="100%">Event type</Th>
-              <Th>To</Th>
-              <Th>Time</Th>
+              <Th {...stickyProps} width="100%">
+                Event type
+              </Th>
+              <Th {...stickyProps}>To</Th>
+              <Th {...stickyProps}>Time</Th>
             </Tr>
           </Thead>
           <Tbody>
