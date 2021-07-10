@@ -1,4 +1,4 @@
-import type { ActorRef, AnyEventObject, State, StateMachine } from 'xstate';
+import type { AnyEventObject, State, StateMachine } from 'xstate';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
@@ -21,7 +21,7 @@ export type ServiceRefEvents =
       state: AnyState;
     };
 
-export interface ServiceRef {
+export interface ServiceData {
   sessionId: string;
   machine: AnyStateMachine;
   state: AnyState;

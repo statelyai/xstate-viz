@@ -17,10 +17,10 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
-import { ServiceRef } from './types';
+import { ServiceData } from './types';
 
 const selectServices = (state: any) =>
-  state.context.services as Record<string, ServiceRef>; // TODO: select() method on model
+  state.context.services as Record<string, ServiceData>; // TODO: select() method on model
 
 const ActorDetails: React.FC<{ state: any; title: string }> = ({
   state,

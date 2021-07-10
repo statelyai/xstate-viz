@@ -1,20 +1,12 @@
 import produce from 'immer';
 import { ActorRefFrom, AnyInterpreter, SCXML } from 'xstate';
-import {
-  AnyEventObject,
-  assign,
-  createMachine,
-  interpret,
-  send,
-  spawn,
-  State,
-} from 'xstate';
+import { AnyEventObject, assign, interpret, send, spawn, State } from 'xstate';
 import { createWindowReceiver } from '@xstate/inspect';
 
 import { createModel } from 'xstate/lib/model';
 import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
-import { AnyState, AnyStateMachine, ServiceRef } from './types';
+import { AnyState, AnyStateMachine, ServiceData } from './types';
 
 export interface SimEvent extends SCXML.Event<any> {
   timestamp: number;
@@ -26,7 +18,7 @@ export const createSimModel = () =>
     {
       state: undefined as AnyState | undefined,
       notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
-      services: {} as Partial<Record<string, ServiceRef>>,
+      services: {} as Partial<Record<string, ServiceData>>,
       service: null as string | null,
       events: [] as SimEvent[],
       previewEvent: undefined as string | undefined,
@@ -45,7 +37,7 @@ export const createSimModel = () =>
         'MACHINES.SET': (index: number) => ({ index }),
         'EVENT.PREVIEW': (eventType: string) => ({ eventType }),
         'PREVIEW.CLEAR': () => ({}),
-        'SERVICE.REGISTER': (service: ServiceRef) => ({ service }),
+        'SERVICE.REGISTER': (service: ServiceData) => ({ service }),
         'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
         'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
         'SERVICE.EVENT': (event: SCXML.Event<any>, sessionId: string) => ({
