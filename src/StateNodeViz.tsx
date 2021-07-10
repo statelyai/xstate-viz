@@ -66,7 +66,9 @@ export const StateNodeViz: React.FC<{
     // Catch exceptions thrown by invalid actions or guards on the transition event
     try {
       return simMachine?.transition(simState, state.context.previewEvent);
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   }, [state, simState, simMachine]);
 
   useEffect(() => {
