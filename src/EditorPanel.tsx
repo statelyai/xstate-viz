@@ -11,15 +11,25 @@ import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
+import { Monaco } from '@monaco-editor/react';
+
+function removeExportsImports(code: string) {
+  return code.replace(/^(export default|export|import(.+)from(.+))/gm, '');
+}
 
 const editorPanelModel = createModel(
   {
     code: '',
     immediateUpdate: false,
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
+    editorRef: null as Monaco | null,
+    mainFile: 'main.ts',
+    machines: null as AnyStateMachine[] | null,
   },
   {
     events: {
+      COMPILE: () => ({}),
+      EDITOR_READY: (editorRef: Monaco) => ({ editorRef }),
       UPDATE_MACHINE_PRESSED: () => ({}),
       EDITOR_ENCOUNTERED_ERROR: (message: string) => ({ message }),
       EDITOR_CHANGED_VALUE: (code: string) => ({ code }),
@@ -29,15 +39,65 @@ const editorPanelModel = createModel(
 
 const editorPanelMachine = createMachine<typeof editorPanelModel>({
   context: editorPanelModel.initialContext,
-  entry: [
-    assign({ notifRef: () => spawn(notifMachine) }),
-    send((ctx) =>
-      ctx.immediateUpdate
-        ? { type: 'UPDATE_MACHINE_PRESSED' }
-        : { type: 'NOOP' },
-    ),
-  ],
+  entry: [assign({ notifRef: () => spawn(notifMachine) })],
+  initial: 'booting',
+  states: {
+    booting: {},
+    active: {},
+    updating: {
+      entry: send('UPDATE_MACHINE_PRESSED'),
+      always: 'active',
+    },
+    compiling: {
+      invoke: {
+        src: (ctx) => {
+          const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
+          const compiledJSPromise = ctx
+            .editorRef!.languages.typescript.getTypeScriptWorker()
+            .then((worker) => worker(uri))
+            .then((client) => client.getEmitOutput(uri.toString()))
+            .then((result) => result.outputFiles[0].text) as Promise<string>;
+
+          return compiledJSPromise.then((js) => {
+            const machines = parseMachines(removeExportsImports(js));
+            return machines;
+          });
+        },
+        onDone: {
+          target: 'updating',
+          actions: [
+            assign({
+              machines: (_, e: any) => e.data,
+            }),
+          ],
+        },
+        onError: {
+          target: 'active',
+          actions: [
+            (_, e) => console.error(e.data),
+            send((_, e) => ({
+              type: 'EDITOR_ENCOUNTERED_ERROR',
+              message: e.data.message,
+            })),
+          ],
+        },
+      },
+    },
+  },
   on: {
+    EDITOR_READY: [
+      {
+        cond: (ctx) => ctx.immediateUpdate,
+        actions: [
+          editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+        ],
+        target: 'compiling',
+      },
+      {
+        target: 'active',
+        actions: editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+      },
+    ],
     EDITOR_CHANGED_VALUE: {
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
     },
@@ -52,6 +112,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     UPDATE_MACHINE_PRESSED: {
       actions: 'onChange',
     },
+    COMPILE: 'compiling',
   },
 });
 
@@ -86,17 +147,7 @@ export const EditorPanel: React.FC<{
     {
       actions: {
         onChange: (ctx) => {
-          // TODO: refactor to invoke
-          try {
-            const machines = parseMachines(ctx.code);
-            onChange(machines);
-          } catch (err: any) {
-            console.error(err);
-            send({
-              type: 'EDITOR_ENCOUNTERED_ERROR',
-              message: err.message,
-            });
-          }
+          onChange(ctx.machines!);
         },
       },
     },
@@ -106,15 +157,20 @@ export const EditorPanel: React.FC<{
     <div data-panel="editor">
       <EditorWithXStateImports
         defaultValue={defaultValue}
+        readonly={current.matches('compiling')}
+        onMount={(_, monaco) => {
+          send({ type: 'EDITOR_READY', editorRef: monaco });
+        }}
         onChange={(code) => {
           send({ type: 'EDITOR_CHANGED_VALUE', code });
         }}
       />
       <HStack>
         <Button
+          disabled={current.matches('compiling')}
           onClick={() => {
             send({
-              type: 'UPDATE_MACHINE_PRESSED',
+              type: 'COMPILE',
             });
           }}
         >
@@ -123,7 +179,7 @@ export const EditorPanel: React.FC<{
         <Button
           isLoading={isPersistPending}
           loadingText={persistText}
-          disabled={isPersistPending}
+          disabled={isPersistPending || current.matches('compiling')}
           onClick={() => {
             onSave(current.context.code);
           }}
