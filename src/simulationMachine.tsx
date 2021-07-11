@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { ActorRefFrom, AnyInterpreter, SCXML } from 'xstate';
+import { ActorRefFrom, AnyInterpreter, InterpreterStatus, SCXML } from 'xstate';
 import { AnyEventObject, assign, interpret, send, spawn, State } from 'xstate';
 import { createWindowReceiver } from '@xstate/inspect';
 
@@ -39,6 +39,7 @@ export const createSimModel = () =>
         'PREVIEW.CLEAR': () => ({}),
         'SERVICE.REGISTER': (service: ServiceData) => ({ service }),
         'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
+        'SERVICE.STOP': (sessionId: string) => ({ sessionId }),
         'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
         'SERVICE.EVENT': (event: SCXML.Event<any>, sessionId: string) => ({
           event,
@@ -132,7 +133,7 @@ export const createSimulationMachine = () => {
             });
 
             service.onStop(() => {
-              // sendBack(simModel.events['SERVICE.UNREGISTER'](service.sessionId));
+              sendBack(simModel.events['SERVICE.STOP'](service.sessionId));
             });
           });
         },
@@ -153,12 +154,9 @@ export const createSimulationMachine = () => {
             }
           });
 
-          const stateMap: Map<string, AnyState> = new Map();
-
           return receiver.subscribe((event) => {
             switch (event.type) {
               case 'service.register':
-                stateMap.set(event.sessionId, event.state);
                 let state = event.machine.resolveState(event.state);
 
                 sendBack(
@@ -176,7 +174,6 @@ export const createSimulationMachine = () => {
                     event.state,
                   ),
                 );
-                // stateMap.set(event.sessionId, event.state);
                 break;
               default:
                 break;
@@ -330,6 +327,14 @@ export const createSimulationMachine = () => {
 
             return ctx.service;
           },
+        }),
+      },
+      'SERVICE.STOP': {
+        actions: simModel.assign({
+          services: (ctx, e) =>
+            produce(ctx.services, (draft) => {
+              draft[e.sessionId]!.status = InterpreterStatus.Stopped;
+            }),
         }),
       },
       'MACHINES.REGISTER': {

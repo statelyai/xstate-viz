@@ -1,4 +1,9 @@
-import type { AnyEventObject, State, StateMachine } from 'xstate';
+import type {
+  AnyEventObject,
+  AnyInterpreter,
+  State,
+  StateMachine,
+} from 'xstate';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
@@ -25,4 +30,5 @@ export interface ServiceData {
   sessionId: string;
   machine: AnyStateMachine;
   state: AnyState;
+  status?: AnyInterpreter['status'];
 }
