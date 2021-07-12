@@ -58,7 +58,6 @@ export const StateNodeViz: React.FC<{
   const simMachine =
     state.context.serviceDataMap[state.context.currentSessionId!]?.machine;
   const ref = useRef<HTMLDivElement>(null);
-  console.log('UPDATE', simState);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {
