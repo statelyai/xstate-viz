@@ -74,7 +74,7 @@ export const TransitionViz: React.FC<{
   const service = useSimulation();
   const state = useSelector(
     service,
-    (s) => s.context.services[s.context.service!]?.state,
+    (s) => s.context.serviceDataMap[s.context.currentSessionId!]?.state,
   );
   const delayOptions = useSelector(service, delayOptionsSelector);
   const delay = useMemo(

@@ -30,12 +30,9 @@ import { SpinnerWithText } from './SpinnerWithText';
 
 function App() {
   const simService = useInterpret(createSimulationMachine());
-  // useEffect(() => {
-  //   return simService.subscribe((s) => console.log('EFFECT', s)).unsubscribe;
-  // }, []);
   const machine = useSelector(simService, (state) => {
-    return state.context.service
-      ? state.context.services[state.context.service!]?.machine
+    return state.context.currentSessionId
+      ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
   const digraph = useMemo(

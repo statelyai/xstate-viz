@@ -27,8 +27,8 @@ const JSONView: React.FC<{ src: object; name: string }> = ({ src, name }) => (
 const selectState = (
   state: StateFrom<ReturnType<typeof createSimulationMachine>>,
 ) =>
-  state.context.service
-    ? state.context.services[state.context.service]?.state
+  state.context.currentSessionId
+    ? state.context.serviceDataMap[state.context.currentSessionId]?.state
     : undefined; // TODO: select() method on model
 
 const ActorState: React.FC<{ state: any }> = ({ state }) => {

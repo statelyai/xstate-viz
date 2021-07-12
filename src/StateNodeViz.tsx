@@ -53,8 +53,10 @@ export const StateNodeViz: React.FC<{
   const service = useSimulation();
   const [state] = useActor(service);
 
-  const simState = state.context.services[state.context.service!]?.state;
-  const simMachine = state.context.services[state.context.service!]?.machine;
+  const simState =
+    state.context.serviceDataMap[state.context.currentSessionId!]?.state;
+  const simMachine =
+    state.context.serviceDataMap[state.context.currentSessionId!]?.machine;
   const ref = useRef<HTMLDivElement>(null);
   console.log('UPDATE', simState);
 
