@@ -49,6 +49,7 @@ export const createSimModel = () =>
           sessionId,
           state,
         }),
+        ERROR: (message: string) => ({ message }),
       },
     },
   );
@@ -103,7 +104,11 @@ export const createSimulationMachine = () => {
 
           onReceive((event) => {
             if (event.type === 'INTERPRET') {
-              locallyInterpret(event.machine);
+              try {
+                locallyInterpret(event.machine);
+              } catch (e) {
+                sendBack(simModel.events.ERROR((e as Error).message));
+              }
             } else if (event.type === 'xstate.event') {
               const service = serviceMap.get(event.sessionId);
 
@@ -347,6 +352,16 @@ export const createSimulationMachine = () => {
             { to: 'services' },
           ),
         ],
+      },
+      ERROR: {
+        actions: send(
+          (_, e) => ({
+            type: 'BROADCAST',
+            status: 'error',
+            message: e.message,
+          }),
+          { to: (ctx) => ctx.notifRef! },
+        ),
       },
     },
   });
