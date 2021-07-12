@@ -53,313 +53,306 @@ export const simModel = createModel(
   },
 );
 
-export const createSimulationMachine = () => {
-  return simModel.createMachine({
-    context: simModel.initialContext,
-    initial: 'pending',
-    entry: assign({ notifRef: () => spawn(notifMachine) }),
-    invoke: [
-      {
-        id: 'services',
-        src: () => (sendBack, onReceive) => {
-          const serviceMap: Map<string, AnyInterpreter> = new Map();
-          let rootMachine: AnyStateMachine;
-          let rootService: AnyInterpreter;
+export const simulationMachine = simModel.createMachine({
+  context: simModel.initialContext,
+  initial: 'pending',
+  entry: assign({ notifRef: () => spawn(notifMachine) }),
+  invoke: [
+    {
+      id: 'services',
+      src: () => (sendBack, onReceive) => {
+        const serviceMap: Map<string, AnyInterpreter> = new Map();
+        let rootMachine: AnyStateMachine;
+        let rootService: AnyInterpreter;
 
-          function locallyInterpret(machine: AnyStateMachine) {
-            rootMachine = machine;
-            // stop all existing services
-            Array.from(serviceMap.values()).forEach((runningService) => {
-              runningService.stop();
-              sendBack({
-                type: 'SERVICE.UNREGISTER',
-                sessionId: runningService.sessionId,
-              });
-            });
-            serviceMap.clear();
-
-            rootService = interpret(machine);
-            serviceMap.set(rootService.sessionId, rootService);
-
+        function locallyInterpret(machine: AnyStateMachine) {
+          rootMachine = machine;
+          // stop all existing services
+          Array.from(serviceMap.values()).forEach((runningService) => {
+            runningService.stop();
             sendBack({
-              type: 'SERVICE.REGISTER',
-              service: {
-                sessionId: rootService.sessionId,
-                machine: rootService.machine,
-                state: rootService.machine.initialState,
-              },
+              type: 'SERVICE.UNREGISTER',
+              sessionId: runningService.sessionId,
             });
+          });
+          serviceMap.clear();
 
-            rootService.subscribe((state) => {
-              sendBack({
-                type: 'SERVICE.STATE',
-                state,
-                sessionId: rootService.sessionId,
-              });
-            });
-            rootService.start();
-          }
+          rootService = interpret(machine);
+          serviceMap.set(rootService.sessionId, rootService);
 
-          onReceive((event) => {
-            if (event.type === 'INTERPRET') {
-              try {
-                locallyInterpret(event.machine);
-              } catch (e) {
-                sendBack(simModel.events.ERROR((e as Error).message));
-              }
-            } else if (event.type === 'xstate.event') {
-              const service = serviceMap.get(event.sessionId);
-
-              if (service) {
-                service.send(event.event);
-              }
-            } else if (event.type === 'RESET') {
-              rootService?.stop();
-              locallyInterpret(rootMachine);
-            }
+          sendBack({
+            type: 'SERVICE.REGISTER',
+            service: {
+              sessionId: rootService.sessionId,
+              machine: rootService.machine,
+              state: rootService.machine.initialState,
+            },
           });
 
-          devTools.onRegister((service) => {
-            sendBack(simModel.events['SERVICE.REGISTER'](service));
+          rootService.subscribe((state) => {
+            sendBack({
+              type: 'SERVICE.STATE',
+              state,
+              sessionId: rootService.sessionId,
+            });
+          });
+          rootService.start();
+        }
 
-            service.subscribe((state) => {
-              if (!state) {
-                return;
-              }
+        onReceive((event) => {
+          if (event.type === 'INTERPRET') {
+            try {
+              locallyInterpret(event.machine);
+            } catch (e) {
+              sendBack(simModel.events.ERROR((e as Error).message));
+            }
+          } else if (event.type === 'xstate.event') {
+            const service = serviceMap.get(event.sessionId);
+
+            if (service) {
+              service.send(event.event);
+            }
+          } else if (event.type === 'RESET') {
+            rootService?.stop();
+            locallyInterpret(rootMachine);
+          }
+        });
+
+        devTools.onRegister((service) => {
+          sendBack(simModel.events['SERVICE.REGISTER'](service));
+
+          service.subscribe((state) => {
+            if (!state) {
+              return;
+            }
+
+            sendBack(
+              simModel.events['SERVICE.EVENT'](state._event, service.sessionId),
+            );
+          });
+
+          service.onStop(() => {
+            sendBack(simModel.events['SERVICE.STOP'](service.sessionId));
+          });
+        });
+      },
+    },
+    {
+      id: 'receiver',
+      src: () => (sendBack, onReceive) => {
+        const receiver = createWindowReceiver();
+        (window as any).receiver = receiver;
+
+        onReceive((event) => {
+          if (event.type === 'xstate.event') {
+            receiver.send({
+              ...event,
+              type: 'xstate.event',
+              event: JSON.stringify(event.event),
+            });
+          }
+        });
+
+        return receiver.subscribe((event) => {
+          switch (event.type) {
+            case 'service.register':
+              let state = event.machine.resolveState(event.state);
 
               sendBack(
-                simModel.events['SERVICE.EVENT'](
-                  state._event,
-                  service.sessionId,
-                ),
+                simModel.events['SERVICE.REGISTER']({
+                  sessionId: event.sessionId,
+                  machine: event.machine,
+                  state,
+                }),
               );
-            });
-
-            service.onStop(() => {
-              sendBack(simModel.events['SERVICE.STOP'](service.sessionId));
-            });
-          });
-        },
+              break;
+            case 'service.state':
+              sendBack(
+                simModel.events['SERVICE.STATE'](event.sessionId, event.state),
+              );
+              break;
+            default:
+              break;
+          }
+        }).unsubscribe;
       },
-      {
-        id: 'receiver',
-        src: () => (sendBack, onReceive) => {
-          const receiver = createWindowReceiver();
-          (window as any).receiver = receiver;
-
-          onReceive((event) => {
-            if (event.type === 'xstate.event') {
-              receiver.send({
-                ...event,
-                type: 'xstate.event',
-                event: JSON.stringify(event.event),
-              });
-            }
-          });
-
-          return receiver.subscribe((event) => {
-            switch (event.type) {
-              case 'service.register':
-                let state = event.machine.resolveState(event.state);
-
-                sendBack(
-                  simModel.events['SERVICE.REGISTER']({
-                    sessionId: event.sessionId,
-                    machine: event.machine,
-                    state,
-                  }),
-                );
-                break;
-              case 'service.state':
-                sendBack(
-                  simModel.events['SERVICE.STATE'](
-                    event.sessionId,
-                    event.state,
-                  ),
-                );
-                break;
-              default:
-                break;
-            }
-          }).unsubscribe;
-        },
-      },
-    ],
-    states: {
-      pending: {
-        always: {
-          target: 'active',
-          cond: (ctx) => {
-            return Object.values(ctx.serviceDataMap).length > 0;
-          },
-        },
-      },
-      active: {
-        on: {
-          'MACHINES.UPDATE': {},
-          'MACHINES.RESET': {
-            target: 'active',
-            internal: false,
-            actions: [
-              simModel.assign({
-                events: [],
-                previewEvent: undefined,
-                currentSessionId: null,
-              }),
-              send('RESET', { to: 'services' }),
-            ],
-          },
-          'MACHINES.SET': {},
-          'EVENT.PREVIEW': {
-            actions: simModel.assign({
-              previewEvent: (_, event) => event.eventType,
-            }),
-          },
-          'PREVIEW.CLEAR': {
-            actions: simModel.assign({ previewEvent: undefined }),
-          },
-
-          'SERVICE.FOCUS': {
-            actions: simModel.assign({
-              currentSessionId: (_, e) => e.sessionId,
-            }),
-          },
+    },
+  ],
+  states: {
+    pending: {
+      always: {
+        target: 'active',
+        cond: (ctx) => {
+          return Object.values(ctx.serviceDataMap).length > 0;
         },
       },
     },
-    on: {
-      'STATE.UPDATE': {
-        actions: assign({
-          state: (_, e) => e.state,
-        }),
-      },
-      'SERVICE.EVENT': {
-        actions: assign({
-          events: (ctx, e) =>
-            produce(ctx.events, (draft) => {
-              draft.push({
-                ...e.event,
-                timestamp: Date.now(),
-                sessionId: e.sessionId,
-              });
+    active: {
+      on: {
+        'MACHINES.UPDATE': {},
+        'MACHINES.RESET': {
+          target: 'active',
+          internal: false,
+          actions: [
+            simModel.assign({
+              events: [],
+              previewEvent: undefined,
+              currentSessionId: null,
             }),
-        }),
-      },
-      'SERVICE.STATE': {
-        actions: [
-          simModel.assign({
-            serviceDataMap: (ctx, e) =>
-              produce(ctx.serviceDataMap, (draft) => {
-                const service = ctx.serviceDataMap[e.sessionId]!;
-                draft[e.sessionId]!.state = service?.machine.resolveState(
-                  e.state,
-                );
-              }),
+            send('RESET', { to: 'services' }),
+          ],
+        },
+        'MACHINES.SET': {},
+        'EVENT.PREVIEW': {
+          actions: simModel.assign({
+            previewEvent: (_, event) => event.eventType,
           }),
-          send((_, e) => ({
-            type: 'SERVICE.EVENT',
-            event: e.state._event,
-            sessionId: e.sessionId,
-          })),
-        ],
-      },
-      'SERVICE.SEND': {
-        actions: [
-          (ctx, e) => {
-            const eventSchema =
-              ctx.serviceDataMap[ctx.currentSessionId!]!.machine.schema
-                ?.events?.[e.event.type];
-            const eventToSend = { ...e.event };
+        },
+        'PREVIEW.CLEAR': {
+          actions: simModel.assign({ previewEvent: undefined }),
+        },
 
-            if (eventSchema) {
-              Object.keys(eventSchema.properties).forEach((prop) => {
-                const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                );
-
-                eventToSend.data[prop] = value;
-              });
-            }
-          },
-          send(
-            (ctx, e) => {
-              return {
-                type: 'xstate.event',
-                event: e.event,
-                sessionId: ctx.currentSessionId,
-              };
-            },
-            { to: 'services' },
-          ),
-          send(
-            (ctx, e) => {
-              return {
-                type: 'xstate.event',
-                event: e.event,
-                sessionId: ctx.currentSessionId,
-              };
-            },
-            { to: 'receiver' },
-          ),
-        ],
+        'SERVICE.FOCUS': {
+          actions: simModel.assign({
+            currentSessionId: (_, e) => e.sessionId,
+          }),
+        },
       },
-      'SERVICE.REGISTER': {
-        actions: simModel.assign({
-          serviceDataMap: (ctx, e) => {
-            return produce(ctx.serviceDataMap, (draft) => {
-              draft[e.service.sessionId] = e.service;
+    },
+  },
+  on: {
+    'STATE.UPDATE': {
+      actions: assign({
+        state: (_, e) => e.state,
+      }),
+    },
+    'SERVICE.EVENT': {
+      actions: assign({
+        events: (ctx, e) =>
+          produce(ctx.events, (draft) => {
+            draft.push({
+              ...e.event,
+              timestamp: Date.now(),
+              sessionId: e.sessionId,
             });
-          },
-          currentSessionId: (ctx, e) => {
-            return ctx.currentSessionId ?? e.service.sessionId;
-          },
-        }),
-      },
-      'SERVICE.UNREGISTER': {
-        actions: simModel.assign({
-          serviceDataMap: (ctx, e) => {
-            return produce(ctx.serviceDataMap, (draft) => {
-              delete draft[e.sessionId];
-            });
-          },
-          currentSessionId: (ctx, e) => {
-            if (ctx.currentSessionId === e.sessionId) {
-              return null;
-            }
-
-            return ctx.currentSessionId;
-          },
-        }),
-      },
-      'SERVICE.STOP': {
-        actions: simModel.assign({
+          }),
+      }),
+    },
+    'SERVICE.STATE': {
+      actions: [
+        simModel.assign({
           serviceDataMap: (ctx, e) =>
             produce(ctx.serviceDataMap, (draft) => {
-              draft[e.sessionId]!.status = InterpreterStatus.Stopped;
+              const service = ctx.serviceDataMap[e.sessionId]!;
+              draft[e.sessionId]!.state = service?.machine.resolveState(
+                e.state,
+              );
             }),
         }),
-      },
-      'MACHINES.REGISTER': {
-        actions: [
-          send(
-            (_, e) => ({
-              type: 'INTERPRET',
-              machine: e.machines[0],
-            }),
-            { to: 'services' },
-          ),
-        ],
-      },
-      ERROR: {
-        actions: send(
-          (_, e) => ({
-            type: 'BROADCAST',
-            status: 'error',
-            message: e.message,
-          }),
-          { to: (ctx) => ctx.notifRef! },
-        ),
-      },
+        send((_, e) => ({
+          type: 'SERVICE.EVENT',
+          event: e.state._event,
+          sessionId: e.sessionId,
+        })),
+      ],
     },
-  });
-};
+    'SERVICE.SEND': {
+      actions: [
+        (ctx, e) => {
+          const eventSchema =
+            ctx.serviceDataMap[ctx.currentSessionId!]!.machine.schema?.events?.[
+              e.event.type
+            ];
+          const eventToSend = { ...e.event };
+
+          if (eventSchema) {
+            Object.keys(eventSchema.properties).forEach((prop) => {
+              const value = prompt(
+                `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
+              );
+
+              eventToSend.data[prop] = value;
+            });
+          }
+        },
+        send(
+          (ctx, e) => {
+            return {
+              type: 'xstate.event',
+              event: e.event,
+              sessionId: ctx.currentSessionId,
+            };
+          },
+          { to: 'services' },
+        ),
+        send(
+          (ctx, e) => {
+            return {
+              type: 'xstate.event',
+              event: e.event,
+              sessionId: ctx.currentSessionId,
+            };
+          },
+          { to: 'receiver' },
+        ),
+      ],
+    },
+    'SERVICE.REGISTER': {
+      actions: simModel.assign({
+        serviceDataMap: (ctx, e) => {
+          return produce(ctx.serviceDataMap, (draft) => {
+            draft[e.service.sessionId] = e.service;
+          });
+        },
+        currentSessionId: (ctx, e) => {
+          return ctx.currentSessionId ?? e.service.sessionId;
+        },
+      }),
+    },
+    'SERVICE.UNREGISTER': {
+      actions: simModel.assign({
+        serviceDataMap: (ctx, e) => {
+          return produce(ctx.serviceDataMap, (draft) => {
+            delete draft[e.sessionId];
+          });
+        },
+        currentSessionId: (ctx, e) => {
+          if (ctx.currentSessionId === e.sessionId) {
+            return null;
+          }
+
+          return ctx.currentSessionId;
+        },
+      }),
+    },
+    'SERVICE.STOP': {
+      actions: simModel.assign({
+        serviceDataMap: (ctx, e) =>
+          produce(ctx.serviceDataMap, (draft) => {
+            draft[e.sessionId]!.status = InterpreterStatus.Stopped;
+          }),
+      }),
+    },
+    'MACHINES.REGISTER': {
+      actions: [
+        send(
+          (_, e) => ({
+            type: 'INTERPRET',
+            machine: e.machines[0],
+          }),
+          { to: 'services' },
+        ),
+      ],
+    },
+    ERROR: {
+      actions: send(
+        (_, e) => ({
+          type: 'BROADCAST',
+          status: 'error',
+          message: e.message,
+        }),
+        { to: (ctx) => ctx.notifRef! },
+      ),
+    },
+  },
+});

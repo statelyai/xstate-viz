@@ -10,7 +10,7 @@ import {
   AccordionIcon,
 } from '@chakra-ui/react';
 import { useSimulation } from './SimulationContext';
-import { createSimulationMachine } from './simulationMachine';
+import { simulationMachine } from './simulationMachine';
 
 const JSONView: React.FC<{ src: object; name: string }> = ({ src, name }) => (
   <ReactJson
@@ -24,9 +24,7 @@ const JSONView: React.FC<{ src: object; name: string }> = ({ src, name }) => (
   />
 );
 
-const selectState = (
-  state: StateFrom<ReturnType<typeof createSimulationMachine>>,
-) =>
+const selectState = (state: StateFrom<typeof simulationMachine>) =>
   state.context.currentSessionId
     ? state.context.serviceDataMap[state.context.currentSessionId]?.state
     : undefined; // TODO: select() method on model

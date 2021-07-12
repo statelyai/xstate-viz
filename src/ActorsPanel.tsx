@@ -17,11 +17,10 @@ import {
 } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 import { StateFrom } from 'xstate';
-import { createSimulationMachine } from './simulationMachine';
+import { simulationMachine } from './simulationMachine';
 
-const selectServices = (
-  state: StateFrom<ReturnType<typeof createSimulationMachine>>,
-) => state.context.serviceDataMap;
+const selectServices = (state: StateFrom<typeof simulationMachine>) =>
+  state.context.serviceDataMap;
 
 const ActorDetails: React.FC<{ state: any; title: string }> = ({
   state,

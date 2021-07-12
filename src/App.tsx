@@ -3,7 +3,6 @@ import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import './Graph';
 import { toDirectedGraph } from './directedGraph';
 import { CanvasPanel } from './CanvasPanel';
-import { createSimulationMachine } from './simulationMachine';
 import { SimulationProvider } from './SimulationContext';
 import './base.scss';
 import { EditorPanel } from './EditorPanel';
@@ -27,9 +26,10 @@ import { clientMachine } from './clientMachine';
 import { ClientProvider } from './clientContext';
 import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
+import { simulationMachine } from './simulationMachine';
 
 function App() {
-  const simService = useInterpret(createSimulationMachine());
+  const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
