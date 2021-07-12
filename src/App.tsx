@@ -7,7 +7,15 @@ import { createSimulationMachine } from './simulationMachine';
 import { SimulationProvider } from './SimulationContext';
 import './base.scss';
 import { EditorPanel } from './EditorPanel';
-import { Tabs, TabList, TabPanels, Tab, TabPanel, Box } from '@chakra-ui/react';
+import {
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  Box,
+  Text,
+} from '@chakra-ui/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
 import { StatePanel } from './StatePanel';
@@ -62,7 +70,17 @@ function App() {
         gridTemplateColumns="1fr minmax(50%, auto)"
         gridTemplateAreas="'canvas tabs'"
       >
-        {digraph && <CanvasPanel digraph={digraph} />}
+        {digraph ? (
+          <CanvasPanel digraph={digraph} />
+        ) : (
+          <Box display="flex" justifyContent="center" alignItems="center">
+            <Text textAlign="center">
+              No machines to display yet...
+              <br />
+              Create one!
+            </Text>
+          </Box>
+        )}
         <ClientProvider value={clientService}>
           <ChakraProvider theme={theme}>
             <Box gridArea="tabs">
