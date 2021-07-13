@@ -48,7 +48,7 @@ export function InvokeViz({ invoke }: { invoke: InvokeDefinition<any, any> }) {
 
 export const EventTypeViz: React.FC<{
   eventType: string;
-  delay: DelayedTransitionMetadata;
+  delay?: DelayedTransitionMetadata;
   onChangeEventType?: (eventType: string) => void;
 }> = ({ eventType: event, delay, onChangeEventType }) => {
   if (event.startsWith('done.state.')) {
@@ -81,11 +81,11 @@ export const EventTypeViz: React.FC<{
     );
   }
 
-  if (delay.delayType === 'DELAYED_INVALID') {
+  if (delay?.delayType === 'DELAYED_INVALID') {
     return <div data-viz="eventType">{event}</div>;
   }
 
-  if (delay.delayType === 'DELAYED_VALID') {
+  if (delay?.delayType === 'DELAYED_VALID') {
     return (
       <div data-viz="eventType" data-viz-keyword="after">
         <em data-viz="eventType-keyword">after</em>{' '}
