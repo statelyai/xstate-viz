@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo } from 'react';
 import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import './Graph';
@@ -20,6 +21,7 @@ import { clientMachine } from './clientMachine';
 import { ClientProvider } from './clientContext';
 import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
+import { ResizableBox } from './ResizableBox';
 
 function App() {
   const simService = useInterpret(createSimulationMachine(testMachine));
@@ -57,13 +59,13 @@ function App() {
         data-viz-theme="dark"
         as="main"
         display="grid"
-        gridTemplateColumns="1fr minmax(50%, auto)"
+        gridTemplateColumns="1fr auto"
         gridTemplateAreas="'canvas tabs'"
       >
         {digraph && <CanvasPanel digraph={digraph} />}
         <ClientProvider value={clientService}>
           <ChakraProvider theme={theme}>
-            <Box gridArea="tabs">
+            <ResizableBox gridArea="tabs">
               <Login />
               <Tabs
                 bg="gray.800"
@@ -132,7 +134,7 @@ function App() {
                   </TabPanel>
                 </TabPanels>
               </Tabs>
-            </Box>
+            </ResizableBox>
           </ChakraProvider>
         </ClientProvider>
       </Box>
