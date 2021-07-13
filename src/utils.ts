@@ -26,7 +26,7 @@ export function createRequiredContext<T>(displayName: string) {
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string
+  TEventType extends TEvent['type'] = string,
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;

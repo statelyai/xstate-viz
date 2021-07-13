@@ -8,7 +8,9 @@ import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
 import { getActionLabel } from './utils';
-import { AnyStateMachine } from './types';
+import { AnyStateMachine, StateFrom } from './types';
+import { toSCXMLEvent } from 'xstate/lib/utils';
+import { simulationMachine } from './simulationMachine';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -61,8 +63,9 @@ const getDelayFromEventType = (
 
 const isBuiltinEvent = (eventType: string) => eventType.startsWith('xstate.');
 
-const delayOptionsSelector = (state: AnyStateNodeDefinition) =>
-  state.context.services[state.context.service!]?.machine.options.delays;
+const delayOptionsSelector = (state: StateFrom<typeof simulationMachine>) =>
+  state.context.serviceDataMap[state.context.currentSessionId!]?.machine.options
+    ?.delays;
 
 export const TransitionViz: React.FC<{
   edge: DirectedGraphEdge;
@@ -71,18 +74,21 @@ export const TransitionViz: React.FC<{
 }> = ({ edge, index, position }) => {
   const definition = edge.transition;
   const service = useSimulation();
-  const state = useSelector(service, (s) =>
-    s.context.services[s.context.service!]?.getSnapshot(),
+  const state = useSelector(
+    service,
+    (s) => s.context.serviceDataMap[s.context.currentSessionId!]?.state,
   );
   const delayOptions = useSelector(service, delayOptionsSelector);
   const delay = useMemo(
     () =>
-      getDelayFromEventType(
-        definition.eventType,
-        delayOptions,
-        state?.context,
-        state?.event,
-      ),
+      delayOptions
+        ? getDelayFromEventType(
+            definition.eventType,
+            delayOptions,
+            state?.context,
+            state?.event,
+          )
+        : undefined,
     [definition.eventType, delayOptions, state],
   );
 
@@ -117,15 +123,15 @@ export const TransitionViz: React.FC<{
       <button
         data-viz="transition-label"
         disabled={
-          delay.delayType === 'DELAYED_INVALID' ||
+          delay?.delayType === 'DELAYED_INVALID' ||
           !state.nextEvents.includes(definition.eventType)
         }
         style={
           {
-            '--delay': delay.delayType === 'DELAYED_VALID' && delay.delay,
+            '--delay': delay?.delayType === 'DELAYED_VALID' && delay.delay,
           } as React.CSSProperties
         }
-        data-is-delayed={delay.delayType !== 'NOT_DELAYED'}
+        data-is-delayed={delay?.delayType !== 'NOT_DELAYED'}
         onMouseEnter={() => {
           service.send({
             type: 'EVENT.PREVIEW',
@@ -143,16 +149,19 @@ export const TransitionViz: React.FC<{
           if (!isBuiltinEvent(eventType)) {
             service.send({
               type: 'SERVICE.SEND',
-              event: {
-                type: eventType,
-              },
+              event: toSCXMLEvent(
+                {
+                  type: definition.eventType,
+                },
+                { origin: state._sessionid as string },
+              ),
             });
           }
         }}
       >
         <span
           data-viz="transition-event"
-          data-is-delayed={delay.delayType !== 'NOT_DELAYED'}
+          data-is-delayed={delay?.delayType !== 'NOT_DELAYED'}
         >
           <EventTypeViz eventType={definition.eventType} delay={delay} />
         </span>

@@ -33,6 +33,7 @@ const rootLayoutOptions: LayoutOptions = {
   // 'elk.layering.strategy': 'NIKOLOV',
   // 'elk.wrapping.strategy': 'SINGLE_EDGE',
   // 'elk.direction': 'DOWN',
+  'elk.aspectRatio': '0.5',
 };
 
 type RelativeNodeEdgeMap = [
@@ -292,7 +293,6 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   const [state, send] = useMachine(() => createElkMachine(digraph));
   const canvasService = useCanvas();
   const { pan, zoom } = useSelector(canvasService, (s) => s.context);
-
 
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });

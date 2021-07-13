@@ -1,7 +1,6 @@
 import React from 'react';
 import { useSelector } from '@xstate/react';
 import { useSimulation } from './SimulationContext';
-import { AnyInterpreter } from 'xstate';
 import {
   Accordion,
   AccordionItem,
@@ -17,9 +16,11 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
+import { StateFrom } from 'xstate';
+import { simulationMachine } from './simulationMachine';
 
-const selectServices = (state: any) =>
-  state.context.services as Record<string, AnyInterpreter>; // TODO: select() method on model
+const selectServices = (state: StateFrom<typeof simulationMachine>) =>
+  state.context.serviceDataMap;
 
 const ActorDetails: React.FC<{ state: any; title: string }> = ({
   state,
@@ -73,11 +74,14 @@ const ActorDetails: React.FC<{ state: any; title: string }> = ({
 export const ActorsPanel: React.FC = () => {
   const simActor = useSimulation();
   const services = useSelector(simActor, selectServices);
-  const currentSessionId = useSelector(simActor, (s) => s.context.service);
+  const currentSessionId = useSelector(
+    simActor,
+    (s) => s.context.currentSessionId,
+  );
 
   return (
     <List>
-      {Object.entries(services).map(([sessionId, service]) => {
+      {Object.entries(services).map(([sessionId, serviceData]) => {
         return (
           <ListItem
             key={sessionId}
@@ -97,7 +101,7 @@ export const ActorsPanel: React.FC = () => {
                   simActor.send({ type: 'SERVICE.FOCUS', sessionId });
                 }}
               >
-                {service.id}
+                {sessionId}
               </Link>{' '}
               ({sessionId})
             </Text>
