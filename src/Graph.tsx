@@ -33,6 +33,7 @@ const rootLayoutOptions: LayoutOptions = {
   // 'elk.layering.strategy': 'NIKOLOV',
   // 'elk.wrapping.strategy': 'SINGLE_EDGE',
   // 'elk.direction': 'DOWN',
+  'elk.aspectRatio': '0.5',
 };
 
 type RelativeNodeEdgeMap = [
