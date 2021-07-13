@@ -112,7 +112,7 @@ function App() {
                         defaultValue={
                           isSourceLoaded
                             ? (sourceState.context.sourceRawContent as string)
-                            : '// some comment'
+                            : `import { createMachine } from 'xstate'`
                         }
                         isUpdateMode={isUpdateMode}
                         onSave={(code: string) => {
