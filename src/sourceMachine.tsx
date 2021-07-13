@@ -1,5 +1,4 @@
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
-import { pure } from 'xstate/lib/actions';
 import { createModel } from 'xstate/lib/model';
 import { notifMachine } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
