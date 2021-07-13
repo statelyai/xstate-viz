@@ -153,7 +153,7 @@ export const TransitionViz: React.FC<{
                 {
                   type: definition.eventType,
                 },
-                { origin: state._sessionid ?? undefined },
+                { origin: state._sessionid as string },
               ),
             });
           }
