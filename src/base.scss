@@ -9,24 +9,6 @@
   position: static;
 }
 
-[data-viz='app'] {
-  height: 100vh;
-  width: 100vw;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr;
-
-  > [data-panel='viz'] {
-    grid-column: 1 / 2;
-    grid-row: 1 / -1;
-  }
-
-  > [data-panel='editor'] {
-    grid-column: 2 / -1;
-    grid-row: 1 / -1;
-  }
-}
-
 [data-viz-theme] {
   background: var(--viz-color-bg);
   color: var(--viz-color-fg);
