@@ -18,7 +18,6 @@ export const EditorWithXStateImports = (
       defaultLanguage="typescript"
       defaultValue={props.defaultValue}
       theme="vs-dark"
-      className="vscode-editor"
       options={{ readOnly: props.readonly }}
       loading={<SpinnerWithText text="Preparing the editor" />}
       onChange={(text) => {
