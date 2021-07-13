@@ -60,7 +60,6 @@ function App() {
   return (
     <SimulationProvider value={simService}>
       <Box
-        data-viz="app"
         data-viz-theme="dark"
         as="main"
         display="grid"
