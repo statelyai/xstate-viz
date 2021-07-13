@@ -1,30 +1,9 @@
 import * as XState from 'xstate';
-import {
-  StateNode,
-  createMachine,
-  interpret,
-  assign,
-  send,
-  sendParent,
-  spawn,
-  actions,
-} from 'xstate';
+import { StateNode, createMachine } from 'xstate';
 
 export function parseMachines(sourceJs: string): Array<StateNode> {
   // eslint-disable-next-line no-new-func
-  const makeMachine = new Function(
-    'Machine',
-    'createMachine',
-    'interpret',
-    'assign',
-    'send',
-    'sendParent',
-    'spawn',
-    'raise',
-    'actions',
-    'XState',
-    sourceJs,
-  );
+  const makeMachine = new Function('exports', 'require', sourceJs);
 
   const machines: Array<StateNode> = [];
 
@@ -34,18 +13,18 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
     return machine;
   };
 
-  makeMachine(
-    machineProxy,
-    machineProxy,
-    interpret,
-    assign,
-    send,
-    sendParent,
-    spawn,
-    actions.raise,
-    actions,
-    XState,
-  );
+  makeMachine({}, (sourcePath: string) => {
+    switch (sourcePath) {
+      case 'xstate':
+        return {
+          ...XState,
+          createMachine: machineProxy,
+          Machine: machineProxy,
+        };
+      default:
+        throw new Error(`External module ("${sourcePath}") can't be used.`);
+    }
+  });
 
   return machines;
 }
