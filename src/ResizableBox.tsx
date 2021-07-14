@@ -89,7 +89,7 @@ const ResizeHandle: React.FC<{
       }}
       onPointerDown={(e) => {
         e.stopPropagation();
-        (e.target as HTMLDivElement).setPointerCapture(e.pointerId);
+        e.currentTarget.setPointerCapture(e.pointerId);
         send(
           dragDropModel.events['DRAG.START']({ x: e.clientX, y: e.clientY }),
         );
@@ -108,12 +108,12 @@ export const ResizableBox: React.FC<React.ComponentProps<typeof Box>> = ({
   gridArea,
   children,
 }) => {
-  const [width, setWidth] = useState(0);
+  const [widthDelta, setWidthDelta] = useState(0);
 
   return (
-    <Box width={`calc(25rem + max(0px, ${width}px))`} gridArea={gridArea}>
+    <Box width={`calc(25rem + max(0px, ${widthDelta}px))`} gridArea={gridArea}>
       {children}
-      <ResizeHandle onChange={(value) => setWidth(value)} />
+      <ResizeHandle onChange={(value) => setWidthDelta(value)} />
     </Box>
   );
 };
