@@ -17,7 +17,7 @@ export const EditorWithXStateImports = (
       {({ css }) => (
         <Editor
           wrapperClassName={css`
-            overflow: hidden;
+            min-height: 0;
           `}
           defaultPath="main.ts"
           defaultLanguage="typescript"
