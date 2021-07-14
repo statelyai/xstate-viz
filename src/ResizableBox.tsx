@@ -104,16 +104,15 @@ const ResizeHandle: React.FC<{
   );
 };
 
-export const ResizableBox: React.FC<React.ComponentProps<typeof Box>> = ({
-  gridArea,
-  children,
-}) => {
+export const ResizableBox: React.FC<
+  Omit<React.ComponentProps<typeof Box>, 'width'>
+> = ({ children, ...props }) => {
   const [widthDelta, setWidthDelta] = useState(0);
 
   return (
     <Box
       width={`min(90vw, calc(25rem + max(0px, ${widthDelta}px)))`}
-      gridArea={gridArea}
+      {...props}
     >
       {children}
       <ResizeHandle onChange={(value) => setWidthDelta(value)} />
