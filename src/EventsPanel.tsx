@@ -13,7 +13,7 @@ import {
   FormLabel,
 } from '@chakra-ui/react';
 import { useActor, useMachine } from '@xstate/react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
@@ -38,11 +38,11 @@ const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
 
 // To keep the table header sticky, the trick is to make all `th` elements sticky
 const stickyProps = {
-  position: 'sticky' as any,
+  position: 'sticky',
   top: 0,
   backgroundColor: 'var(--chakra-colors-gray-800)',
   zIndex: 1,
-};
+} as const;
 
 const sortByCriteria = {
   ASC: (events: SimEvent[]) =>
@@ -50,10 +50,10 @@ const sortByCriteria = {
   DESC: (events: SimEvent[]) =>
     events.sort((a, b) => (a.timestamp > b.timestamp ? 1 : -1)),
 };
-type SORT_CRITERIA = 'ASC' | 'DESC';
+type SortCriteria = keyof typeof sortByCriteria;
 const eventsModel = createModel(
   {
-    sortCriteria: null as SORT_CRITERIA | null,
+    sortCriteria: null as SortCriteria | null,
     filterKeyword: '',
     showBuiltins: false,
     rawEvents: [] as SimEvent[],
@@ -61,8 +61,8 @@ const eventsModel = createModel(
   },
   {
     events: {
-      SORT_BY_TIMESTAMP: (sortCriteria: SORT_CRITERIA) => ({ sortCriteria }),
-      FILTER: (keyword: string) => ({ keyword }),
+      SORT_BY_TIMESTAMP: (sortCriteria: SortCriteria) => ({ sortCriteria }),
+      FILTER_BY_KEYWORD: (keyword: string) => ({ keyword }),
       TOGGLE_BUILTIN_EVENTS: (showBuiltins: boolean) => ({ showBuiltins }),
       EVENTS_UPDATED: (events: SimEvent[]) => ({ events }),
       INTERNAL_UPDATE: () => ({}),
@@ -110,7 +110,7 @@ const eventsMachine = createMachine<typeof eventsModel>({
         send('INTERNAL_UPDATE'),
       ],
     },
-    FILTER: {
+    FILTER_BY_KEYWORD: {
       target: 'modified',
       actions: [
         eventsModel.assign((_, e) => ({
@@ -141,9 +141,7 @@ const eventsMachine = createMachine<typeof eventsModel>({
 
 export const EventsPanel: React.FC = () => {
   const [state] = useActor(useSimulation());
-  const rawEvents = useMemo(() => {
-    return state.context!.events;
-  }, [state]);
+  const rawEvents = state.context!.events;
 
   const [eventsState, sendToEventsMachine] = useMachine(
     eventsMachine.withContext({
@@ -171,7 +169,10 @@ export const EventsPanel: React.FC = () => {
           placeholder="Filter events"
           type="search"
           onChange={(e) => {
-            sendToEventsMachine({ type: 'FILTER', keyword: e.target.value });
+            sendToEventsMachine({
+              type: 'FILTER_BY_KEYWORD',
+              keyword: e.target.value,
+            });
           }}
           marginRight="auto"
           width="40%"
