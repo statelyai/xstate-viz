@@ -62,7 +62,6 @@ function App() {
   return (
     <SimulationProvider value={simService}>
       <Box
-        data-viz="app"
         data-viz-theme="dark"
         as="main"
         display="grid"
@@ -98,7 +97,7 @@ function App() {
                 </TabList>
 
                 <TabPanels overflow="hidden">
-                  <TabPanel padding={0}>
+                  <TabPanel padding={0} height="100%">
                     {sourceState.matches({
                       with_source: 'loading_content',
                     }) && (
