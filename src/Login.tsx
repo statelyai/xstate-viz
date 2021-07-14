@@ -22,7 +22,7 @@ import { useClient } from './clientContext';
 export const Login: React.FC = () => {
   const clientService = useClient();
   const state = useSelector(clientService, (state) => state);
-  const session = state.context.client.auth.session();
+  const session = state.context!.client.auth.session();
 
   return (
     <Box
