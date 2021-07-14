@@ -112,7 +112,10 @@ function App() {
                         defaultValue={
                           isSourceLoaded
                             ? (sourceState.context.sourceRawContent as string)
-                            : `import { createMachine } from 'xstate'`
+                            : `import { createMachine } from 'xstate'; createMachine({initial: 'foo', states: {
+                              foo: { on: { EVENT: 'bar' } },
+                              bar: {}
+                            }})`
                         }
                         isUpdateMode={isUpdateMode}
                         onSave={(code: string) => {

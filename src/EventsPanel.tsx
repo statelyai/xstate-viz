@@ -8,13 +8,18 @@ import {
   Td,
   Thead,
   Th,
+  Button,
 } from '@chakra-ui/react';
-import { useActor } from '@xstate/react';
+import { useActor, useMachine } from '@xstate/react';
 import React, { useMemo, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
 import { SimEvent } from './simulationMachine';
+import { toSCXMLEvent } from 'xstate/lib/utils';
+import { SCXML } from 'xstate';
+import { createModel } from 'xstate/lib/model';
+import Editor from '@monaco-editor/react';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   return (
@@ -25,8 +30,68 @@ const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   );
 };
 
+const eventCreatorModel = createModel(
+  {
+    value: {
+      type: '',
+    } as { type: string; [key: string]: any },
+  },
+  {
+    events: {
+      update: (value: { [key: string]: any }) => ({ value }),
+    },
+  },
+);
+
+const eventCreatorMachine = eventCreatorModel.createMachine({
+  on: {
+    update: {
+      actions: eventCreatorModel.assign({
+        value: (ctx, e) => {
+          return { ...ctx.value, ...e.value };
+        },
+      }),
+    },
+  },
+});
+
+export const EventCreator: React.FC<{
+  onEvent: (event: SCXML.Event<any>) => void;
+}> = ({ onEvent }) => {
+  const [state, send] = useMachine(eventCreatorMachine);
+  const [text, setText] = useState('{}');
+
+  return (
+    <Box>
+      <Editor
+        language="json"
+        theme="vs-dark"
+        options={{
+          minimap: { enabled: false },
+          lineNumbers: 'off',
+          tabSize: 2,
+        }}
+        height="150px"
+        defaultValue={text}
+        onChange={(text) => {
+          if (text) {
+            setText(text);
+          }
+        }}
+      />
+      <Button
+        onClick={() => {
+          onEvent(toSCXMLEvent(JSON.parse(text)));
+        }}
+      >
+        Send it
+      </Button>
+    </Box>
+  );
+};
+
 export const EventsPanel: React.FC = () => {
-  const [state] = useActor(useSimulation());
+  const [state, send] = useActor(useSimulation());
   const events = useMemo(() => {
     return state.context.events.filter((event) => event.name !== 'xstate.init');
   }, [state]);
@@ -35,7 +100,7 @@ export const EventsPanel: React.FC = () => {
   return (
     <Box
       display="grid"
-      gridTemplateRows="auto 1fr"
+      gridTemplateRows="auto 1fr auto"
       gridRowGap="2"
       height="100%"
     >
@@ -61,6 +126,14 @@ export const EventsPanel: React.FC = () => {
           </Tbody>
         </Table>
       </Box>
+      <EventCreator
+        onEvent={(event) => {
+          send({
+            type: 'SERVICE.SEND',
+            event,
+          });
+        }}
+      />
     </Box>
   );
 };
