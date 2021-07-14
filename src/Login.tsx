@@ -52,7 +52,7 @@ export const Login: React.FC = () => {
 
       {state.hasTag('authorized') && (
         <Menu closeOnSelect={true}>
-          <MenuButton>
+          <MenuButton title={session?.user?.user_metadata?.full_name}>
             <Image
               display="inline-flex"
               marginRight="2"
@@ -60,18 +60,6 @@ export const Login: React.FC = () => {
               src={session?.user?.user_metadata?.avatar_url}
               alt={session?.user?.email}
             />
-            {/* Madness to get text ellipsis working with inline-flex */}
-            <Box as="span" display="inline-flex">
-              <Box
-                as="span"
-                maxWidth="100px"
-                textOverflow="ellipsis"
-                overflowX="hidden"
-                whiteSpace="nowrap"
-              >
-                {session?.user?.user_metadata?.full_name}
-              </Box>
-            </Box>
           </MenuButton>
           <MenuList>
             <MenuItem
