@@ -81,7 +81,6 @@ const eventsMachine = createMachine<typeof eventsModel>({
       actions: [
         eventsModel.assign((ctx) => {
           let finalEvents = ctx.rawEvents;
-          console.log(ctx);
           if (!ctx.showBuiltins) {
             finalEvents = finalEvents.filter(
               (event) => !event.name.startsWith('xstate.'),
