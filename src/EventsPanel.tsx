@@ -55,41 +55,6 @@ const eventCreatorMachine = eventCreatorModel.createMachine({
   },
 });
 
-export const EventCreator: React.FC<{
-  onEvent: (event: SCXML.Event<any>) => void;
-}> = ({ onEvent }) => {
-  const [state, send] = useMachine(eventCreatorMachine);
-  const [text, setText] = useState('{}');
-
-  return (
-    <Box>
-      <Editor
-        language="json"
-        theme="vs-dark"
-        options={{
-          minimap: { enabled: false },
-          lineNumbers: 'off',
-          tabSize: 2,
-        }}
-        height="150px"
-        defaultValue={text}
-        onChange={(text) => {
-          if (text) {
-            setText(text);
-          }
-        }}
-      />
-      <Button
-        onClick={() => {
-          onEvent(toSCXMLEvent(JSON.parse(text)));
-        }}
-      >
-        Send it
-      </Button>
-    </Box>
-  );
-};
-
 export const EventsPanel: React.FC = () => {
   const [state, send] = useActor(useSimulation());
   const events = useMemo(() => {
@@ -120,20 +85,15 @@ export const EventsPanel: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
+            <NewEventRow
+              onSend={(event) => send({ type: 'SERVICE.SEND', event })}
+            />
             {events.map((event, i) => {
               return <EventRow event={event} filter={filter} key={i} />;
             })}
           </Tbody>
         </Table>
       </Box>
-      <EventCreator
-        onEvent={(event) => {
-          send({
-            type: 'SERVICE.SEND',
-            event,
-          });
-        }}
-      />
     </Box>
   );
 };
@@ -161,6 +121,52 @@ const EventRow: React.FC<{ event: SimEvent; filter: string }> = ({
           </Td>
         </Tr>
       ) : null}
+    </>
+  );
+};
+
+const NewEventRow: React.FC<{
+  onSend: (scxmlEvent: SCXML.Event<any>) => void;
+}> = ({ onSend }) => {
+  const [show, setShow] = useState(false);
+  const [text, setText] = useState('');
+
+  return (
+    <>
+      <Tr>
+        <Td>
+          <Input onChange={(e) => setText(e.target.value)} />
+          <Button onClick={() => setShow(true)}>Add payload</Button>
+          <Button onClick={() => onSend(toSCXMLEvent({ type: text }))}>
+            Send
+          </Button>
+        </Td>
+        <Td color="gray.500" textAlign="right"></Td>
+        <Td color="gray.500"></Td>
+      </Tr>
+      {show && (
+        <Tr>
+          <Td colSpan={3}>
+            <Editor
+              language="json"
+              theme="vs-dark"
+              options={{
+                minimap: { enabled: false },
+                lineNumbers: 'off',
+                tabSize: 2,
+              }}
+              height="150px"
+              width="auto"
+              defaultValue={text}
+              onChange={(text) => {
+                if (text) {
+                  setText(text);
+                }
+              }}
+            />
+          </Td>
+        </Tr>
+      )}
     </>
   );
 };

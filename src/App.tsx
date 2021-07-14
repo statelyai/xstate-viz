@@ -111,7 +111,7 @@ function App() {
                         immediateUpdate={isSourceLoaded}
                         defaultValue={
                           isSourceLoaded
-                            ? (sourceState.context.sourceRawContent as string)
+                            ? (sourceState.context!.sourceRawContent as string)
                             : `import { createMachine } from 'xstate'; createMachine({initial: 'foo', states: {
                               foo: { on: { EVENT: 'bar' } },
                               bar: {}
