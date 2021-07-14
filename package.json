@@ -14,19 +14,22 @@
     "@testing-library/user-event": "^12.1.10",
     "@xstate/graph": "^1.3.0",
     "@xstate/inspect": "^0.4.1",
-    "@xstate/react": "^1.4.0",
+    "@xstate/react": "^1.5.1",
     "date-fns": "^2.22.1",
     "elkjs": "^0.7.1",
     "framer-motion": "^4",
+    "global": "^4.4.0",
     "immer": "^9.0.3",
+    "lodash.isequal": "^4.5.0",
     "monaco-editor": "^0.24.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-json-view": "^1.21.3",
     "react-scripts": "4.0.3",
+    "reserve-npm": "^1.0.1",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
-    "xstate": "^4.20.1"
+    "xstate": "^4.22.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -53,6 +56,7 @@
     ]
   },
   "devDependencies": {
+    "@types/lodash.isequal": "^4.5.5",
     "@types/react": "^17.0.6",
     "@types/react-dom": "^17.0.5",
     "sass": "^1.33.0",
