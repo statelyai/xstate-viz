@@ -23,7 +23,10 @@ export const EditorWithXStateImports = (
           defaultLanguage="typescript"
           defaultValue={props.defaultValue}
           theme="vs-dark"
-          options={{ readOnly: props.readonly }}
+          options={{
+            readOnly: props.readonly,
+            minimap: { enabled: false },
+          }}
           loading={<SpinnerWithText text="Preparing the editor" />}
           onChange={(text) => {
             if (text) {
