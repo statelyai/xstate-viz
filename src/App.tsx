@@ -95,7 +95,7 @@ function App() {
                 </TabList>
 
                 <TabPanels overflow="hidden">
-                  <TabPanel padding={0}>
+                  <TabPanel padding={0} height="100%">
                     {sourceState.matches({
                       with_source: 'loading_content',
                     }) && (

@@ -1,4 +1,4 @@
-import { Button, HStack } from '@chakra-ui/react';
+import { Button, HStack, Box } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom, send } from 'xstate';
@@ -6,7 +6,6 @@ import { assign } from 'xstate';
 import { createMachine, send as sendAction, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useClient } from './clientContext';
-import './EditorPanel.scss';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
@@ -150,7 +149,7 @@ export const EditorPanel: React.FC<{
   );
 
   return (
-    <div data-panel="editor">
+    <Box height="100%" display="grid" gridTemplateRows="1fr auto">
       <EditorWithXStateImports
         defaultValue={defaultValue}
         readonly={current.matches('compiling')}
@@ -183,6 +182,6 @@ export const EditorPanel: React.FC<{
           {persistText}
         </Button>
       </HStack>
-    </div>
+    </Box>
   );
 };
