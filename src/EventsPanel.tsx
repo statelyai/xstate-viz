@@ -143,7 +143,7 @@ export const EventsPanel: React.FC = () => {
   const [state] = useActor(useSimulation());
   const rawEvents = state.context!.events;
 
-  const [eventsState, sendToEventsMachine] = useMachine(
+  const [eventsState, sendToEventsMachine] = useMachine(() =>
     eventsMachine.withContext({
       ...eventsModel.initialContext,
       rawEvents: rawEvents,
