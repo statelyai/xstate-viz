@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import './Graph';
