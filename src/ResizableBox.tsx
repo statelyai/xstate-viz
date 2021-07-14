@@ -6,8 +6,8 @@ import { Point } from './pathUtils';
 
 const dragDropModel = createModel(
   {
-    prevWidth: 300,
-    width: 300,
+    prevWidth: 0,
+    widthDelta: 0,
     dragPoint: { x: 0, y: 0 },
     point: { x: 0, y: 0 },
   },
@@ -36,7 +36,7 @@ const dragDropMachine = dragDropModel.createMachine({
         'DRAG.MOVE': {
           actions: dragDropModel.assign({
             dragPoint: (_, e) => e.point,
-            width: (ctx, e) => {
+            widthDelta: (ctx, e) => {
               return Math.max(0, ctx.prevWidth + (ctx.point.x - e.point.x));
             },
           }),
@@ -45,7 +45,7 @@ const dragDropMachine = dragDropModel.createMachine({
           target: 'idle',
           actions: dragDropModel.assign({
             point: (ctx) => ctx.dragPoint,
-            prevWidth: (ctx) => ctx.width,
+            prevWidth: (ctx) => ctx.widthDelta,
           }),
         },
       },
@@ -59,13 +59,34 @@ const ResizeHandle: React.FC<{
   const [state, send] = useMachine(dragDropMachine);
 
   useEffect(() => {
-    onChange(state.context.width);
-  }, [state.context.width, onChange]);
+    onChange(state.context.widthDelta);
+  }, [state.context.widthDelta, onChange]);
 
   return (
     <Box
-      data-viz="resizeHandle"
       width="1"
+      css={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        height: '100%',
+        cursor: 'ew-resize',
+        opacity: 0,
+        transition: 'opacity 0.2s ease',
+      }}
+      _hover={{
+        opacity: 1,
+        background: 'var(--chakra-colors-blue-300)',
+      }}
+      _before={{
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        transform: 'scaleX(2)',
+      }}
       onPointerDown={(e) => {
         e.stopPropagation();
         (e.target as HTMLDivElement).setPointerCapture(e.pointerId);
@@ -83,14 +104,14 @@ const ResizeHandle: React.FC<{
   );
 };
 
-export const ResizableBox: React.FC<{ gridArea?: string }> = ({
-  gridArea, // TODO: figure out how to add Box prop types
+export const ResizableBox: React.FC<React.ComponentProps<typeof Box>> = ({
+  gridArea,
   children,
 }) => {
-  const [width, setWidth] = useState(300);
+  const [width, setWidth] = useState(0);
 
   return (
-    <Box width={`${width}px`} gridArea={gridArea}>
+    <Box width={`calc(25rem + max(0px, ${width}px))`} gridArea={gridArea}>
       {children}
       <ResizeHandle onChange={(value) => setWidth(value)} />
     </Box>

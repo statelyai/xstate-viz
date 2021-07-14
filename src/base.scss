@@ -51,27 +51,3 @@
 body {
   overscroll-behavior: none;
 }
-
-[data-viz='resizeHandle'] {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  cursor: ew-resize;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    transform: scaleX(2);
-  }
-  &:hover {
-    opacity: 1;
-    background: var(--chakra-colors-blue-300);
-  }
-}
