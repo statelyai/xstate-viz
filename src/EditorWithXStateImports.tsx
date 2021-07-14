@@ -27,12 +27,27 @@ export const EditorWithXStateImports = (
         }
       }}
       onMount={async (editor, monaco) => {
+        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+          customWorkerPath: `${new URL(
+            process.env.PUBLIC_URL,
+            window.location.origin,
+          )}/ts-worker.js`,
+        });
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
+          module: monaco.languages.typescript.ModuleKind.CommonJS,
+          moduleResolution:
+            monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+          strict: true,
+        });
+
         const indexFile = await fetch(`/xstate.d.ts.txt`).then((res) =>
           res.text(),
         );
 
         monaco.languages.typescript.typescriptDefaults.addExtraLib(
-          `${indexFile}`,
+          indexFile,
+          'file:///node_modules/xstate/index.d.ts',
         );
 
         props.onMount?.(editor, monaco);

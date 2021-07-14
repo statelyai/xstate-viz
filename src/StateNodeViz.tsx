@@ -53,10 +53,10 @@ export const StateNodeViz: React.FC<{
   const service = useSimulation();
   const [state] = useActor(service);
 
-  const simState = state.context.services[
-    state.context.service!
-  ]?.getSnapshot();
-  const simMachine = state.context.services[state.context.service!]?.machine;
+  const serviceData =
+    state.context.serviceDataMap[state.context.currentSessionId!];
+  const simState = serviceData?.state;
+  const simMachine = serviceData?.machine;
   const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
@@ -66,8 +66,9 @@ export const StateNodeViz: React.FC<{
     // Catch exceptions thrown by invalid actions or guards on the transition event
     try {
       return simMachine?.transition(simState, state.context.previewEvent);
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
+      return undefined;
     }
   }, [state, simState, simMachine]);
 
@@ -131,15 +132,17 @@ export const StateNodeViz: React.FC<{
               ></div>
             )}
             <div data-viz="stateNode-key">{stateNode.key}</div>
-            <div data-viz="stateNode-tags">
-              {stateNode.tags.map((tag, i) => {
-                return (
-                  <div data-viz="stateNode-tag" key={i}>
-                    {tag}
-                  </div>
-                );
-              })}
-            </div>
+            {stateNode.tags.length > 0 && (
+              <div data-viz="stateNode-tags">
+                {stateNode.tags.map((tag, i) => {
+                  return (
+                    <div data-viz="stateNode-tag" key={i}>
+                      {tag}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
           {stateNode.definition.invoke.length > 0 && (
             <div data-viz="stateNode-invocations">
