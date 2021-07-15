@@ -14,21 +14,19 @@ import {
   PopoverBody,
   PopoverCloseButton,
   PopoverContent,
-  PopoverHeader,
   PopoverTrigger,
   Portal,
   PopoverFooter,
   ButtonGroup,
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
 import { SimEvent } from './simulationMachine';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { SCXML } from 'xstate';
-import { createModel } from 'xstate/lib/model';
 import Editor from '@monaco-editor/react';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
