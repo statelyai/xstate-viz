@@ -109,6 +109,13 @@
   font-weight: bold;
 }
 
+[data-viz='stateNode-keyText'] {
+  max-width: 15ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 [data-viz='stateNode-actions'] {
   padding: 0.5rem;
 
@@ -122,6 +129,8 @@
 }
 
 [data-viz='stateNode-tags'] {
+  display: flex;
+  flex-direction: row;
   text-overflow: ellipsis;
   padding: 0.5rem;
 }
