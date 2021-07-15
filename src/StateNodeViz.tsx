@@ -9,6 +9,8 @@ import { deleteRect, setRect } from './getRect';
 import { useSimulation } from './SimulationContext';
 import { DirectedGraphNode } from './directedGraph';
 import { getActionLabel } from './utils';
+import ReactMarkdown from 'react-markdown';
+import { ChakraProvider, Heading, Link } from '@chakra-ui/react';
 
 interface BaseStateNodeDef {
   key: string;
@@ -176,6 +178,31 @@ export const StateNodeViz: React.FC<{
                 );
               })}
             </div>
+          )}
+          {stateNode.meta?.description && (
+            <ChakraProvider>
+              <div data-viz="stateNode-meta">
+                <ReactMarkdown
+                  components={{
+                    h1: ({ node, ...props }) => (
+                      <Heading as="h1" size="2xl" {...props} />
+                    ),
+                    h2: ({ node, ...props }) => (
+                      <Heading as="h2" size="xl" {...props} />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <Heading as="h3" size="lg" {...props} />
+                    ),
+                    h4: ({ node, ...props }) => (
+                      <Heading as="h4" size="md" {...props} />
+                    ),
+                    a: ({ node, ...props }) => <Link {...props} />,
+                  }}
+                >
+                  {stateNode.meta.description}
+                </ReactMarkdown>
+              </div>
+            </ChakraProvider>
           )}
         </div>
         {'states' in stateNode && (
