@@ -25,7 +25,6 @@ import {
 } from '@chakra-ui/icons';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { send } from 'xstate/lib/actions';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   return (
@@ -57,7 +56,6 @@ const eventsModel = createModel(
     filterKeyword: '',
     showBuiltins: false,
     rawEvents: [] as SimEvent[],
-    finalEvents: [] as SimEvent[],
   },
   {
     events: {
@@ -65,7 +63,6 @@ const eventsModel = createModel(
       FILTER_BY_KEYWORD: (keyword: string) => ({ keyword }),
       TOGGLE_BUILTIN_EVENTS: (showBuiltins: boolean) => ({ showBuiltins }),
       EVENTS_UPDATED: (events: SimEvent[]) => ({ events }),
-      INTERNAL_UPDATE: () => ({}),
     },
   },
 );
@@ -77,37 +74,12 @@ const eventsMachine = createMachine<typeof eventsModel>({
     modified: {},
   },
   on: {
-    INTERNAL_UPDATE: {
-      actions: [
-        eventsModel.assign((ctx) => {
-          let finalEvents = ctx.rawEvents;
-          if (!ctx.showBuiltins) {
-            finalEvents = finalEvents.filter(
-              (event) => !event.name.startsWith('xstate.'),
-            );
-          }
-          if (ctx.filterKeyword) {
-            finalEvents = finalEvents.filter((evt) =>
-              evt.name.toUpperCase().includes(ctx.filterKeyword.toUpperCase()),
-            );
-          }
-          if (ctx.sortCriteria) {
-            finalEvents = sortByCriteria[ctx.sortCriteria](finalEvents.slice());
-          }
-          return {
-            ...ctx,
-            finalEvents,
-          };
-        }),
-      ],
-    },
     SORT_BY_TIMESTAMP: {
       target: 'modified',
       actions: [
         eventsModel.assign((_, e) => ({
           sortCriteria: e.sortCriteria,
         })),
-        send('INTERNAL_UPDATE'),
       ],
     },
     FILTER_BY_KEYWORD: {
@@ -116,7 +88,6 @@ const eventsMachine = createMachine<typeof eventsModel>({
         eventsModel.assign((_, e) => ({
           filterKeyword: e.keyword,
         })),
-        send('INTERNAL_UPDATE'),
       ],
     },
     EVENTS_UPDATED: {
@@ -124,7 +95,6 @@ const eventsMachine = createMachine<typeof eventsModel>({
         eventsModel.assign((_, e) => ({
           rawEvents: e.events,
         })),
-        send('INTERNAL_UPDATE'),
       ],
     },
     TOGGLE_BUILTIN_EVENTS: {
@@ -133,11 +103,28 @@ const eventsMachine = createMachine<typeof eventsModel>({
         eventsModel.assign((_, e) => ({
           showBuiltins: e.showBuiltins,
         })),
-        send('INTERNAL_UPDATE'),
       ],
     },
   },
 });
+
+const deriveFinalEvents = (ctx: typeof eventsModel.initialContext) => {
+  let finalEvents = ctx.rawEvents;
+  if (!ctx.showBuiltins) {
+    finalEvents = finalEvents.filter(
+      (event) => !event.name.startsWith('xstate.'),
+    );
+  }
+  if (ctx.filterKeyword) {
+    finalEvents = finalEvents.filter((evt) =>
+      evt.name.toUpperCase().includes(ctx.filterKeyword.toUpperCase()),
+    );
+  }
+  if (ctx.sortCriteria) {
+    finalEvents = sortByCriteria[ctx.sortCriteria](finalEvents.slice());
+  }
+  return finalEvents;
+};
 
 export const EventsPanel: React.FC = () => {
   const [state] = useActor(useSimulation());
@@ -149,6 +136,8 @@ export const EventsPanel: React.FC = () => {
       rawEvents: rawEvents,
     }),
   );
+
+  const finalEvents = deriveFinalEvents(eventsState.context);
 
   useEffect(() => {
     sendToEventsMachine({
@@ -250,7 +239,7 @@ export const EventsPanel: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {eventsState.context.finalEvents.map((event, i) => {
+            {finalEvents.map((event, i) => {
               return <EventRow event={event} key={i} />;
             })}
           </Tbody>
