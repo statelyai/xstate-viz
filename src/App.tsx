@@ -29,6 +29,10 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { ResizableBox } from './ResizableBox';
 import { simulationMachine } from './simulationMachine';
 
+const initialMachineCode = `
+import { createMachine } from 'xstate';
+`.trim();
+
 function App() {
   const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
@@ -111,11 +115,8 @@ function App() {
                         immediateUpdate={isSourceLoaded}
                         defaultValue={
                           isSourceLoaded
-                            ? (sourceState.context!.sourceRawContent as string)
-                            : `import { createMachine } from 'xstate'; createMachine({initial: 'foo', states: {
-                              foo: { on: { EVENT: 'bar' } },
-                              bar: {}
-                            }})`
+                            ? (sourceState.context.sourceRawContent as string)
+                            : initialMachineCode
                         }
                         isUpdateMode={isUpdateMode}
                         onSave={(code: string) => {
