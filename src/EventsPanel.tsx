@@ -164,9 +164,7 @@ const NewEvent: React.FC<{
                       width="auto"
                       value={editorValue}
                       onChange={(text) => {
-                        if (text) {
-                          setEditorValue(text);
-                        }
+                        setEditorValue(text);
                       }}
                     />
                   </PopoverBody>
