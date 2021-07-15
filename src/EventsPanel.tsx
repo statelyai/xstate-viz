@@ -9,9 +9,19 @@ import {
   Thead,
   Th,
   Button,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  Portal,
+  PopoverFooter,
+  ButtonGroup,
 } from '@chakra-ui/react';
-import { useActor, useMachine } from '@xstate/react';
-import React, { useMemo, useState } from 'react';
+import { useActor } from '@xstate/react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
@@ -24,36 +34,13 @@ import Editor from '@monaco-editor/react';
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   return (
     <Box display="inline-flex" flexDirection="row" gap="1ch">
-      {event.origin && <Text whiteSpace="nowrap">{event.origin} →&nbsp;</Text>}
+      {event.origin && event.origin !== event.sessionId && (
+        <Text whiteSpace="nowrap">{event.origin} →&nbsp;</Text>
+      )}
       <Text whiteSpace="nowrap">{event.sessionId}</Text>
     </Box>
   );
 };
-
-const eventCreatorModel = createModel(
-  {
-    value: {
-      type: '',
-    } as { type: string; [key: string]: any },
-  },
-  {
-    events: {
-      update: (value: { [key: string]: any }) => ({ value }),
-    },
-  },
-);
-
-const eventCreatorMachine = eventCreatorModel.createMachine({
-  on: {
-    update: {
-      actions: eventCreatorModel.assign({
-        value: (ctx, e) => {
-          return { ...ctx.value, ...e.value };
-        },
-      }),
-    },
-  },
-});
 
 export const EventsPanel: React.FC = () => {
   const [state, send] = useActor(useSimulation());
@@ -85,15 +72,13 @@ export const EventsPanel: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            <NewEventRow
-              onSend={(event) => send({ type: 'SERVICE.SEND', event })}
-            />
             {events.map((event, i) => {
               return <EventRow event={event} filter={filter} key={i} />;
             })}
           </Tbody>
         </Table>
       </Box>
+      <NewEvent onSend={(event) => send({ type: 'SERVICE.SEND', event })} />
     </Box>
   );
 };
@@ -125,48 +110,85 @@ const EventRow: React.FC<{ event: SimEvent; filter: string }> = ({
   );
 };
 
-const NewEventRow: React.FC<{
+const NewEvent: React.FC<{
   onSend: (scxmlEvent: SCXML.Event<any>) => void;
 }> = ({ onSend }) => {
-  const [show, setShow] = useState(false);
-  const [text, setText] = useState('');
+  const [editorValue, setEditorValue] = useState('');
+
+  const sendEvent = useCallback(
+    (eventJSONString: string) => {
+      try {
+        const scxmlEvent = toSCXMLEvent(JSON.parse(eventJSONString));
+
+        onSend(scxmlEvent);
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [onSend],
+  );
 
   return (
-    <>
-      <Tr>
-        <Td>
-          <Input onChange={(e) => setText(e.target.value)} />
-          <Button onClick={() => setShow(true)}>Add payload</Button>
-          <Button onClick={() => onSend(toSCXMLEvent({ type: text }))}>
-            Send
-          </Button>
-        </Td>
-        <Td color="gray.500" textAlign="right"></Td>
-        <Td color="gray.500"></Td>
-      </Tr>
-      {show && (
-        <Tr>
-          <Td colSpan={3}>
-            <Editor
-              language="json"
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                lineNumbers: 'off',
-                tabSize: 2,
-              }}
-              height="150px"
-              width="auto"
-              defaultValue={text}
-              onChange={(text) => {
-                if (text) {
-                  setText(text);
-                }
-              }}
-            />
-          </Td>
-        </Tr>
-      )}
-    </>
+    <Box
+      display="flex"
+      flexDirection="row"
+      css={{
+        gap: '.5rem',
+      }}
+    >
+      <Input
+        onChange={(e) => {
+          setEditorValue(`{\n\t"type": "${e.target.value}"\n}`);
+        }}
+        placeholder="New event"
+      />
+      <ButtonGroup isAttached>
+        <Popover>
+          {({ onClose }) => (
+            <>
+              <PopoverTrigger>
+                <Button variant="outline">Add payload</Button>
+              </PopoverTrigger>
+              <Portal>
+                <PopoverContent>
+                  <PopoverArrow />
+                  <PopoverCloseButton />
+                  <PopoverBody>
+                    <Editor
+                      language="json"
+                      theme="vs-dark"
+                      options={{
+                        minimap: { enabled: false },
+                        lineNumbers: 'off',
+                        tabSize: 2,
+                      }}
+                      height="150px"
+                      width="auto"
+                      value={editorValue}
+                      onChange={(text) => {
+                        if (text) {
+                          setEditorValue(text);
+                        }
+                      }}
+                    />
+                  </PopoverBody>
+                  <PopoverFooter>
+                    <Button
+                      onClick={() => {
+                        sendEvent(editorValue);
+                        onClose();
+                      }}
+                    >
+                      Send
+                    </Button>
+                  </PopoverFooter>
+                </PopoverContent>
+              </Portal>
+            </>
+          )}
+        </Popover>
+        <Button onClick={() => sendEvent(editorValue)}>Send</Button>
+      </ButtonGroup>
+    </Box>
   );
 };
