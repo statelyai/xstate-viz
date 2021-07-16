@@ -320,6 +320,11 @@ const NewEvent: React.FC<{
         onChange={(e) => {
           setEditorValue(`{\n\t"type": "${e.target.value}"\n}`);
         }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            sendEvent(editorValue);
+          }
+        }}
         placeholder="New event"
       />
       <ButtonGroup isAttached>
