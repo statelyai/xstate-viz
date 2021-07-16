@@ -12,7 +12,6 @@ import {
   Popover,
   PopoverArrow,
   PopoverBody,
-  PopoverCloseButton,
   PopoverContent,
   PopoverTrigger,
   Portal,
@@ -22,13 +21,13 @@ import {
   Switch,
 } from '@chakra-ui/react';
 import { useActor, useMachine } from '@xstate/react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
 import { SimEvent } from './simulationMachine';
 import { toSCXMLEvent } from 'xstate/lib/utils';
-import { SCXML } from 'xstate';
+import { assign, SCXML } from 'xstate';
 import Editor from '@monaco-editor/react';
 import {
   ChevronDownIcon,
@@ -37,6 +36,7 @@ import {
 } from '@chakra-ui/icons';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { willChange } from './utils';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   return (
@@ -290,39 +290,73 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
   );
 };
 
+const newEventModel = createModel(
+  {
+    eventType: '',
+    eventString: '',
+  },
+  {
+    events: {
+      'EVENT.TYPE': (value: string) => ({ value }),
+      'EVENT.PAYLOAD': (value: string) => ({ value }),
+      'EVENT.SEND': () => ({}),
+    },
+  },
+);
+
+const newEventMachine = newEventModel.createMachine({
+  on: {
+    'EVENT.TYPE': {
+      actions: assign({
+        eventType: (_, e) => e.value,
+        eventString: (_, e) => `{\n\t"type": "${e.value}"\n}`,
+      }),
+    },
+    'EVENT.PAYLOAD': {
+      actions: assign({ eventString: (_, e) => e.value }),
+    },
+    'EVENT.SEND': {
+      actions: 'sendEvent',
+      cond: (ctx) => ctx.eventType.trim().length > 0,
+    },
+  },
+});
+
 const NewEvent: React.FC<{
   onSend: (scxmlEvent: SCXML.Event<any>) => void;
 }> = ({ onSend }) => {
-  const [editorValue, setEditorValue] = useState('');
+  const [state, send] = useMachine(newEventMachine, {
+    actions: {
+      sendEvent: (ctx) => {
+        try {
+          const scxmlEvent = toSCXMLEvent({
+            type: ctx.eventType,
+            ...JSON.parse(ctx.eventString),
+          });
 
-  const sendEvent = useCallback(
-    (eventJSONString: string) => {
-      try {
-        const scxmlEvent = toSCXMLEvent(JSON.parse(eventJSONString));
-
-        onSend(scxmlEvent);
-      } catch (e) {
-        console.error(e);
-      }
+          onSend(scxmlEvent);
+        } catch (e) {
+          console.error(e);
+        }
+      },
     },
-    [onSend],
-  );
+  });
 
   return (
     <Box
       display="flex"
       flexDirection="row"
       css={{
-        gap: '.5rem',
+        gap: '.5rem', // TODO: source from Chakra
       }}
     >
       <Input
         onChange={(e) => {
-          setEditorValue(`{\n\t"type": "${e.target.value}"\n}`);
+          send(newEventModel.events['EVENT.TYPE'](e.target.value));
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            sendEvent(editorValue);
+            send(newEventModel.events['EVENT.SEND']());
           }
         }}
         placeholder="New event"
@@ -332,7 +366,9 @@ const NewEvent: React.FC<{
           {({ onClose }) => (
             <>
               <PopoverTrigger>
-                <Button variant="outline">Add payload</Button>
+                <Button variant="outline" disabled={!state.context.eventType}>
+                  Add payload
+                </Button>
               </PopoverTrigger>
               <Portal>
                 <PopoverContent>
@@ -348,21 +384,32 @@ const NewEvent: React.FC<{
                       }}
                       height="150px"
                       width="auto"
-                      value={editorValue}
+                      value={state.context.eventString}
                       onChange={(text) => {
-                        text !== undefined && setEditorValue(text);
+                        text &&
+                          send(newEventModel.events['EVENT.PAYLOAD'](text));
                       }}
                     />
                   </PopoverBody>
                   <PopoverFooter>
-                    <ButtonGroup
+                    <Box
                       isAttached
                       display="flex"
                       flexDirection="row-reverse"
+                      css={{
+                        gap: '.5rem',
+                      }}
                     >
                       <Button
+                        disabled={
+                          !willChange(
+                            newEventMachine,
+                            state,
+                            newEventModel.events['EVENT.SEND'](),
+                          )
+                        }
                         onClick={() => {
-                          sendEvent(editorValue);
+                          send(newEventModel.events['EVENT.SEND']());
                           onClose();
                         }}
                       >
@@ -371,14 +418,20 @@ const NewEvent: React.FC<{
                       <Button variant="ghost" onClick={onClose}>
                         Cancel
                       </Button>
-                    </ButtonGroup>
+                    </Box>
                   </PopoverFooter>
                 </PopoverContent>
               </Portal>
             </>
           )}
         </Popover>
-        <Button onClick={() => sendEvent(editorValue)}>Send</Button>
+        <Button
+          onClick={() => {
+            send(newEventModel.events['EVENT.SEND']());
+          }}
+        >
+          Send
+        </Button>
       </ButtonGroup>
     </Box>
   );

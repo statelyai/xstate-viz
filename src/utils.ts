@@ -5,6 +5,7 @@ import type {
   StateNode,
   TransitionDefinition,
 } from 'xstate';
+import { AnyState, AnyStateMachine } from './types';
 
 export function createRequiredContext<T>(displayName: string) {
   const context = React.createContext<T | null>(null);
@@ -114,3 +115,11 @@ export const gQuery = (query: string, accessToken?: string) =>
       query,
     }),
   }).then((resp) => resp.json());
+
+export function willChange(
+  machine: AnyStateMachine,
+  state: AnyState,
+  event: AnyEventObject,
+): boolean {
+  return !!machine.transition(state, event).changed;
+}
