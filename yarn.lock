@@ -2044,19 +2044,19 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@monaco-editor/loader@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@monaco-editor/loader/-/loader-1.0.1.tgz#7068c9b07bbc65387c0e7a4df6dac0a326155905"
-  integrity sha512-hycGOhLqLYjnD0A/FHs56covEQWnDFrSnm/qLKkB/yoeayQ7ju+Vaj4SdTojGrXeY6jhMDx59map0+Jqwquh1Q==
+"@monaco-editor/loader@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@monaco-editor/loader/-/loader-1.1.1.tgz#37db648c81a86946d0febd391de00df9c28a0a3d"
+  integrity sha512-mkT4r4xDjIyOG9o9M6rJDSzEIeonwF80sYErxEvAAL4LncFVdcbNli8Qv6NDqF6nyv6sunuKkDzo4iFjxPL+uQ==
   dependencies:
     state-local "^1.0.6"
 
-"@monaco-editor/react@^4.1.3":
-  version "4.1.3"
-  resolved "https://registry.yarnpkg.com/@monaco-editor/react/-/react-4.1.3.tgz#7dcaa584f2a4e8bd8f5298604f0b5368f8ebca55"
-  integrity sha512-kqcjVuoy6btcgALAk4RV/SlasveM+WTw5lzzlyq5FhKXjF8wu5tSe/2oCQ1uhLpcdtxcHfx3L0HrcAPWnejFnQ==
+"@monaco-editor/react@^4.2.1":
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/@monaco-editor/react/-/react-4.2.1.tgz#75cb6e85e3640e05887a14005c370e46bd71256b"
+  integrity sha512-yN8qVY0PyFIbqPjfrZ5TbR/wrcfeiwoys8+0QkmyfiOzG74vXxSBOPIUxk7Ly+qCj7qWHPq1uDJskzFGaIqaPA==
   dependencies:
-    "@monaco-editor/loader" "^1.0.1"
+    "@monaco-editor/loader" "^1.1.1"
     prop-types "^15.7.2"
     state-local "^1.0.7"
 
@@ -8232,10 +8232,10 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-monaco-editor@^0.24.0:
-  version "0.24.0"
-  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.24.0.tgz#990b55096bcc95d08d8d28e55264c6eb17707269"
-  integrity sha512-o1f0Lz6ABFNTtnEqqqvlY9qzNx24rQZx1RgYNQ8SkWkE+Ka63keHH/RqxQ4QhN4fs/UYOnvAtEUZsPrzccH++A==
+monaco-editor@^0.25.2:
+  version "0.25.2"
+  resolved "https://registry.yarnpkg.com/monaco-editor/-/monaco-editor-0.25.2.tgz#119e2b15bbd968a1a99c03cac9c329316d7c37e9"
+  integrity sha512-5iylzSJevCnzJn9UVsW8yOZ3yHjmAs4TfvH3zsbftKiFKmHG0xirGN6DK9Kk04VSWxYCZZAIafYJoNJJMAU1KA==
 
 move-concurrently@^1.0.1:
   version "1.0.1"
