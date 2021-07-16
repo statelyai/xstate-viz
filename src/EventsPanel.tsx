@@ -337,7 +337,6 @@ const NewEvent: React.FC<{
               <Portal>
                 <PopoverContent>
                   <PopoverArrow />
-                  <PopoverCloseButton />
                   <PopoverBody>
                     <Editor
                       language="json"
@@ -356,14 +355,23 @@ const NewEvent: React.FC<{
                     />
                   </PopoverBody>
                   <PopoverFooter>
-                    <Button
-                      onClick={() => {
-                        sendEvent(editorValue);
-                        onClose();
-                      }}
+                    <ButtonGroup
+                      isAttached
+                      display="flex"
+                      flexDirection="row-reverse"
                     >
-                      Send
-                    </Button>
+                      <Button
+                        onClick={() => {
+                          sendEvent(editorValue);
+                          onClose();
+                        }}
+                      >
+                        Send
+                      </Button>
+                      <Button variant="ghost" onClick={onClose}>
+                        Cancel
+                      </Button>
+                    </ButtonGroup>
                   </PopoverFooter>
                 </PopoverContent>
               </Portal>
