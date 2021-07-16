@@ -118,7 +118,6 @@ export const EditorWithXStateImports = (
               label: 'Backup',
               keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_B],
               run: () => {
-                console.log('Backing up');
                 props.onPersist?.();
               },
             });
