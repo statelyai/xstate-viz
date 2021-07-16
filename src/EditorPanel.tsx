@@ -1,4 +1,4 @@
-import { Button, HStack, Box } from '@chakra-ui/react';
+import { Button, HStack, Box, Tooltip } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom, send } from 'xstate';
@@ -40,10 +40,12 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     booting: {},
     active: {},
     updating: {
+      tags: ['visualizing'],
       entry: send('UPDATE_MACHINE_PRESSED'),
       always: 'active',
     },
     compiling: {
+      tags: ['visualizing'],
       invoke: {
         src: (ctx) => {
           const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
@@ -122,9 +124,9 @@ export const EditorPanel: React.FC<{
   defaultValue: string;
   isUpdateMode: boolean;
   immediateUpdate: boolean;
-  onSave: (code: string) => void;
+  onPersist: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
-}> = ({ defaultValue, isUpdateMode, immediateUpdate, onSave, onChange }) => {
+}> = ({ defaultValue, isUpdateMode, immediateUpdate, onPersist, onChange }) => {
   const clientService = useClient();
   const clientState = useSelector(clientService, (state) => state);
   const persistText = getPersistText(
@@ -147,6 +149,7 @@ export const EditorPanel: React.FC<{
       },
     },
   );
+  const isVisualizing = current.hasTag('visualizing');
 
   return (
     <Box height="100%" display="grid" gridTemplateRows="1fr auto">
@@ -159,28 +162,56 @@ export const EditorPanel: React.FC<{
         onChange={(code) => {
           send({ type: 'EDITOR_CHANGED_VALUE', code });
         }}
+        onFormat={() => {
+          send({
+            type: 'COMPILE',
+          });
+        }}
+        onPersist={() => {
+          onPersist(current.context.code);
+        }}
       />
       <HStack>
-        <Button
-          disabled={current.matches('compiling')}
-          onClick={() => {
-            send({
-              type: 'COMPILE',
-            });
-          }}
+        <Tooltip
+          bg="black"
+          color="white"
+          label="Ctrl/CMD + S"
+          aria-label="Ctrl/CMD + S"
+          closeDelay={500}
         >
-          Update Chart
-        </Button>
-        <Button
-          isLoading={isPersistPending}
-          loadingText={persistText}
-          disabled={isPersistPending || current.matches('compiling')}
-          onClick={() => {
-            onSave(current.context.code);
-          }}
+          <Button
+            disabled={isVisualizing}
+            isLoading={isVisualizing}
+            loadingText="Visualize"
+            onClick={() => {
+              send({
+                type: 'COMPILE',
+              });
+            }}
+            title="Visualize"
+          >
+            Visualize
+          </Button>
+        </Tooltip>
+        <Tooltip
+          bg="black"
+          color="white"
+          label="Ctrl/CMD + B"
+          aria-label="Ctrl/CMD + B"
+          closeDelay={500}
         >
-          {persistText}
-        </Button>
+          <Button
+            isLoading={isPersistPending}
+            loadingText={persistText}
+            disabled={isPersistPending || isVisualizing}
+            onClick={() => {
+              onPersist(current.context.code);
+            }}
+            title="Persist in the Registry"
+          >
+            {persistText}
+          </Button>
+        </Tooltip>
       </HStack>
     </Box>
   );

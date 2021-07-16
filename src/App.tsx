@@ -119,7 +119,7 @@ function App() {
                             : initialMachineCode
                         }
                         isUpdateMode={isUpdateMode}
-                        onSave={(code: string) => {
+                        onPersist={(code: string) => {
                           if (isUpdateMode) {
                             clientService.send({
                               type: 'UPDATE',
