@@ -2,17 +2,14 @@
 self.customTSWorkerFactory = (TypeScriptWorker) => {
   return class extends TypeScriptWorker {
     getCompletionsAtPosition(fileName, position, options) {
-      const ret = this._languageService.getCompletionsAtPosition(
+      return this._languageService.getCompletionsAtPosition(
         fileName,
         position,
         {
           ...options,
           includeCompletionsForModuleExports: true,
-          // includeCompletionsWithInsertText,
         },
       );
-      console.log(ret.entries.find((a) => a.name === 'assign'));
-      return ret;
     }
     getCompletionEntryDetails(
       fileName,
@@ -23,16 +20,7 @@ self.customTSWorkerFactory = (TypeScriptWorker) => {
       preferences,
       data,
     ) {
-      console.log('getCompletionEntryDetails args', {
-        fileName,
-        position,
-        entryName,
-        formatOptions,
-        source,
-        preferences,
-        data,
-      });
-      const ret = this._languageService.getCompletionEntryDetails(
+      return this._languageService.getCompletionEntryDetails(
         fileName,
         position,
         entryName,
@@ -41,8 +29,6 @@ self.customTSWorkerFactory = (TypeScriptWorker) => {
         preferences,
         data,
       );
-      console.log('getCompletionEntryDetails return', ret);
-      return ret;
     }
     queryXStateIdentifiers() {
       throw new Error('Not implemented yet.');

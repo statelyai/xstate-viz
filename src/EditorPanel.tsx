@@ -154,19 +154,6 @@ export const EditorPanel: React.FC<{
         defaultValue={defaultValue}
         readonly={current.matches('compiling')}
         onMount={(_, monaco) => {
-          const uri = monaco.Uri.parse('main.ts');
-
-          monaco.languages.typescript
-            .getTypeScriptWorker()
-            .then((worker) => worker(uri))
-            .then((client) => {
-              const orig = client.getCompletionEntryDetails;
-
-              client.getCompletionEntryDetails = function (...args) {
-                return orig.apply(this, args);
-              };
-            });
-
           send({ type: 'EDITOR_READY', editorRef: monaco });
         }}
         onChange={(code) => {
