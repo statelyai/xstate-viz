@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect } from 'react';
+import React, { CSSProperties, KeyboardEvent, useEffect } from 'react';
 import { canvasModel } from './canvasMachine';
 import { useCanvas } from './CanvasContext';
 
@@ -93,20 +93,27 @@ export const CanvasContainer: React.FC = ({ children }) => {
   const [state, send] = useMachine(dragMachine);
 
   useEffect(() => {
-    window.addEventListener('keydown', (e) => {
+    function keydownListener(e: any) {
       if (e.code === 'Space') {
         // preventDefault is needed to disable text selection while moving
         e.preventDefault();
         send('LOCK');
       }
-    });
-    window.addEventListener('keyup', (e) => {
+    }
+    function keyupListener(e: any) {
       if (e.code === 'Space') {
         send('RELEASE');
       } else {
         send('UNGRAB');
       }
-    });
+    }
+    window.addEventListener('keydown', keydownListener);
+    window.addEventListener('keyup', keyupListener);
+
+    return () => {
+      window.removeEventListener('keydown', keydownListener);
+      window.removeEventListener('keyup', keyupListener);
+    };
   }, [send]);
 
   useEffect(() => {
