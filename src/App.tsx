@@ -28,6 +28,7 @@ import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { ResizableBox } from './ResizableBox';
 import { simulationMachine } from './simulationMachine';
+import { SettingsIcon } from '@chakra-ui/icons';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -85,7 +86,6 @@ function App() {
         <ClientProvider value={clientService}>
           <ChakraProvider theme={theme}>
             <ResizableBox gridArea="tabs">
-              <Login />
               <Tabs
                 bg="gray.800"
                 display="grid"
@@ -97,6 +97,10 @@ function App() {
                   <Tab>State</Tab>
                   <Tab>Events</Tab>
                   <Tab>Actors</Tab>
+                  <Tab marginLeft="auto" marginRight="2">
+                    <SettingsIcon />
+                  </Tab>
+                  <Login />
                 </TabList>
 
                 <TabPanels minHeight={0}>

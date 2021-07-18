@@ -97,7 +97,7 @@ const ResizeHandle: React.FC<{
       onPointerMove={(e) => {
         send(dragDropModel.events['DRAG.MOVE']({ x: e.clientX, y: e.clientY }));
       }}
-      onPointerUp={(e) => {
+      onPointerUp={() => {
         send(dragDropModel.events['DRAG.END']());
       }}
     ></Box>
@@ -111,7 +111,7 @@ export const ResizableBox: React.FC<
 
   return (
     <Box
-      width={`min(90vw, calc(25rem + max(0px, ${widthDelta}px)))`}
+      width={`min(90vw, calc(30rem + max(0px, ${widthDelta}px)))`}
       {...props}
     >
       {children}
