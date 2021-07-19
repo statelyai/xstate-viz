@@ -47,6 +47,14 @@ type StateNodeDef =
   | FinalStateNodeDef
   | HistoryStateNodeDef;
 
+const StateNodeKey: React.FC<{ value: string }> = ({ value }) => {
+  return (
+    <div data-viz="stateNode-key" title={value}>
+      <div data-viz="stateNode-keyText">{value}</div>
+    </div>
+  );
+};
+
 export const StateNodeViz: React.FC<{
   node: DirectedGraphNode;
   stateNode: StateNode;
@@ -133,7 +141,7 @@ export const StateNodeViz: React.FC<{
                 data-viz-type={stateNode.type}
               ></div>
             )}
-            <div data-viz="stateNode-key">{stateNode.key}</div>
+            <StateNodeKey value={stateNode.key} />
             {stateNode.tags.length > 0 && (
               <div data-viz="stateNode-tags">
                 {stateNode.tags.map((tag, i) => {
