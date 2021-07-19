@@ -1,9 +1,7 @@
 import { Button, HStack, Box } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom, send } from 'xstate';
-import { assign } from 'xstate';
-import { createMachine, send as sendAction, spawn } from 'xstate';
+import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useClient } from './clientContext';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
@@ -97,7 +95,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
       actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
     },
     EDITOR_ENCOUNTERED_ERROR: {
-      actions: sendAction(
+      actions: send(
         (_, e) => ({ type: 'BROADCAST', status: 'error', message: e.message }),
         {
           to: (ctx) => ctx.notifRef,

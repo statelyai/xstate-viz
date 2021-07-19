@@ -136,25 +136,31 @@ monacoLoader.init = function (...args) {
                 return item;
               }
 
-              const textChange =
-                details.codeActions?.[0].changes[0].textChanges[0];
+              const codeAction = details.codeActions?.[0];
+              const additionalTextChange =
+                codeAction?.changes[0].textChanges[0];
+
+              // assume that if the codeAction is there it's about auto import
+              // and since the only external "module" that is supported is xstate we can just use it literally here
+              const detailText = codeAction
+                ? `Auto import from 'xstate'`
+                : details.displayParts
+                    ?.map((displayPart: any) => displayPart.text)
+                    .join('') ?? '';
 
               return {
                 uri: item.uri,
                 position: item.position,
                 label: details.name,
                 kind: (provider.constructor as any).convertKind(details.kind),
-                detail:
-                  details.displayParts
-                    ?.map((displayPart: any) => displayPart.text)
-                    .join('') ?? '',
+                detail: detailText,
 
                 // properties below were added here
                 // ---
                 // this could be flatMaped with all text edit
                 // but we don't rly have a use case for multiple additional text edits at the same time
-                additionalTextEdits: textChange && [
-                  toTextEdit(provider, textChange),
+                additionalTextEdits: additionalTextChange && [
+                  toTextEdit(provider, additionalTextChange),
                 ],
                 documentation: {
                   value: (provider.constructor as any).createDocumentationString(
