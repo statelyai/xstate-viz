@@ -12,7 +12,7 @@ import {
   Switch,
   FormLabel,
 } from '@chakra-ui/react';
-import { useActor, useMachine } from '@xstate/react';
+import { useActor, useMachine, useSelector } from '@xstate/react';
 import React, { useEffect, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
@@ -27,10 +27,21 @@ import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
+  const sim = useSimulation();
+  const originId = useSelector(
+    sim,
+    (state) =>
+      event.origin && state.context.serviceDataMap[event.origin]?.machine.id,
+  );
+  const targetId = useSelector(
+    sim,
+    (state) => state.context.serviceDataMap[event.sessionId]?.machine.id,
+  );
+
   return (
-    <Box display="inline-flex" flexDirection="row" gap="1ch">
-      {event.origin && <Text whiteSpace="nowrap">{event.origin} →&nbsp;</Text>}
-      <Text whiteSpace="nowrap">{event.sessionId}</Text>
+    <Box display="inline-flex" flexDirection="row" gap="1ch" fontSize="sm">
+      {originId && <Text whiteSpace="nowrap">{originId} →&nbsp;</Text>}
+      <Text whiteSpace="nowrap">{targetId}</Text>
     </Box>
   );
 };
