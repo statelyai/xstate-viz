@@ -38,12 +38,21 @@ import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
+  const sim = useSimulation();
+  const originId = useSelector(
+    sim,
+    (state) =>
+      event.origin && state.context.serviceDataMap[event.origin]?.machine.id,
+  );
+  const targetId = useSelector(
+    sim,
+    (state) => state.context.serviceDataMap[event.sessionId]?.machine.id,
+  );
+
   return (
-    <Box display="inline-flex" flexDirection="row" gap="1ch">
-      {event.origin && event.origin !== event.sessionId && (
-        <Text whiteSpace="nowrap">{event.origin} →&nbsp;</Text>
-      )}
-      <Text whiteSpace="nowrap">{event.sessionId}</Text>
+    <Box display="inline-flex" flexDirection="row" gap="1ch" fontSize="sm">
+      {originId && <Text whiteSpace="nowrap">{originId} →&nbsp;</Text>}
+      <Text whiteSpace="nowrap">{targetId}</Text>
     </Box>
   );
 };
@@ -153,7 +162,6 @@ export const EventsPanel: React.FC = () => {
     (state) => selectMachine(state)?.state.nextEvents,
     (a, b) => JSON.stringify(a) === JSON.stringify(b),
   );
-
 
   const [eventsState, sendToEventsMachine] = useMachine(() =>
     eventsMachine.withContext({
@@ -383,7 +391,6 @@ const NewEvent: React.FC<{
       },
     },
   });
-
 
   return (
     <Box
