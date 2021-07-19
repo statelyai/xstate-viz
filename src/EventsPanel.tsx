@@ -385,7 +385,6 @@ const NewEvent: React.FC<{
     },
   });
 
-  console.log(state);
 
   return (
     <Box
