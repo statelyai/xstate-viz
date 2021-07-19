@@ -26,7 +26,7 @@
     "react-scripts": "4.0.3",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
-    "xstate": "^4.22.0"
+    "xstate": "^4.23.0"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -26,6 +26,7 @@ export const EditorWithXStateImports = (
           options={{
             readOnly: props.readonly,
             minimap: { enabled: false },
+            tabSize: 2,
           }}
           loading={<SpinnerWithText text="Preparing the editor" />}
           onChange={(text) => {

@@ -9,15 +9,26 @@ import {
   Thead,
   Th,
   Button,
-  Switch,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Portal,
+  PopoverFooter,
   FormLabel,
+  Switch,
+  PopoverHeader,
 } from '@chakra-ui/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React, { useEffect, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
-import { SimEvent } from './simulationMachine';
+import { SimEvent, simulationMachine } from './simulationMachine';
+import { toSCXMLEvent } from 'xstate/lib/utils';
+import { assign, SCXML, send, StateFrom } from 'xstate';
+import Editor from '@monaco-editor/react';
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -137,9 +148,20 @@ const deriveFinalEvents = (ctx: typeof eventsModel.initialContext) => {
   return finalEvents;
 };
 
+const selectMachine = (state: StateFrom<typeof simulationMachine>) =>
+  state.context.currentSessionId
+    ? state.context.serviceDataMap[state.context.currentSessionId]
+    : undefined; // TODO: select() method on model
+
 export const EventsPanel: React.FC = () => {
-  const [state] = useActor(useSimulation());
+  const sim = useSimulation();
+  const [state, send] = useActor(sim);
   const rawEvents = state.context!.events;
+  const nextEvents = useSelector(
+    sim,
+    (state) => selectMachine(state)?.state.nextEvents,
+    (a, b) => JSON.stringify(a) === JSON.stringify(b),
+  );
 
   const [eventsState, sendToEventsMachine] = useMachine(() =>
     eventsMachine.withContext({
@@ -160,7 +182,7 @@ export const EventsPanel: React.FC = () => {
   return (
     <Box
       display="grid"
-      gridTemplateRows="auto 1fr"
+      gridTemplateRows="auto 1fr auto"
       gridRowGap="2"
       height="100%"
     >
@@ -256,6 +278,10 @@ export const EventsPanel: React.FC = () => {
           </Tbody>
         </Table>
       </Box>
+      <NewEvent
+        onSend={(event) => send({ type: 'SERVICE.SEND', event })}
+        nextEvents={nextEvents}
+      />
     </Box>
   );
 };
@@ -283,5 +309,182 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
         </Tr>
       ) : null}
     </>
+  );
+};
+
+const newEventModel = createModel(
+  {
+    eventType: '',
+    eventString: `{\n\t"type": ""\n}`,
+  },
+  {
+    events: {
+      'EVENT.TYPE': (value: string) => ({ value }),
+      'EVENT.PAYLOAD': (value: string) => ({ value }),
+      'EVENT.SEND': () => ({}),
+      'EVENT.RESET': () => ({}),
+    },
+  },
+);
+
+const newEventMachine = newEventModel.createMachine({
+  type: 'parallel',
+  states: {
+    validity: {
+      initial: 'invalid',
+      states: {
+        invalid: {},
+        valid: {
+          tags: 'valid',
+        },
+      },
+      on: {
+        '*': [
+          {
+            cond: (ctx) => {
+              try {
+                const eventObject = JSON.parse(ctx.eventString);
+                return typeof eventObject.type === 'string';
+              } catch (e) {
+                return false;
+              }
+            },
+            target: '.valid',
+          },
+          { target: '.invalid' },
+        ],
+      },
+    },
+    editing: {
+      on: {
+        'EVENT.PAYLOAD': {
+          actions: assign({ eventString: (_, e) => e.value }),
+        },
+        'EVENT.SEND': {
+          actions: ['sendEvent', send('EVENT.RESET')],
+        },
+        'EVENT.RESET': {
+          actions: newEventModel.reset(),
+        },
+      },
+    },
+  },
+});
+
+const NewEvent: React.FC<{
+  onSend: (scxmlEvent: SCXML.Event<any>) => void;
+  nextEvents?: string[];
+}> = ({ onSend, nextEvents }) => {
+  const [state, send] = useMachine(newEventMachine, {
+    actions: {
+      sendEvent: (ctx) => {
+        try {
+          const scxmlEvent = toSCXMLEvent({
+            type: ctx.eventType,
+            ...JSON.parse(ctx.eventString),
+          });
+
+          onSend(scxmlEvent);
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    },
+  });
+
+  return (
+    <Box
+      display="flex"
+      flexDirection="row"
+      css={{
+        gap: '.5rem', // TODO: source from Chakra
+      }}
+    >
+      <Popover>
+        {({ onClose }) => (
+          <>
+            <PopoverTrigger>
+              <Button variant="outline">Send event...</Button>
+            </PopoverTrigger>
+            <Portal>
+              <PopoverContent>
+                <PopoverArrow />
+                <PopoverHeader
+                  display="flex"
+                  flexWrap="wrap"
+                  css={{
+                    gap: '.5rem',
+                  }}
+                >
+                  {nextEvents &&
+                    nextEvents.map((nextEvent) => (
+                      <Button
+                        key={nextEvent}
+                        size="xs"
+                        colorScheme="blue"
+                        onClick={() =>
+                          send(
+                            newEventModel.events['EVENT.PAYLOAD'](
+                              `{\n\t"type": "${nextEvent}"\n}`,
+                            ),
+                          )
+                        }
+                      >
+                        {nextEvent}
+                      </Button>
+                    ))}
+                </PopoverHeader>
+                <PopoverBody>
+                  <Editor
+                    language="json"
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: false },
+                      lineNumbers: 'off',
+                      tabSize: 2,
+                    }}
+                    height="150px"
+                    width="auto"
+                    value={state.context.eventString}
+                    onChange={(text) => {
+                      text && send(newEventModel.events['EVENT.PAYLOAD'](text));
+                    }}
+                  />
+                </PopoverBody>
+                <PopoverFooter>
+                  <Box
+                    isAttached
+                    display="flex"
+                    flexDirection="row-reverse"
+                    css={{
+                      gap: '.5rem',
+                    }}
+                  >
+                    <Button
+                      disabled={!state.hasTag('valid')}
+                      onClick={() => {
+                        send(newEventModel.events['EVENT.SEND']());
+                        onClose();
+                      }}
+                    >
+                      Send
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        send(newEventModel.events['EVENT.RESET']());
+                        onClose();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+                </PopoverFooter>
+              </PopoverContent>
+            </Portal>
+          </>
+        )}
+      </Popover>
+    </Box>
   );
 };

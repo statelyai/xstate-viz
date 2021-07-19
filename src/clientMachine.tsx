@@ -4,11 +4,11 @@ import {
   Session,
   SupabaseClient,
 } from '@supabase/supabase-js';
-import { ActorRefFrom, assign, MachineOptions } from 'xstate';
+import { ActorRefFrom, assign, EventFrom, MachineOptions } from 'xstate';
 import { spawn } from 'xstate';
 import { send } from 'xstate';
 import { createMachine } from 'xstate';
-import { createModel, ModelEventsFrom } from 'xstate/lib/model';
+import { createModel } from 'xstate/lib/model';
 import { notifMachine } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
@@ -40,7 +40,7 @@ const clientModel = createModel(
 const clientOptions: Partial<
   MachineOptions<
     typeof clientModel['initialContext'],
-    ModelEventsFrom<typeof clientModel>
+    EventFrom<typeof clientModel>
   >
 > = {
   actions: {
