@@ -4,7 +4,7 @@ import type {
   State,
   StateMachine,
 } from 'xstate';
-import { Model } from 'xstate/lib/model';
+import { Model } from 'xstate/lib/model.types';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
