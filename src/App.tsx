@@ -31,8 +31,6 @@ import { simulationMachine } from './simulationMachine';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
-
-createMachine({});
 `.trim();
 
 function App() {
