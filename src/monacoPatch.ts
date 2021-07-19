@@ -13,7 +13,12 @@ monacoLoader.config({
 
 function toTextEdit(provider: any, textChange: any) {
   return {
-    text: textChange.newText,
+    // if there is no existing xstate import in the file then a new import has to be created
+    // in such a situation TS most likely fails to compute the proper module specifier for this "node module"
+    // because it exits its `tryGetModuleNameAsNodeModule` when it doesn't have fs layer installed:
+    // https://github.com/microsoft/TypeScript/blob/328e888a9d0a11952f4ff949848d4336bce91b18/src/compiler/moduleSpecifiers.ts#L553
+    // it then generates a relative path which we just patch here
+    text: textChange.newText.replace(/\.\/node_modules\/xstate/, 'xstate'),
     range: (provider as any)._textSpanToRange(
       provider.__model,
       textChange.span,
