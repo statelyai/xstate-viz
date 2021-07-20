@@ -68,14 +68,6 @@ export const Login: React.FC = () => {
               }}
             >
               Logout
-              <Box
-                as="em"
-                fontSize="sm"
-                marginLeft="1"
-                textTransform="capitalize"
-              >
-                ({session?.user?.app_metadata.provider})
-              </Box>
             </MenuItem>
           </MenuList>
         </Menu>
@@ -92,7 +84,7 @@ export const Login: React.FC = () => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Sign in</ModalHeader>
+          <ModalHeader>Sign In</ModalHeader>
           <ModalBody>
             <Text>
               Sign in to Stately Registry to be able to save machines.
@@ -104,8 +96,9 @@ export const Login: React.FC = () => {
                 onClick={() => {
                   clientService.send({ type: 'SIGN_IN', provider: 'github' });
                 }}
+                colorScheme="blue"
               >
-                Github
+                GitHub
               </Button>
             </HStack>
           </ModalFooter>
