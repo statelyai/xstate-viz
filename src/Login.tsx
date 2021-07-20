@@ -14,6 +14,7 @@ import {
   Text,
   Image,
   ModalFooter,
+  Avatar,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React from 'react';
@@ -53,12 +54,12 @@ export const Login: React.FC = () => {
       {state.hasTag('authorized') && (
         <Menu closeOnSelect={true}>
           <MenuButton title={session?.user?.user_metadata?.full_name}>
-            <Image
-              display="inline-flex"
+            <Avatar
               marginRight="2"
-              boxSize="30px"
-              src={session?.user?.user_metadata?.avatar_url}
-              alt={session?.user?.email}
+              src={session?.user?.user_metadata?.avatar_url || ''}
+              name={session?.user?.user_metadata?.display_name || ''}
+              height="30px"
+              width="30px"
             />
           </MenuButton>
           <MenuList>
