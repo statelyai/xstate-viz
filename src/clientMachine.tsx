@@ -9,7 +9,7 @@ import { spawn } from 'xstate';
 import { send } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { notifMachine } from './notificationMachine';
+import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 const clientModel = createModel(
@@ -55,14 +55,17 @@ const clientOptions: Partial<
     },
   },
   services: {
-    saveMachines: (ctx, e: any) =>
-      gQuery(
+    saveMachines: async (ctx, e) => {
+      if (e.type !== 'SAVE') return;
+      return gQuery(
         `mutation {createSourceFile(text: ${JSON.stringify(
           e.rawSource,
         )}) {id}}`,
         ctx.client.auth.session()?.access_token!,
-      ).then((data) => data.data.createSourceFile),
-    updateMachines: (ctx, e: any) => {
+      ).then((data) => data.data.createSourceFile);
+    },
+    updateMachines: async (ctx, e) => {
+      if (e.type !== 'UPDATE') return;
       return gQuery(
         `mutation {updateSourceFile(id: ${JSON.stringify(
           e.id,
@@ -208,7 +211,13 @@ export const clientMachine = createMachine<typeof clientModel>(
           src: 'saveMachines',
           onDone: {
             target: 'signed_in',
-            actions: ['saveCreatedMachine', 'updateURLWithMachineID'],
+            actions: [
+              'saveCreatedMachine',
+              'updateURLWithMachineID',
+              send(notifModel.events.BROADCAST('Machine saved!', 'success'), {
+                to: (ctx) => ctx.notifRef,
+              }),
+            ],
           },
           onError: {
             target: 'signed_in',
@@ -231,6 +240,11 @@ export const clientMachine = createMachine<typeof clientModel>(
           src: 'updateMachines',
           onDone: {
             target: 'signed_in',
+            actions: [
+              send(notifModel.events.BROADCAST('Machine saved!', 'success'), {
+                to: (ctx) => ctx.notifRef,
+              }),
+            ],
           },
           onError: {
             target: 'signed_in',
