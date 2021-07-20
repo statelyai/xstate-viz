@@ -47,17 +47,7 @@ export const sourceMachine = createMachine<typeof sourceModel>(
             },
           },
           source_loaded: {
-            entry: [
-              'saveSourceContent',
-              send(
-                (ctx) => ({
-                  type: 'BROADCAST',
-                  status: 'success',
-                  message: `Source loaded successfully from ${ctx.sourceProvider}`,
-                }),
-                { to: (ctx) => ctx.notifRef },
-              ),
-            ],
+            entry: ['saveSourceContent'],
           },
           source_error: {
             entry: [
