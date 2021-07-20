@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import './Graph';
 import { toDirectedGraph } from './directedGraph';
@@ -119,6 +119,11 @@ function App() {
                             ? (sourceState.context.sourceRawContent as string)
                             : initialMachineCode
                         }
+                        onChangedCodeValue={() => {
+                          clientService.send({
+                            type: 'CODE_UPDATED',
+                          });
+                        }}
                         isUpdateMode={isUpdateMode}
                         onSave={(code: string) => {
                           if (isUpdateMode) {
