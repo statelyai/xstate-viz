@@ -311,6 +311,10 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
       <div
         style={{
           transform: `translate3d(${pan.dx}px, ${pan.dy}px, 0) scale(${zoom})`,
+          /**
+           * Prevents text selection inside all graph nodes
+           */
+          userSelect: 'none',
         }}
       >
         <MemoizedEdges digraph={digraph} />
