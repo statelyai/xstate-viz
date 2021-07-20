@@ -25,11 +25,11 @@ export const canvasMachine = createMachine<typeof canvasModel>({
   context: canvasModel.initialContext,
   on: {
     'ZOOM.OUT': {
-      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom - 0.1 }),
+      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom * 0.85 }),
       cond: (ctx) => ctx.zoom > 0.5,
     },
     'ZOOM.IN': {
-      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom + 0.1 }),
+      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom * 1.15 }),
     },
     PAN: {
       actions: canvasModel.assign({
