@@ -14,6 +14,7 @@ import {
   TabPanel,
   Box,
   Text,
+  IconButton,
 } from '@chakra-ui/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
@@ -29,6 +30,7 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { ResizableBox } from './ResizableBox';
 import { simulationMachine } from './simulationMachine';
 import { SettingsIcon } from '@chakra-ui/icons';
+import { SettingsPanel } from './SettingsPanel';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -154,6 +156,9 @@ function App() {
                   </TabPanel>
                   <TabPanel>
                     <ActorsPanel />
+                  </TabPanel>
+                  <TabPanel height="100%">
+                    <SettingsPanel />
                   </TabPanel>
                 </TabPanels>
               </Tabs>
