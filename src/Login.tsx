@@ -55,7 +55,6 @@ export const Login: React.FC = () => {
         <Menu closeOnSelect={true}>
           <MenuButton title={session?.user?.user_metadata?.full_name}>
             <Avatar
-              display="inline-flex"
               marginRight="2"
               src={session?.user?.user_metadata?.avatar_url || ''}
               name={session?.user?.user_metadata?.display_name || ''}
