@@ -299,7 +299,7 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
         <Td color="gray.500" textAlign="right">
           <EventConnection event={event} />
         </Td>
-        <Td color="gray.500">{format(event.timestamp, 'hh:mm:ss')}</Td>
+        <Td color="gray.500">{format(event.timestamp, 'HH:mm:ss')}</Td>
       </Tr>
       {show ? (
         <Tr>
