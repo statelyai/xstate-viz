@@ -1,6 +1,8 @@
-import { createMachine } from 'xstate';
+import { assign, createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { Point } from './pathUtils';
+import { ModelEventsFrom } from 'xstate/lib/model.types';
+import { localCache } from './localCache';
+import { SourceProvider } from './types';
 
 export const canvasModel = createModel(
   {
@@ -9,14 +11,18 @@ export const canvasModel = createModel(
       dx: 0,
       dy: 0,
     },
-    initialPosition: { x: 0, y: 0 },
   },
   {
     events: {
       'ZOOM.OUT': () => ({}),
       'ZOOM.IN': () => ({}),
-      'POSITION.SET': ({ x, y }: Point) => ({ position: { x, y } }),
       PAN: (dx: number, dy: number) => ({ dx, dy }),
+      /**
+       * Occurs when a source changed id or provider
+       */
+      SOURCE_CHANGED: (id: string | null) => ({
+        id,
+      }),
     },
   },
 );
@@ -33,9 +39,13 @@ export const canvasMachine = createMachine<typeof canvasModel>({
         zoom: (ctx) => ctx.zoom * ZOOM_OUT_FACTOR,
       }),
       cond: (ctx) => ctx.zoom > 0.5,
+      target: '.throttling',
+      internal: false,
     },
     'ZOOM.IN': {
       actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom * ZOOM_IN_FACTOR }),
+      target: '.throttling',
+      internal: false,
     },
     PAN: {
       actions: canvasModel.assign({
@@ -46,11 +56,53 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           };
         },
       }),
+      target: '.throttling',
+      internal: false,
     },
-    'POSITION.SET': {
-      actions: canvasModel.assign({
-        initialPosition: (_, e) => e.position,
+    SOURCE_CHANGED: {
+      target: '.throttling',
+      internal: false,
+      /**
+       * Only load persisted state if we have a source ID
+       * and a provider
+       */
+      cond: (ctx, event) => {
+        return Boolean(event.id);
+      },
+      actions: assign((context, event) => {
+        const position = getPositionFromEvent(event)!;
+
+        return position;
       }),
     },
   },
+  initial: 'idle',
+  states: {
+    idle: {},
+    throttling: {
+      after: {
+        300: 'saving',
+      },
+      meta: {
+        description: `
+          Throttling a moment before saving to ensure
+          we don't do too much saving to localStorage
+        `,
+      },
+    },
+    saving: {
+      always: {
+        actions: 'persistPositionToLocalStorage',
+        target: 'idle',
+      },
+    },
+  },
 });
+
+const getPositionFromEvent = (event: ModelEventsFrom<typeof canvasModel>) => {
+  if (event.type !== 'SOURCE_CHANGED') return null;
+  if (!event.id) return null;
+
+  const position = localCache.getPosition(event.id);
+  return position;
+};
