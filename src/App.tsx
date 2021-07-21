@@ -28,6 +28,10 @@ import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { ResizableBox } from './ResizableBox';
 import { simulationMachine } from './simulationMachine';
+import { canvasMachine } from './canvasMachine';
+import { localCache } from './localCache';
+import { useInterpretCanvas } from './useInterpretCanvas';
+import { CanvasProvider } from './CanvasContext';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -62,6 +66,10 @@ function App() {
     [sourceState],
   );
 
+  const canvasService = useInterpretCanvas({
+    sourceID,
+  });
+
   return (
     <SimulationProvider value={simService}>
       <Box
@@ -73,7 +81,9 @@ function App() {
         gridTemplateAreas="'canvas tabs'"
       >
         {digraph ? (
-          <CanvasPanel digraph={digraph} />
+          <CanvasProvider value={canvasService}>
+            <CanvasPanel digraph={digraph} />
+          </CanvasProvider>
         ) : (
           <Box display="flex" justifyContent="center" alignItems="center">
             <Text textAlign="center">
