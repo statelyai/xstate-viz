@@ -92,7 +92,10 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
       },
     ],
     EDITOR_CHANGED_VALUE: {
-      actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
+      actions: [
+        editorPanelModel.assign({ code: (_, e) => e.code }),
+        'onChangedCodeValue',
+      ],
     },
     EDITOR_ENCOUNTERED_ERROR: {
       actions: send(
@@ -122,7 +125,15 @@ export const EditorPanel: React.FC<{
   immediateUpdate: boolean;
   onSave: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
-}> = ({ defaultValue, isUpdateMode, immediateUpdate, onSave, onChange }) => {
+  onChangedCodeValue: (code: string) => void;
+}> = ({
+  defaultValue,
+  isUpdateMode,
+  immediateUpdate,
+  onSave,
+  onChange,
+  onChangedCodeValue,
+}) => {
   const clientService = useClient();
   const clientState = useSelector(clientService, (state) => state);
   const persistText = getPersistText(
@@ -141,6 +152,9 @@ export const EditorPanel: React.FC<{
       actions: {
         onChange: (ctx) => {
           onChange(ctx.machines!);
+        },
+        onChangedCodeValue: (ctx) => {
+          onChangedCodeValue(ctx.code);
         },
       },
     },
