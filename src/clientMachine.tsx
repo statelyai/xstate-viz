@@ -9,6 +9,7 @@ import { spawn } from 'xstate';
 import { send } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { confirmBeforeLeavingService } from './confirmLeavingService';
 import { notifMachine, notifModel } from './notificationMachine';
 import { CreateSourceQuery, UpdateSourceQuery } from './types';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
@@ -34,6 +35,7 @@ const clientModel = createModel(
         id,
         rawSource,
       }),
+      CODE_UPDATED: () => ({}),
     },
   },
 );
@@ -161,6 +163,19 @@ export const clientMachine = createMachine<typeof clientModel>(
           SIGN_OUT: 'signing_out',
           SAVE: 'saving',
           UPDATE: 'updating',
+        },
+        initial: 'noCodeChanges',
+        states: {
+          noCodeChanges: {
+            on: {
+              CODE_UPDATED: 'hasCodeChanges',
+            },
+          },
+          hasCodeChanges: {
+            invoke: {
+              src: confirmBeforeLeavingService,
+            },
+          },
         },
       },
       signing_in: {
