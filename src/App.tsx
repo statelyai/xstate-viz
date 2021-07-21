@@ -130,7 +130,7 @@ function App() {
                           clientService.send({
                             type: 'CODE_UPDATED',
                             code,
-                            sourceId: sourceState.context.sourceID || null,
+                            sourceId: sourceState.context.sourceID,
                           });
                         }}
                         isUpdateMode={isUpdateMode}
