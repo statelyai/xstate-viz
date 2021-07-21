@@ -18,7 +18,7 @@ export const canvasModel = createModel(
       'ZOOM.IN': () => ({}),
       PAN: (dx: number, dy: number) => ({ dx, dy }),
       /**
-       * Occurs when a source changed id or provider
+       * Occurs when a source changed id
        */
       SOURCE_CHANGED: (id: string | null) => ({
         id,
