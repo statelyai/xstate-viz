@@ -10,6 +10,7 @@ import { send } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { notifMachine, notifModel } from './notificationMachine';
+import { CreateSourceQuery, UpdateSourceQuery } from './types';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 const clientModel = createModel(
@@ -57,21 +58,21 @@ const clientOptions: Partial<
   services: {
     saveMachines: async (ctx, e) => {
       if (e.type !== 'SAVE') return;
-      return gQuery(
+      return gQuery<CreateSourceQuery>(
         `mutation {createSourceFile(text: ${JSON.stringify(
           e.rawSource,
         )}) {id}}`,
         ctx.client.auth.session()?.access_token!,
-      ).then((data) => data.data.createSourceFile);
+      ).then((data) => data.data?.createSourceFile);
     },
     updateMachines: async (ctx, e) => {
       if (e.type !== 'UPDATE') return;
-      return gQuery(
+      return gQuery<UpdateSourceQuery>(
         `mutation {updateSourceFile(id: ${JSON.stringify(
           e.id,
         )}, text: ${JSON.stringify(e.rawSource)}) {id}}`,
         ctx.client.auth.session()?.access_token!,
-      ).then((data) => data.data.updateSourceFile);
+      ).then((data) => data.data?.updateSourceFile);
     },
     checkUserSession: (ctx) =>
       new Promise((resolve, reject) => {

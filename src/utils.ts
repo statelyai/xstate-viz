@@ -104,7 +104,10 @@ export const updateQueryParamsWithoutReload = (
   window.history.pushState({ path: newURL.href }, '', newURL.href);
 };
 
-export const gQuery = (query: string, accessToken?: string) =>
+export const gQuery = <Result>(
+  query: string,
+  accessToken?: string,
+): Promise<{ data?: Result }> =>
   fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
     method: 'POST',
     headers: {
