@@ -12,10 +12,10 @@ const POSITION_CACHE_PREFIX = `xstate_viz_position`;
 const RAW_SOURCE_CACHE_PREFIX = `xstate_viz_raw_source`;
 
 const makePositionCacheKey = (sourceId: string | null) =>
-  `${POSITION_CACHE_PREFIX}${sourceId || 'no_source'}`;
+  `${POSITION_CACHE_PREFIX}|${sourceId || 'no_source'}`;
 
 const makeRawSourceCacheKey = (sourceId: string | null) =>
-  `${RAW_SOURCE_CACHE_PREFIX}${sourceId || 'no_source'}`;
+  `${RAW_SOURCE_CACHE_PREFIX}|${sourceId || 'no_source'}`;
 
 const savePosition = (sourceId: string | null, position: CachedPosition) => {
   localStorage.setItem(
