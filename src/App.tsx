@@ -61,10 +61,6 @@ function App() {
     sourceState.context.sourceProvider === 'registry'
       ? sourceState.context.sourceID
       : createdMachine?.id;
-  const isSourceLoaded = useMemo(
-    () => sourceState.matches({ with_source: 'source_loaded' }),
-    [sourceState],
-  );
 
   const canvasService = useInterpretCanvas({
     sourceID,
@@ -123,15 +119,18 @@ function App() {
                       with_source: 'loading_content',
                     }) && (
                       <EditorPanel
-                        immediateUpdate={isSourceLoaded}
+                        immediateUpdate={Boolean(
+                          sourceState.context.sourceRawContent,
+                        )}
                         defaultValue={
-                          isSourceLoaded
-                            ? (sourceState.context.sourceRawContent as string)
-                            : initialMachineCode
+                          sourceState.context.sourceRawContent ||
+                          initialMachineCode
                         }
-                        onChangedCodeValue={() => {
+                        onChangedCodeValue={(code) => {
                           clientService.send({
                             type: 'CODE_UPDATED',
+                            code,
+                            sourceId: sourceState.context.sourceID || null,
                           });
                         }}
                         isUpdateMode={isUpdateMode}

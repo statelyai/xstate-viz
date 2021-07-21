@@ -4,11 +4,18 @@ import {
   Session,
   SupabaseClient,
 } from '@supabase/supabase-js';
-import { ActorRefFrom, assign, EventFrom, MachineOptions } from 'xstate';
+import {
+  ActorRefFrom,
+  assign,
+  EventFrom,
+  forwardTo,
+  MachineOptions,
+} from 'xstate';
 import { spawn } from 'xstate';
 import { send } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingService } from './confirmLeavingService';
 import { notifMachine, notifModel } from './notificationMachine';
 import { CreateSourceQuery, UpdateSourceQuery } from './types';
@@ -35,7 +42,10 @@ const clientModel = createModel(
         id,
         rawSource,
       }),
-      CODE_UPDATED: () => ({}),
+      CODE_UPDATED: (code: string, sourceId: string | null) => ({
+        code,
+        sourceId,
+      }),
     },
   },
 );
@@ -143,6 +153,13 @@ export const clientMachine = createMachine<typeof clientModel>(
             target: '.choosing_provider',
           },
           CHOOSE_PROVIDER: '.choosing_provider',
+          CODE_UPDATED: {
+            actions: forwardTo('codeCacheMachine'),
+          },
+        },
+        invoke: {
+          src: cacheCodeChangesMachine,
+          id: 'codeCacheMachine',
         },
         initial: 'idle',
         states: {
@@ -163,14 +180,18 @@ export const clientMachine = createMachine<typeof clientModel>(
           SIGN_OUT: 'signing_out',
           SAVE: 'saving',
           UPDATE: 'updating',
+          CODE_UPDATED: {
+            target: '.hasCodeChanges',
+            actions: forwardTo('codeCacheMachine'),
+          },
+        },
+        invoke: {
+          src: cacheCodeChangesMachine,
+          id: 'codeCacheMachine',
         },
         initial: 'noCodeChanges',
         states: {
-          noCodeChanges: {
-            on: {
-              CODE_UPDATED: 'hasCodeChanges',
-            },
-          },
+          noCodeChanges: {},
           hasCodeChanges: {
             invoke: {
               src: confirmBeforeLeavingService,

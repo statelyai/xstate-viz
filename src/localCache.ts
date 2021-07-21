@@ -1,5 +1,4 @@
-import { isBefore } from 'date-fns';
-import { SourceProvider } from './types';
+import { isAfter, isBefore } from 'date-fns';
 
 export interface CachedPosition {
   zoom: number;
@@ -12,20 +11,20 @@ export interface CachedPosition {
 const POSITION_CACHE_PREFIX = `xstate_viz_position`;
 const RAW_SOURCE_CACHE_PREFIX = `xstate_viz_raw_source`;
 
-const makePositionCacheKey = (sourceId: string) =>
-  `${POSITION_CACHE_PREFIX}${sourceId}`;
+const makePositionCacheKey = (sourceId: string | null) =>
+  `${POSITION_CACHE_PREFIX}${sourceId || 'no_source'}`;
 
 const makeRawSourceCacheKey = (sourceId: string | null) =>
   `${RAW_SOURCE_CACHE_PREFIX}${sourceId || 'no_source'}`;
 
-const savePosition = (sourceId: string, position: CachedPosition) => {
+const savePosition = (sourceId: string | null, position: CachedPosition) => {
   localStorage.setItem(
     makePositionCacheKey(sourceId),
     JSON.stringify(position),
   );
 };
 
-const getPosition = (sourceId: string): CachedPosition | null => {
+const getPosition = (sourceId: string | null): CachedPosition | null => {
   const result = localStorage.getItem(makePositionCacheKey(sourceId));
 
   if (!result) return null;
@@ -81,7 +80,7 @@ const getSourceRawContent = (
     return result.sourceRawContent;
   }
 
-  const isLocalStorageFresherThanTheAPI = isBefore(
+  const isLocalStorageFresherThanTheAPI = isAfter(
     new Date(result.date),
     new Date(updatedAt),
   );
