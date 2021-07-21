@@ -21,15 +21,21 @@ export const canvasModel = createModel(
   },
 );
 
+const ZOOM_IN_FACTOR = 1.15;
+// exactly reversed factor so zooming in & out results in the same zoom values
+const ZOOM_OUT_FACTOR = 1 / ZOOM_IN_FACTOR;
+
 export const canvasMachine = createMachine<typeof canvasModel>({
   context: canvasModel.initialContext,
   on: {
     'ZOOM.OUT': {
-      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom - 0.1 }),
+      actions: canvasModel.assign({
+        zoom: (ctx) => ctx.zoom * ZOOM_OUT_FACTOR,
+      }),
       cond: (ctx) => ctx.zoom > 0.5,
     },
     'ZOOM.IN': {
-      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom + 0.1 }),
+      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom * ZOOM_IN_FACTOR }),
     },
     PAN: {
       actions: canvasModel.assign({

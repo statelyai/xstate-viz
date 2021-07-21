@@ -14,6 +14,7 @@ import {
   Text,
   Image,
   ModalFooter,
+  Avatar,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React from 'react';
@@ -53,12 +54,12 @@ export const Login: React.FC = () => {
       {state.hasTag('authorized') && (
         <Menu closeOnSelect={true}>
           <MenuButton title={session?.user?.user_metadata?.full_name}>
-            <Image
-              display="inline-flex"
+            <Avatar
               marginRight="2"
-              boxSize="30px"
-              src={session?.user?.user_metadata?.avatar_url}
-              alt={session?.user?.email}
+              src={session?.user?.user_metadata?.avatar_url || ''}
+              name={session?.user?.user_metadata?.display_name || ''}
+              height="30px"
+              width="30px"
             />
           </MenuButton>
           <MenuList>
@@ -68,14 +69,6 @@ export const Login: React.FC = () => {
               }}
             >
               Logout
-              <Box
-                as="em"
-                fontSize="sm"
-                marginLeft="1"
-                textTransform="capitalize"
-              >
-                ({session?.user?.app_metadata.provider})
-              </Box>
             </MenuItem>
           </MenuList>
         </Menu>
@@ -92,7 +85,7 @@ export const Login: React.FC = () => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Sign in</ModalHeader>
+          <ModalHeader>Sign In</ModalHeader>
           <ModalBody>
             <Text>
               Sign in to Stately Registry to be able to save machines.
@@ -104,8 +97,9 @@ export const Login: React.FC = () => {
                 onClick={() => {
                   clientService.send({ type: 'SIGN_IN', provider: 'github' });
                 }}
+                colorScheme="blue"
               >
-                Github
+                GitHub
               </Button>
             </HStack>
           </ModalFooter>

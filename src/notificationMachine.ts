@@ -4,7 +4,7 @@ import { createModel } from 'xstate/lib/model';
 
 const toast = createStandaloneToast();
 
-const notifModel = createModel(
+export const notifModel = createModel(
   {},
   {
     events: {
