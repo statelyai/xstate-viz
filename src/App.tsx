@@ -1,37 +1,33 @@
-import { useEffect, useMemo } from 'react';
-import { useInterpret, useMachine, useSelector } from '@xstate/react';
-import './Graph';
-import { toDirectedGraph } from './directedGraph';
-import { CanvasPanel } from './CanvasPanel';
-import { SimulationProvider } from './SimulationContext';
-import './base.scss';
-import { EditorPanel } from './EditorPanel';
 import {
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
   Box,
+  ChakraProvider,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
   Text,
 } from '@chakra-ui/react';
-import { ChakraProvider } from '@chakra-ui/react';
-import { theme } from './theme';
-import { StatePanel } from './StatePanel';
-import { EventsPanel } from './EventsPanel';
+import { useActor, useInterpret, useSelector } from '@xstate/react';
+import { useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
-import { Login } from './Login';
-
-import { clientMachine } from './clientMachine';
-import { ClientProvider } from './clientContext';
-import { sourceMachine } from './sourceMachine';
-import { SpinnerWithText } from './SpinnerWithText';
-import { ResizableBox } from './ResizableBox';
-import { simulationMachine } from './simulationMachine';
-import { canvasMachine } from './canvasMachine';
-import { localCache } from './localCache';
-import { useInterpretCanvas } from './useInterpretCanvas';
+import { clientMachine } from './authMachine';
+import './base.scss';
 import { CanvasProvider } from './CanvasContext';
+import { CanvasPanel } from './CanvasPanel';
+import { ClientProvider } from './clientContext';
+import { toDirectedGraph } from './directedGraph';
+import { EditorPanel } from './EditorPanel';
+import { EventsPanel } from './EventsPanel';
+import './Graph';
+import { Login } from './Login';
+import { ResizableBox } from './ResizableBox';
+import { SimulationProvider } from './SimulationContext';
+import { simulationMachine } from './simulationMachine';
+import { SpinnerWithText } from './SpinnerWithText';
+import { StatePanel } from './StatePanel';
+import { theme } from './theme';
+import { useInterpretCanvas } from './useInterpretCanvas';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -53,7 +49,12 @@ function App() {
     clientService,
     (state) => state.context.createdMachine,
   );
-  const [sourceState] = useMachine(sourceMachine);
+  const sourceService = useSelector(
+    clientService,
+    (state) => state.context.sourceRef,
+  );
+
+  const [sourceState] = useActor(sourceService!);
 
   const isUpdateMode =
     sourceState.context.sourceProvider === 'registry' || !!createdMachine;
@@ -127,7 +128,7 @@ function App() {
                           initialMachineCode
                         }
                         onChangedCodeValue={(code) => {
-                          clientService.send({
+                          sourceService?.send({
                             type: 'CODE_UPDATED',
                             code,
                             sourceID: sourceState.context.sourceID,
@@ -135,18 +136,10 @@ function App() {
                         }}
                         isUpdateMode={isUpdateMode}
                         onSave={(code: string) => {
-                          if (isUpdateMode) {
-                            clientService.send({
-                              type: 'UPDATE',
-                              id: sourceID,
-                              rawSource: code,
-                            });
-                          } else {
-                            clientService.send({
-                              type: 'SAVE',
-                              rawSource: code,
-                            });
-                          }
+                          sourceService?.send({
+                            type: 'SAVE',
+                            rawSource: code,
+                          });
                         }}
                         onChange={(machines) => {
                           simService.send({
