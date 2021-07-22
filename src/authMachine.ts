@@ -8,6 +8,7 @@ import {
   ActorRefFrom,
   assign,
   createMachine,
+  DoneInvokeEvent,
   EventFrom,
   MachineOptions,
   send,
@@ -15,9 +16,18 @@ import {
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
+import {
+  GetLoggedInUserDataDocument,
+  GetLoggedInUserDataQuery,
+  LoggedInUserFragment,
+} from './graphql/GetLoggedInUserData.generated';
 import { notifMachine } from './notificationMachine';
-import { makeSourceMachine, SourceMachineActorRef } from './sourceMachine';
-import { updateQueryParamsWithoutReload } from './utils';
+import {
+  makeSourceMachine,
+  SourceMachineActorRef,
+  sourceModel,
+} from './sourceMachine';
+import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 const authModel = createModel(
   {
@@ -25,6 +35,7 @@ const authModel = createModel(
     createdMachine: null! as any,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     sourceRef: null as SourceMachineActorRef | null,
+    loggedInUserData: null as null | LoggedInUserFragment,
   },
   {
     events: {
@@ -45,27 +56,7 @@ const authOptions: Partial<
     EventFrom<typeof authModel>
   >
 > = {
-  actions: {
-    saveCreatedMachine: assign({
-      createdMachine: (_, e) => (e as any).data,
-    }),
-    updateURLWithMachineID: (_, e: any) => {
-      updateQueryParamsWithoutReload((queries) => {
-        queries.delete('gist');
-        queries.set('id', e.data.id);
-      });
-    },
-  },
   services: {
-    checkUserSession: (ctx) =>
-      new Promise((resolve, reject) => {
-        const session = ctx.client.auth.session();
-        if (session) {
-          resolve(session);
-        } else {
-          reject();
-        }
-      }),
     signinUser: (ctx, e) =>
       ctx.client.auth.signIn(
         { provider: (e as any).provider },
@@ -150,9 +141,56 @@ export const clientMachine = createMachine<typeof authModel>(
         },
       },
       signed_in: {
+        exit: [
+          send((ctx) => sourceModel.events.LOGGED_IN_USER_ID_UPDATED(null), {
+            to: (ctx) => ctx.sourceRef!,
+          }),
+        ],
         tags: ['authorized'],
         on: {
           SIGN_OUT: 'signing_out',
+        },
+        initial: 'fetchingUser',
+        states: {
+          fetchingUser: {
+            invoke: {
+              src: async (
+                ctx,
+              ): Promise<GetLoggedInUserDataQuery | undefined> => {
+                return gQuery(
+                  GetLoggedInUserDataDocument,
+                  {},
+                  ctx.client.auth.session()?.access_token,
+                ).then((res) => res.data);
+              },
+              onDone: {
+                target: 'idle',
+                actions: [
+                  assign(
+                    (
+                      context,
+                      event: DoneInvokeEvent<GetLoggedInUserDataQuery>,
+                    ) => {
+                      return {
+                        loggedInUserData: event.data?.getLoggedInUser,
+                      };
+                    },
+                  ),
+                  send(
+                    (ctx, event: DoneInvokeEvent<GetLoggedInUserDataQuery>) => {
+                      return sourceModel.events.LOGGED_IN_USER_ID_UPDATED(
+                        event.data?.getLoggedInUser?.id || null,
+                      );
+                    },
+                    {
+                      to: (ctx) => ctx.sourceRef!,
+                    },
+                  ),
+                ],
+              },
+            },
+          },
+          idle: {},
         },
       },
       signing_in: {

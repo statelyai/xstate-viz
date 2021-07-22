@@ -26,12 +26,12 @@ import {
   UpdateSourceFileMutation,
 } from './graphql/UpdateSourceFile.generated';
 import { localCache } from './localCache';
-import { notifMachine } from './notificationMachine';
+import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 type SourceProvider = 'gist' | 'registry';
 
-const sourceModel = createModel(
+export const sourceModel = createModel(
   {
     sourceID: null as string | null,
     sourceUpdatedAt: null as string | null,
@@ -39,10 +39,14 @@ const sourceModel = createModel(
     sourceRawContent: null as string | null,
     sourceOwnerId: null as string | null,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
+    loggedInUserId: null! as string | null,
   },
   {
     events: {
       SAVE: (rawSource: string) => ({
+        rawSource,
+      }),
+      CREATE_NEW: (rawSource: string) => ({
         rawSource,
       }),
       LOADED_FROM_GIST: (rawSource: string) => ({
@@ -53,6 +57,10 @@ const sourceModel = createModel(
         code,
         sourceID,
       }),
+      /**
+       * Passed in from the parent to the child via events
+       */
+      LOGGED_IN_USER_ID_UPDATED: (id: string | null) => ({ id }),
     },
   },
 );
@@ -72,10 +80,7 @@ class NotFoundError extends Error {
   }
 }
 
-export const makeSourceMachine = (
-  auth: SupabaseAuthClient,
-  getLoggedInUserId: () => string | undefined,
-) => {
+export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   const isLoggedIn = () => {
     return Boolean(auth.session());
   };
@@ -85,6 +90,15 @@ export const makeSourceMachine = (
       initial: 'checking_url',
       context: sourceModel.initialContext,
       entry: assign({ notifRef: () => spawn(notifMachine) }),
+      on: {
+        LOGGED_IN_USER_ID_UPDATED: {
+          actions: assign((context, event) => {
+            return {
+              loggedInUserId: event.id,
+            };
+          }),
+        },
+      },
       states: {
         checking_url: {
           entry: 'parseQueries',
@@ -95,6 +109,17 @@ export const makeSourceMachine = (
         },
         with_source: {
           initial: 'loading_content',
+          on: {
+            CREATE_NEW: [
+              {
+                target: '#forking',
+                cond: isLoggedIn,
+              },
+              {
+                actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+              },
+            ],
+          },
           states: {
             loading_content: {
               on: {
@@ -106,7 +131,7 @@ export const makeSourceMachine = (
                         sourceID: event.data.getSourceFile?.id,
                         sourceRawContent: event.data.getSourceFile?.text,
                         sourceUpdatedAt: event.data.getSourceFile?.updatedAt,
-                        sourceOwnerId: event.data.getSourceFile?.id,
+                        sourceOwnerId: event.data.getSourceFile?.owner?.id,
                       };
                     }),
                   },
@@ -128,15 +153,6 @@ export const makeSourceMachine = (
             source_loaded: {
               entry: ['getLocalStorageCachedSource'],
               on: {
-                SAVE: [
-                  {
-                    cond: isLoggedIn,
-                    target: '#updating',
-                  },
-                  {
-                    actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
-                  },
-                ],
                 CODE_UPDATED: {
                   actions: [
                     forwardTo('codeCacheMachine'),
@@ -159,13 +175,12 @@ export const makeSourceMachine = (
                 checking_if_user_owns_source: {
                   always: [
                     {
-                      cond: (ctx, event) => {
+                      cond: (ctx) => {
                         const ownerId = ctx.sourceOwnerId;
-                        const loggedInUserId = getLoggedInUserId();
 
-                        if (!ownerId || !loggedInUserId) return false;
+                        if (!ownerId || !ctx.loggedInUserId) return false;
 
-                        return ownerId === loggedInUserId;
+                        return ownerId === ctx.loggedInUserId;
                       },
                       target: 'user_owns_this_source',
                     },
@@ -174,8 +189,40 @@ export const makeSourceMachine = (
                     },
                   ],
                 },
-                user_owns_this_source: {},
-                user_does_not_own_this_source: {},
+                user_owns_this_source: {
+                  on: {
+                    SAVE: [
+                      {
+                        cond: isLoggedIn,
+                        target: '#updating',
+                      },
+                      {
+                        actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                      },
+                    ],
+                  },
+                },
+                user_does_not_own_this_source: {
+                  on: {
+                    SAVE: [
+                      {
+                        cond: isLoggedIn,
+                        target: '#creating',
+                      },
+                      {
+                        actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                      },
+                    ],
+                    LOGGED_IN_USER_ID_UPDATED: {
+                      actions: assign((context, event) => {
+                        return {
+                          loggedInUserId: event.id,
+                        };
+                      }),
+                      target: 'checking_if_user_owns_source',
+                    },
+                  },
+                },
               },
             },
             source_error: {
@@ -239,39 +286,80 @@ export const makeSourceMachine = (
         },
         creating: {
           id: 'creating',
+          tags: ['persisting'],
           invoke: {
             src: 'createSourceFile',
             // TODO - handle error
             onDone: {
               target: 'with_source.source_loaded.user_owns_this_source',
-              actions: assign(
-                (context, event: DoneInvokeEvent<CreateSourceFileMutation>) => {
-                  return {
-                    sourceID: event.data.createSourceFile.id,
-                    sourceProvider: 'registry',
-                    sourceUpdatedAt: event.data.createSourceFile.updatedAt,
-                  };
-                },
-              ),
+              actions: [
+                'assignCreateSourceFileToContext',
+                'updateURLWithMachineID',
+                send(
+                  notifModel.events.BROADCAST('Saved successfully', 'success'),
+                  {
+                    to: (ctx) => {
+                      return ctx.notifRef!;
+                    },
+                  },
+                ),
+              ],
+            },
+          },
+        },
+        forking: {
+          tags: ['forking'],
+          id: 'forking',
+          invoke: {
+            src: 'createSourceFile',
+            // TODO - handle error
+            onDone: {
+              target: 'with_source.source_loaded.user_owns_this_source',
+              actions: [
+                'assignCreateSourceFileToContext',
+                'updateURLWithMachineID',
+                send(
+                  notifModel.events.BROADCAST('Forked successfully', 'success'),
+                  {
+                    to: (ctx) => {
+                      return ctx.notifRef!;
+                    },
+                  },
+                ),
+              ],
             },
           },
         },
         updating: {
+          tags: ['persisting'],
           id: 'updating',
           invoke: {
             src: 'updateSourceFile',
             // TODO - handle error
             onDone: {
               target: 'with_source.source_loaded.user_owns_this_source',
-              actions: assign(
-                (context, event: DoneInvokeEvent<UpdateSourceFileMutation>) => {
-                  return {
-                    sourceID: event.data.updateSourceFile.id,
-                    sourceProvider: 'registry',
-                    sourceUpdatedAt: event.data.updateSourceFile.updatedAt,
-                  };
-                },
-              ),
+              actions: [
+                assign(
+                  (
+                    context,
+                    event: DoneInvokeEvent<UpdateSourceFileMutation>,
+                  ) => {
+                    return {
+                      sourceID: event.data.updateSourceFile.id,
+                      sourceProvider: 'registry',
+                      sourceUpdatedAt: event.data.updateSourceFile.updatedAt,
+                    };
+                  },
+                ),
+                send(
+                  notifModel.events.BROADCAST('Saved successfully', 'success'),
+                  {
+                    to: (ctx) => {
+                      return ctx.notifRef!;
+                    },
+                  },
+                ),
+              ],
             },
           },
         },
@@ -279,6 +367,23 @@ export const makeSourceMachine = (
     },
     {
       actions: {
+        assignCreateSourceFileToContext: assign((context, _event: any) => {
+          const event: DoneInvokeEvent<CreateSourceFileMutation> = _event;
+          return {
+            sourceID: event.data.createSourceFile.id,
+            sourceProvider: 'registry',
+            sourceUpdatedAt: event.data.createSourceFile.updatedAt,
+            sourceOwnerId: event.data.createSourceFile.ownerId,
+          };
+        }),
+        updateURLWithMachineID: (ctx) => {
+          updateQueryParamsWithoutReload((queries) => {
+            queries.delete('gist');
+            if (ctx.sourceID) {
+              queries.set('id', ctx.sourceID);
+            }
+          });
+        },
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
             context.sourceID,
@@ -322,7 +427,7 @@ export const makeSourceMachine = (
       },
       services: {
         createSourceFile: async (ctx, e) => {
-          if (e.type !== 'SAVE') return;
+          if (e.type !== 'SAVE' && e.type !== 'CREATE_NEW') return;
           return gQuery(
             CreateSourceFileDocument,
             {
@@ -345,25 +450,24 @@ export const makeSourceMachine = (
         loadSourceContent: (ctx) => async (send) => {
           switch (ctx.sourceProvider) {
             case 'gist':
-              await fetch('https://api.github.com/gists/' + ctx.sourceID)
-                .then((resp) => {
-                  //   fetch doesn't treat 404 as errors by default
-                  if (resp.status === 404) {
-                    return Promise.reject(new NotFoundError('Gist not found'));
-                  }
-                  return resp.json();
-                })
-                .then((data) => {
-                  return fetch(data.files['machine.js'].raw_url).then(
-                    async (r) => {
-                      const rawSource = await r.text();
-                      send({
-                        type: 'LOADED_FROM_GIST',
-                        rawSource,
-                      });
-                    },
-                  );
-                });
+              const response = await fetch(
+                'https://api.github.com/gists/' + ctx.sourceID,
+              );
+              // Fetch doesn't treat 404's as errors by default
+              if (response.status === 404) {
+                return Promise.reject(new NotFoundError('Gist not found'));
+              }
+              const json = await response.json();
+
+              const gistResponse = await fetch(
+                json.files['machine.js'].raw_url,
+              );
+              const rawSource = await gistResponse.text();
+
+              send({
+                type: 'LOADED_FROM_GIST',
+                rawSource,
+              });
               break;
             case 'registry':
               const result = await gQuery(GetSourceFileDocument, {

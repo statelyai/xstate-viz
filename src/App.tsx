@@ -17,7 +17,7 @@ import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
 import { ClientProvider } from './clientContext';
 import { toDirectedGraph } from './directedGraph';
-import { EditorPanel } from './EditorPanel';
+import { EditorPanel, SourceStatus } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
 import './Graph';
 import { Login } from './Login';
@@ -56,12 +56,22 @@ function App() {
 
   const [sourceState] = useActor(sourceService!);
 
-  const isUpdateMode =
-    sourceState.context.sourceProvider === 'registry' || !!createdMachine;
   const sourceID =
     sourceState.context.sourceProvider === 'registry'
       ? sourceState.context.sourceID
       : createdMachine?.id;
+
+  let sourceStatus: SourceStatus = 'no-source';
+
+  if (!sourceState.matches('no_source')) {
+    if (
+      sourceState.context.loggedInUserId === sourceState.context.sourceOwnerId
+    ) {
+      sourceStatus = 'user-owns-source';
+    } else {
+      sourceStatus = 'user-does-not-own-source';
+    }
+  }
 
   const canvasService = useInterpretCanvas({
     sourceID,
@@ -134,10 +144,16 @@ function App() {
                             sourceID: sourceState.context.sourceID,
                           });
                         }}
-                        isUpdateMode={isUpdateMode}
+                        sourceStatus={sourceStatus}
                         onSave={(code: string) => {
                           sourceService?.send({
                             type: 'SAVE',
+                            rawSource: code,
+                          });
+                        }}
+                        onCreateNew={(code) => {
+                          sourceService?.send({
+                            type: 'CREATE_NEW',
                             rawSource: code,
                           });
                         }}
