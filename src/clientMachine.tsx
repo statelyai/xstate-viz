@@ -4,13 +4,21 @@ import {
   Session,
   SupabaseClient,
 } from '@supabase/supabase-js';
-import { ActorRefFrom, assign, EventFrom, MachineOptions } from 'xstate';
+import {
+  ActorRefFrom,
+  assign,
+  EventFrom,
+  forwardTo,
+  MachineOptions,
+} from 'xstate';
 import { spawn } from 'xstate';
 import { send } from 'xstate';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingService } from './confirmLeavingService';
 import { notifMachine, notifModel } from './notificationMachine';
+import { CreateSourceQuery, UpdateSourceQuery } from './types';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 const clientModel = createModel(
@@ -34,7 +42,10 @@ const clientModel = createModel(
         id,
         rawSource,
       }),
-      CODE_UPDATED: () => ({}),
+      CODE_UPDATED: (code: string, sourceID: string | null) => ({
+        code,
+        sourceID,
+      }),
     },
   },
 );
@@ -59,21 +70,21 @@ const clientOptions: Partial<
   services: {
     saveMachines: async (ctx, e) => {
       if (e.type !== 'SAVE') return;
-      return gQuery(
+      return gQuery<CreateSourceQuery>(
         `mutation {createSourceFile(text: ${JSON.stringify(
           e.rawSource,
         )}) {id}}`,
         ctx.client.auth.session()?.access_token!,
-      ).then((data) => data.data.createSourceFile);
+      ).then((data) => data.data?.createSourceFile);
     },
     updateMachines: async (ctx, e) => {
       if (e.type !== 'UPDATE') return;
-      return gQuery(
+      return gQuery<UpdateSourceQuery>(
         `mutation {updateSourceFile(id: ${JSON.stringify(
           e.id,
         )}, text: ${JSON.stringify(e.rawSource)}) {id}}`,
         ctx.client.auth.session()?.access_token!,
-      ).then((data) => data.data.updateSourceFile);
+      ).then((data) => data.data?.updateSourceFile);
     },
     checkUserSession: (ctx) =>
       new Promise((resolve, reject) => {
@@ -142,6 +153,13 @@ export const clientMachine = createMachine<typeof clientModel>(
             target: '.choosing_provider',
           },
           CHOOSE_PROVIDER: '.choosing_provider',
+          CODE_UPDATED: {
+            actions: forwardTo('codeCacheMachine'),
+          },
+        },
+        invoke: {
+          src: cacheCodeChangesMachine,
+          id: 'codeCacheMachine',
         },
         initial: 'idle',
         states: {
@@ -162,14 +180,18 @@ export const clientMachine = createMachine<typeof clientModel>(
           SIGN_OUT: 'signing_out',
           SAVE: 'saving',
           UPDATE: 'updating',
+          CODE_UPDATED: {
+            target: '.hasCodeChanges',
+            actions: forwardTo('codeCacheMachine'),
+          },
+        },
+        invoke: {
+          src: cacheCodeChangesMachine,
+          id: 'codeCacheMachine',
         },
         initial: 'noCodeChanges',
         states: {
-          noCodeChanges: {
-            on: {
-              CODE_UPDATED: 'hasCodeChanges',
-            },
-          },
+          noCodeChanges: {},
           hasCodeChanges: {
             invoke: {
               src: confirmBeforeLeavingService,

@@ -2,7 +2,6 @@ import { assign, createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
-import { SourceProvider } from './types';
 
 export const canvasModel = createModel(
   {
@@ -62,15 +61,10 @@ export const canvasMachine = createMachine<typeof canvasModel>({
     SOURCE_CHANGED: {
       target: '.throttling',
       internal: false,
-      /**
-       * Only load persisted state if we have a source ID
-       * and a provider
-       */
-      cond: (ctx, event) => {
-        return Boolean(event.id);
-      },
       actions: assign((context, event) => {
-        const position = getPositionFromEvent(event)!;
+        const position = getPositionFromEvent(event);
+
+        if (!position) return {};
 
         return position;
       }),
@@ -101,7 +95,6 @@ export const canvasMachine = createMachine<typeof canvasModel>({
 
 const getPositionFromEvent = (event: ModelEventsFrom<typeof canvasModel>) => {
   if (event.type !== 'SOURCE_CHANGED') return null;
-  if (!event.id) return null;
 
   const position = localCache.getPosition(event.id);
   return position;

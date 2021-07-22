@@ -13,9 +13,7 @@ export const useInterpretCanvas = ({
   const canvasService = useInterpret(canvasMachine, {
     actions: {
       persistPositionToLocalStorage: (context) => {
-        if (sourceID) {
-          localCache.savePosition(sourceID, context);
-        }
+        localCache.savePosition(sourceID, context);
       },
     },
   });

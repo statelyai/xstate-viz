@@ -8,6 +8,26 @@ import { Model } from 'xstate/lib/model.types';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
+export type CreateSourceQuery = {
+  createSourceFile: {
+    id: string;
+  };
+};
+
+export type UpdateSourceQuery = {
+  updateSourceFile: {
+    id: string;
+  };
+};
+
+export type GetSourceFile = {
+  getSourceFile?: {
+    id: string;
+    text: string;
+    updatedAt: string;
+  };
+};
+
 export type StateFrom<T> = T extends StateMachine<
   infer TContext,
   any,
