@@ -1,16 +1,16 @@
 import {
   ActorRefFrom,
   assign,
+  ContextFrom,
   createMachine,
   DoneInvokeEvent,
   send,
   spawn,
-  ContextFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { GetSourceFileDocument } from './graphql/GetSourceFile.generated';
 import { localCache } from './localCache';
 import { notifMachine } from './notificationMachine';
-import { GetSourceFile } from './types';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 type SourceProvider = 'gist' | 'registry';
@@ -153,9 +153,7 @@ export const sourceMachine = createMachine<typeof sourceModel>(
       isSourceIDAvailable: (ctx) => !!ctx.sourceID,
     },
     services: {
-      loadSourceContent: (
-        ctx,
-      ): Promise<{ text: string; updatedAt?: string }> => {
+      loadSourceContent: (ctx) => {
         switch (ctx.sourceProvider) {
           case 'gist':
             return fetch('https://api.github.com/gists/' + ctx.sourceID)
@@ -176,13 +174,11 @@ export const sourceMachine = createMachine<typeof sourceModel>(
                 );
               });
           case 'registry':
-            return gQuery<GetSourceFile>(
-              `query {getSourceFile(id: ${JSON.stringify(
-                ctx.sourceID,
-              )}) {id,text,updatedAt}}`,
-            ).then((data) => {
-              if (data.data?.getSourceFile) {
-                return data.data.getSourceFile;
+            return gQuery(GetSourceFileDocument, {
+              id: ctx.sourceID,
+            }).then((res) => {
+              if (res.data?.getSourceFile) {
+                return Promise.resolve(res.data.getSourceFile);
               }
               return Promise.reject(
                 new NotFoundError('Source not found in Registry'),

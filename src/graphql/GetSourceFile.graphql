@@ -1,0 +1,11 @@
+query GetSourceFile($id: String!) {
+  getSourceFile(id: $id) {
+    id
+    updatedAt
+    owner {
+      id
+      avatarUrl
+      displayName
+    }
+  }
+}

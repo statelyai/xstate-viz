@@ -1,0 +1,15 @@
+schema:
+  - https://registry-prod.graphcdn.app
+documents:
+  - 'src/graphql/**/*.graphql'
+generates:
+  graphql/schemaTypes.generated.ts:
+    - typescript
+  graphql/:
+    preset: near-operation-file
+    presetConfig:
+      baseTypesPath: 'schemaTypes.generated.ts'
+      extension: '.generated.ts'
+    plugins:
+      - typescript-operations
+      - typed-document-node
