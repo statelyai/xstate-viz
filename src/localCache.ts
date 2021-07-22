@@ -11,21 +11,21 @@ export interface CachedPosition {
 const POSITION_CACHE_PREFIX = `xstate_viz_position`;
 const RAW_SOURCE_CACHE_PREFIX = `xstate_viz_raw_source`;
 
-const makePositionCacheKey = (sourceId: string | null) =>
-  `${POSITION_CACHE_PREFIX}|${sourceId || 'no_source'}`;
+const makePositionCacheKey = (sourceID: string | null) =>
+  `${POSITION_CACHE_PREFIX}|${sourceID || 'no_source'}`;
 
-const makeRawSourceCacheKey = (sourceId: string | null) =>
-  `${RAW_SOURCE_CACHE_PREFIX}|${sourceId || 'no_source'}`;
+const makeRawSourceCacheKey = (sourceID: string | null) =>
+  `${RAW_SOURCE_CACHE_PREFIX}|${sourceID || 'no_source'}`;
 
-const savePosition = (sourceId: string | null, position: CachedPosition) => {
+const savePosition = (sourceID: string | null, position: CachedPosition) => {
   localStorage.setItem(
-    makePositionCacheKey(sourceId),
+    makePositionCacheKey(sourceID),
     JSON.stringify(position),
   );
 };
 
-const getPosition = (sourceId: string | null): CachedPosition | null => {
-  const result = localStorage.getItem(makePositionCacheKey(sourceId));
+const getPosition = (sourceID: string | null): CachedPosition | null => {
+  const result = localStorage.getItem(makePositionCacheKey(sourceID));
 
   if (!result) return null;
 
@@ -53,21 +53,21 @@ const decodeRawSource = (
 };
 
 const saveSourceRawContent = (
-  sourceId: string | null,
+  sourceID: string | null,
   sourceRawContent: string,
 ) => {
   localStorage.setItem(
-    makeRawSourceCacheKey(sourceId),
+    makeRawSourceCacheKey(sourceID),
     encodeRawSource(sourceRawContent, new Date()),
   );
 };
 
 const getSourceRawContent = (
-  sourceId: string | null,
+  sourceID: string | null,
   updatedAt: string | null,
 ): string | null => {
   const result = decodeRawSource(
-    localStorage.getItem(makeRawSourceCacheKey(sourceId)),
+    localStorage.getItem(makeRawSourceCacheKey(sourceID)),
   );
 
   if (!result) return null;
@@ -88,7 +88,7 @@ const getSourceRawContent = (
   if (isLocalStorageFresherThanTheAPI) {
     return result.sourceRawContent;
   }
-  localStorage.removeItem(makeRawSourceCacheKey(sourceId))
+  localStorage.removeItem(makeRawSourceCacheKey(sourceID));
   return null;
 };
 

@@ -42,9 +42,9 @@ const clientModel = createModel(
         id,
         rawSource,
       }),
-      CODE_UPDATED: (code: string, sourceId: string | null) => ({
+      CODE_UPDATED: (code: string, sourceID: string | null) => ({
         code,
-        sourceId,
+        sourceID,
       }),
     },
   },
