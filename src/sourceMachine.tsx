@@ -178,7 +178,7 @@ export const sourceMachine = createMachine<typeof sourceModel>(
               id: ctx.sourceID,
             }).then((res) => {
               if (res.data?.getSourceFile) {
-                return Promise.resolve(res.data.getSourceFile);
+                return res.data.getSourceFile;
               }
               return Promise.reject(
                 new NotFoundError('Source not found in Registry'),
