@@ -1,5 +1,11 @@
 import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
-import { Box, ButtonGroup, ChakraProvider, IconButton } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  ChakraProvider,
+  IconButton,
+} from '@chakra-ui/react';
 import React from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
@@ -18,26 +24,35 @@ export const CanvasPanel: React.FC<{
     <Box display="grid" gridTemplateRows="auto 1fr">
       <Box zIndex={1} bg="black">
         <ChakraProvider theme={theme}>
-          <ButtonGroup size="sm" spacing={2} padding={2}>
-            <IconButton
-              aria-label="Zoom out"
-              title="Zoom out"
-              icon={<MinusIcon />}
-              onClick={() => canvasService.send('ZOOM.OUT')}
-            />
-            <IconButton
-              aria-label="Zoom in"
-              title="Zoom in"
-              icon={<AddIcon />}
-              onClick={() => canvasService.send('ZOOM.IN')}
-            />
-            <IconButton
-              aria-label="Reset"
-              title="Reset"
-              icon={<RepeatIcon />}
+          <Box display="flex" justifyContent="space-between">
+            <ButtonGroup size="sm" spacing={2} padding={2}>
+              <IconButton
+                aria-label="Zoom out"
+                title="Zoom out"
+                icon={<MinusIcon />}
+                onClick={() => canvasService.send('ZOOM.OUT')}
+              />
+              <IconButton
+                aria-label="Zoom in"
+                title="Zoom in"
+                icon={<AddIcon />}
+                onClick={() => canvasService.send('ZOOM.IN')}
+              />
+              <IconButton
+                aria-label="Reset canvas"
+                title="Reset canvas"
+                icon={<RepeatIcon />}
+                onClick={() => canvasService.send('POSITION.RESET')}
+              />
+            </ButtonGroup>
+            <Button
+              size="sm"
+              margin={2}
               onClick={() => simService.send('MACHINES.RESET')}
-            />
-          </ButtonGroup>
+            >
+              {'Reset machine'}
+            </Button>
+          </Box>
         </ChakraProvider>
       </Box>
       <CanvasContainer>
