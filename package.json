@@ -7,6 +7,7 @@
     "@chakra-ui/react": "^1.6.3",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
+    "@graphql-typed-document-node/core": "^3.1.0",
     "@monaco-editor/react": "^4.2.1",
     "@supabase/supabase-js": "^1.15.1",
     "@testing-library/jest-dom": "^5.11.4",
@@ -30,8 +31,10 @@
     "xstate": "^4.23.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",
+    "start:app": "react-scripts start",
+    "build": "graphql-codegen && react-scripts build",
+    "graphql:codegen": "graphql-codegen --watch",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -54,8 +57,15 @@
     ]
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^1.21.5",
+    "@graphql-codegen/near-operation-file-preset": "^1.18.1",
+    "@graphql-codegen/typed-document-node": "^1.18.6",
+    "@graphql-codegen/typescript": "^1.22.1",
+    "@graphql-codegen/typescript-operations": "^1.18.0",
     "@types/react": "^17.0.6",
     "@types/react-dom": "^17.0.5",
+    "concurrently": "^6.2.0",
+    "graphql": "^15.5.0",
     "sass": "^1.33.0",
     "typescript": "^4.3.5"
   }

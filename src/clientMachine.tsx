@@ -7,18 +7,19 @@ import {
 import {
   ActorRefFrom,
   assign,
+  createMachine,
   EventFrom,
   forwardTo,
   MachineOptions,
+  send,
+  spawn,
 } from 'xstate';
-import { spawn } from 'xstate';
-import { send } from 'xstate';
-import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingService } from './confirmLeavingService';
+import { CreateSourceFileDocument } from './graphql/CreateSourceFile.generated';
+import { UpdateSourceFileDocument } from './graphql/UpdateSourceFile.generated';
 import { notifMachine, notifModel } from './notificationMachine';
-import { CreateSourceQuery, UpdateSourceQuery } from './types';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 const clientModel = createModel(
@@ -70,19 +71,22 @@ const clientOptions: Partial<
   services: {
     saveMachines: async (ctx, e) => {
       if (e.type !== 'SAVE') return;
-      return gQuery<CreateSourceQuery>(
-        `mutation {createSourceFile(text: ${JSON.stringify(
-          e.rawSource,
-        )}) {id}}`,
+      return gQuery(
+        CreateSourceFileDocument,
+        {
+          text: e.rawSource,
+        },
         ctx.client.auth.session()?.access_token!,
       ).then((data) => data.data?.createSourceFile);
     },
     updateMachines: async (ctx, e) => {
       if (e.type !== 'UPDATE') return;
-      return gQuery<UpdateSourceQuery>(
-        `mutation {updateSourceFile(id: ${JSON.stringify(
-          e.id,
-        )}, text: ${JSON.stringify(e.rawSource)}) {id}}`,
+      return gQuery(
+        UpdateSourceFileDocument,
+        {
+          id: e.id,
+          text: e.rawSource,
+        },
         ctx.client.auth.session()?.access_token!,
       ).then((data) => data.data?.updateSourceFile);
     },
