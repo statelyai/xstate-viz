@@ -9,6 +9,7 @@ import {
   Thead,
   Th,
   Button,
+  ButtonGroup,
   Popover,
   PopoverArrow,
   PopoverBody,
@@ -451,24 +452,8 @@ const NewEvent: React.FC<{
                     }}
                   />
                 </PopoverBody>
-                <PopoverFooter>
-                  <Box
-                    isAttached
-                    display="flex"
-                    flexDirection="row-reverse"
-                    css={{
-                      gap: '.5rem',
-                    }}
-                  >
-                    <Button
-                      disabled={!state.hasTag('valid')}
-                      onClick={() => {
-                        send(newEventModel.events['EVENT.SEND']());
-                        onClose();
-                      }}
-                    >
-                      Send
-                    </Button>
+                <PopoverFooter display="flex" justifyContent="flex-end">
+                  <ButtonGroup spacing={2}>
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -478,7 +463,16 @@ const NewEvent: React.FC<{
                     >
                       Cancel
                     </Button>
-                  </Box>
+                    <Button
+                      disabled={!state.hasTag('valid')}
+                      onClick={() => {
+                        send(newEventModel.events['EVENT.SEND']());
+                        onClose();
+                      }}
+                    >
+                      Send
+                    </Button>
+                  </ButtonGroup>
                 </PopoverFooter>
               </PopoverContent>
             </Portal>
