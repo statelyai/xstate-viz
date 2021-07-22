@@ -1,4 +1,7 @@
-import { isAfter, isBefore } from 'date-fns';
+import { isAfter } from 'date-fns';
+import { createStorage, testStorageSupport } from 'memory-web-storage';
+
+const storage = testStorageSupport() ? window.localStorage : createStorage();
 
 export interface CachedPosition {
   zoom: number;
@@ -18,14 +21,11 @@ const makeRawSourceCacheKey = (sourceID: string | null) =>
   `${RAW_SOURCE_CACHE_PREFIX}|${sourceID || 'no_source'}`;
 
 const savePosition = (sourceID: string | null, position: CachedPosition) => {
-  localStorage.setItem(
-    makePositionCacheKey(sourceID),
-    JSON.stringify(position),
-  );
+  storage.setItem(makePositionCacheKey(sourceID), JSON.stringify(position));
 };
 
 const getPosition = (sourceID: string | null): CachedPosition | null => {
-  const result = localStorage.getItem(makePositionCacheKey(sourceID));
+  const result = storage.getItem(makePositionCacheKey(sourceID));
 
   if (!result) return null;
 
@@ -56,7 +56,7 @@ const saveSourceRawContent = (
   sourceID: string | null,
   sourceRawContent: string,
 ) => {
-  localStorage.setItem(
+  storage.setItem(
     makeRawSourceCacheKey(sourceID),
     encodeRawSource(sourceRawContent, new Date()),
   );
@@ -67,7 +67,7 @@ const getSourceRawContent = (
   updatedAt: string | null,
 ): string | null => {
   const result = decodeRawSource(
-    localStorage.getItem(makeRawSourceCacheKey(sourceID)),
+    storage.getItem(makeRawSourceCacheKey(sourceID)),
   );
 
   if (!result) return null;
@@ -88,7 +88,7 @@ const getSourceRawContent = (
   if (isLocalStorageFresherThanTheAPI) {
     return result.sourceRawContent;
   }
-  localStorage.removeItem(makeRawSourceCacheKey(sourceID));
+  storage.removeItem(makeRawSourceCacheKey(sourceID));
   return null;
 };
 
