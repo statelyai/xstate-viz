@@ -88,6 +88,7 @@ const getSourceRawContent = (
   if (isLocalStorageFresherThanTheAPI) {
     return result.sourceRawContent;
   }
+  localStorage.removeItem(makeRawSourceCacheKey(sourceId))
   return null;
 };
 
