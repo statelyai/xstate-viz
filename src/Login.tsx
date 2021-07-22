@@ -1,28 +1,27 @@
 import {
+  Avatar,
+  Box,
   Button,
-  Modal,
-  ModalOverlay,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
   HStack,
   Menu,
   MenuButton,
-  MenuList,
   MenuItem,
-  Box,
-  Text,
-  Image,
+  MenuList,
+  Modal,
+  ModalBody,
+  ModalContent,
   ModalFooter,
-  Avatar,
+  ModalHeader,
+  ModalOverlay,
+  Text,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React from 'react';
-import { useClient } from './clientContext';
+import { useAuth } from './authContext';
 
 export const Login: React.FC = () => {
-  const clientService = useClient();
-  const state = useSelector(clientService, (state) => state);
+  const authService = useAuth();
+  const state = useSelector(authService, (state) => state);
   const session = state.context!.client.auth.session();
 
   return (
@@ -44,7 +43,7 @@ export const Login: React.FC = () => {
           colorScheme="blue"
           rounded="false"
           onClick={() => {
-            clientService.send('CHOOSE_PROVIDER');
+            authService.send('CHOOSE_PROVIDER');
           }}
         >
           Login
@@ -65,7 +64,7 @@ export const Login: React.FC = () => {
           <MenuList>
             <MenuItem
               onClick={() => {
-                clientService.send('SIGN_OUT');
+                authService.send('SIGN_OUT');
               }}
             >
               Logout
@@ -75,11 +74,11 @@ export const Login: React.FC = () => {
       )}
 
       <Modal
-        isOpen={clientService.state?.matches({
+        isOpen={authService.state?.matches({
           signed_out: 'choosing_provider',
         })}
         onClose={() => {
-          clientService.send('CANCEL_PROVIDER');
+          authService.send('CANCEL_PROVIDER');
         }}
         // colorScheme="blackAlpha"
       >
@@ -87,15 +86,15 @@ export const Login: React.FC = () => {
         <ModalContent>
           <ModalHeader>Sign In</ModalHeader>
           <ModalBody>
-            <Text>
-              Sign in to Stately Registry to be able to save machines.
+            <Text fontSize="sm">
+              Sign in to Stately Registry to be able to save/fork machines.
             </Text>
           </ModalBody>
           <ModalFooter justifyContent="flex-start">
             <HStack>
               <Button
                 onClick={() => {
-                  clientService.send({ type: 'SIGN_IN', provider: 'github' });
+                  authService.send({ type: 'SIGN_IN', provider: 'github' });
                 }}
                 colorScheme="blue"
               >

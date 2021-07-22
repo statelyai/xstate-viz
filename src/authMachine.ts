@@ -68,7 +68,7 @@ const authOptions: Partial<
   },
 };
 
-export const clientMachine = createMachine<typeof authModel>(
+export const authMachine = createMachine<typeof authModel>(
   {
     id: 'client',
     initial: 'initializing',

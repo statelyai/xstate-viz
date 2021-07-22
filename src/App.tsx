@@ -11,11 +11,11 @@ import {
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
-import { clientMachine } from './authMachine';
+import { authMachine } from './authMachine';
 import './base.scss';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
-import { ClientProvider } from './clientContext';
+import { AuthProvider } from './authContext';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel, SourceStatus } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
@@ -44,13 +44,13 @@ function App() {
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
-  const clientService = useInterpret(clientMachine);
+  const authService = useInterpret(authMachine);
   const createdMachine = useSelector(
-    clientService,
+    authService,
     (state) => state.context.createdMachine,
   );
   const sourceService = useSelector(
-    clientService,
+    authService,
     (state) => state.context.sourceRef,
   );
 
@@ -100,7 +100,7 @@ function App() {
             </Text>
           </Box>
         )}
-        <ClientProvider value={clientService}>
+        <AuthProvider value={authService}>
           <ChakraProvider theme={theme}>
             <ResizableBox gridArea="tabs">
               <Login />
@@ -179,7 +179,7 @@ function App() {
               </Tabs>
             </ResizableBox>
           </ChakraProvider>
-        </ClientProvider>
+        </AuthProvider>
       </Box>
     </SimulationProvider>
   );

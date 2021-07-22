@@ -3,7 +3,7 @@ import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { useClient } from './clientContext';
+import { useAuth } from './authContext';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
@@ -119,7 +119,12 @@ export type SourceStatus =
 
 const getPersistText = (isSignedOut: boolean, sourceStatus: SourceStatus) => {
   if (isSignedOut) {
-    return 'Login to save';
+    switch (sourceStatus) {
+      case 'no-source':
+        return 'Login to save';
+      default:
+        return 'Login to fork';
+    }
   }
   switch (sourceStatus) {
     case 'no-source':
@@ -147,16 +152,16 @@ export const EditorPanel: React.FC<{
   sourceStatus,
   onCreateNew,
 }) => {
-  const clientService = useClient();
-  const clientState = useSelector(clientService, (state) => state);
+  const authService = useAuth();
+  const authState = useSelector(authService, (state) => state);
   const sourceService = useSelector(
-    clientService,
+    authService,
     (state) => state.context.sourceRef!,
   );
   const [sourceState] = useActor(sourceService);
 
   const persistText = getPersistText(
-    clientState.matches('signed_out'),
+    authState.matches('signed_out'),
     sourceStatus,
   );
 
