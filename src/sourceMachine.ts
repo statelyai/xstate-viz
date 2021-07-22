@@ -289,7 +289,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           tags: ['persisting'],
           invoke: {
             src: 'createSourceFile',
-            // TODO - handle error
             onDone: {
               target: 'with_source.source_loaded.user_owns_this_source',
               actions: [
@@ -305,6 +304,20 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 ),
               ],
             },
+            onError: {
+              target: 'no_source',
+              actions: send(
+                notifModel.events.BROADCAST(
+                  'An error occurred when saving.',
+                  'error',
+                ),
+                {
+                  to: (ctx) => {
+                    return ctx.notifRef!;
+                  },
+                },
+              ),
+            },
           },
         },
         forking: {
@@ -312,7 +325,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           id: 'forking',
           invoke: {
             src: 'createSourceFile',
-            // TODO - handle error
             onDone: {
               target: 'with_source.source_loaded.user_owns_this_source',
               actions: [
@@ -328,6 +340,20 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 ),
               ],
             },
+            onError: {
+              target: 'with_source',
+              actions: send(
+                notifModel.events.BROADCAST(
+                  'An error occurred when forking',
+                  'error',
+                ),
+                {
+                  to: (ctx) => {
+                    return ctx.notifRef!;
+                  },
+                },
+              ),
+            },
           },
         },
         updating: {
@@ -335,7 +361,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           id: 'updating',
           invoke: {
             src: 'updateSourceFile',
-            // TODO - handle error
             onDone: {
               target: 'with_source.source_loaded.user_owns_this_source',
               actions: [
@@ -360,6 +385,20 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                   },
                 ),
               ],
+            },
+            onError: {
+              target: 'with_source',
+              actions: send(
+                notifModel.events.BROADCAST(
+                  'An error occurred when saving.',
+                  'error',
+                ),
+                {
+                  to: (ctx) => {
+                    return ctx.notifRef!;
+                  },
+                },
+              ),
             },
           },
         },
