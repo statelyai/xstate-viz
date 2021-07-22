@@ -5,9 +5,9 @@ import {
   DoneInvokeEvent,
   send,
   spawn,
+  ContextFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { ModelContextFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
 import { notifMachine } from './notificationMachine';
 import { GetSourceFile } from './types';
@@ -139,7 +139,7 @@ export const sourceMachine = createMachine<typeof sourceModel>(
       }),
       saveSourceContent: assign(
         (
-          ctx: ModelContextFrom<typeof sourceModel>,
+          ctx: ContextFrom<typeof sourceModel>,
           e: DoneInvokeEvent<{ text: string; updatedAt?: string }>,
         ) => {
           return {
