@@ -204,7 +204,6 @@ export const EditorPanel: React.FC<{
         </Button>
         <Button
           isLoading={sourceState.hasTag('persisting')}
-          loadingText={persistText}
           disabled={
             sourceState.hasTag('persisting') || current.matches('compiling')
           }
@@ -220,7 +219,6 @@ export const EditorPanel: React.FC<{
               sourceState.hasTag('forking') || current.matches('compiling')
             }
             isLoading={sourceState.hasTag('forking')}
-            loadingText="Forking..."
             onClick={() => {
               onCreateNew(current.context.code);
             }}
