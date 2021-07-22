@@ -11,6 +11,11 @@ export interface CachedPosition {
   };
 }
 
+export interface CachedSource {
+  sourceRawContent: string;
+  date: string;
+}
+
 const POSITION_CACHE_PREFIX = `xstate_viz_position`;
 const RAW_SOURCE_CACHE_PREFIX = `xstate_viz_raw_source`;
 
@@ -42,12 +47,24 @@ const encodeRawSource = (sourceRawContent: string, date: Date) => {
   });
 };
 
+const isCachedSource = (source: unknown): source is CachedSource => {
+  return (
+    typeof source === 'object' &&
+    (source as any)?.sourceRawContent &&
+    (source as any)?.date
+  );
+};
+
 const decodeRawSource = (
   fromLocalStorage: string | null,
-): { sourceRawContent: string; date: string } | null => {
+): CachedSource | null => {
   if (fromLocalStorage === null) return null;
   try {
-    return JSON.parse(fromLocalStorage);
+    const possibleObject = JSON.parse(fromLocalStorage);
+
+    if (isCachedSource(possibleObject)) {
+      return possibleObject;
+    }
   } catch (e) {}
   return null;
 };
