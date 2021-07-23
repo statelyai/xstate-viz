@@ -41,6 +41,7 @@ export const sourceModel = createModel(
     sourceRegistryData: null as null | SourceFileFragment,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     loggedInUserId: null! as string | null,
+    desiredName: null as string | null,
   },
   {
     events: {
@@ -62,6 +63,8 @@ export const sourceModel = createModel(
        * Passed in from the parent to the child via events
        */
       LOGGED_IN_USER_ID_UPDATED: (id: string | null) => ({ id }),
+      CHOOSE_NAME: (name: string) => ({ name }),
+      CLOSE_NAME_CHOOSER_MODAL: () => ({}),
     },
   },
 );
@@ -109,12 +112,18 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           ],
         },
         with_source: {
+          id: 'with_source',
           initial: 'loading_content',
           on: {
             CREATE_NEW: [
               {
-                target: '#forking',
+                target: '#creating',
                 cond: isLoggedIn,
+                actions: assign((context, event) => {
+                  return {
+                    sourceRawContent: event.rawSource,
+                  };
+                }),
               },
               {
                 actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -248,6 +257,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           },
         },
         no_source: {
+          id: 'no_source',
           on: {
             CODE_UPDATED: {
               actions: [
@@ -286,73 +296,75 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         },
         creating: {
           id: 'creating',
-          tags: ['persisting'],
-          invoke: {
-            src: 'createSourceFile',
-            onDone: {
-              target: 'with_source.source_loaded.user_owns_this_source',
-              actions: [
-                'assignCreateSourceFileToContext',
-                'updateURLWithMachineID',
-                send(
-                  notifModel.events.BROADCAST('Saved successfully', 'success'),
-                  {
-                    to: (ctx) => {
-                      return ctx.notifRef!;
-                    },
-                  },
-                ),
-              ],
-            },
-            onError: {
-              target: 'no_source',
-              actions: send(
-                notifModel.events.BROADCAST(
-                  'An error occurred when saving.',
-                  'error',
-                ),
-                {
-                  to: (ctx) => {
-                    return ctx.notifRef!;
-                  },
+          initial: 'showingNameModal',
+          states: {
+            showingNameModal: {
+              on: {
+                CHOOSE_NAME: {
+                  target: 'creating',
+                  actions: assign((context, event) => {
+                    return {
+                      desiredName: event.name,
+                    };
+                  }),
                 },
-              ),
-            },
-          },
-        },
-        forking: {
-          tags: ['forking'],
-          id: 'forking',
-          invoke: {
-            src: 'createSourceFile',
-            onDone: {
-              target: 'with_source.source_loaded.user_owns_this_source',
-              actions: [
-                'assignCreateSourceFileToContext',
-                'updateURLWithMachineID',
-                send(
-                  notifModel.events.BROADCAST('Forked successfully', 'success'),
+                CLOSE_NAME_CHOOSER_MODAL: [
                   {
-                    to: (ctx) => {
-                      return ctx.notifRef!;
-                    },
+                    target: '#with_source.source_loaded',
+                    cond: (ctx) => Boolean(ctx.sourceID),
                   },
-                ),
-              ],
+                  { target: '#no_source' },
+                ],
+              },
             },
-            onError: {
-              target: 'with_source',
-              actions: send(
-                notifModel.events.BROADCAST(
-                  'An error occurred when forking',
-                  'error',
-                ),
-                {
-                  to: (ctx) => {
-                    return ctx.notifRef!;
-                  },
+
+            creating: {
+              exit: [
+                /**
+                 * Reset desired name when it's no longer required
+                 */
+                assign((context, event) => {
+                  return {
+                    desiredName: null,
+                  };
+                }),
+              ],
+              tags: ['persisting'],
+              invoke: {
+                src: 'createSourceFile',
+                onDone: {
+                  target: '#with_source.source_loaded.user_owns_this_source',
+                  actions: [
+                    'assignCreateSourceFileToContext',
+                    'updateURLWithMachineID',
+                    send(
+                      notifModel.events.BROADCAST(
+                        'New file saved successfully!',
+                        'success',
+                      ),
+                      {
+                        to: (ctx) => {
+                          return ctx.notifRef!;
+                        },
+                      },
+                    ),
+                  ],
                 },
-              ),
+                onError: {
+                  target: '#no_source',
+                  actions: send(
+                    notifModel.events.BROADCAST(
+                      'An error occurred when saving.',
+                      'error',
+                    ),
+                    {
+                      to: (ctx) => {
+                        return ctx.notifRef!;
+                      },
+                    },
+                  ),
+                },
+              },
             },
           },
         },
@@ -454,11 +466,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
       },
       services: {
         createSourceFile: async (ctx, e) => {
-          if (e.type !== 'SAVE' && e.type !== 'CREATE_NEW') return;
           return gQuery(
             CreateSourceFileDocument,
             {
-              text: e.rawSource,
+              text: ctx.sourceRawContent,
+              name: ctx.desiredName || '',
             },
             auth.session()?.access_token!,
           ).then((res) => res.data);

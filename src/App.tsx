@@ -21,6 +21,7 @@ import { EditorPanel, SourceStatus } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
 import './Graph';
 import { Login } from './Login';
+import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { ResizableBox } from './ResizableBox';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
@@ -103,6 +104,7 @@ function App() {
           <ChakraProvider theme={theme}>
             <ResizableBox gridArea="tabs">
               <Login />
+              <MachineNameChooserModal />
               <Tabs
                 bg="gray.800"
                 display="grid"

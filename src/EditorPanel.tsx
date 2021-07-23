@@ -221,9 +221,9 @@ export const EditorPanel: React.FC<{
         {sourceStatus === 'user-owns-source' && (
           <Button
             disabled={
-              sourceState.hasTag('forking') || current.matches('compiling')
+              sourceState.hasTag('persisting') || current.matches('compiling')
             }
-            isLoading={sourceState.hasTag('forking')}
+            isLoading={sourceState.hasTag('persisting')}
             onClick={() => {
               onCreateNew(current.context.code);
             }}
