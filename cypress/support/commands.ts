@@ -2,6 +2,7 @@
 
 import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
+import 'cypress-real-events/support';
 
 // ***********************************************
 // This example commands.js shows you how to
