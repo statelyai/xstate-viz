@@ -3,20 +3,9 @@
 import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
+import { Mutation, Query } from '../../src/graphql/schemaTypes.generated';
 
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-
-Cypress.Commands.add('login', () => {
+const login = () => {
   cy.setLocalStorage(
     'supabase.auth.token',
     JSON.stringify({
@@ -32,12 +21,44 @@ Cypress.Commands.add('login', () => {
       },
     }),
   );
-});
+};
 
-Cypress.Commands.add('interceptGraphQL', (data) => {
+const interceptGraphQL = (data: DeepPartial<Mutation & Query>) => {
   cy.intercept('https://stately-registry-dev.vercel.app/api/graphql', {
     body: {
       data,
     },
   });
-});
+};
+
+type DeepPartial<T> = T extends Function
+  ? T
+  : T extends Array<infer U>
+  ? _DeepPartialArray<U>
+  : T extends object
+  ? _DeepPartialObject<T>
+  : T | undefined;
+
+interface _DeepPartialArray<T> extends Array<DeepPartial<T>> {}
+
+type _DeepPartialObject<T> = { [P in keyof T]?: DeepPartial<T[P]> };
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      /**
+       * Log in to the app
+       */
+      login: typeof login;
+
+      /**
+       * Allows the tester to mock the GraphQL API to return whatever
+       * values they like
+       */
+      interceptGraphQL: typeof interceptGraphQL;
+    }
+  }
+}
+
+Cypress.Commands.add('login', login);
+Cypress.Commands.add('interceptGraphQL', interceptGraphQL);

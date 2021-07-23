@@ -16,8 +16,7 @@ describe('When the user is logged in', () => {
         text: `import { createMachine } from 'xstate'; createMachine({});`,
       },
     });
-    // TODO - configure this to use baseUrl
-    cy.visit('http://localhost:3000?id=source-file-id');
+    cy.visit('/?id=source-file-id');
     cy.contains('Source File Name', {
       timeout: 6000,
     });
