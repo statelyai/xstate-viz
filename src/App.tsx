@@ -8,14 +8,14 @@ import {
   Tabs,
   Text,
 } from '@chakra-ui/react';
-import { useActor, useInterpret, useSelector } from '@xstate/react';
+import { useInterpret, useSelector } from '@xstate/react';
 import { useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
+import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
 import './base.scss';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
-import { AuthProvider } from './authContext';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel, SourceStatus } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
@@ -24,6 +24,7 @@ import { Login } from './Login';
 import { ResizableBox } from './ResizableBox';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
+import { useSourceState } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
@@ -49,12 +50,8 @@ function App() {
     authService,
     (state) => state.context.createdMachine,
   );
-  const sourceService = useSelector(
-    authService,
-    (state) => state.context.sourceRef,
-  );
 
-  const [sourceState] = useActor(sourceService!);
+  const [sourceState, sendToSourceService] = useSourceState(authService);
 
   const sourceID =
     sourceState.context.sourceProvider === 'registry'
@@ -65,7 +62,8 @@ function App() {
 
   if (!sourceState.matches('no_source')) {
     if (
-      sourceState.context.loggedInUserId === sourceState.context.sourceOwnerId
+      sourceState.context.loggedInUserId ===
+      sourceState.context.sourceRegistryData?.owner?.id
     ) {
       sourceStatus = 'user-owns-source';
     } else {
@@ -79,28 +77,29 @@ function App() {
 
   return (
     <SimulationProvider value={simService}>
-      <Box
-        data-testid="app"
-        data-viz-theme="dark"
-        as="main"
-        display="grid"
-        gridTemplateColumns="1fr auto"
-        gridTemplateAreas="'canvas tabs'"
-      >
-        {digraph ? (
-          <CanvasProvider value={canvasService}>
-            <CanvasPanel digraph={digraph} />
-          </CanvasProvider>
-        ) : (
-          <Box display="flex" justifyContent="center" alignItems="center">
-            <Text textAlign="center">
-              No machines to display yet...
-              <br />
-              Create one!
-            </Text>
-          </Box>
-        )}
-        <AuthProvider value={authService}>
+      <AuthProvider value={authService}>
+        <Box
+          data-testid="app"
+          data-viz-theme="dark"
+          as="main"
+          display="grid"
+          gridTemplateColumns="1fr auto"
+          gridTemplateAreas="'canvas tabs'"
+        >
+          {digraph ? (
+            <CanvasProvider value={canvasService}>
+              <CanvasPanel digraph={digraph} />
+            </CanvasProvider>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center">
+              <Text textAlign="center">
+                No machines to display yet...
+                <br />
+                Create one!
+              </Text>
+            </Box>
+          )}
+
           <ChakraProvider theme={theme}>
             <ResizableBox gridArea="tabs">
               <Login />
@@ -138,7 +137,7 @@ function App() {
                           initialMachineCode
                         }
                         onChangedCodeValue={(code) => {
-                          sourceService?.send({
+                          sendToSourceService({
                             type: 'CODE_UPDATED',
                             code,
                             sourceID: sourceState.context.sourceID,
@@ -146,13 +145,13 @@ function App() {
                         }}
                         sourceStatus={sourceStatus}
                         onSave={(code: string) => {
-                          sourceService?.send({
+                          sendToSourceService({
                             type: 'SAVE',
                             rawSource: code,
                           });
                         }}
                         onCreateNew={(code) => {
-                          sourceService?.send({
+                          sendToSourceService({
                             type: 'CREATE_NEW',
                             rawSource: code,
                           });
@@ -179,8 +178,8 @@ function App() {
               </Tabs>
             </ResizableBox>
           </ChakraProvider>
-        </AuthProvider>
-      </Box>
+        </Box>
+      </AuthProvider>
     </SimulationProvider>
   );
 }

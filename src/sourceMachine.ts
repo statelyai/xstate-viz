@@ -1,8 +1,8 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
+import { useActor, useSelector } from '@xstate/react';
 import {
   ActorRefFrom,
   assign,
-  ContextFrom,
   createMachine,
   DoneInvokeEvent,
   forwardTo,
@@ -11,6 +11,7 @@ import {
   spawn,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { authMachine } from './authMachine';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
 import {
@@ -21,6 +22,7 @@ import {
   GetSourceFileDocument,
   GetSourceFileQuery,
 } from './graphql/GetSourceFile.generated';
+import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
 import {
   UpdateSourceFileDocument,
   UpdateSourceFileMutation,
@@ -34,10 +36,9 @@ type SourceProvider = 'gist' | 'registry';
 export const sourceModel = createModel(
   {
     sourceID: null as string | null,
-    sourceUpdatedAt: null as string | null,
     sourceProvider: null as SourceProvider | null,
     sourceRawContent: null as string | null,
-    sourceOwnerId: null as string | null,
+    sourceRegistryData: null as null | SourceFileFragment,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     loggedInUserId: null! as string | null,
   },
@@ -130,8 +131,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       return {
                         sourceID: event.data.getSourceFile?.id,
                         sourceRawContent: event.data.getSourceFile?.text,
-                        sourceUpdatedAt: event.data.getSourceFile?.updatedAt,
-                        sourceOwnerId: event.data.getSourceFile?.owner?.id,
+                        sourceRegistryData: event.data.getSourceFile,
                       };
                     }),
                   },
@@ -176,7 +176,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                   always: [
                     {
                       cond: (ctx) => {
-                        const ownerId = ctx.sourceOwnerId;
+                        const ownerId = ctx.sourceRegistryData?.owner?.id;
 
                         if (!ownerId || !ctx.loggedInUserId) return false;
 
@@ -372,7 +372,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                     return {
                       sourceID: event.data.updateSourceFile.id,
                       sourceProvider: 'registry',
-                      sourceUpdatedAt: event.data.updateSourceFile.updatedAt,
+                      sourceRegistryData: event.data.updateSourceFile,
                     };
                   },
                 ),
@@ -411,8 +411,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           return {
             sourceID: event.data.createSourceFile.id,
             sourceProvider: 'registry',
-            sourceUpdatedAt: event.data.createSourceFile.updatedAt,
-            sourceOwnerId: event.data.createSourceFile.ownerId,
+            sourceRegistryData: event.data.createSourceFile,
           };
         }),
         updateURLWithMachineID: (ctx) => {
@@ -426,7 +425,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
             context.sourceID,
-            context.sourceUpdatedAt,
+            context.sourceRegistryData?.updatedAt,
           );
 
           if (!result) {
@@ -452,17 +451,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           }
           return {};
         }),
-        saveSourceContent: assign(
-          (
-            ctx: ContextFrom<typeof sourceModel>,
-            e: DoneInvokeEvent<{ text: string; updatedAt?: string }>,
-          ) => {
-            return {
-              sourceRawContent: e.data.text,
-              sourceUpdatedAt: e.data.updatedAt || null,
-            };
-          },
-        ) as any,
       },
       services: {
         createSourceFile: async (ctx, e) => {
@@ -527,4 +515,15 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
       },
     },
   );
+};
+
+export const useSourceState = (
+  authService: ActorRefFrom<typeof authMachine>,
+) => {
+  const sourceService = useSelector(
+    authService,
+    (state) => state.context.sourceRef,
+  );
+
+  return useActor(sourceService!);
 };
