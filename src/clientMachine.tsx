@@ -4,12 +4,22 @@ import {
   Session,
   SupabaseClient,
 } from '@supabase/supabase-js';
-import { ActorRefFrom, assign, MachineOptions } from 'xstate';
-import { spawn } from 'xstate';
-import { send } from 'xstate';
-import { createMachine } from 'xstate';
-import { createModel, ModelEventsFrom } from 'xstate/lib/model';
-import { notifMachine } from './notificationMachine';
+import {
+  ActorRefFrom,
+  assign,
+  createMachine,
+  EventFrom,
+  forwardTo,
+  MachineOptions,
+  send,
+  spawn,
+} from 'xstate';
+import { createModel } from 'xstate/lib/model';
+import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
+import { confirmBeforeLeavingService } from './confirmLeavingService';
+import { CreateSourceFileDocument } from './graphql/CreateSourceFile.generated';
+import { UpdateSourceFileDocument } from './graphql/UpdateSourceFile.generated';
+import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
 const clientModel = createModel(
@@ -33,6 +43,10 @@ const clientModel = createModel(
         id,
         rawSource,
       }),
+      CODE_UPDATED: (code: string, sourceID: string | null) => ({
+        code,
+        sourceID,
+      }),
     },
   },
 );
@@ -40,7 +54,7 @@ const clientModel = createModel(
 const clientOptions: Partial<
   MachineOptions<
     typeof clientModel['initialContext'],
-    ModelEventsFrom<typeof clientModel>
+    EventFrom<typeof clientModel>
   >
 > = {
   actions: {
@@ -55,20 +69,26 @@ const clientOptions: Partial<
     },
   },
   services: {
-    saveMachines: (ctx, e: any) =>
-      gQuery(
-        `mutation {createSourceFile(text: ${JSON.stringify(
-          e.rawSource,
-        )}) {id}}`,
-        ctx.client.auth.session()?.access_token!,
-      ).then((data) => data.data.createSourceFile),
-    updateMachines: (ctx, e: any) => {
+    saveMachines: async (ctx, e) => {
+      if (e.type !== 'SAVE') return;
       return gQuery(
-        `mutation {updateSourceFile(id: ${JSON.stringify(
-          e.id,
-        )}, text: ${JSON.stringify(e.rawSource)}) {id}}`,
+        CreateSourceFileDocument,
+        {
+          text: e.rawSource,
+        },
         ctx.client.auth.session()?.access_token!,
-      ).then((data) => data.data.updateSourceFile);
+      ).then((data) => data.data?.createSourceFile);
+    },
+    updateMachines: async (ctx, e) => {
+      if (e.type !== 'UPDATE') return;
+      return gQuery(
+        UpdateSourceFileDocument,
+        {
+          id: e.id,
+          text: e.rawSource,
+        },
+        ctx.client.auth.session()?.access_token!,
+      ).then((data) => data.data?.updateSourceFile);
     },
     checkUserSession: (ctx) =>
       new Promise((resolve, reject) => {
@@ -137,6 +157,13 @@ export const clientMachine = createMachine<typeof clientModel>(
             target: '.choosing_provider',
           },
           CHOOSE_PROVIDER: '.choosing_provider',
+          CODE_UPDATED: {
+            actions: forwardTo('codeCacheMachine'),
+          },
+        },
+        invoke: {
+          src: cacheCodeChangesMachine,
+          id: 'codeCacheMachine',
         },
         initial: 'idle',
         states: {
@@ -157,6 +184,23 @@ export const clientMachine = createMachine<typeof clientModel>(
           SIGN_OUT: 'signing_out',
           SAVE: 'saving',
           UPDATE: 'updating',
+          CODE_UPDATED: {
+            target: '.hasCodeChanges',
+            actions: forwardTo('codeCacheMachine'),
+          },
+        },
+        invoke: {
+          src: cacheCodeChangesMachine,
+          id: 'codeCacheMachine',
+        },
+        initial: 'noCodeChanges',
+        states: {
+          noCodeChanges: {},
+          hasCodeChanges: {
+            invoke: {
+              src: confirmBeforeLeavingService,
+            },
+          },
         },
       },
       signing_in: {
@@ -208,7 +252,13 @@ export const clientMachine = createMachine<typeof clientModel>(
           src: 'saveMachines',
           onDone: {
             target: 'signed_in',
-            actions: ['saveCreatedMachine', 'updateURLWithMachineID'],
+            actions: [
+              'saveCreatedMachine',
+              'updateURLWithMachineID',
+              send(notifModel.events.BROADCAST('Machine saved!', 'success'), {
+                to: (ctx) => ctx.notifRef,
+              }),
+            ],
           },
           onError: {
             target: 'signed_in',
@@ -231,6 +281,11 @@ export const clientMachine = createMachine<typeof clientModel>(
           src: 'updateMachines',
           onDone: {
             target: 'signed_in',
+            actions: [
+              send(notifModel.events.BROADCAST('Machine saved!', 'success'), {
+                to: (ctx) => ctx.notifRef,
+              }),
+            ],
           },
           onError: {
             target: 'signed_in',

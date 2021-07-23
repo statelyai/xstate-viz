@@ -1,3 +1,4 @@
+import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import * as React from 'react';
 import type {
   ActionObject,
@@ -5,6 +6,8 @@ import type {
   StateNode,
   TransitionDefinition,
 } from 'xstate';
+import { AnyState, AnyStateMachine } from './types';
+import { print } from 'graphql';
 
 export function createRequiredContext<T>(displayName: string) {
   const context = React.createContext<T | null>(null);
@@ -103,7 +106,11 @@ export const updateQueryParamsWithoutReload = (
   window.history.pushState({ path: newURL.href }, '', newURL.href);
 };
 
-export const gQuery = (query: string, accessToken?: string) =>
+export const gQuery = <Data, Variables>(
+  query: TypedDocumentNode<Data, Variables>,
+  variables: Variables,
+  accessToken?: string,
+): Promise<{ data?: Data }> =>
   fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
     method: 'POST',
     headers: {
@@ -111,6 +118,15 @@ export const gQuery = (query: string, accessToken?: string) =>
       ...(accessToken && { authorization: 'Bearer ' + accessToken }),
     },
     body: JSON.stringify({
-      query,
+      query: print(query),
+      variables,
     }),
   }).then((resp) => resp.json());
+
+export function willChange(
+  machine: AnyStateMachine,
+  state: AnyState,
+  event: AnyEventObject,
+): boolean {
+  return !!machine.transition(state, event).changed;
+}

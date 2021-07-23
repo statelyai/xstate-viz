@@ -11,12 +11,13 @@ import {
 } from '@chakra-ui/react';
 import { useSimulation } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
+import { vizReactJsonTheme } from './vizReactJsonTheme';
 
 const JSONView: React.FC<{ src: object; name: string }> = ({ src, name }) => (
   <ReactJson
     src={src}
     name={name}
-    theme="monokai"
+    theme={vizReactJsonTheme}
     collapsed={1}
     onEdit={false}
     displayDataTypes={false}

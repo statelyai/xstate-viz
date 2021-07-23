@@ -1,9 +1,7 @@
 import { Button, HStack, Box, Tooltip } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom, send } from 'xstate';
-import { assign } from 'xstate';
-import { createMachine, send as sendAction, spawn } from 'xstate';
+import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useClient } from './clientContext';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
@@ -96,10 +94,13 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
       },
     ],
     EDITOR_CHANGED_VALUE: {
-      actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
+      actions: [
+        editorPanelModel.assign({ code: (_, e) => e.code }),
+        'onChangedCodeValue',
+      ],
     },
     EDITOR_ENCOUNTERED_ERROR: {
-      actions: sendAction(
+      actions: send(
         (_, e) => ({ type: 'BROADCAST', status: 'error', message: e.message }),
         {
           to: (ctx) => ctx.notifRef,
@@ -124,9 +125,17 @@ export const EditorPanel: React.FC<{
   defaultValue: string;
   isUpdateMode: boolean;
   immediateUpdate: boolean;
-  onPersist: (code: string) => void;
+  onSave: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
-}> = ({ defaultValue, isUpdateMode, immediateUpdate, onPersist, onChange }) => {
+  onChangedCodeValue: (code: string) => void;
+}> = ({
+  defaultValue,
+  isUpdateMode,
+  immediateUpdate,
+  onSave,
+  onChange,
+  onChangedCodeValue,
+}) => {
   const clientService = useClient();
   const clientState = useSelector(clientService, (state) => state);
   const persistText = getPersistText(
@@ -145,6 +154,9 @@ export const EditorPanel: React.FC<{
       actions: {
         onChange: (ctx) => {
           onChange(ctx.machines!);
+        },
+        onChangedCodeValue: (ctx) => {
+          onChangedCodeValue(ctx.code);
         },
       },
     },
@@ -168,7 +180,7 @@ export const EditorPanel: React.FC<{
           });
         }}
         onPersist={() => {
-          onPersist(current.context.code);
+          onSave(current.context.code);
         }}
       />
       <HStack>
@@ -205,7 +217,7 @@ export const EditorPanel: React.FC<{
             loadingText={persistText}
             disabled={isPersistPending || isVisualizing}
             onClick={() => {
-              onPersist(current.context.code);
+              onSave(current.context.code);
             }}
             title="Persist in the Registry"
           >

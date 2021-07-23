@@ -1,5 +1,15 @@
-import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
+import {
+  ActorRefFrom,
+  assign,
+  ContextFrom,
+  createMachine,
+  DoneInvokeEvent,
+  send,
+  spawn,
+} from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { GetSourceFileDocument } from './graphql/GetSourceFile.generated';
+import { localCache } from './localCache';
 import { notifMachine } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 
@@ -7,6 +17,7 @@ type SourceProvider = 'gist' | 'registry';
 
 const sourceModel = createModel({
   sourceID: null as string | null,
+  sourceUpdatedAt: null as string | null,
   sourceProvider: null as SourceProvider | null,
   sourceRawContent: null as string | null,
   notifRef: null! as ActorRefFrom<typeof notifMachine>,
@@ -47,17 +58,17 @@ export const sourceMachine = createMachine<typeof sourceModel>(
             },
           },
           source_loaded: {
-            entry: [
-              'saveSourceContent',
-              send(
-                (ctx) => ({
-                  type: 'BROADCAST',
-                  status: 'success',
-                  message: `Source loaded successfully from ${ctx.sourceProvider}`,
-                }),
-                { to: (ctx) => ctx.notifRef },
-              ),
-            ],
+            entry: ['saveSourceContent'],
+            initial: 'checking_if_in_local_storage',
+            states: {
+              checking_if_in_local_storage: {
+                always: {
+                  target: 'check_complete',
+                  actions: 'getLocalStorageCachedSource',
+                },
+              },
+              check_complete: {},
+            },
           },
           source_error: {
             entry: [
@@ -82,12 +93,34 @@ export const sourceMachine = createMachine<typeof sourceModel>(
         },
       },
       no_source: {
-        type: 'final',
+        initial: 'checking_if_in_local_storage',
+        states: {
+          checking_if_in_local_storage: {
+            always: {
+              target: 'check_complete',
+              actions: 'getLocalStorageCachedSource',
+            },
+          },
+          check_complete: {},
+        },
       },
     },
   },
   {
     actions: {
+      getLocalStorageCachedSource: assign((context, event) => {
+        const result = localCache.getSourceRawContent(
+          context.sourceID,
+          context.sourceUpdatedAt,
+        );
+
+        if (!result) {
+          return {};
+        }
+        return {
+          sourceRawContent: result,
+        };
+      }),
       parseQueries: assign((ctx) => {
         const queries = new URLSearchParams(window.location.search);
         if (queries.get('gist')) {
@@ -104,15 +137,17 @@ export const sourceMachine = createMachine<typeof sourceModel>(
         }
         return {};
       }),
-      saveSourceContent: assign({
-        sourceRawContent: (_, e) => {
-          if (!('data' in e)) {
-            throw new Error('`data` not available on the event');
-          }
-
-          return (e as any).data;
+      saveSourceContent: assign(
+        (
+          ctx: ContextFrom<typeof sourceModel>,
+          e: DoneInvokeEvent<{ text: string; updatedAt?: string }>,
+        ) => {
+          return {
+            sourceRawContent: e.data.text,
+            sourceUpdatedAt: e.data.updatedAt || null,
+          };
         },
-      }),
+      ) as any,
     },
     guards: {
       isSourceIDAvailable: (ctx) => !!ctx.sourceID,
@@ -130,18 +165,20 @@ export const sourceMachine = createMachine<typeof sourceModel>(
                 return resp.json();
               })
               .then((data) => {
-                return fetch(data.files['machine.js'].raw_url).then((r) =>
-                  r.text(),
+                return fetch(data.files['machine.js'].raw_url).then(
+                  async (r) => {
+                    return {
+                      text: await r.text(),
+                    };
+                  },
                 );
               });
           case 'registry':
-            return gQuery(
-              `query {getSourceFile(id: ${JSON.stringify(
-                ctx.sourceID,
-              )}) {id,text}}`,
-            ).then((data) => {
-              if (data.data.getSourceFile) {
-                return data.data.getSourceFile.text;
+            return gQuery(GetSourceFileDocument, {
+              id: ctx.sourceID,
+            }).then((res) => {
+              if (res.data?.getSourceFile) {
+                return res.data.getSourceFile;
               }
               return Promise.reject(
                 new NotFoundError('Source not found in Registry'),

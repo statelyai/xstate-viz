@@ -14,7 +14,6 @@ import {
   TabPanel,
   Box,
   Text,
-  IconButton,
 } from '@chakra-ui/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './theme';
@@ -29,6 +28,8 @@ import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { ResizableBox } from './ResizableBox';
 import { simulationMachine } from './simulationMachine';
+import { useInterpretCanvas } from './useInterpretCanvas';
+import { CanvasProvider } from './CanvasContext';
 import { SettingsIcon } from '@chakra-ui/icons';
 import { SettingsPanel } from './SettingsPanel';
 
@@ -60,14 +61,15 @@ function App() {
     sourceState.context.sourceProvider === 'registry'
       ? sourceState.context.sourceID
       : createdMachine?.id;
-  const isSourceLoaded = useMemo(
-    () => sourceState.matches({ with_source: 'source_loaded' }),
-    [sourceState],
-  );
+
+  const canvasService = useInterpretCanvas({
+    sourceID,
+  });
 
   return (
     <SimulationProvider value={simService}>
       <Box
+        data-testid="app"
         data-viz-theme="dark"
         as="main"
         display="grid"
@@ -75,7 +77,9 @@ function App() {
         gridTemplateAreas="'canvas tabs'"
       >
         {digraph ? (
-          <CanvasPanel digraph={digraph} />
+          <CanvasProvider value={canvasService}>
+            <CanvasPanel digraph={digraph} />
+          </CanvasProvider>
         ) : (
           <Box display="flex" justifyContent="center" alignItems="center">
             <Text textAlign="center">
@@ -118,14 +122,22 @@ function App() {
                       with_source: 'loading_content',
                     }) && (
                       <EditorPanel
-                        immediateUpdate={isSourceLoaded}
+                        immediateUpdate={Boolean(
+                          sourceState.context.sourceRawContent,
+                        )}
                         defaultValue={
-                          isSourceLoaded
-                            ? (sourceState.context.sourceRawContent as string)
-                            : initialMachineCode
+                          sourceState.context.sourceRawContent ||
+                          initialMachineCode
                         }
+                        onChangedCodeValue={(code) => {
+                          clientService.send({
+                            type: 'CODE_UPDATED',
+                            code,
+                            sourceID: sourceState.context.sourceID,
+                          });
+                        }}
                         isUpdateMode={isUpdateMode}
-                        onPersist={(code: string) => {
+                        onSave={(code: string) => {
                           if (isUpdateMode) {
                             clientService.send({
                               type: 'UPDATE',

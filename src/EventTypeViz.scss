@@ -14,7 +14,8 @@
   &[data-viz-keyword='error'] {
     --viz-eventType-dot-color: #e76f4b;
   }
-  &[data-viz-keyword='always'] {
+  &[data-viz-keyword='always'],
+  &[data-viz-keyword='after'] {
     --viz-eventType-dot-color: #fff;
   }
 

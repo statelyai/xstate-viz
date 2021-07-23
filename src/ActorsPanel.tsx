@@ -101,7 +101,7 @@ export const ActorsPanel: React.FC = () => {
                   simActor.send({ type: 'SERVICE.FOCUS', sessionId });
                 }}
               >
-                {sessionId}
+                {serviceData?.machine.id ?? '(machine)'}
               </Link>{' '}
               ({sessionId})
             </Text>
