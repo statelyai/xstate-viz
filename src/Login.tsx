@@ -12,7 +12,6 @@ import {
   MenuItem,
   Box,
   Text,
-  Image,
   ModalFooter,
   Avatar,
 } from '@chakra-ui/react';

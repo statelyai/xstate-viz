@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useInterpret, useMachine, useSelector } from '@xstate/react';
 import './Graph';
 import { toDirectedGraph } from './directedGraph';
@@ -28,10 +28,9 @@ import { sourceMachine } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { ResizableBox } from './ResizableBox';
 import { simulationMachine } from './simulationMachine';
-import { canvasMachine } from './canvasMachine';
-import { localCache } from './localCache';
 import { useInterpretCanvas } from './useInterpretCanvas';
 import { CanvasProvider } from './CanvasContext';
+import { Footer } from './Footer';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -74,7 +73,9 @@ function App() {
         as="main"
         display="grid"
         gridTemplateColumns="1fr auto"
-        gridTemplateAreas="'canvas tabs'"
+        gridTemplateRows="1fr auto"
+        gridTemplateAreas="'canvas panels' 'footer footer'"
+        height="100vh"
       >
         {digraph ? (
           <CanvasProvider value={canvasService}>
@@ -91,13 +92,13 @@ function App() {
         )}
         <ClientProvider value={clientService}>
           <ChakraProvider theme={theme}>
-            <ResizableBox gridArea="tabs">
+            <ResizableBox gridArea="panels">
               <Login />
               <Tabs
                 bg="gray.800"
                 display="grid"
                 gridTemplateRows="auto 1fr"
-                height="100vh"
+                height="100%"
               >
                 <TabList>
                   <Tab>Code</Tab>
@@ -169,6 +170,7 @@ function App() {
                 </TabPanels>
               </Tabs>
             </ResizableBox>
+            <Footer />
           </ChakraProvider>
         </ClientProvider>
       </Box>
