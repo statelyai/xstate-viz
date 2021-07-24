@@ -30,7 +30,7 @@ import { ResizableBox } from './ResizableBox';
 import { simulationMachine } from './simulationMachine';
 import { useInterpretCanvas } from './useInterpretCanvas';
 import { CanvasProvider } from './CanvasContext';
-import { SimMode } from './types';
+import { Footer } from './Footer';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -53,10 +53,6 @@ function App() {
     (state) => state.context.createdMachine,
   );
   const [sourceState] = useMachine(sourceMachine);
-
-  const mode: SimMode = useSelector(simService, (state) =>
-    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
-  );
 
   const isUpdateMode =
     sourceState.context.sourceProvider === 'registry' || !!createdMachine;
@@ -174,15 +170,7 @@ function App() {
                 </TabPanels>
               </Tabs>
             </ResizableBox>
-            <Box
-              gridArea="footer"
-              background={mode === 'inspecting' ? 'orange.500' : 'black'}
-              padding="2"
-            >
-              <Text fontWeight="bold">
-                {mode === 'inspecting' ? 'Inspecting' : 'Viz'}
-              </Text>
-            </Box>
+            <Footer />
           </ChakraProvider>
         </ClientProvider>
       </Box>
