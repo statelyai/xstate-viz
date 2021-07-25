@@ -21,7 +21,6 @@ import { StatePanel } from './StatePanel';
 import { EventsPanel } from './EventsPanel';
 import { ActorsPanel } from './ActorsPanel';
 import { Login } from './Login';
-
 import { clientMachine } from './clientMachine';
 import { ClientProvider } from './clientContext';
 import { sourceMachine } from './sourceMachine';
@@ -32,12 +31,15 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 import { CanvasProvider } from './CanvasContext';
 import { SettingsIcon } from '@chakra-ui/icons';
 import { SettingsPanel } from './SettingsPanel';
+import { paletteMachine } from './paletteMachine';
+import { PaletteProvider } from './PaletteContext';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
 `.trim();
 
 function App() {
+  const paletteService = useInterpret(paletteMachine);
   const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
@@ -67,118 +69,120 @@ function App() {
   });
 
   return (
-    <SimulationProvider value={simService}>
-      <Box
-        data-testid="app"
-        data-viz-theme="dark"
-        as="main"
-        display="grid"
-        gridTemplateColumns="1fr auto"
-        gridTemplateAreas="'canvas tabs'"
-      >
-        {digraph ? (
-          <CanvasProvider value={canvasService}>
-            <CanvasPanel digraph={digraph} />
-          </CanvasProvider>
-        ) : (
-          <Box display="flex" justifyContent="center" alignItems="center">
-            <Text textAlign="center">
-              No machines to display yet...
-              <br />
-              Create one!
-            </Text>
-          </Box>
-        )}
-        <ClientProvider value={clientService}>
-          <ChakraProvider theme={theme}>
-            <ResizableBox gridArea="tabs">
-              <Tabs
-                bg="gray.800"
-                display="grid"
-                gridTemplateRows="auto 1fr"
-                height="100vh"
-              >
-                <TabList>
-                  <Tab>Code</Tab>
-                  <Tab>State</Tab>
-                  <Tab>Events</Tab>
-                  <Tab>Actors</Tab>
-                  <Tab marginLeft="auto" marginRight="2">
-                    <SettingsIcon />
-                  </Tab>
-                  <Login />
-                </TabList>
+    <PaletteProvider value={paletteService}>
+      <SimulationProvider value={simService}>
+        <Box
+          data-testid="app"
+          data-viz-theme="dark"
+          as="main"
+          display="grid"
+          gridTemplateColumns="1fr auto"
+          gridTemplateAreas="'canvas tabs'"
+        >
+          {digraph ? (
+            <CanvasProvider value={canvasService}>
+              <CanvasPanel digraph={digraph} />
+            </CanvasProvider>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center">
+              <Text textAlign="center">
+                No machines to display yet...
+                <br />
+                Create one!
+              </Text>
+            </Box>
+          )}
+          <ClientProvider value={clientService}>
+            <ChakraProvider theme={theme}>
+              <ResizableBox gridArea="tabs">
+                <Tabs
+                  bg="gray.800"
+                  display="grid"
+                  gridTemplateRows="auto 1fr"
+                  height="100vh"
+                >
+                  <TabList>
+                    <Tab>Code</Tab>
+                    <Tab>State</Tab>
+                    <Tab>Events</Tab>
+                    <Tab>Actors</Tab>
+                    <Tab marginLeft="auto" marginRight="2">
+                      <SettingsIcon />
+                    </Tab>
+                    <Login />
+                  </TabList>
 
-                <TabPanels minHeight={0}>
-                  <TabPanel padding={0} height="100%">
-                    {sourceState.matches({
-                      with_source: 'loading_content',
-                    }) && (
-                      <SpinnerWithText
-                        text={`Loading source from ${sourceState.context.sourceProvider}`}
-                      />
-                    )}
-                    {!sourceState.matches({
-                      with_source: 'loading_content',
-                    }) && (
-                      <EditorPanel
-                        immediateUpdate={Boolean(
-                          sourceState.context.sourceRawContent,
-                        )}
-                        defaultValue={
-                          sourceState.context.sourceRawContent ||
-                          initialMachineCode
-                        }
-                        onChangedCodeValue={(code) => {
-                          clientService.send({
-                            type: 'CODE_UPDATED',
-                            code,
-                            sourceID: sourceState.context.sourceID,
-                          });
-                        }}
-                        isUpdateMode={isUpdateMode}
-                        onSave={(code: string) => {
-                          if (isUpdateMode) {
-                            clientService.send({
-                              type: 'UPDATE',
-                              id: sourceID,
-                              rawSource: code,
-                            });
-                          } else {
-                            clientService.send({
-                              type: 'SAVE',
-                              rawSource: code,
-                            });
+                  <TabPanels minHeight={0}>
+                    <TabPanel padding={0} height="100%">
+                      {sourceState.matches({
+                        with_source: 'loading_content',
+                      }) && (
+                        <SpinnerWithText
+                          text={`Loading source from ${sourceState.context.sourceProvider}`}
+                        />
+                      )}
+                      {!sourceState.matches({
+                        with_source: 'loading_content',
+                      }) && (
+                        <EditorPanel
+                          immediateUpdate={Boolean(
+                            sourceState.context.sourceRawContent,
+                          )}
+                          defaultValue={
+                            sourceState.context.sourceRawContent ||
+                            initialMachineCode
                           }
-                        }}
-                        onChange={(machines) => {
-                          simService.send({
-                            type: 'MACHINES.REGISTER',
-                            machines,
-                          });
-                        }}
-                      />
-                    )}
-                  </TabPanel>
-                  <TabPanel>
-                    <StatePanel />
-                  </TabPanel>
-                  <TabPanel overflow="hidden" height="100%">
-                    <EventsPanel />
-                  </TabPanel>
-                  <TabPanel>
-                    <ActorsPanel />
-                  </TabPanel>
-                  <TabPanel height="100%">
-                    <SettingsPanel />
-                  </TabPanel>
-                </TabPanels>
-              </Tabs>
-            </ResizableBox>
-          </ChakraProvider>
-        </ClientProvider>
-      </Box>
-    </SimulationProvider>
+                          onChangedCodeValue={(code) => {
+                            clientService.send({
+                              type: 'CODE_UPDATED',
+                              code,
+                              sourceID: sourceState.context.sourceID,
+                            });
+                          }}
+                          isUpdateMode={isUpdateMode}
+                          onSave={(code: string) => {
+                            if (isUpdateMode) {
+                              clientService.send({
+                                type: 'UPDATE',
+                                id: sourceID,
+                                rawSource: code,
+                              });
+                            } else {
+                              clientService.send({
+                                type: 'SAVE',
+                                rawSource: code,
+                              });
+                            }
+                          }}
+                          onChange={(machines) => {
+                            simService.send({
+                              type: 'MACHINES.REGISTER',
+                              machines,
+                            });
+                          }}
+                        />
+                      )}
+                    </TabPanel>
+                    <TabPanel height="100%">
+                      <StatePanel />
+                    </TabPanel>
+                    <TabPanel overflow="hidden" height="100%">
+                      <EventsPanel />
+                    </TabPanel>
+                    <TabPanel height="100%">
+                      <ActorsPanel />
+                    </TabPanel>
+                    <TabPanel height="100%">
+                      <SettingsPanel />
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
+              </ResizableBox>
+            </ChakraProvider>
+          </ClientProvider>
+        </Box>
+      </SimulationProvider>
+    </PaletteProvider>
   );
 }
 

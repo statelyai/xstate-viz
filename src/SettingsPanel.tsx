@@ -7,7 +7,8 @@ import {
   Td,
   Heading,
   Box,
-  Code,
+  Kbd,
+  VStack,
 } from '@chakra-ui/react';
 
 export const SettingsPanel: React.FC = () => {
@@ -26,15 +27,28 @@ export const SettingsPanel: React.FC = () => {
         <Tbody>
           <Tr>
             <Td>
-              <Code colorScheme="blue">Ctrl/CMD + B</Code>
+              <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
             </Td>
             <Td>Saves or updates the code in Stately Registry</Td>
           </Tr>
           <Tr>
             <Td>
-              <Code colorScheme="blue">Ctrl/CMD + S</Code>
+              <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
             </Td>
             <Td>Visualizes the current editor code</Td>
+          </Tr>
+          <Tr>
+            <Td>
+              <VStack alignItems="flex-start">
+                <span>
+                  <Kbd>Ctrl/CMD</Kbd> + <Kbd>K</Kbd>
+                </span>
+                <span>
+                  <Kbd>Ctrl/CMD</Kbd> + <Kbd>?</Kbd>
+                </span>
+              </VStack>
+            </Td>
+            <Td>Show the Command palette</Td>
           </Tr>
         </Tbody>
       </Table>

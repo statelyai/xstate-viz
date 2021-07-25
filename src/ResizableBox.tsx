@@ -111,7 +111,7 @@ export const ResizableBox: React.FC<
 
   return (
     <Box
-      width={`min(90vw, calc(30rem + max(0px, ${widthDelta}px)))`}
+      width={`min(90vw, calc(35rem + max(0px, ${widthDelta}px)))`}
       {...props}
     >
       {children}

@@ -1,7 +1,7 @@
 import { Button, HStack, Box, Tooltip } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
-import React from 'react';
 import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
+import React from 'react';
 import { createModel } from 'xstate/lib/model';
 import { useClient } from './clientContext';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
@@ -9,6 +9,7 @@ import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine } from './types';
 import { Monaco } from '@monaco-editor/react';
+import { CommandPalette } from './CommandPalette';
 
 const editorPanelModel = createModel(
   {
@@ -35,7 +36,11 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   entry: [assign({ notifRef: () => spawn(notifMachine) })],
   initial: 'booting',
   states: {
-    booting: {},
+    booting: {
+      on: {
+        COMPILE: undefined,
+      },
+    },
     active: {},
     updating: {
       tags: ['visualizing'],
@@ -164,67 +169,77 @@ export const EditorPanel: React.FC<{
   const isVisualizing = current.hasTag('visualizing');
 
   return (
-    <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-      <EditorWithXStateImports
-        defaultValue={defaultValue}
-        readonly={current.matches('compiling')}
-        onMount={(_, monaco) => {
-          send({ type: 'EDITOR_READY', editorRef: monaco });
-        }}
-        onChange={(code) => {
-          send({ type: 'EDITOR_CHANGED_VALUE', code });
-        }}
-        onFormat={() => {
-          send({
-            type: 'COMPILE',
-          });
-        }}
-        onPersist={() => {
+    <>
+      <CommandPalette
+        onSave={() => {
           onSave(current.context.code);
         }}
+        onVisualize={() => {
+          send('COMPILE');
+        }}
       />
-      <HStack>
-        <Tooltip
-          bg="black"
-          color="white"
-          label="Ctrl/CMD + S"
-          aria-label="Ctrl/CMD + S"
-          closeDelay={500}
-        >
-          <Button
-            disabled={isVisualizing}
-            isLoading={isVisualizing}
-            loadingText="Visualize"
-            onClick={() => {
-              send({
-                type: 'COMPILE',
-              });
-            }}
-            title="Visualize"
+      <Box height="100%" display="grid" gridTemplateRows="1fr auto">
+        <EditorWithXStateImports
+          defaultValue={defaultValue}
+          readonly={current.matches('compiling')}
+          onMount={(_, monaco) => {
+            send({ type: 'EDITOR_READY', editorRef: monaco });
+          }}
+          onChange={(code) => {
+            send({ type: 'EDITOR_CHANGED_VALUE', code });
+          }}
+          onFormat={() => {
+            send({
+              type: 'COMPILE',
+            });
+          }}
+          onSave={() => {
+            onSave(current.context.code);
+          }}
+        />
+        <HStack>
+          <Tooltip
+            bg="black"
+            color="white"
+            label="Ctrl/CMD + S"
+            aria-label="Ctrl/CMD + S"
+            closeDelay={500}
           >
-            Visualize
-          </Button>
-        </Tooltip>
-        <Tooltip
-          bg="black"
-          color="white"
-          label="Ctrl/CMD + B"
-          aria-label="Ctrl/CMD + B"
-          closeDelay={500}
-        >
-          <Button
-            isLoading={isPersistPending}
-            loadingText={persistText}
-            disabled={isPersistPending || isVisualizing}
-            onClick={() => {
-              onSave(current.context.code);
-            }}
-            title="Persist in the Registry"
+            <Button
+              disabled={isVisualizing}
+              isLoading={isVisualizing}
+              loadingText="Visualize"
+              onClick={() => {
+                send({
+                  type: 'COMPILE',
+                });
+              }}
+              title="Visualize"
+            >
+              Visualize
+            </Button>
+          </Tooltip>
+          <Tooltip
+            bg="black"
+            color="white"
+            label="Ctrl/CMD + Enter"
+            aria-label="Ctrl/CMD + Enter"
+            closeDelay={500}
           >
-            {persistText}
-          </Button>
-        </Tooltip>
-      </HStack>
-    </Box>
+            <Button
+              isLoading={isPersistPending}
+              loadingText={persistText}
+              disabled={isPersistPending || isVisualizing}
+              onClick={() => {
+                onSave(current.context.code);
+              }}
+              title="Save/Update in the Registry"
+            >
+              {persistText}
+            </Button>
+          </Tooltip>
+        </HStack>
+      </Box>
+    </>
   );
 };

@@ -4,6 +4,7 @@ import { KeyCode, KeyMod } from 'monaco-editor';
 import { SpinnerWithText } from './SpinnerWithText';
 import { format } from 'prettier/standalone';
 import tsParser from 'prettier/parser-typescript';
+import { usePalette } from './PaletteContext';
 
 function prettify(code: string) {
   return format(code, {
@@ -13,16 +14,16 @@ function prettify(code: string) {
 }
 
 /**
- * CtrlCMD + S => format => update chart
+ * CtrlCMD + Enter => format => update chart
  * Click on update chart button => update chart
  * Click on save/update => save/update to registry
- * CtrlCMD + B => save/update to registry
+ * CtrlCMD + S => save/update to registry
  */
 
 interface EditorWithXStateImportsProps {
   onChange?: (text: string) => void;
   onMount?: OnMount;
-  onPersist?: () => void;
+  onSave?: () => void;
   onFormat?: () => void;
   onError?: (err: any) => void;
   readonly?: boolean;
@@ -32,6 +33,7 @@ interface EditorWithXStateImportsProps {
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
+  const paletteService = usePalette();
   return (
     <ClassNames>
       {({ css }) => (
@@ -79,10 +81,11 @@ export const EditorWithXStateImports = (
             );
 
             // Prettier to format
+            // Ctrl/CMD + Enter to visualize
             editor.addAction({
               id: 'format',
               label: 'Format',
-              keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_S],
+              keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
               run: (editor) => {
                 editor.getAction('editor.action.formatDocument').run();
               },
@@ -103,20 +106,34 @@ export const EditorWithXStateImports = (
                     console.error(err);
                     // props.onError?.('Formatting failed');
                   } finally {
-                    props.onFormat?.();
+                    setTimeout(() => {
+                      props.onFormat?.();
+                    }, 0);
                   }
                 },
               },
             );
 
-            // Ctrl/CMD + B to save/update to registry
+            // Ctrl/CMD + S to save/update to registry
             editor.addAction({
               id: 'backup',
               label: 'Backup',
-              keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_B],
+              keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_S],
               run: () => {
-                console.log('Backing up');
-                props.onPersist?.();
+                props.onSave?.();
+              },
+            });
+
+            // Command Palette
+            editor.addAction({
+              id: 'palette',
+              label: 'Palette',
+              keybindings: [
+                KeyMod.CtrlCmd | KeyCode.KEY_K,
+                KeyMod.Shift | KeyCode.US_SLASH,
+              ],
+              run: () => {
+                paletteService.send('SHOW_PALETTE');
               },
             });
 
