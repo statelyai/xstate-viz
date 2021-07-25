@@ -1,15 +1,16 @@
-import { Button, HStack, Box, Tooltip } from '@chakra-ui/react';
-import { useMachine, useSelector } from '@xstate/react';
-import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
+import { Button, HStack, Box, Text, Tooltip } from '@chakra-ui/react';
+import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
+import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useClient } from './clientContext';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import type { AnyStateMachine } from './types';
+import type { AnyStateMachine, SimMode } from './types';
 import { Monaco } from '@monaco-editor/react';
 import { CommandPalette } from './CommandPalette';
+import { useSimulation } from './SimulationContext';
 
 const editorPanelModel = createModel(
   {
@@ -141,8 +142,12 @@ export const EditorPanel: React.FC<{
   onChange,
   onChangedCodeValue,
 }) => {
+  const simService = useSimulation();
+  const simMode: SimMode = useSelector(simService, (state) =>
+    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
+  );
   const clientService = useClient();
-  const clientState = useSelector(clientService, (state) => state);
+  const [clientState] = useActor(clientService);
   const persistText = getPersistText(
     clientState.matches('signed_out'),
     isUpdateMode,
@@ -179,66 +184,70 @@ export const EditorPanel: React.FC<{
         }}
       />
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-        <EditorWithXStateImports
-          defaultValue={defaultValue}
-          readonly={current.matches('compiling')}
-          onMount={(_, monaco) => {
-            send({ type: 'EDITOR_READY', editorRef: monaco });
-          }}
-          onChange={(code) => {
-            send({ type: 'EDITOR_CHANGED_VALUE', code });
-          }}
-          onFormat={() => {
-            send({
-              type: 'COMPILE',
-            });
-          }}
-          onSave={() => {
-            onSave(current.context.code);
-          }}
-        />
-        <HStack>
-          <Tooltip
-            bg="black"
-            color="white"
-            label="Ctrl/CMD + S"
-            aria-label="Ctrl/CMD + S"
-            closeDelay={500}
-          >
-            <Button
-              disabled={isVisualizing}
-              isLoading={isVisualizing}
-              loadingText="Visualize"
-              onClick={() => {
-                send({
-                  type: 'COMPILE',
-                });
+        {simMode === 'visualizing' && (
+          <>
+            <EditorWithXStateImports
+              defaultValue={defaultValue}
+              readonly={current.matches('compiling')}
+              onMount={(_, monaco) => {
+                send({ type: 'EDITOR_READY', editorRef: monaco });
               }}
-              title="Visualize"
-            >
-              Visualize
-            </Button>
-          </Tooltip>
-          <Tooltip
-            bg="black"
-            color="white"
-            label="Ctrl/CMD + Enter"
-            aria-label="Ctrl/CMD + Enter"
-            closeDelay={500}
-          >
-            <Button
-              isLoading={isPersistPending}
-              loadingText={persistText}
-              disabled={isPersistPending || isVisualizing}
-              onClick={() => {
-                onSave(current.context.code);
+              onChange={(code) => {
+                send({ type: 'EDITOR_CHANGED_VALUE', code });
               }}
-              title="Save/Update in the Registry"
-            >
-              {persistText}
-            </Button>
-          </Tooltip>
-        </HStack>
+            />
+            <HStack padding="2">
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + Enter"
+                aria-label="Ctrl/CMD + Enter"
+                closeDelay={500}
+              >
+                <Button
+                  disabled={isVisualizing}
+                  isLoading={isVisualizing}
+                  loadingText="Visualize"
+                  title="Visualize"
+                  onClick={() => {
+                    send({
+                      type: 'COMPILE',
+                    });
+                  }}
+                >
+                  Visualize
+                </Button>
+              </Tooltip>
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + S"
+                aria-label="Ctrl/CMD + S"
+                closeDelay={500}
+              >
+                <Button
+                  isLoading={isPersistPending}
+                  loadingText={persistText}
+                  disabled={isPersistPending || isVisualizing}
+                  title={persistText}
+                  onClick={() => {
+                    onSave(current.context.code);
+                  }}
+                >
+                  {persistText}
+                </Button>
+              </Tooltip>
+            </HStack>
+          </>
+        )}
+        {simMode === 'inspecting' && (
+          <Box padding="4">
+            <Text as="strong">Inspection mode</Text>
+            <Text>
+              Services from a separate process are currently being inspected.
+            </Text>
+          </Box>
+        )}
       </Box>
     </>
   );

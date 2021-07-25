@@ -33,6 +33,7 @@ import { SettingsIcon } from '@chakra-ui/icons';
 import { SettingsPanel } from './SettingsPanel';
 import { paletteMachine } from './paletteMachine';
 import { PaletteProvider } from './PaletteContext';
+import { Footer } from './Footer';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -77,7 +78,9 @@ function App() {
           as="main"
           display="grid"
           gridTemplateColumns="1fr auto"
-          gridTemplateAreas="'canvas tabs'"
+          gridTemplateRows="1fr auto"
+          gridTemplateAreas="'canvas panels' 'footer footer'"
+          height="100vh"
         >
           {digraph ? (
             <CanvasProvider value={canvasService}>
@@ -94,12 +97,12 @@ function App() {
           )}
           <ClientProvider value={clientService}>
             <ChakraProvider theme={theme}>
-              <ResizableBox gridArea="tabs">
+              <ResizableBox gridArea="panels">
                 <Tabs
                   bg="gray.800"
                   display="grid"
                   gridTemplateRows="auto 1fr"
-                  height="100vh"
+                  height="100%"
                 >
                   <TabList>
                     <Tab>Code</Tab>
@@ -178,6 +181,7 @@ function App() {
                   </TabPanels>
                 </Tabs>
               </ResizableBox>
+              <Footer />
             </ChakraProvider>
           </ClientProvider>
         </Box>
