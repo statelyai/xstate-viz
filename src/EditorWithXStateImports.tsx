@@ -116,8 +116,8 @@ export const EditorWithXStateImports = (
 
             // Ctrl/CMD + S to save/update to registry
             editor.addAction({
-              id: 'backup',
-              label: 'Backup',
+              id: 'save',
+              label: 'Save',
               keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_S],
               run: () => {
                 props.onSave?.();

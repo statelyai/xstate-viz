@@ -61,7 +61,7 @@ export const CommandPalette: React.FC<{
             >
               Saves or updates the code in Stately Registry{' '}
               <Box as="span" marginLeft="auto">
-                <Kbd>Ctrl/CMD</Kbd> + <Kbd>B</Kbd>
+                <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
               </Box>
             </CommandButton>
           </ListItem>
@@ -74,7 +74,7 @@ export const CommandPalette: React.FC<{
             >
               Visualizes the current editor code
               <Box as="span" marginLeft="auto">
-                <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
+                <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
               </Box>
             </CommandButton>
           </ListItem>

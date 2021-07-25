@@ -195,6 +195,14 @@ export const EditorPanel: React.FC<{
               onChange={(code) => {
                 send({ type: 'EDITOR_CHANGED_VALUE', code });
               }}
+              onFormat={() => {
+                send({
+                  type: 'COMPILE',
+                });
+              }}
+              onSave={() => {
+                onSave(current.context.code);
+              }}
             />
             <HStack padding="2">
               <Tooltip
