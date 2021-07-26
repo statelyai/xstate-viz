@@ -17,7 +17,7 @@ function prettify(code: string) {
  * CtrlCMD + Enter => format => update chart
  * Click on update chart button => update chart
  * Click on save/update => save/update to registry
- * CtrlCMD + S => save/update to registry
+ * CtrlCMD + S => format => save/update to registry
  */
 
 interface EditorWithXStateImportsProps {
