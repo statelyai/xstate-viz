@@ -25,19 +25,9 @@ export const Login: React.FC = () => {
   const session = state.context!.client.auth.session();
 
   return (
-    <Box
-      position="absolute"
-      right="1rem"
-      top="0"
-      zIndex="1"
-      height="42"
-      display="flex"
-    >
+    <Box zIndex="1" height="42" display="flex">
       {!state.hasTag('authorized') && (
         <Button
-          position="absolute"
-          top="0"
-          right="0"
           className="btn-login"
           zIndex="1"
           colorScheme="blue"

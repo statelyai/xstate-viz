@@ -1,4 +1,4 @@
-import { Button, HStack, Box, Text } from '@chakra-ui/react';
+import { Button, HStack, Box, Text, Tooltip } from '@chakra-ui/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
@@ -9,6 +9,7 @@ import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import type { AnyStateMachine, SimMode } from './types';
 import { Monaco } from '@monaco-editor/react';
+import { CommandPalette } from './CommandPalette';
 import { useSimulation } from './SimulationContext';
 
 const editorPanelModel = createModel(
@@ -36,13 +37,33 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   entry: [assign({ notifRef: () => spawn(notifMachine) })],
   initial: 'booting',
   states: {
-    booting: {},
+    booting: {
+      on: {
+        EDITOR_READY: [
+          {
+            cond: (ctx) => ctx.immediateUpdate,
+            actions: [
+              editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+            ],
+            target: 'compiling',
+          },
+          {
+            target: 'active',
+            actions: editorPanelModel.assign({
+              editorRef: (_, e) => e.editorRef,
+            }),
+          },
+        ],
+      },
+    },
     active: {},
     updating: {
+      tags: ['visualizing'],
       entry: send('UPDATE_MACHINE_PRESSED'),
       always: 'active',
     },
     compiling: {
+      tags: ['visualizing'],
       invoke: {
         src: (ctx) => {
           const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
@@ -79,19 +100,6 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     },
   },
   on: {
-    EDITOR_READY: [
-      {
-        cond: (ctx) => ctx.immediateUpdate,
-        actions: [
-          editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-        ],
-        target: 'compiling',
-      },
-      {
-        target: 'active',
-        actions: editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-      },
-    ],
     EDITOR_CHANGED_VALUE: {
       actions: [
         editorPanelModel.assign({ code: (_, e) => e.code }),
@@ -164,53 +172,89 @@ export const EditorPanel: React.FC<{
       },
     },
   );
+  const isVisualizing = current.hasTag('visualizing');
 
   return (
-    <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-      {simMode === 'visualizing' && (
-        <>
-          <EditorWithXStateImports
-            defaultValue={defaultValue}
-            readonly={current.matches('compiling')}
-            onMount={(_, monaco) => {
-              send({ type: 'EDITOR_READY', editorRef: monaco });
-            }}
-            onChange={(code) => {
-              send({ type: 'EDITOR_CHANGED_VALUE', code });
-            }}
-          />
-          <HStack padding="2">
-            <Button
-              disabled={current.matches('compiling')}
-              onClick={() => {
+    <>
+      <CommandPalette
+        onSave={() => {
+          onSave(current.context.code);
+        }}
+        onVisualize={() => {
+          send('COMPILE');
+        }}
+      />
+      <Box height="100%" display="grid" gridTemplateRows="1fr auto">
+        {simMode === 'visualizing' && (
+          <>
+            <EditorWithXStateImports
+              defaultValue={defaultValue}
+              onMount={(_, monaco) => {
+                send({ type: 'EDITOR_READY', editorRef: monaco });
+              }}
+              onChange={(code) => {
+                send({ type: 'EDITOR_CHANGED_VALUE', code });
+              }}
+              onFormat={() => {
                 send({
                   type: 'COMPILE',
                 });
               }}
-            >
-              Update Chart
-            </Button>
-            <Button
-              isLoading={isPersistPending}
-              loadingText={persistText}
-              disabled={isPersistPending || current.matches('compiling')}
-              onClick={() => {
+              onSave={() => {
                 onSave(current.context.code);
               }}
-            >
-              {persistText}
-            </Button>
-          </HStack>
-        </>
-      )}
-      {simMode === 'inspecting' && (
-        <Box padding="4">
-          <Text as="strong">Inspection mode</Text>
-          <Text>
-            Services from a separate process are currently being inspected.
-          </Text>
-        </Box>
-      )}
-    </Box>
+            />
+            <HStack padding="2">
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + Enter"
+                closeDelay={500}
+              >
+                <Button
+                  disabled={isVisualizing}
+                  isLoading={isVisualizing}
+                  loadingText="Visualize"
+                  title="Visualize"
+                  onClick={() => {
+                    send({
+                      type: 'COMPILE',
+                    });
+                  }}
+                >
+                  Visualize
+                </Button>
+              </Tooltip>
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + S"
+                closeDelay={500}
+              >
+                <Button
+                  isLoading={isPersistPending}
+                  loadingText={persistText}
+                  disabled={isPersistPending || isVisualizing}
+                  title={persistText}
+                  onClick={() => {
+                    onSave(current.context.code);
+                  }}
+                >
+                  {persistText}
+                </Button>
+              </Tooltip>
+            </HStack>
+          </>
+        )}
+        {simMode === 'inspecting' && (
+          <Box padding="4">
+            <Text as="strong">Inspection mode</Text>
+            <Text>
+              Services from a separate process are currently being inspected.
+            </Text>
+          </Box>
+        )}
+      </Box>
+    </>
   );
 };
