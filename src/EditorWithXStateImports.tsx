@@ -31,14 +31,13 @@ interface EditorWithXStateImportsProps {
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
-  const paletteService = usePalette();
   return (
     <ClassNames>
       {({ css }) => (
         <Editor
-          wrapperClassName={css`
+          wrapperClassName={`${css`
             min-height: 0;
-          `}
+          `} js-monaco-editor`}
           defaultPath="main.ts"
           defaultLanguage="typescript"
           defaultValue={props.defaultValue}
@@ -116,16 +115,6 @@ export const EditorWithXStateImports = (
               run: () => {
                 props.onSave?.();
                 editor.getAction('editor.action.formatDocument').run();
-              },
-            });
-
-            // Command Palette
-            editor.addAction({
-              id: 'palette',
-              label: 'Palette',
-              keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_K],
-              run: () => {
-                paletteService.send('SHOW_PALETTE');
               },
             });
 

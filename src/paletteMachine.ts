@@ -1,4 +1,5 @@
 import { createModel } from 'xstate/lib/model';
+import { EDITOR_CLASSNAME } from './constants';
 
 const paletteModel = createModel(undefined, {
   events: {
@@ -13,11 +14,22 @@ export const paletteMachine = paletteModel.createMachine({
     closed: {
       invoke: {
         src: () => (sendBack) => {
+          function captureCommandPaletteKeybindings(e: KeyboardEvent) {
+            const keybindings = {
+              'CtrlCMD+K': (e.metaKey || e.ctrlKey) && e.code === 'KeyK',
+              // Shift + / = ?
+              'Shift+?': e.shiftKey && e.code === 'Slash',
+            };
+            return Object.values(keybindings).some(Boolean);
+          }
+          function eventRoseFromEditor(e: KeyboardEvent) {
+            const editorElement = document.querySelector(EDITOR_CLASSNAME);
+            return editorElement && editorElement.contains(e.target as Node);
+          }
           const eventHandler = (e: KeyboardEvent) => {
             if (
-              ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') ||
-              // Shift + / = ?
-              (e.shiftKey && e.code === 'Slash')
+              captureCommandPaletteKeybindings(e) &&
+              !eventRoseFromEditor(e)
             ) {
               sendBack('SHOW_PALETTE');
             }
