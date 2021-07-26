@@ -115,6 +115,7 @@ export const EditorWithXStateImports = (
               keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_S],
               run: () => {
                 props.onSave?.();
+                props.onFormat?.();
               },
             });
 
