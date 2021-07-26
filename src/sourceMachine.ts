@@ -306,20 +306,22 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 ),
               ],
             },
-            onError: {
-              target: 'no_source',
-              actions: send(
-                notifModel.events.BROADCAST(
-                  'An error occurred when saving.',
-                  'error',
-                ),
-                {
-                  to: (ctx) => {
-                    return ctx.notifRef!;
-                  },
-                },
-              ),
-            },
+            onError: [
+              {
+                /**
+                 * If the source had an ID, it means we've forking
+                 * someone else's
+                 */
+                cond: (ctx) => Boolean(ctx.sourceID),
+                target:
+                  'with_source.source_loaded.checking_if_user_owns_source',
+                actions: 'showSaveErrorToast',
+              },
+              {
+                target: 'no_source',
+                actions: 'showSaveErrorToast',
+              },
+            ],
           },
         },
         forking: {
@@ -408,13 +410,24 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
     },
     {
       actions: {
+        showSaveErrorToast: send(
+          notifModel.events.BROADCAST(
+            'An error occurred when saving.',
+            'error',
+          ),
+          {
+            to: (ctx) => {
+              return ctx.notifRef!;
+            },
+          },
+        ),
         assignCreateSourceFileToContext: assign((context, _event: any) => {
           const event: DoneInvokeEvent<CreateSourceFileMutation> = _event;
           return {
-            sourceID: event.data.createSourceFile.id,
+            sourceID: event.data?.createSourceFile.id,
             sourceProvider: 'registry',
-            sourceUpdatedAt: event.data.createSourceFile.updatedAt,
-            sourceOwnerId: event.data.createSourceFile.ownerId,
+            sourceUpdatedAt: event.data?.createSourceFile.updatedAt,
+            sourceOwnerId: event.data?.createSourceFile.ownerId,
           };
         }),
         updateURLWithMachineID: (ctx) => {
@@ -475,7 +488,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               text: e.rawSource,
             },
             auth.session()?.access_token!,
-          ).then((res) => res.data);
+          ).then((res) => {
+            return res.data;
+          });
         },
         updateSourceFile: async (ctx, e) => {
           if (e.type !== 'SAVE') return;
