@@ -39,7 +39,6 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   states: {
     booting: {
       on: {
-        COMPILE: undefined,
         EDITOR_READY: [
           {
             cond: (ctx) => ctx.immediateUpdate,
