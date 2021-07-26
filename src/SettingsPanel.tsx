@@ -44,7 +44,7 @@ export const SettingsPanel: React.FC = () => {
                   <Kbd>Ctrl/CMD</Kbd> + <Kbd>K</Kbd>
                 </span>
                 <span>
-                  <Kbd>Ctrl/CMD</Kbd> + <Kbd>?</Kbd>
+                  <Kbd>Shift</Kbd> + <Kbd>?</Kbd>
                 </span>
               </VStack>
             </Td>
