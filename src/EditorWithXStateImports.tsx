@@ -134,7 +134,6 @@ export const EditorWithXStateImports = (
               ],
               run: () => {
                 paletteService.send('SHOW_PALETTE');
-                props.onSave?.();
               },
             });
 
