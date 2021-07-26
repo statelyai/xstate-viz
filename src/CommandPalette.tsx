@@ -6,6 +6,7 @@ import {
   Button,
   Box,
   Kbd,
+  ModalOverlay,
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
 import React from 'react';
@@ -50,6 +51,7 @@ export const CommandPalette: React.FC<{
       motionPreset="slideInBottom"
       autoFocus
     >
+      <ModalOverlay />
       <ModalContent>
         <List spacing="5" paddingY="5">
           <ListItem borderRadius="0">
