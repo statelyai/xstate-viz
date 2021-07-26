@@ -40,6 +40,21 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     booting: {
       on: {
         COMPILE: undefined,
+        EDITOR_READY: [
+          {
+            cond: (ctx) => ctx.immediateUpdate,
+            actions: [
+              editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+            ],
+            target: 'compiling',
+          },
+          {
+            target: 'active',
+            actions: editorPanelModel.assign({
+              editorRef: (_, e) => e.editorRef,
+            }),
+          },
+        ],
       },
     },
     active: {},
@@ -86,19 +101,6 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     },
   },
   on: {
-    EDITOR_READY: [
-      {
-        cond: (ctx) => ctx.immediateUpdate,
-        actions: [
-          editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-        ],
-        target: 'compiling',
-      },
-      {
-        target: 'active',
-        actions: editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-      },
-    ],
     EDITOR_CHANGED_VALUE: {
       actions: [
         editorPanelModel.assign({ code: (_, e) => e.code }),
