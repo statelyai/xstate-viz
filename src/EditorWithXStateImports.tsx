@@ -25,7 +25,6 @@ interface EditorWithXStateImportsProps {
   onMount?: OnMount;
   onSave?: () => void;
   onFormat?: () => void;
-  onError?: (err: any) => void;
   defaultValue?: string;
 }
 
