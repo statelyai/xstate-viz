@@ -26,7 +26,6 @@ interface EditorWithXStateImportsProps {
   onSave?: () => void;
   onFormat?: () => void;
   onError?: (err: any) => void;
-  readonly?: boolean;
   defaultValue?: string;
 }
 
@@ -46,7 +45,6 @@ export const EditorWithXStateImports = (
           defaultValue={props.defaultValue}
           theme="vs-dark"
           options={{
-            readOnly: props.readonly,
             minimap: { enabled: false },
             tabSize: 2,
           }}
@@ -104,11 +102,8 @@ export const EditorWithXStateImports = (
                     ];
                   } catch (err) {
                     console.error(err);
-                    // props.onError?.('Formatting failed');
                   } finally {
-                    setTimeout(() => {
-                      props.onFormat?.();
-                    }, 0);
+                    props.onFormat?.();
                   }
                 },
               },
@@ -128,10 +123,7 @@ export const EditorWithXStateImports = (
             editor.addAction({
               id: 'palette',
               label: 'Palette',
-              keybindings: [
-                KeyMod.CtrlCmd | KeyCode.KEY_K,
-                KeyMod.Shift | KeyCode.US_SLASH,
-              ],
+              keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_K],
               run: () => {
                 paletteService.send('SHOW_PALETTE');
               },

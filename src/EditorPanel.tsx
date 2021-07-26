@@ -188,7 +188,6 @@ export const EditorPanel: React.FC<{
           <>
             <EditorWithXStateImports
               defaultValue={defaultValue}
-              readonly={current.matches('compiling')}
               onMount={(_, monaco) => {
                 send({ type: 'EDITOR_READY', editorRef: monaco });
               }}
