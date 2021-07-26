@@ -74,7 +74,7 @@ export const Login: React.FC = () => {
       )}
 
       <Modal
-        isOpen={authService.state.matches({
+        isOpen={state.matches({
           signed_out: 'choosing_provider',
         })}
         onClose={() => {
