@@ -4,4 +4,4 @@ import { createRequiredContext } from './utils';
 
 export const [PaletteProvider, usePalette] = createRequiredContext<
   InterpreterFrom<typeof paletteMachine>
->('Simulation');
+>('Palette');
