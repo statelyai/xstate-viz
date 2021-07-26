@@ -209,7 +209,6 @@ export const EditorPanel: React.FC<{
                 bg="black"
                 color="white"
                 label="Ctrl/CMD + Enter"
-                aria-label="Ctrl/CMD + Enter"
                 closeDelay={500}
               >
                 <Button
@@ -230,7 +229,6 @@ export const EditorPanel: React.FC<{
                 bg="black"
                 color="white"
                 label="Ctrl/CMD + S"
-                aria-label="Ctrl/CMD + S"
                 closeDelay={500}
               >
                 <Button
