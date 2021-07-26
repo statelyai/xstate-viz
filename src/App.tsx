@@ -46,10 +46,6 @@ function App() {
     [machine],
   );
   const authService = useInterpret(authMachine);
-  const createdMachine = useSelector(
-    authService,
-    (state) => state.context.createdMachine,
-  );
   const sourceService = useSelector(
     authService,
     (state) => state.context.sourceRef,
@@ -57,10 +53,7 @@ function App() {
 
   const [sourceState] = useActor(sourceService!);
 
-  const sourceID =
-    sourceState.context.sourceProvider === 'registry'
-      ? sourceState.context.sourceID
-      : createdMachine?.id;
+  const sourceID = sourceState.context.sourceID;
 
   let sourceStatus: SourceStatus = 'no-source';
 
