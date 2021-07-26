@@ -61,7 +61,7 @@ export const sourceModel = createModel(
       /**
        * Passed in from the parent to the child via events
        */
-      LOGGED_IN_USER_ID_UPDATED: (id: string | null) => ({ id }),
+      LOGGED_IN_USER_ID_UPDATED: (id: string | null | undefined) => ({ id }),
     },
   },
 );
@@ -164,6 +164,14 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                     forwardTo('confirmBeforeLeavingMachine'),
                   ],
                 },
+                LOGGED_IN_USER_ID_UPDATED: {
+                  actions: assign((context, event) => {
+                    return {
+                      loggedInUserId: event.id,
+                    };
+                  }),
+                  target: '.checking_if_user_owns_source',
+                },
               },
               invoke: [
                 {
@@ -218,14 +226,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
                       },
                     ],
-                    LOGGED_IN_USER_ID_UPDATED: {
-                      actions: assign((context, event) => {
-                        return {
-                          loggedInUserId: event.id,
-                        };
-                      }),
-                      target: 'checking_if_user_owns_source',
-                    },
                   },
                 },
               },
@@ -233,11 +233,8 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             source_error: {
               entry: [
                 send(
-                  (_, e: any) => ({
-                    type: 'BROADCAST',
-                    status: 'error',
-                    message: e.data.toString(),
-                  }),
+                  (_, e: any) =>
+                    notifModel.events.BROADCAST(e.data.toString, 'error'),
                   { to: (ctx: any) => ctx.notifRef },
                 ),
                 (_, e: any) => {
@@ -392,7 +389,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               ],
             },
             onError: {
-              target: 'with_source',
+              target: 'with_source.source_loaded',
               actions: send(
                 notifModel.events.BROADCAST(
                   'An error occurred when saving.',
