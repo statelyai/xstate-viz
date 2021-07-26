@@ -17,15 +17,16 @@ import './base.scss';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
-import { EditorPanel, SourceStatus } from './EditorPanel';
+import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
+import { Footer } from './Footer';
 import './Graph';
 import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { ResizableBox } from './ResizableBox';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { useSourceState } from './sourceMachine';
+import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
@@ -47,30 +48,14 @@ function App() {
     [machine],
   );
   const authService = useInterpret(authMachine);
-  const createdMachine = useSelector(
+  const sourceService = useSelector(
     authService,
-    (state) => state.context.createdMachine,
+    (state) => state.context.sourceRef,
   );
 
-  const [sourceState, sendToSourceService] = useSourceState(authService);
+  const [sourceState, sendToSourceService] = useSourceActor(authService);
 
-  const sourceID =
-    sourceState.context.sourceProvider === 'registry'
-      ? sourceState.context.sourceID
-      : createdMachine?.id;
-
-  let sourceStatus: SourceStatus = 'no-source';
-
-  if (!sourceState.matches('no_source')) {
-    if (
-      sourceState.context.loggedInUserId ===
-      sourceState.context.sourceRegistryData?.owner?.id
-    ) {
-      sourceStatus = 'user-owns-source';
-    } else {
-      sourceStatus = 'user-does-not-own-source';
-    }
-  }
+  const sourceID = sourceState.context.sourceID;
 
   const canvasService = useInterpretCanvas({
     sourceID,
@@ -85,7 +70,9 @@ function App() {
           as="main"
           display="grid"
           gridTemplateColumns="1fr auto"
-          gridTemplateAreas="'canvas tabs'"
+          gridTemplateRows="1fr auto"
+          gridTemplateAreas="'canvas panels' 'footer footer'"
+          height="100vh"
         >
           {digraph ? (
             <CanvasProvider value={canvasService}>
@@ -100,16 +87,15 @@ function App() {
               </Text>
             </Box>
           )}
-
           <ChakraProvider theme={theme}>
-            <ResizableBox gridArea="tabs">
+            <ResizableBox gridArea="panels">
               <Login />
               <MachineNameChooserModal />
               <Tabs
                 bg="gray.800"
                 display="grid"
                 gridTemplateRows="auto 1fr"
-                height="100vh"
+                height="100%"
               >
                 <TabList>
                   <Tab>Code</Tab>
@@ -145,7 +131,6 @@ function App() {
                             sourceID: sourceState.context.sourceID,
                           });
                         }}
-                        sourceStatus={sourceStatus}
                         onSave={(code: string) => {
                           sendToSourceService({
                             type: 'SAVE',
@@ -179,6 +164,7 @@ function App() {
                 </TabPanels>
               </Tabs>
             </ResizableBox>
+            <Footer />
           </ChakraProvider>
         </Box>
       </AuthProvider>
