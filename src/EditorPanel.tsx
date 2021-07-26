@@ -1,15 +1,16 @@
-import { Button, HStack, Box, Text } from '@chakra-ui/react';
+import { Box, Button, HStack, Text } from '@chakra-ui/react';
+import { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
+import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import type { AnyStateMachine, SimMode } from './types';
-import { Monaco } from '@monaco-editor/react';
 import { useSimulation } from './SimulationContext';
+import { SourceMachineState } from './sourceMachine';
+import type { AnyStateMachine, SimMode } from './types';
 
 const editorPanelModel = createModel(
   {
@@ -113,21 +114,41 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   },
 });
 
-export type SourceStatus =
+export type SourceOwnershipStatus =
   | 'user-owns-source'
   | 'no-source'
   | 'user-does-not-own-source';
 
-const getPersistText = (isSignedOut: boolean, sourceStatus: SourceStatus) => {
+const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
+  let sourceStatus: SourceOwnershipStatus = 'no-source';
+
+  if (!sourceState.matches('no_source')) {
+    if (
+      sourceState.context.loggedInUserId === sourceState.context.sourceOwnerId
+    ) {
+      sourceStatus = 'user-owns-source';
+    } else {
+      sourceStatus = 'user-does-not-own-source';
+    }
+  }
+
+  return sourceStatus;
+};
+
+const getPersistText = (
+  isSignedOut: boolean,
+  sourceOwnershipStatus: SourceOwnershipStatus,
+): string => {
   if (isSignedOut) {
-    switch (sourceStatus) {
+    switch (sourceOwnershipStatus) {
       case 'no-source':
         return 'Login to save';
-      default:
+      case 'user-does-not-own-source':
+      case 'user-owns-source':
         return 'Login to fork';
     }
   }
-  switch (sourceStatus) {
+  switch (sourceOwnershipStatus) {
     case 'no-source':
     case 'user-owns-source':
       return 'Save';
@@ -139,7 +160,6 @@ const getPersistText = (isSignedOut: boolean, sourceStatus: SourceStatus) => {
 export const EditorPanel: React.FC<{
   defaultValue: string;
   immediateUpdate: boolean;
-  sourceStatus: SourceStatus;
   onSave: (code: string) => void;
   onCreateNew: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
@@ -150,16 +170,17 @@ export const EditorPanel: React.FC<{
   onSave,
   onChange,
   onChangedCodeValue,
-  sourceStatus,
   onCreateNew,
 }) => {
   const authService = useAuth();
-  const authState = useSelector(authService, (state) => state);
+  const [authState] = useActor(authService);
   const sourceService = useSelector(
     authService,
     (state) => state.context.sourceRef!,
   );
   const [sourceState] = useActor(sourceService);
+
+  const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
 
   const simService = useSimulation();
   const simMode: SimMode = useSelector(simService, (state) =>
@@ -167,7 +188,7 @@ export const EditorPanel: React.FC<{
   );
   const persistText = getPersistText(
     authState.matches('signed_out'),
-    sourceStatus,
+    sourceOwnershipStatus,
   );
 
   const [current, send] = useMachine(
@@ -225,7 +246,7 @@ export const EditorPanel: React.FC<{
             >
               {persistText}
             </Button>
-            {sourceStatus === 'user-owns-source' && (
+            {sourceOwnershipStatus === 'user-owns-source' && (
               <Button
                 disabled={
                   sourceState.hasTag('forking') || current.matches('compiling')

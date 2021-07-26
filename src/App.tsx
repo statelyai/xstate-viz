@@ -17,7 +17,7 @@ import './base.scss';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
-import { EditorPanel, SourceStatus } from './EditorPanel';
+import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
 import { Footer } from './Footer';
 import './Graph';
@@ -54,18 +54,6 @@ function App() {
   const [sourceState] = useActor(sourceService!);
 
   const sourceID = sourceState.context.sourceID;
-
-  let sourceStatus: SourceStatus = 'no-source';
-
-  if (!sourceState.matches('no_source')) {
-    if (
-      sourceState.context.loggedInUserId === sourceState.context.sourceOwnerId
-    ) {
-      sourceStatus = 'user-owns-source';
-    } else {
-      sourceStatus = 'user-does-not-own-source';
-    }
-  }
 
   const canvasService = useInterpretCanvas({
     sourceID,
@@ -140,7 +128,6 @@ function App() {
                             sourceID: sourceState.context.sourceID,
                           });
                         }}
-                        sourceStatus={sourceStatus}
                         onSave={(code: string) => {
                           sourceService?.send({
                             type: 'SAVE',

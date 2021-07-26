@@ -9,6 +9,7 @@ import {
   send,
   sendParent,
   spawn,
+  StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
@@ -66,6 +67,10 @@ export const sourceModel = createModel(
 );
 
 export type SourceMachineActorRef = ActorRefFrom<
+  ReturnType<typeof makeSourceMachine>
+>;
+
+export type SourceMachineState = StateFrom<
   ReturnType<typeof makeSourceMachine>
 >;
 

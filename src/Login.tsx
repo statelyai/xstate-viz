@@ -15,13 +15,13 @@ import {
   ModalOverlay,
   Text,
 } from '@chakra-ui/react';
-import { useSelector } from '@xstate/react';
+import { useActor, useSelector } from '@xstate/react';
 import React from 'react';
 import { useAuth } from './authContext';
 
 export const Login: React.FC = () => {
   const authService = useAuth();
-  const state = useSelector(authService, (state) => state);
+  const [state] = useActor(authService);
   const session = state.context!.client.auth.session();
 
   return (
