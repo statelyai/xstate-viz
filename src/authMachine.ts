@@ -69,7 +69,7 @@ const authOptions: Partial<
 
 export const authMachine = createMachine<typeof authModel>(
   {
-    id: 'client',
+    id: 'auth',
     initial: 'initializing',
     context: authModel.initialContext,
     entry: assign({
