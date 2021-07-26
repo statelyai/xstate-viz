@@ -534,7 +534,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   );
 };
 
-export const useSourceState = (
+export const useSourceActor = (
   authService: ActorRefFrom<typeof authMachine>,
 ) => {
   const sourceService = useSelector(

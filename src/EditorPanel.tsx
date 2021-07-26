@@ -124,7 +124,8 @@ const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
 
   if (!sourceState.matches('no_source')) {
     if (
-      sourceState.context.loggedInUserId === sourceState.context.sourceOwnerId
+      sourceState.context.loggedInUserId ===
+      sourceState.context.sourceRegistryData?.owner?.id
     ) {
       sourceStatus = 'user-owns-source';
     } else {
