@@ -1,40 +1,30 @@
 import { createModel } from 'xstate/lib/model';
 
-const paletteModel = createModel(
-  {
-    commandEventHandlerFactory: (sendBack: any) => (e: KeyboardEvent) => {},
+const paletteModel = createModel(undefined, {
+  events: {
+    SHOW_PALETTE: () => ({}),
+    HIDE_PALETTE: () => ({}),
   },
-  {
-    events: {
-      SHOW_PALETTE: () => ({}),
-      HIDE_PALETTE: () => ({}),
-    },
-  },
-);
+});
 
 export const paletteMachine = paletteModel.createMachine({
   initial: 'closed',
-  context: {
-    ...paletteModel.initialContext,
-    commandEventHandlerFactory: (sendBack) => (e: KeyboardEvent) => {
-      console.log(e);
-      if (
-        ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') ||
-        // Shift + / = ?
-        (e.shiftKey && e.code === 'Slash')
-      ) {
-        sendBack('SHOW_PALETTE');
-      }
-    },
-  },
   states: {
     closed: {
       invoke: {
-        src: (ctx) => (sendBack) => {
-          const handler = ctx.commandEventHandlerFactory(sendBack);
-          window.addEventListener('keydown', handler);
+        src: () => (sendBack) => {
+          const eventHandler = (e: KeyboardEvent) => {
+            if (
+              ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') ||
+              // Shift + / = ?
+              (e.shiftKey && e.code === 'Slash')
+            ) {
+              sendBack('SHOW_PALETTE');
+            }
+          };
+          window.addEventListener('keydown', eventHandler);
           return () => {
-            window.removeEventListener('keydown', handler);
+            window.removeEventListener('keydown', eventHandler);
           };
         },
       },
@@ -43,7 +33,6 @@ export const paletteMachine = paletteModel.createMachine({
       },
     },
     opened: {
-      entry: 'saveListRef',
       on: {
         HIDE_PALETTE: 'closed',
       },
