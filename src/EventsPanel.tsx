@@ -36,6 +36,7 @@ import {
 } from '@chakra-ui/icons';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { vizReactJsonTheme } from './vizReactJsonTheme';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -304,7 +305,7 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
       {show ? (
         <Tr>
           <Td colSpan={3}>
-            <ReactJson src={event.data} theme="monokai" />
+            <ReactJson src={event.data} theme={vizReactJsonTheme} />
           </Td>
         </Tr>
       ) : null}

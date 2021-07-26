@@ -11,14 +11,15 @@ import {
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
+import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
 import './base.scss';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
-import { AuthProvider } from './authContext';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel, SourceStatus } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
+import { Footer } from './Footer';
 import './Graph';
 import { Login } from './Login';
 import { ResizableBox } from './ResizableBox';
@@ -85,7 +86,9 @@ function App() {
         as="main"
         display="grid"
         gridTemplateColumns="1fr auto"
-        gridTemplateAreas="'canvas tabs'"
+        gridTemplateRows="1fr auto"
+        gridTemplateAreas="'canvas panels' 'footer footer'"
+        height="100vh"
       >
         {digraph ? (
           <CanvasProvider value={canvasService}>
@@ -102,13 +105,13 @@ function App() {
         )}
         <AuthProvider value={authService}>
           <ChakraProvider theme={theme}>
-            <ResizableBox gridArea="tabs">
+            <ResizableBox gridArea="panels">
               <Login />
               <Tabs
                 bg="gray.800"
                 display="grid"
                 gridTemplateRows="auto 1fr"
-                height="100vh"
+                height="100%"
               >
                 <TabList>
                   <Tab>Code</Tab>
@@ -178,6 +181,7 @@ function App() {
                 </TabPanels>
               </Tabs>
             </ResizableBox>
+            <Footer />
           </ChakraProvider>
         </AuthProvider>
       </Box>
