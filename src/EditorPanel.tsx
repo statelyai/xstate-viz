@@ -240,7 +240,6 @@ export const EditorPanel: React.FC<{
               }}
               onChange={(code) => {
                 send({ type: 'EDITOR_CHANGED_VALUE', code });
-                console.log({ code });
               }}
               onFormat={() => {
                 send({
