@@ -161,7 +161,7 @@ export const EventsPanel: React.FC = () => {
   const rawEvents = state.context!.events;
   const nextEvents = useSelector(
     sim,
-    (state) => selectMachine(state)?.state.nextEvents,
+    (state) => selectMachine(state)?.state?.nextEvents,
     (a, b) => JSON.stringify(a) === JSON.stringify(b),
   );
 
@@ -406,7 +406,7 @@ const NewEvent: React.FC<{
         {({ onClose }) => (
           <>
             <PopoverTrigger>
-              <Button variant="outline">Send event...</Button>
+              <Button variant="outline">Send event</Button>
             </PopoverTrigger>
             <Portal>
               <PopoverContent>

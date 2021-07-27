@@ -1,0 +1,11 @@
+query GetLoggedInUserData {
+  getLoggedInUser {
+    ...LoggedInUser
+  }
+}
+
+fragment LoggedInUser on User {
+  id
+  displayName
+  avatarUrl
+}

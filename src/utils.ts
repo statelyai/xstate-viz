@@ -121,7 +121,18 @@ export const gQuery = <Data, Variables>(
       query: print(query),
       variables,
     }),
-  }).then((resp) => resp.json());
+  })
+    .then((resp) => resp.json())
+    .then((res) => {
+      /**
+       * Throw the GQL error if it comes - this
+       * doesn't happen by default
+       */
+      if (res.errors?.[0]?.message) {
+        throw new Error(res.errors?.[0].message);
+      }
+      return res;
+    });
 
 export function willChange(
   machine: AnyStateMachine,

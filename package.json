@@ -22,6 +22,7 @@
     "immer": "^9.0.3",
     "memory-web-storage": "^1.0.0",
     "monaco-editor": "^0.25.2",
+    "prettier": "^2.3.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-json-view": "^1.21.3",

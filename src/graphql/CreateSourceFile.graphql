@@ -1,5 +1,7 @@
 mutation CreateSourceFile($text: String!) {
   createSourceFile(text: $text) {
     id
+    updatedAt
+    ownerId
   }
 }
