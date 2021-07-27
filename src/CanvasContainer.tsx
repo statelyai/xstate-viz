@@ -125,7 +125,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
   return (
     <div
       data-panel="viz"
-      style={{ cursor: getCursorByState(state) }}
+      style={{ cursor: getCursorByState(state), WebkitFontSmoothing: 'auto' }}
       onWheel={(e) => {
         canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
       }}

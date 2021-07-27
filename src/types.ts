@@ -4,7 +4,7 @@ import type {
   State,
   StateMachine,
 } from 'xstate';
-import { Model } from 'xstate/lib/model';
+import { Model } from 'xstate/lib/model.types';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
@@ -37,4 +37,7 @@ export interface ServiceData {
   machine: AnyStateMachine;
   state: AnyState;
   status?: AnyInterpreter['status'];
+  source?: 'inspector' | 'visualizer';
 }
+
+export type SimMode = 'inspecting' | 'visualizing';
