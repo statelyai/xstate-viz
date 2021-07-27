@@ -501,7 +501,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           return gQuery(
             CreateSourceFileDocument,
             {
-              text: ctx.sourceRawContent,
+              text: ctx.sourceRawContent || '',
               name: ctx.desiredMachineName || '',
             },
             auth.session()?.access_token!,
