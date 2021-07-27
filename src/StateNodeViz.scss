@@ -149,6 +149,12 @@
 }
 
 [data-viz='stateNode-meta'] {
+  border-top: 2px solid var(--chakra-colors-whiteAlpha-300);
   padding: 0.5rem;
-  max-width: 20rem;
+  min-width: max-content;
+  font-size: var(--chakra-fontSizes-sm);
+
+  > p {
+    max-width: 10rem;
+  }
 }
