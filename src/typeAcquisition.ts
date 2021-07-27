@@ -1,6 +1,14 @@
 // almost identical to https://github.com/microsoft/TypeScript-Website/blob/23cd21aec8ef8284d3cb89fad6607e839c2f97e8/packages/sandbox/src/typeAcquisition.ts
 import lzstring from 'lz-string';
 
+//// PATCH-START
+////
+//// let's use a safe variant throughout the file
+import { createStorage, testStorageSupport } from 'memory-web-storage';
+
+const storage = testStorageSupport() ? window.localStorage : createStorage();
+//// PATCH-END
+
 const globalishObj: any =
   typeof globalThis !== 'undefined' ? globalThis : window || {};
 globalishObj.typeDefinitions = {};
@@ -345,7 +353,7 @@ const getModuleAndRootDefTypePath = async (
 };
 
 const getCachedDTSString = async (config: ATAConfig, url: string) => {
-  const cached = localStorage.getItem(url);
+  const cached = storage.getItem(url);
   if (cached) {
     const [dateString, text] = cached.split('-=-^-=-');
     const cachedDate = new Date(dateString);
@@ -384,7 +392,7 @@ const getCachedDTSString = async (config: ATAConfig, url: string) => {
   const cacheContent = `${now.toISOString()}-=-^-=-${lzstring.compressToUTF16(
     content,
   )}`;
-  localStorage.setItem(url, cacheContent);
+  storage.setItem(url, cacheContent);
   return content;
 };
 
