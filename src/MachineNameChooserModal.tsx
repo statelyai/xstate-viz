@@ -44,9 +44,7 @@ export const MachineNameChooserModal = () => {
           <ModalHeader>Choose Name</ModalHeader>
           <ModalBody>
             <FormControl>
-              <FormLabel fontSize="sm">
-                Choose a name for your new machine
-              </FormLabel>
+              <FormLabel fontSize="sm">Choose a name for your fork</FormLabel>
               <Input
                 type="text"
                 name="name"
@@ -67,7 +65,11 @@ export const MachineNameChooserModal = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" colorScheme="blue">
+              <Button
+                type="submit"
+                colorScheme="blue"
+                loading={sourceState.hasTag('persisting')}
+              >
                 Submit
               </Button>
             </HStack>
