@@ -44,7 +44,7 @@ export const CanvasPanel: React.FC<{
   return (
     <Box display="grid" gridTemplateRows="auto 1fr">
       <ChakraProvider theme={theme}>
-        <HStack bg="black" justifyContent="space-between">
+        <HStack bg="black" justifyContent="space-between" zIndex={1}>
           <Box zIndex={1} display="flex" alignItems="center">
             <ButtonGroup size="sm" spacing={2} padding={2}>
               <IconButton
