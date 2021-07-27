@@ -10,7 +10,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
@@ -23,6 +23,7 @@ import { EventsPanel } from './EventsPanel';
 import { Footer } from './Footer';
 import './Graph';
 import { Login } from './Login';
+import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
 import { ResizableBox } from './ResizableBox';
@@ -54,6 +55,13 @@ function App() {
   const authService = useInterpret(authMachine);
 
   const [sourceState, sendToSourceService] = useSourceActor(authService);
+
+  useEffect(() => {
+    sendToSourceService({
+      type: 'MACHINE_ID_CHANGED',
+      id: machine?.id || '',
+    });
+  }, [machine?.id, sendToSourceService]);
 
   const sourceID = sourceState.context.sourceID;
 
@@ -171,6 +179,7 @@ function App() {
                 </Tabs>
               </ResizableBox>
               <Footer />
+              <MachineNameChooserModal />
             </ChakraProvider>
           </Box>
         </SimulationProvider>
