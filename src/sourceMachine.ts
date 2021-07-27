@@ -303,7 +303,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             showingNameModal: {
               on: {
                 CHOOSE_NAME: {
-                  target: 'creating',
+                  target: 'pendingSave',
                   actions: assign((context, event) => {
                     return {
                       desiredName: event.name,
@@ -320,7 +320,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               },
             },
 
-            creating: {
+            pendingSave: {
               exit: [
                 /**
                  * Reset desired name when it's no longer required
