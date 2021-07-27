@@ -232,6 +232,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       {
                         cond: isLoggedIn,
                         target: '#updating',
+                        actions: assign((context, event) => {
+                          return {
+                            sourceRawContent: event.rawSource,
+                          };
+                        }),
                       },
                       {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -245,7 +250,14 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       {
                         cond: isLoggedIn,
                         target: '#creating',
-                        actions: 'addForkOfToDesiredName',
+                        actions: [
+                          'addForkOfToDesiredName',
+                          assign((context, event) => {
+                            return {
+                              sourceRawContent: event.rawSource,
+                            };
+                          }),
+                        ],
                       },
                       {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -287,6 +299,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               {
                 cond: isLoggedIn,
                 target: 'creating',
+                actions: assign((context, event) => {
+                  return {
+                    sourceRawContent: event.rawSource,
+                  };
+                }),
               },
               { actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE') },
             ],
