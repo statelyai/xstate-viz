@@ -6,9 +6,11 @@ import {
   ChakraProvider,
   IconButton,
 } from '@chakra-ui/react';
+import { useSelector } from '@xstate/react';
 import React from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
+import { getShouldEnableZoomOutButton } from './canvasMachine';
 import { DirectedGraphNode } from './directedGraph';
 import { Graph } from './Graph';
 import { useSimulation } from './SimulationContext';
@@ -24,6 +26,11 @@ export const CanvasPanel: React.FC<{
   const simService = useSimulation();
   const canvasService = useCanvas();
 
+  const shouldEnableZoomOutButton = useSelector(
+    canvasService,
+    getShouldEnableZoomOutButton,
+  );
+
   return (
     <Box display="grid" gridTemplateRows="auto 1fr">
       <ChakraProvider theme={theme}>
@@ -33,6 +40,7 @@ export const CanvasPanel: React.FC<{
               aria-label="Zoom out"
               title="Zoom out"
               icon={<MinusIcon />}
+              disabled={!shouldEnableZoomOutButton}
               onClick={() => canvasService.send('ZOOM.OUT')}
             />
             <IconButton

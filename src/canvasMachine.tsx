@@ -1,4 +1,4 @@
-import { assign, createMachine } from 'xstate';
+import { assign, createMachine, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
@@ -29,6 +29,7 @@ export const canvasModel = createModel(initialPosition, {
 const ZOOM_IN_FACTOR = 1.15;
 // exactly reversed factor so zooming in & out results in the same zoom values
 const ZOOM_OUT_FACTOR = 1 / ZOOM_IN_FACTOR;
+const MAX_ZOOM_OUT_FACTOR = 0.5;
 
 export const canvasMachine = createMachine<typeof canvasModel>({
   context: canvasModel.initialContext,
@@ -37,7 +38,7 @@ export const canvasMachine = createMachine<typeof canvasModel>({
       actions: canvasModel.assign({
         zoom: (ctx) => ctx.zoom * ZOOM_OUT_FACTOR,
       }),
-      cond: (ctx) => ctx.zoom > 0.5,
+      cond: (ctx) => ctx.zoom > MAX_ZOOM_OUT_FACTOR,
       target: '.throttling',
       internal: false,
     },
@@ -103,4 +104,10 @@ const getPositionFromEvent = (event: ModelEventsFrom<typeof canvasModel>) => {
 
   const position = localCache.getPosition(event.id);
   return position;
+};
+
+export const getShouldEnableZoomOutButton = (
+  state: StateFrom<typeof canvasMachine>,
+) => {
+  return state.context.zoom > MAX_ZOOM_OUT_FACTOR;
 };
