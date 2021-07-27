@@ -1,49 +1,40 @@
 import {
+  Avatar,
+  Box,
   Button,
-  Modal,
-  ModalOverlay,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
   HStack,
   Menu,
   MenuButton,
-  MenuList,
   MenuItem,
-  Box,
-  Text,
-  Image,
+  MenuList,
+  Modal,
+  ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Text,
 } from '@chakra-ui/react';
-import { useSelector } from '@xstate/react';
+import { useActor, useSelector } from '@xstate/react';
 import React from 'react';
-import { useClient } from './clientContext';
+import { useAuth } from './authContext';
+import { registryLinks } from './registryLinks';
 
 export const Login: React.FC = () => {
-  const clientService = useClient();
-  const state = useSelector(clientService, (state) => state);
+  const authService = useAuth();
+  const [state] = useActor(authService);
   const session = state.context!.client.auth.session();
 
   return (
-    <Box
-      position="absolute"
-      right="1rem"
-      top="0"
-      zIndex="1"
-      height="42"
-      display="flex"
-    >
+    <Box zIndex="1" height="42" display="flex">
       {!state.hasTag('authorized') && (
         <Button
-          position="absolute"
-          top="0"
-          right="0"
           className="btn-login"
           zIndex="1"
           colorScheme="blue"
           rounded="false"
           onClick={() => {
-            clientService.send('CHOOSE_PROVIDER');
+            authService.send('CHOOSE_PROVIDER');
           }}
         >
           Login
@@ -53,59 +44,62 @@ export const Login: React.FC = () => {
       {state.hasTag('authorized') && (
         <Menu closeOnSelect={true}>
           <MenuButton title={session?.user?.user_metadata?.full_name}>
-            <Image
-              display="inline-flex"
+            <Avatar
               marginRight="2"
-              boxSize="30px"
-              src={session?.user?.user_metadata?.avatar_url}
-              alt={session?.user?.email}
+              src={session?.user?.user_metadata?.avatar_url || ''}
+              name={session?.user?.user_metadata?.display_name || ''}
+              height="30px"
+              width="30px"
             />
           </MenuButton>
           <MenuList>
+            {state.context.loggedInUserData && (
+              <MenuItem
+                as="a"
+                href={registryLinks.viewUserById(
+                  state.context.loggedInUserData.id,
+                )}
+              >
+                View Machines
+              </MenuItem>
+            )}
             <MenuItem
               onClick={() => {
-                clientService.send('SIGN_OUT');
+                authService.send('SIGN_OUT');
               }}
             >
               Logout
-              <Box
-                as="em"
-                fontSize="sm"
-                marginLeft="1"
-                textTransform="capitalize"
-              >
-                ({session?.user?.app_metadata.provider})
-              </Box>
             </MenuItem>
           </MenuList>
         </Menu>
       )}
 
       <Modal
-        isOpen={clientService.state?.matches({
+        isOpen={state.matches({
           signed_out: 'choosing_provider',
         })}
         onClose={() => {
-          clientService.send('CANCEL_PROVIDER');
+          authService.send('CANCEL_PROVIDER');
         }}
         // colorScheme="blackAlpha"
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Sign in</ModalHeader>
+          <ModalHeader>Sign In</ModalHeader>
           <ModalBody>
-            <Text>
-              Sign in to Stately Registry to be able to save machines.
+            <Text fontSize="sm">
+              Sign in to Stately Registry to be able to save/fork machines.
             </Text>
           </ModalBody>
           <ModalFooter justifyContent="flex-start">
             <HStack>
               <Button
                 onClick={() => {
-                  clientService.send({ type: 'SIGN_IN', provider: 'github' });
+                  authService.send({ type: 'SIGN_IN', provider: 'github' });
                 }}
+                colorScheme="blue"
               >
-                Github
+                GitHub
               </Button>
             </HStack>
           </ModalFooter>

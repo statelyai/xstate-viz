@@ -1,16 +1,17 @@
-import { Button, HStack, Box } from '@chakra-ui/react';
-import { useMachine, useSelector } from '@xstate/react';
+import { Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react';
+import { Monaco } from '@monaco-editor/react';
+import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom, send } from 'xstate';
-import { assign } from 'xstate';
-import { createMachine, send as sendAction, spawn } from 'xstate';
+import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { useClient } from './clientContext';
+import { useAuth } from './authContext';
+import { CommandPalette } from './CommandPalette';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import type { AnyStateMachine } from './types';
-import { Monaco } from '@monaco-editor/react';
+import { useSimulation } from './SimulationContext';
+import { SourceMachineState } from './sourceMachine';
+import type { AnyStateMachine, SimMode } from './types';
 
 const editorPanelModel = createModel(
   {
@@ -37,13 +38,33 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   entry: [assign({ notifRef: () => spawn(notifMachine) })],
   initial: 'booting',
   states: {
-    booting: {},
+    booting: {
+      on: {
+        EDITOR_READY: [
+          {
+            cond: (ctx) => ctx.immediateUpdate,
+            actions: [
+              editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+            ],
+            target: 'compiling',
+          },
+          {
+            target: 'active',
+            actions: editorPanelModel.assign({
+              editorRef: (_, e) => e.editorRef,
+            }),
+          },
+        ],
+      },
+    },
     active: {},
     updating: {
+      tags: ['visualizing'],
       entry: send('UPDATE_MACHINE_PRESSED'),
       always: 'active',
     },
     compiling: {
+      tags: ['visualizing'],
       invoke: {
         src: (ctx) => {
           const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
@@ -80,24 +101,14 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     },
   },
   on: {
-    EDITOR_READY: [
-      {
-        cond: (ctx) => ctx.immediateUpdate,
-        actions: [
-          editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-        ],
-        target: 'compiling',
-      },
-      {
-        target: 'active',
-        actions: editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-      },
-    ],
     EDITOR_CHANGED_VALUE: {
-      actions: [editorPanelModel.assign({ code: (_, e) => e.code })],
+      actions: [
+        editorPanelModel.assign({ code: (_, e) => e.code }),
+        'onChangedCodeValue',
+      ],
     },
     EDITOR_ENCOUNTERED_ERROR: {
-      actions: sendAction(
+      actions: send(
         (_, e) => ({ type: 'BROADCAST', status: 'error', message: e.message }),
         {
           to: (ctx) => ctx.notifRef,
@@ -111,27 +122,84 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   },
 });
 
-const getPersistText = (isSignedOut: boolean, isUpdateMode: boolean) => {
-  if (isSignedOut) {
-    return 'Login to save';
+export type SourceOwnershipStatus =
+  | 'user-owns-source'
+  | 'no-source'
+  | 'user-does-not-own-source';
+
+const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
+  let sourceStatus: SourceOwnershipStatus = 'no-source';
+
+  if (!sourceState.matches('no_source')) {
+    if (
+      sourceState.context.loggedInUserId ===
+      sourceState.context.sourceRegistryData?.owner?.id
+    ) {
+      sourceStatus = 'user-owns-source';
+    } else {
+      sourceStatus = 'user-does-not-own-source';
+    }
   }
-  return isUpdateMode ? 'Update' : 'Save';
+
+  return sourceStatus;
+};
+
+const getPersistText = (
+  isSignedOut: boolean,
+  sourceOwnershipStatus: SourceOwnershipStatus,
+): string => {
+  if (isSignedOut) {
+    switch (sourceOwnershipStatus) {
+      case 'no-source':
+        return 'Login to save';
+      case 'user-does-not-own-source':
+      case 'user-owns-source':
+        return 'Login to fork';
+    }
+  }
+  switch (sourceOwnershipStatus) {
+    case 'no-source':
+    case 'user-owns-source':
+      return 'Save';
+    case 'user-does-not-own-source':
+      return 'Fork';
+  }
 };
 
 export const EditorPanel: React.FC<{
   defaultValue: string;
-  isUpdateMode: boolean;
   immediateUpdate: boolean;
   onSave: (code: string) => void;
+  onCreateNew: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
-}> = ({ defaultValue, isUpdateMode, immediateUpdate, onSave, onChange }) => {
-  const clientService = useClient();
-  const clientState = useSelector(clientService, (state) => state);
-  const persistText = getPersistText(
-    clientState.matches('signed_out'),
-    isUpdateMode,
+  onChangedCodeValue: (code: string) => void;
+}> = ({
+  defaultValue,
+  immediateUpdate,
+  onSave,
+  onChange,
+  onChangedCodeValue,
+  onCreateNew,
+}) => {
+  const authService = useAuth();
+  const [authState] = useActor(authService);
+  const sourceService = useSelector(
+    authService,
+    (state) => state.context.sourceRef!,
   );
-  const isPersistPending = clientState.hasTag('persisting');
+  const [sourceState] = useActor(sourceService);
+
+  const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
+
+  const simService = useSimulation();
+  const simMode: SimMode = useSelector(simService, (state) =>
+    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
+  );
+  const persistText = getPersistText(
+    authState.matches('signed_out'),
+    sourceOwnershipStatus,
+  );
+
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
@@ -144,44 +212,107 @@ export const EditorPanel: React.FC<{
         onChange: (ctx) => {
           onChange(ctx.machines!);
         },
+        onChangedCodeValue: (ctx) => {
+          onChangedCodeValue(ctx.code);
+        },
       },
     },
   );
+  const isVisualizing = current.hasTag('visualizing');
 
   return (
-    <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-      <EditorWithXStateImports
-        defaultValue={defaultValue}
-        readonly={current.matches('compiling')}
-        onMount={(_, monaco) => {
-          send({ type: 'EDITOR_READY', editorRef: monaco });
+    <>
+      <CommandPalette
+        onSave={() => {
+          onSave(current.context.code);
         }}
-        onChange={(code) => {
-          send({ type: 'EDITOR_CHANGED_VALUE', code });
+        onVisualize={() => {
+          send('COMPILE');
         }}
       />
-      <HStack>
-        <Button
-          disabled={current.matches('compiling')}
-          onClick={() => {
-            send({
-              type: 'COMPILE',
-            });
-          }}
-        >
-          Update Chart
-        </Button>
-        <Button
-          isLoading={isPersistPending}
-          loadingText={persistText}
-          disabled={isPersistPending || current.matches('compiling')}
-          onClick={() => {
-            onSave(current.context.code);
-          }}
-        >
-          {persistText}
-        </Button>
-      </HStack>
-    </Box>
+      <Box height="100%" display="grid" gridTemplateRows="1fr auto">
+        {simMode === 'visualizing' && (
+          <>
+            <EditorWithXStateImports
+              defaultValue={defaultValue}
+              onMount={(_, monaco) => {
+                send({ type: 'EDITOR_READY', editorRef: monaco });
+              }}
+              onChange={(code) => {
+                send({ type: 'EDITOR_CHANGED_VALUE', code });
+              }}
+              onFormat={() => {
+                send({
+                  type: 'COMPILE',
+                });
+              }}
+              onSave={() => {
+                onSave(current.context.code);
+              }}
+            />
+            <HStack padding="2">
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + Enter"
+                closeDelay={500}
+              >
+                <Button
+                  disabled={isVisualizing}
+                  isLoading={isVisualizing}
+                  title="Visualize"
+                  onClick={() => {
+                    send({
+                      type: 'COMPILE',
+                    });
+                  }}
+                >
+                  Visualize
+                </Button>
+              </Tooltip>
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + S"
+                closeDelay={500}
+              >
+                <Button
+                  isLoading={sourceState.hasTag('persisting')}
+                  disabled={sourceState.hasTag('persisting') || isVisualizing}
+                  title={persistText}
+                  onClick={() => {
+                    onSave(current.context.code);
+                  }}
+                >
+                  {persistText}
+                </Button>
+              </Tooltip>
+              {sourceOwnershipStatus === 'user-owns-source' && (
+                <Button
+                  disabled={
+                    sourceState.hasTag('forking') ||
+                    current.matches('compiling')
+                  }
+                  isLoading={sourceState.hasTag('forking')}
+                  onClick={() => {
+                    onCreateNew(current.context.code);
+                  }}
+                >
+                  Fork
+                </Button>
+              )}
+            </HStack>
+          </>
+        )}
+        {simMode === 'inspecting' && (
+          <Box padding="4">
+            <Text as="strong">Inspection mode</Text>
+            <Text>
+              Services from a separate process are currently being inspected.
+            </Text>
+          </Box>
+        )}
+      </Box>
+    </>
   );
 };

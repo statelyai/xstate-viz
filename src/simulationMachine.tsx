@@ -163,6 +163,7 @@ export const simulationMachine = simModel.createMachine({
                   sessionId: event.sessionId,
                   machine: event.machine,
                   state,
+                  source: 'inspector',
                 }),
               );
               break;
@@ -188,6 +189,23 @@ export const simulationMachine = simModel.createMachine({
       },
     },
     active: {
+      initial: 'visualizing',
+      states: {
+        inspecting: {
+          tags: 'inspecting',
+        },
+        visualizing: {
+          tags: 'visualizing',
+          always: {
+            // Whenever any of the services are sourced from the inspector, we are actually in inspecting mode
+            cond: (ctx) =>
+              Object.values(ctx.serviceDataMap).some(
+                (serviceData) => serviceData!.source === 'inspector',
+              ),
+            target: 'inspecting',
+          },
+        },
+      },
       on: {
         'MACHINES.UPDATE': {},
         'MACHINES.RESET': {
