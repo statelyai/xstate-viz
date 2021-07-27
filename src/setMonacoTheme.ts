@@ -1,6 +1,6 @@
-export const setMonacoTheme = (
-  monaco: typeof import('monaco-editor/esm/vs/editor/editor.api'),
-) => {
+import { Monaco } from '@monaco-editor/react';
+
+export const setMonacoTheme = (monaco: Monaco) => {
   monaco.editor.defineTheme('xstate-viz', {
     base: 'vs-dark',
     inherit: true,
