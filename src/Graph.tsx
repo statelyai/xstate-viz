@@ -130,7 +130,7 @@ function getElkEdge(edge: DirectedGraphEdge) {
   };
 }
 
-function getPortId(edge: DirectedGraphEdge): `port:${string}` {
+function getPortId(edge: DirectedGraphEdge): string {
   return `port:${edge.id}`;
 }
 
