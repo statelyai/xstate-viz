@@ -1,5 +1,5 @@
-mutation CreateSourceFile($text: String!) {
-  createSourceFile(text: $text) {
+mutation CreateSourceFile($text: String!, $name: String!) {
+  createSourceFile(text: $text, name: $name) {
     ...SourceFile
   }
 }
