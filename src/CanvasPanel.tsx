@@ -2,8 +2,10 @@ import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
 import {
   Avatar,
   Box,
+  Button,
   ButtonGroup,
   ChakraProvider,
+  HStack,
   IconButton,
   Link,
   Stack,
@@ -21,6 +23,10 @@ import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
 
+const ButtonSeparator = () => (
+  <Box backgroundColor="whiteAlpha.400" width={0.5} height="60%" marginX={1} />
+);
+
 export const CanvasPanel: React.FC<{
   digraph: DirectedGraphNode;
 }> = ({ digraph }) => {
@@ -37,14 +43,9 @@ export const CanvasPanel: React.FC<{
 
   return (
     <Box display="grid" gridTemplateRows="auto 1fr">
-      <Box zIndex={1} bg="black">
-        <ChakraProvider theme={theme}>
-          <Stack
-            direction="row"
-            spacing="4"
-            alignItems="center"
-            justifyContent="space-between"
-          >
+      <ChakraProvider theme={theme}>
+        <HStack bg="black" justifyContent="space-between">
+          <Box zIndex={1} display="flex" alignItems="center">
             <ButtonGroup size="sm" spacing={2} padding={2}>
               <IconButton
                 aria-label="Zoom out"
@@ -59,43 +60,51 @@ export const CanvasPanel: React.FC<{
                 onClick={() => canvasService.send('ZOOM.IN')}
               />
               <IconButton
-                aria-label="Reset"
-                title="Reset"
+                aria-label="Reset canvas"
+                title="Reset canvas"
                 icon={<RepeatIcon />}
-                onClick={() => simService.send('MACHINES.RESET')}
+                onClick={() => canvasService.send('POSITION.RESET')}
               />
             </ButtonGroup>
-            {sourceState.context.sourceRegistryData && (
-              <Stack direction="row" spacing="3" alignItems="center" pr="4">
-                <Text fontWeight="medium" fontSize="sm" color="gray.100">
-                  {sourceState.context.sourceRegistryData?.name ||
-                    'Unnamed Source'}
-                </Text>
-                {sourceState.context.sourceRegistryData?.owner &&
-                  !userOwnsSource && (
-                    <Link
-                      href={registryLinks.viewUserById(
-                        sourceState.context.sourceRegistryData?.owner?.id,
-                      )}
-                    >
-                      <Avatar
-                        src={
-                          sourceState.context.sourceRegistryData.owner
-                            ?.avatarUrl || ''
-                        }
-                        name={
-                          sourceState.context.sourceRegistryData.owner
-                            ?.displayName || ''
-                        }
-                        style={{ height: '30px', width: '30px' }}
-                      ></Avatar>
-                    </Link>
-                  )}
-              </Stack>
-            )}
-          </Stack>
-        </ChakraProvider>
-      </Box>
+            <ButtonSeparator />
+            <Button
+              size="sm"
+              margin={2}
+              onClick={() => simService.send('MACHINES.RESET')}
+            >
+              {'Reset machine'}
+            </Button>
+          </Box>
+          {sourceState.context.sourceRegistryData && (
+            <Stack direction="row" spacing="3" alignItems="center" pr="4">
+              <Text fontWeight="medium" fontSize="sm" color="gray.100">
+                {sourceState.context.sourceRegistryData?.name ||
+                  'Unnamed Source'}
+              </Text>
+              {sourceState.context.sourceRegistryData?.owner &&
+                !userOwnsSource && (
+                  <Link
+                    href={registryLinks.viewUserById(
+                      sourceState.context.sourceRegistryData?.owner?.id,
+                    )}
+                  >
+                    <Avatar
+                      src={
+                        sourceState.context.sourceRegistryData.owner
+                          ?.avatarUrl || ''
+                      }
+                      name={
+                        sourceState.context.sourceRegistryData.owner
+                          ?.displayName || ''
+                      }
+                      style={{ height: '30px', width: '30px' }}
+                    ></Avatar>
+                  </Link>
+                )}
+            </Stack>
+          )}
+        </HStack>
+      </ChakraProvider>
       <CanvasContainer>
         <Graph digraph={digraph} />
       </CanvasContainer>

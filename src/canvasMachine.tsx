@@ -3,28 +3,28 @@ import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
 
-export const canvasModel = createModel(
-  {
-    zoom: 1,
-    pan: {
-      dx: 0,
-      dy: 0,
-    },
+const initialPosition = {
+  zoom: 1,
+  pan: {
+    dx: 0,
+    dy: 0,
   },
-  {
-    events: {
-      'ZOOM.OUT': () => ({}),
-      'ZOOM.IN': () => ({}),
-      PAN: (dx: number, dy: number) => ({ dx, dy }),
-      /**
-       * Occurs when a source changed id
-       */
-      SOURCE_CHANGED: (id: string | null) => ({
-        id,
-      }),
-    },
+};
+
+export const canvasModel = createModel(initialPosition, {
+  events: {
+    'ZOOM.OUT': () => ({}),
+    'ZOOM.IN': () => ({}),
+    'POSITION.RESET': () => ({}),
+    PAN: (dx: number, dy: number) => ({ dx, dy }),
+    /**
+     * Occurs when a source changed id
+     */
+    SOURCE_CHANGED: (id: string | null) => ({
+      id,
+    }),
   },
-);
+});
 
 const ZOOM_IN_FACTOR = 1.15;
 // exactly reversed factor so zooming in & out results in the same zoom values
@@ -55,6 +55,11 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           };
         },
       }),
+      target: '.throttling',
+      internal: false,
+    },
+    'POSITION.RESET': {
+      actions: canvasModel.assign(initialPosition),
       target: '.throttling',
       internal: false,
     },
