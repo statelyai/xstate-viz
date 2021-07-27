@@ -436,7 +436,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             return {};
           }
           return {
-            desiredMachineName: `Fork of ${context.desiredMachineName}`,
+            desiredMachineName: `${context.desiredMachineName} (forked)`,
           };
         }),
         showSaveErrorToast: send(
