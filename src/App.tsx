@@ -70,33 +70,32 @@ function App() {
   });
 
   return (
-    <PaletteProvider value={paletteService}>
-      <SimulationProvider value={simService}>
-        <Box
-          data-testid="app"
-          data-viz-theme="dark"
-          as="main"
-          display="grid"
-          gridTemplateColumns="1fr auto"
-          gridTemplateRows="1fr auto"
-          gridTemplateAreas="'canvas panels' 'footer footer'"
-          height="100vh"
-        >
-          {digraph ? (
-            <CanvasProvider value={canvasService}>
-              <CanvasPanel digraph={digraph} />
-            </CanvasProvider>
-          ) : (
-            <Box display="flex" justifyContent="center" alignItems="center">
-              <Text textAlign="center">
-                No machines to display yet...
-                <br />
-                Create one!
-              </Text>
-            </Box>
-          )}
-          <MachineNameChooserModal />
-          <AuthProvider value={authService}>
+    <AuthProvider value={authService}>
+      <PaletteProvider value={paletteService}>
+        <SimulationProvider value={simService}>
+          <Box
+            data-testid="app"
+            data-viz-theme="dark"
+            as="main"
+            display="grid"
+            gridTemplateColumns="1fr auto"
+            gridTemplateRows="1fr auto"
+            gridTemplateAreas="'canvas panels' 'footer footer'"
+            height="100vh"
+          >
+            {digraph ? (
+              <CanvasProvider value={canvasService}>
+                <CanvasPanel digraph={digraph} />
+              </CanvasProvider>
+            ) : (
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Text textAlign="center">
+                  No machines to display yet...
+                  <br />
+                  Create one!
+                </Text>
+              </Box>
+            )}
             <ChakraProvider theme={theme}>
               <ResizableBox gridArea="panels">
                 <Tabs
@@ -180,11 +179,12 @@ function App() {
                 </Tabs>
               </ResizableBox>
               <Footer />
+              <MachineNameChooserModal />
             </ChakraProvider>
-          </AuthProvider>
-        </Box>
-      </SimulationProvider>
-    </PaletteProvider>
+          </Box>
+        </SimulationProvider>
+      </PaletteProvider>
+    </AuthProvider>
   );
 }
 
