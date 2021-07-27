@@ -47,7 +47,12 @@ export const MachineNameChooserModal = () => {
               <FormLabel fontSize="sm">
                 Choose a name for your new machine
               </FormLabel>
-              <Input type="text" name="name" placeholder="Unnamed Source" />
+              <Input
+                type="text"
+                name="name"
+                placeholder="Unnamed Source"
+                defaultValue={sourceState.context.desiredMachineName || ''}
+              />
             </FormControl>
           </ModalBody>
           <ModalFooter>

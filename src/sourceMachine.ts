@@ -42,7 +42,7 @@ export const sourceModel = createModel(
     sourceRegistryData: null as null | SourceFileFragment,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     loggedInUserId: null! as string | null,
-    desiredName: null as string | null,
+    desiredMachineName: null as string | null,
   },
   {
     events: {
@@ -66,6 +66,7 @@ export const sourceModel = createModel(
       LOGGED_IN_USER_ID_UPDATED: (id: string | null | undefined) => ({ id }),
       CHOOSE_NAME: (name: string) => ({ name }),
       CLOSE_NAME_CHOOSER_MODAL: () => ({}),
+      MACHINE_ID_CHANGED: (id: string) => ({ id }),
     },
   },
 );
@@ -107,6 +108,17 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             };
           }),
         },
+        /**
+         * When the machine id changes from the sim machine,
+         * set the desiredMachineName to it
+         */
+        MACHINE_ID_CHANGED: {
+          actions: assign((context, event) => {
+            return {
+              desiredMachineName: event.id,
+            };
+          }),
+        },
       },
       states: {
         checking_url: {
@@ -124,11 +136,14 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               {
                 target: '#creating',
                 cond: isLoggedIn,
-                actions: assign((context, event) => {
-                  return {
-                    sourceRawContent: event.rawSource,
-                  };
-                }),
+                actions: [
+                  assign((context, event) => {
+                    return {
+                      sourceRawContent: event.rawSource,
+                    };
+                  }),
+                  'addForkOfToDesiredName',
+                ],
               },
               {
                 actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -230,6 +245,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       {
                         cond: isLoggedIn,
                         target: '#creating',
+                        actions: 'addForkOfToDesiredName',
                       },
                       {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -306,7 +322,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                   target: 'pendingSave',
                   actions: assign((context, event) => {
                     return {
-                      desiredName: event.name,
+                      desiredMachineName: event.name,
                     };
                   }),
                 },
@@ -321,16 +337,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             },
 
             pendingSave: {
-              exit: [
-                /**
-                 * Reset desired name when it's no longer required
-                 */
-                assign((context, event) => {
-                  return {
-                    desiredName: null,
-                  };
-                }),
-              ],
               tags: ['persisting'],
               invoke: {
                 src: 'createSourceFile',
@@ -422,6 +428,17 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
     },
     {
       actions: {
+        addForkOfToDesiredName: assign((context, event) => {
+          if (
+            !context.desiredMachineName ||
+            context.desiredMachineName?.startsWith('Fork of ')
+          ) {
+            return {};
+          }
+          return {
+            desiredMachineName: `Fork of ${context.desiredMachineName}`,
+          };
+        }),
         showSaveErrorToast: send(
           notifModel.events.BROADCAST(
             'An error occurred when saving.',
@@ -485,7 +502,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             CreateSourceFileDocument,
             {
               text: ctx.sourceRawContent,
-              name: ctx.desiredName || '',
+              name: ctx.desiredMachineName || '',
             },
             auth.session()?.access_token!,
           ).then((res) => {

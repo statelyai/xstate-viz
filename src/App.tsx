@@ -9,7 +9,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
@@ -48,12 +48,15 @@ function App() {
     [machine],
   );
   const authService = useInterpret(authMachine);
-  const sourceService = useSelector(
-    authService,
-    (state) => state.context.sourceRef,
-  );
 
   const [sourceState, sendToSourceService] = useSourceActor(authService);
+
+  useEffect(() => {
+    sendToSourceService({
+      type: 'MACHINE_ID_CHANGED',
+      id: machine?.id || '',
+    });
+  }, [machine?.id, sendToSourceService]);
 
   const sourceID = sourceState.context.sourceID;
 
