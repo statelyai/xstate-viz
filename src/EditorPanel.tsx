@@ -1,10 +1,11 @@
-import { Box, Button, HStack, Text } from '@chakra-ui/react';
+import { Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react';
 import { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
+import { CommandPalette } from './CommandPalette';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
@@ -37,13 +38,33 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   entry: [assign({ notifRef: () => spawn(notifMachine) })],
   initial: 'booting',
   states: {
-    booting: {},
+    booting: {
+      on: {
+        EDITOR_READY: [
+          {
+            cond: (ctx) => ctx.immediateUpdate,
+            actions: [
+              editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+            ],
+            target: 'compiling',
+          },
+          {
+            target: 'active',
+            actions: editorPanelModel.assign({
+              editorRef: (_, e) => e.editorRef,
+            }),
+          },
+        ],
+      },
+    },
     active: {},
     updating: {
+      tags: ['visualizing'],
       entry: send('UPDATE_MACHINE_PRESSED'),
       always: 'active',
     },
     compiling: {
+      tags: ['visualizing'],
       invoke: {
         src: (ctx) => {
           const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
@@ -80,19 +101,6 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     },
   },
   on: {
-    EDITOR_READY: [
-      {
-        cond: (ctx) => ctx.immediateUpdate,
-        actions: [
-          editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-        ],
-        target: 'compiling',
-      },
-      {
-        target: 'active',
-        actions: editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-      },
-    ],
     EDITOR_CHANGED_VALUE: {
       actions: [
         editorPanelModel.assign({ code: (_, e) => e.code }),
@@ -210,68 +218,101 @@ export const EditorPanel: React.FC<{
       },
     },
   );
+  const isVisualizing = current.hasTag('visualizing');
 
   return (
-    <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-      {simMode === 'visualizing' && (
-        <>
-          <EditorWithXStateImports
-            defaultValue={defaultValue}
-            readonly={current.matches('compiling')}
-            onMount={(_, monaco) => {
-              send({ type: 'EDITOR_READY', editorRef: monaco });
-            }}
-            onChange={(code) => {
-              send({ type: 'EDITOR_CHANGED_VALUE', code });
-            }}
-          />
-          <HStack>
-            <Button
-              disabled={current.matches('compiling')}
-              onClick={() => {
+    <>
+      <CommandPalette
+        onSave={() => {
+          onSave(current.context.code);
+        }}
+        onVisualize={() => {
+          send('COMPILE');
+        }}
+      />
+      <Box height="100%" display="grid" gridTemplateRows="1fr auto">
+        {simMode === 'visualizing' && (
+          <>
+            <EditorWithXStateImports
+              defaultValue={defaultValue}
+              onMount={(_, monaco) => {
+                send({ type: 'EDITOR_READY', editorRef: monaco });
+              }}
+              onChange={(code) => {
+                send({ type: 'EDITOR_CHANGED_VALUE', code });
+              }}
+              onFormat={() => {
                 send({
                   type: 'COMPILE',
                 });
               }}
-            >
-              Update Chart
-            </Button>
-            <Button
-              isLoading={sourceState.hasTag('persisting')}
-              disabled={
-                sourceState.hasTag('persisting') || current.matches('compiling')
-              }
-              onClick={() => {
+              onSave={() => {
                 onSave(current.context.code);
               }}
-            >
-              {persistText}
-            </Button>
-            {sourceOwnershipStatus === 'user-owns-source' && (
-              <Button
-                disabled={
-                  sourceState.hasTag('forking') || current.matches('compiling')
-                }
-                isLoading={sourceState.hasTag('forking')}
-                onClick={() => {
-                  onCreateNew(current.context.code);
-                }}
+            />
+            <HStack padding="2">
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + Enter"
+                closeDelay={500}
               >
-                Fork
-              </Button>
-            )}
-          </HStack>
-        </>
-      )}
-
-      {simMode === 'inspecting' && (
-        <Box padding="4">
-          <Text as="strong">Inspection mode</Text>
-          <Text>
-            Services from a separate process are currently being inspected.
-          </Text>
-        </Box>
-      )}
-    </Box>
+                <Button
+                  disabled={isVisualizing}
+                  isLoading={isVisualizing}
+                  title="Visualize"
+                  onClick={() => {
+                    send({
+                      type: 'COMPILE',
+                    });
+                  }}
+                >
+                  Visualize
+                </Button>
+              </Tooltip>
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + S"
+                closeDelay={500}
+              >
+                <Button
+                  isLoading={sourceState.hasTag('persisting')}
+                  disabled={sourceState.hasTag('persisting') || isVisualizing}
+                  title={persistText}
+                  onClick={() => {
+                    onSave(current.context.code);
+                  }}
+                >
+                  {persistText}
+                </Button>
+              </Tooltip>
+              {sourceOwnershipStatus === 'user-owns-source' && (
+                <Button
+                  disabled={
+                    sourceState.hasTag('forking') ||
+                    current.matches('compiling')
+                  }
+                  isLoading={sourceState.hasTag('forking')}
+                  onClick={() => {
+                    onCreateNew(current.context.code);
+                  }}
+                >
+                  Fork
+                </Button>
+              )}
+            </HStack>
+          </>
+        )}
+        {simMode === 'inspecting' && (
+          <Box padding="4">
+            <Text as="strong">Inspection mode</Text>
+            <Text>
+              Services from a separate process are currently being inspected.
+            </Text>
+          </Box>
+        )}
+      </Box>
+    </>
   );
 };
