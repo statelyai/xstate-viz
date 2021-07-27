@@ -29,7 +29,7 @@ export const canvasModel = createModel(initialPosition, {
 const ZOOM_IN_FACTOR = 1.15;
 // exactly reversed factor so zooming in & out results in the same zoom values
 const ZOOM_OUT_FACTOR = 1 / ZOOM_IN_FACTOR;
-const MAX_ZOOM_OUT_FACTOR = 0.5;
+const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
 
