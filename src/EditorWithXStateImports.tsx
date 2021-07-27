@@ -4,7 +4,7 @@ import { KeyCode, KeyMod } from 'monaco-editor';
 import { SpinnerWithText } from './SpinnerWithText';
 import { format } from 'prettier/standalone';
 import tsParser from 'prettier/parser-typescript';
-import { usePalette } from './PaletteContext';
+import { setMonacoTheme } from './setMonacoTheme';
 
 function prettify(code: string) {
   return format(code, {
@@ -59,6 +59,7 @@ export const EditorWithXStateImports = (
                 window.location.origin,
               )}/ts-worker.js`,
             });
+            setMonacoTheme(monaco);
             monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
               ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
               module: monaco.languages.typescript.ModuleKind.CommonJS,
