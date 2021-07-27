@@ -3,9 +3,9 @@ schema:
 documents:
   - 'src/graphql/**/*.graphql'
 generates:
-  graphql/schemaTypes.generated.ts:
+  src/graphql/schemaTypes.generated.ts:
     - typescript
-  graphql/:
+  src/graphql/:
     preset: near-operation-file
     presetConfig:
       baseTypesPath: 'schemaTypes.generated.ts'
