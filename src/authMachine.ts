@@ -20,7 +20,7 @@ import {
   GetLoggedInUserDataQuery,
   LoggedInUserFragment,
 } from './graphql/GetLoggedInUserData.generated';
-import { notifMachine } from './notificationMachine';
+import { notifMachine, notifModel } from './notificationMachine';
 import {
   makeSourceMachine,
   SourceMachineActorRef,
@@ -182,6 +182,20 @@ export const authMachine = createMachine<typeof authModel>(
                     },
                     {
                       to: (ctx) => ctx.sourceRef!,
+                    },
+                  ),
+                ],
+              },
+              onError: {
+                target: 'idle',
+                actions: [
+                  send(
+                    notifModel.events.BROADCAST(
+                      `Could not load your user's details. Some things may not work as expected. Reload the page to retry.`,
+                      'error',
+                    ),
+                    {
+                      to: (ctx) => ctx.notifRef,
                     },
                   ),
                 ],
