@@ -53,7 +53,6 @@ export const CanvasPanel: React.FC<{
             size="sm"
             margin={2}
             onClick={() => simService.send('MACHINES.RESET')}
-            title="Reset machines"
           >
             RESET
           </Button>
