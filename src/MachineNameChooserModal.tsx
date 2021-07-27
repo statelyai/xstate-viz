@@ -12,11 +12,11 @@ import {
   ModalOverlay,
 } from '@chakra-ui/react';
 import { useAuth } from './authContext';
-import { useSourceState } from './sourceMachine';
+import { useSourceActor } from './sourceMachine';
 
 export const MachineNameChooserModal = () => {
   const authService = useAuth();
-  const [sourceState, send] = useSourceState(authService);
+  const [sourceState, send] = useSourceActor(authService);
 
   return (
     <Modal
@@ -44,10 +44,13 @@ export const MachineNameChooserModal = () => {
           <ModalHeader>Choose Name</ModalHeader>
           <ModalBody>
             <FormControl>
-              <FormLabel fontSize="sm">
-                Choose a name for your new machine
-              </FormLabel>
-              <Input type="text" name="name" placeholder="Unnamed Source" />
+              <FormLabel fontSize="sm">Choose a name for your fork</FormLabel>
+              <Input
+                type="text"
+                name="name"
+                placeholder="Unnamed Source"
+                defaultValue={sourceState.context.desiredMachineName || ''}
+              />
             </FormControl>
           </ModalBody>
           <ModalFooter>
@@ -62,7 +65,11 @@ export const MachineNameChooserModal = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" colorScheme="blue">
+              <Button
+                type="submit"
+                colorScheme="blue"
+                loading={sourceState.hasTag('persisting')}
+              >
                 Submit
               </Button>
             </HStack>

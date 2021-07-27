@@ -37,4 +37,7 @@ export interface ServiceData {
   machine: AnyStateMachine;
   state: AnyState;
   status?: AnyInterpreter['status'];
+  source?: 'inspector' | 'visualizer';
 }
+
+export type SimMode = 'inspecting' | 'visualizing';

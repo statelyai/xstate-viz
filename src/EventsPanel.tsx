@@ -9,6 +9,7 @@ import {
   Thead,
   Th,
   Button,
+  ButtonGroup,
   Popover,
   PopoverArrow,
   PopoverBody,
@@ -36,6 +37,7 @@ import {
 } from '@chakra-ui/icons';
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { vizReactJsonTheme } from './vizReactJsonTheme';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -159,7 +161,7 @@ export const EventsPanel: React.FC = () => {
   const rawEvents = state.context!.events;
   const nextEvents = useSelector(
     sim,
-    (state) => selectMachine(state)?.state.nextEvents,
+    (state) => selectMachine(state)?.state?.nextEvents,
     (a, b) => JSON.stringify(a) === JSON.stringify(b),
   );
 
@@ -304,7 +306,7 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
       {show ? (
         <Tr>
           <Td colSpan={3}>
-            <ReactJson src={event.data} theme="monokai" />
+            <ReactJson src={event.data} theme={vizReactJsonTheme} />
           </Td>
         </Tr>
       ) : null}
@@ -404,7 +406,7 @@ const NewEvent: React.FC<{
         {({ onClose }) => (
           <>
             <PopoverTrigger>
-              <Button variant="outline">Send event...</Button>
+              <Button variant="outline">Send event</Button>
             </PopoverTrigger>
             <Portal>
               <PopoverContent>
@@ -451,24 +453,8 @@ const NewEvent: React.FC<{
                     }}
                   />
                 </PopoverBody>
-                <PopoverFooter>
-                  <Box
-                    isAttached
-                    display="flex"
-                    flexDirection="row-reverse"
-                    css={{
-                      gap: '.5rem',
-                    }}
-                  >
-                    <Button
-                      disabled={!state.hasTag('valid')}
-                      onClick={() => {
-                        send(newEventModel.events['EVENT.SEND']());
-                        onClose();
-                      }}
-                    >
-                      Send
-                    </Button>
+                <PopoverFooter display="flex" justifyContent="flex-end">
+                  <ButtonGroup spacing={2}>
                     <Button
                       variant="ghost"
                       onClick={() => {
@@ -478,7 +464,16 @@ const NewEvent: React.FC<{
                     >
                       Cancel
                     </Button>
-                  </Box>
+                    <Button
+                      disabled={!state.hasTag('valid')}
+                      onClick={() => {
+                        send(newEventModel.events['EVENT.SEND']());
+                        onClose();
+                      }}
+                    >
+                      Send
+                    </Button>
+                  </ButtonGroup>
                 </PopoverFooter>
               </PopoverContent>
             </Portal>

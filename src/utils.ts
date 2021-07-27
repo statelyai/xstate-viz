@@ -3,14 +3,19 @@ import * as React from 'react';
 import type {
   ActionObject,
   AnyEventObject,
+  Interpreter,
+  StateFrom,
+  StateMachine,
   StateNode,
   TransitionDefinition,
 } from 'xstate';
 import { AnyState, AnyStateMachine } from './types';
 import { print } from 'graphql';
 
-export function createRequiredContext<T>(displayName: string) {
-  const context = React.createContext<T | null>(null);
+export function createRequiredContext<
+  TInterpreter extends Interpreter<any, any, any>,
+>(displayName: string) {
+  const context = React.createContext<TInterpreter | null>(null);
   context.displayName = displayName;
 
   const useContext = () => {
@@ -23,7 +28,15 @@ export function createRequiredContext<T>(displayName: string) {
     return ctx;
   };
 
-  return [context.Provider, useContext] as const;
+  /**
+   * A way to create a typesafe selector you can pass into
+   * useSelector
+   */
+  const createSelector = <Data>(
+    selector: (state: TInterpreter['state']) => Data,
+  ) => selector;
+
+  return [context.Provider, useContext, createSelector] as const;
 }
 
 export interface Edge<
@@ -121,7 +134,18 @@ export const gQuery = <Data, Variables>(
       query: print(query),
       variables,
     }),
-  }).then((resp) => resp.json());
+  })
+    .then((resp) => resp.json())
+    .then((res) => {
+      /**
+       * Throw the GQL error if it comes - this
+       * doesn't happen by default
+       */
+      if (res.errors?.[0]?.message) {
+        throw new Error(res.errors?.[0].message);
+      }
+      return res;
+    });
 
 export function willChange(
   machine: AnyStateMachine,

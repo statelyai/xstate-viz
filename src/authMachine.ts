@@ -15,7 +15,6 @@ import {
   spawn,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import {
   GetLoggedInUserDataDocument,
   GetLoggedInUserDataQuery,
@@ -27,12 +26,11 @@ import {
   SourceMachineActorRef,
   sourceModel,
 } from './sourceMachine';
-import { gQuery, updateQueryParamsWithoutReload } from './utils';
+import { gQuery } from './utils';
 
 const authModel = createModel(
   {
     client: null! as SupabaseClient,
-    createdMachine: null! as any,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     sourceRef: null as SourceMachineActorRef | null,
     loggedInUserData: null as null | LoggedInUserFragment,
@@ -57,12 +55,12 @@ const authOptions: Partial<
   >
 > = {
   services: {
-    signinUser: (ctx, e) =>
+    signInUser: (ctx, e) =>
       ctx.client.auth.signIn(
         { provider: (e as any).provider },
         { redirectTo: window.location.href },
       ),
-    signoutUser: (ctx) => {
+    signOutUser: (ctx) => {
       return ctx.client.auth.signOut();
     },
   },
@@ -70,7 +68,7 @@ const authOptions: Partial<
 
 export const authMachine = createMachine<typeof authModel>(
   {
-    id: 'client',
+    id: 'auth',
     initial: 'initializing',
     context: authModel.initialContext,
     entry: assign({
@@ -132,7 +130,7 @@ export const authMachine = createMachine<typeof authModel>(
           idle: {},
           choosing_provider: {
             on: {
-              SIGN_IN: '#client.signing_in',
+              SIGN_IN: '#auth.signing_in',
               CANCEL_PROVIDER: {
                 target: 'idle',
               },
@@ -142,7 +140,7 @@ export const authMachine = createMachine<typeof authModel>(
       },
       signed_in: {
         exit: [
-          send((ctx) => sourceModel.events.LOGGED_IN_USER_ID_UPDATED(null), {
+          send(sourceModel.events.LOGGED_IN_USER_ID_UPDATED(null), {
             to: (ctx) => ctx.sourceRef!,
           }),
         ],
@@ -179,7 +177,7 @@ export const authMachine = createMachine<typeof authModel>(
                   send(
                     (ctx, event: DoneInvokeEvent<GetLoggedInUserDataQuery>) => {
                       return sourceModel.events.LOGGED_IN_USER_ID_UPDATED(
-                        event.data?.getLoggedInUser?.id || null,
+                        event.data?.getLoggedInUser?.id,
                       );
                     },
                     {
@@ -195,8 +193,7 @@ export const authMachine = createMachine<typeof authModel>(
       },
       signing_in: {
         invoke: {
-          src: 'signinUser',
-          // No need, eventual consistency from the auth listener
+          src: 'signInUser',
           onDone: {
             target: 'signed_in',
           },
@@ -217,7 +214,7 @@ export const authMachine = createMachine<typeof authModel>(
       },
       signing_out: {
         invoke: {
-          src: 'signoutUser',
+          src: 'signOutUser',
           onDone: {
             target: 'signed_out',
           },

@@ -1,14 +1,17 @@
-import { Button, HStack, Box } from '@chakra-ui/react';
+import { Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react';
+import { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
+import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
+import { CommandPalette } from './CommandPalette';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import type { AnyStateMachine } from './types';
-import { Monaco } from '@monaco-editor/react';
+import { useSimulation } from './SimulationContext';
+import { SourceMachineState } from './sourceMachine';
+import type { AnyStateMachine, SimMode } from './types';
 
 const editorPanelModel = createModel(
   {
@@ -35,13 +38,33 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   entry: [assign({ notifRef: () => spawn(notifMachine) })],
   initial: 'booting',
   states: {
-    booting: {},
+    booting: {
+      on: {
+        EDITOR_READY: [
+          {
+            cond: (ctx) => ctx.immediateUpdate,
+            actions: [
+              editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+            ],
+            target: 'compiling',
+          },
+          {
+            target: 'active',
+            actions: editorPanelModel.assign({
+              editorRef: (_, e) => e.editorRef,
+            }),
+          },
+        ],
+      },
+    },
     active: {},
     updating: {
+      tags: ['visualizing'],
       entry: send('UPDATE_MACHINE_PRESSED'),
       always: 'active',
     },
     compiling: {
+      tags: ['visualizing'],
       invoke: {
         src: (ctx) => {
           const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
@@ -78,19 +101,6 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     },
   },
   on: {
-    EDITOR_READY: [
-      {
-        cond: (ctx) => ctx.immediateUpdate,
-        actions: [
-          editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-        ],
-        target: 'compiling',
-      },
-      {
-        target: 'active',
-        actions: editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-      },
-    ],
     EDITOR_CHANGED_VALUE: {
       actions: [
         editorPanelModel.assign({ code: (_, e) => e.code }),
@@ -112,21 +122,42 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   },
 });
 
-export type SourceStatus =
+export type SourceOwnershipStatus =
   | 'user-owns-source'
   | 'no-source'
   | 'user-does-not-own-source';
 
-const getPersistText = (isSignedOut: boolean, sourceStatus: SourceStatus) => {
+const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
+  let sourceStatus: SourceOwnershipStatus = 'no-source';
+
+  if (!sourceState.matches('no_source')) {
+    if (
+      sourceState.context.loggedInUserId ===
+      sourceState.context.sourceRegistryData?.owner?.id
+    ) {
+      sourceStatus = 'user-owns-source';
+    } else {
+      sourceStatus = 'user-does-not-own-source';
+    }
+  }
+
+  return sourceStatus;
+};
+
+const getPersistText = (
+  isSignedOut: boolean,
+  sourceOwnershipStatus: SourceOwnershipStatus,
+): string => {
   if (isSignedOut) {
-    switch (sourceStatus) {
+    switch (sourceOwnershipStatus) {
       case 'no-source':
         return 'Login to save';
-      default:
+      case 'user-does-not-own-source':
+      case 'user-owns-source':
         return 'Login to fork';
     }
   }
-  switch (sourceStatus) {
+  switch (sourceOwnershipStatus) {
     case 'no-source':
     case 'user-owns-source':
       return 'Save';
@@ -138,7 +169,6 @@ const getPersistText = (isSignedOut: boolean, sourceStatus: SourceStatus) => {
 export const EditorPanel: React.FC<{
   defaultValue: string;
   immediateUpdate: boolean;
-  sourceStatus: SourceStatus;
   onSave: (code: string) => void;
   onCreateNew: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
@@ -149,20 +179,25 @@ export const EditorPanel: React.FC<{
   onSave,
   onChange,
   onChangedCodeValue,
-  sourceStatus,
   onCreateNew,
 }) => {
   const authService = useAuth();
-  const authState = useSelector(authService, (state) => state);
+  const [authState] = useActor(authService);
   const sourceService = useSelector(
     authService,
     (state) => state.context.sourceRef!,
   );
   const [sourceState] = useActor(sourceService);
 
+  const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
+
+  const simService = useSimulation();
+  const simMode: SimMode = useSelector(simService, (state) =>
+    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
+  );
   const persistText = getPersistText(
     authState.matches('signed_out'),
-    sourceStatus,
+    sourceOwnershipStatus,
   );
 
   const [current, send] = useMachine(
@@ -183,55 +218,101 @@ export const EditorPanel: React.FC<{
       },
     },
   );
+  const isVisualizing = current.hasTag('visualizing');
 
   return (
-    <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-      <EditorWithXStateImports
-        defaultValue={defaultValue}
-        readonly={current.matches('compiling')}
-        onMount={(_, monaco) => {
-          send({ type: 'EDITOR_READY', editorRef: monaco });
+    <>
+      <CommandPalette
+        onSave={() => {
+          onSave(current.context.code);
         }}
-        onChange={(code) => {
-          send({ type: 'EDITOR_CHANGED_VALUE', code });
+        onVisualize={() => {
+          send('COMPILE');
         }}
       />
-      <HStack>
-        <Button
-          disabled={current.matches('compiling')}
-          onClick={() => {
-            send({
-              type: 'COMPILE',
-            });
-          }}
-        >
-          Update Chart
-        </Button>
-        <Button
-          isLoading={sourceState.hasTag('persisting')}
-          disabled={
-            sourceState.hasTag('persisting') || current.matches('compiling')
-          }
-          onClick={() => {
-            onSave(current.context.code);
-          }}
-        >
-          {persistText}
-        </Button>
-        {sourceStatus === 'user-owns-source' && (
-          <Button
-            disabled={
-              sourceState.hasTag('persisting') || current.matches('compiling')
-            }
-            isLoading={sourceState.hasTag('persisting')}
-            onClick={() => {
-              onCreateNew(current.context.code);
-            }}
-          >
-            Fork
-          </Button>
+      <Box height="100%" display="grid" gridTemplateRows="1fr auto">
+        {simMode === 'visualizing' && (
+          <>
+            <EditorWithXStateImports
+              defaultValue={defaultValue}
+              onMount={(_, monaco) => {
+                send({ type: 'EDITOR_READY', editorRef: monaco });
+              }}
+              onChange={(code) => {
+                send({ type: 'EDITOR_CHANGED_VALUE', code });
+              }}
+              onFormat={() => {
+                send({
+                  type: 'COMPILE',
+                });
+              }}
+              onSave={() => {
+                onSave(current.context.code);
+              }}
+            />
+            <HStack padding="2">
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + Enter"
+                closeDelay={500}
+              >
+                <Button
+                  disabled={isVisualizing}
+                  isLoading={isVisualizing}
+                  title="Visualize"
+                  onClick={() => {
+                    send({
+                      type: 'COMPILE',
+                    });
+                  }}
+                >
+                  Visualize
+                </Button>
+              </Tooltip>
+              <Tooltip
+                bg="black"
+                color="white"
+                label="Ctrl/CMD + S"
+                closeDelay={500}
+              >
+                <Button
+                  isLoading={sourceState.hasTag('persisting')}
+                  disabled={sourceState.hasTag('persisting') || isVisualizing}
+                  title={persistText}
+                  onClick={() => {
+                    onSave(current.context.code);
+                  }}
+                >
+                  {persistText}
+                </Button>
+              </Tooltip>
+              {sourceOwnershipStatus === 'user-owns-source' && (
+                <Button
+                  disabled={
+                    sourceState.hasTag('forking') ||
+                    current.matches('compiling')
+                  }
+                  isLoading={sourceState.hasTag('forking')}
+                  onClick={() => {
+                    onCreateNew(current.context.code);
+                  }}
+                >
+                  Fork
+                </Button>
+              )}
+            </HStack>
+          </>
         )}
-      </HStack>
-    </Box>
+        {simMode === 'inspecting' && (
+          <Box padding="4">
+            <Text as="strong">Inspection mode</Text>
+            <Text>
+              Services from a separate process are currently being inspected.
+            </Text>
+          </Box>
+        )}
+      </Box>
+    </>
   );
 };
