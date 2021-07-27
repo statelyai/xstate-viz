@@ -18,6 +18,7 @@ import {
 import { useActor, useSelector } from '@xstate/react';
 import React from 'react';
 import { useAuth } from './authContext';
+import { registryLinks } from './registryLinks';
 
 export const Login: React.FC = () => {
   const authService = useAuth();
@@ -52,6 +53,16 @@ export const Login: React.FC = () => {
             />
           </MenuButton>
           <MenuList>
+            {state.context.loggedInUserData && (
+              <MenuItem
+                as="a"
+                href={registryLinks.viewUserById(
+                  state.context.loggedInUserData.id,
+                )}
+              >
+                View Machines
+              </MenuItem>
+            )}
             <MenuItem
               onClick={() => {
                 authService.send('SIGN_OUT');
