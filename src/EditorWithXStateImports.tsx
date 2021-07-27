@@ -1,10 +1,11 @@
 import { ClassNames } from '@emotion/react';
-import Editor, { OnMount } from '@monaco-editor/react';
-import { KeyCode, KeyMod } from 'monaco-editor';
+import Editor, { OnMount, Monaco } from '@monaco-editor/react';
+import { KeyCode, KeyMod, editor } from 'monaco-editor';
 import { SpinnerWithText } from './SpinnerWithText';
 import { format } from 'prettier/standalone';
 import tsParser from 'prettier/parser-typescript';
 import { setMonacoTheme } from './setMonacoTheme';
+import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
 
 function prettify(code: string) {
   return format(code, {
@@ -27,6 +28,44 @@ interface EditorWithXStateImportsProps {
   onFormat?: () => void;
   defaultValue?: string;
 }
+
+// based on the logic here: https://github.com/microsoft/TypeScript-Website/blob/103f80e7490ad75c34917b11e3ebe7ab9e8fc418/packages/sandbox/src/index.ts
+const withTypeAcquisition = (
+  editor: editor.IStandaloneCodeEditor,
+  monaco: Monaco,
+): editor.IStandaloneCodeEditor => {
+  const addLibraryToRuntime = (code: string, path: string) => {
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(code, path);
+    const uri = monaco.Uri.file(path);
+    if (monaco.editor.getModel(uri) === null) {
+      monaco.editor.createModel(code, 'javascript', uri);
+    }
+  };
+
+  const textUpdated = () => {
+    const code = editor.getModel()!.getValue();
+    detectNewImportsToAcquireTypeFor(
+      code,
+      addLibraryToRuntime,
+      window.fetch.bind(window),
+      { logger: console },
+    );
+  };
+
+  let debouncingTimer = false;
+  editor.onDidChangeModelContent((_e) => {
+    if (debouncingTimer) return;
+    debouncingTimer = true;
+    setTimeout(() => {
+      debouncingTimer = false;
+      textUpdated();
+    }, 1000);
+  });
+
+  textUpdated();
+
+  return editor;
+};
 
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
@@ -67,15 +106,6 @@ export const EditorWithXStateImports = (
                 monaco.languages.typescript.ModuleResolutionKind.NodeJs,
               strict: true,
             });
-
-            const indexFile = await fetch(`/xstate.d.ts.txt`).then((res) =>
-              res.text(),
-            );
-
-            monaco.languages.typescript.typescriptDefaults.addExtraLib(
-              indexFile,
-              'file:///node_modules/xstate/index.d.ts',
-            );
 
             // Prettier to format
             // Ctrl/CMD + Enter to visualize
@@ -119,7 +149,7 @@ export const EditorWithXStateImports = (
               },
             });
 
-            props.onMount?.(editor, monaco);
+            props.onMount?.(withTypeAcquisition(editor, monaco), monaco);
           }}
         />
       )}
