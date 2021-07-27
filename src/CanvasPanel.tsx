@@ -16,7 +16,10 @@ import React from 'react';
 import { getLoggedInUserData, useAuth } from './authContext';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
-import { getShouldEnableZoomOutButton } from './canvasMachine';
+import {
+  getShouldEnableZoomInButton,
+  getShouldEnableZoomOutButton,
+} from './canvasMachine';
 import { DirectedGraphNode } from './directedGraph';
 import { Graph } from './Graph';
 import { registryLinks } from './registryLinks';
@@ -47,6 +50,11 @@ export const CanvasPanel: React.FC<{
     getShouldEnableZoomOutButton,
   );
 
+  const shouldEnableZoomInButton = useSelector(
+    canvasService,
+    getShouldEnableZoomInButton,
+  );
+
   return (
     <Box display="grid" gridTemplateRows="auto 1fr">
       <ChakraProvider theme={theme}>
@@ -64,6 +72,7 @@ export const CanvasPanel: React.FC<{
                 aria-label="Zoom in"
                 title="Zoom in"
                 icon={<AddIcon />}
+                disabled={!shouldEnableZoomInButton}
                 onClick={() => canvasService.send('ZOOM.IN')}
               />
               <IconButton

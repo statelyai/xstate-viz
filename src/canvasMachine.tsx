@@ -31,6 +31,8 @@ const ZOOM_IN_FACTOR = 1.15;
 const ZOOM_OUT_FACTOR = 1 / ZOOM_IN_FACTOR;
 const MAX_ZOOM_OUT_FACTOR = 0.5;
 
+const MAX_ZOOM_IN_FACTOR = 2;
+
 export const canvasMachine = createMachine<typeof canvasModel>({
   context: canvasModel.initialContext,
   on: {
@@ -44,6 +46,7 @@ export const canvasMachine = createMachine<typeof canvasModel>({
     },
     'ZOOM.IN': {
       actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom * ZOOM_IN_FACTOR }),
+      cond: (ctx) => ctx.zoom < MAX_ZOOM_IN_FACTOR,
       target: '.throttling',
       internal: false,
     },
@@ -110,4 +113,10 @@ export const getShouldEnableZoomOutButton = (
   state: StateFrom<typeof canvasMachine>,
 ) => {
   return state.context.zoom > MAX_ZOOM_OUT_FACTOR;
+};
+
+export const getShouldEnableZoomInButton = (
+  state: StateFrom<typeof canvasMachine>,
+) => {
+  return state.context.zoom < MAX_ZOOM_IN_FACTOR;
 };
