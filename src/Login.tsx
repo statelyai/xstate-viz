@@ -57,7 +57,7 @@ export const Login: React.FC = () => {
               <MenuItem
                 as="a"
                 href={registryLinks.viewUserById(
-                  state.context.loggedInUserData?.id,
+                  state.context.loggedInUserData.id,
                 )}
               >
                 View Machines
