@@ -259,7 +259,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               entry: [
                 send(
                   (_, e: any) =>
-                    notifModel.events.BROADCAST(e.data.toString, 'error'),
+                    notifModel.events.BROADCAST(e.data.toString(), 'error'),
                   { to: (ctx: any) => ctx.notifRef },
                 ),
                 (_, e: any) => {
