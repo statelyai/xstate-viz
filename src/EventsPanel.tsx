@@ -38,6 +38,7 @@ import {
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { vizReactJsonTheme } from './vizReactJsonTheme';
+import { setMonacoTheme } from './setMonacoTheme';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -436,14 +437,16 @@ const NewEvent: React.FC<{
                       </Button>
                     ))}
                 </PopoverHeader>
-                <PopoverBody>
+                <PopoverBody bg="gray.800">
                   <Editor
                     language="json"
-                    theme="vs-dark"
                     options={{
                       minimap: { enabled: false },
                       lineNumbers: 'off',
                       tabSize: 2,
+                    }}
+                    onMount={(editor, monaco) => {
+                      setMonacoTheme(monaco);
                     }}
                     height="150px"
                     width="auto"
