@@ -5,6 +5,35 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { format } from 'prettier/standalone';
 import tsParser from 'prettier/parser-typescript';
 import { setMonacoTheme } from './setMonacoTheme';
+import { SourceProvider } from './sourceMachine';
+import { uniq } from './utils';
+
+function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
+  const rootNames: string[] = [];
+  let text = '';
+
+  for (const identifier of usedXStateGistIdentifiers) {
+    switch (identifier) {
+      case 'raise':
+        rootNames.push('actions');
+        text += 'const { raise } = actions;\n';
+        break;
+      case 'XState':
+        text += 'import * as XState from "xstate";\n';
+        break;
+      default:
+        rootNames.push(identifier);
+        break;
+    }
+  }
+
+  if (rootNames.length) {
+    // this uses `uniq` on the `rootNames` list because `actions` could be pushed into it while it was already in the list
+    text = `import { ${uniq(rootNames).join(', ')} } from "xstate";\n${text}`;
+  }
+
+  return text;
+}
 
 function prettify(code: string) {
   return format(code, {
@@ -25,6 +54,7 @@ interface EditorWithXStateImportsProps {
   onMount?: OnMount;
   onSave?: () => void;
   onFormat?: () => void;
+  sourceProvider: SourceProvider | null;
   defaultValue?: string;
 }
 
@@ -118,6 +148,23 @@ export const EditorWithXStateImports = (
                 editor.getAction('editor.action.formatDocument').run();
               },
             });
+
+            if (props.sourceProvider === 'gist') {
+              const uri = monaco.Uri.parse('main.ts');
+              const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+              const tsWorker = await getWorker(uri);
+              const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
+                uri.toString(),
+              );
+              if (usedXStateGistIdentifiers.length > 0) {
+                editor.executeEdits(uri.toString(), [
+                  {
+                    range: new monaco.Range(0, 0, 0, 0),
+                    text: buildGistFixupImportsText(usedXStateGistIdentifiers),
+                  },
+                ]);
+              }
+            }
 
             props.onMount?.(editor, monaco);
           }}

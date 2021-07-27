@@ -1,3 +1,11 @@
+// codes taken from the TS codebase, this ts-worker is not bundled right now so we can't easily use any module system here to import these
+// https://github.com/microsoft/TypeScript/blob/1aac3555f7ebbfc10515d2ba28f041e03e75d885/src/compiler/diagnosticMessages.json#L1457-L1460
+const CANNOT_FIND_NAME_CODE = 2304;
+// https://github.com/microsoft/TypeScript/blob/1aac3555f7ebbfc10515d2ba28f041e03e75d885/src/compiler/diagnosticMessages.json#L7110-L7113
+const NO_VALUE_EXISTS_IN_SCOPE_FOR_THE_SHORTHAND_PROPERTY_CODE = 18004;
+
+const uniq = (arr) => Array.from(new Set(arr));
+
 // eslint-disable-next-line no-restricted-globals
 self.customTSWorkerFactory = (TypeScriptWorker) => {
   return class extends TypeScriptWorker {
@@ -32,8 +40,39 @@ self.customTSWorkerFactory = (TypeScriptWorker) => {
         data,
       );
     }
-    queryXStateIdentifiers() {
-      throw new Error('Not implemented yet.');
+    // lists what has been used from the list of things initially exposed here:
+    // https://github.com/statecharts/xstate-viz/blob/87e87c8610ed84d5d61975c8451be7aba21ca18a/src/StateChart.tsx#L143-L151
+    queryXStateGistIdentifiers(fileName) {
+      const exposedToGists = new Set([
+        'Machine',
+        'interpret',
+        'assign',
+        'send',
+        'sendParent',
+        'spawn',
+        'raise',
+        'actions',
+        'XState',
+      ]);
+      const program = this._languageService.getProgram();
+      const sourceFile = program.getSourceFile(fileName);
+      const diagnostics = program.getSemanticDiagnostics(sourceFile);
+
+      return uniq(
+        diagnostics
+          .filter((diagnostic) => {
+            switch (diagnostic.code) {
+              case CANNOT_FIND_NAME_CODE:
+              case NO_VALUE_EXISTS_IN_SCOPE_FOR_THE_SHORTHAND_PROPERTY_CODE:
+                return true;
+              default:
+                return false;
+            }
+          })
+          // the missing name is always quoted in the message text and it's the only thing that is quoted there
+          .map((diagnostic) => diagnostic.messageText.match(/["'](.+)["']/)[1])
+          .filter((name) => exposedToGists.has(name)),
+      );
     }
   };
 };

@@ -238,6 +238,7 @@ export const EditorPanel: React.FC<{
           {simMode === 'visualizing' && (
             <>
               <EditorWithXStateImports
+                sourceProvider={sourceState.context.sourceProvider}
                 defaultValue={defaultValue}
                 onMount={(_, monaco) => {
                   send({ type: 'EDITOR_READY', editorRef: monaco });
