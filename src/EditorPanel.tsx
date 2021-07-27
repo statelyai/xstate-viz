@@ -1,16 +1,17 @@
-import { Button, HStack, Box, Text, Tooltip } from '@chakra-ui/react';
+import { Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react';
+import { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom, createMachine, send, spawn, assign } from 'xstate';
+import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { useClient } from './clientContext';
+import { useAuth } from './authContext';
+import { CommandPalette } from './CommandPalette';
 import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import type { AnyStateMachine, SimMode } from './types';
-import { Monaco } from '@monaco-editor/react';
-import { CommandPalette } from './CommandPalette';
 import { useSimulation } from './SimulationContext';
+import { SourceMachineState } from './sourceMachine';
+import type { AnyStateMachine, SimMode } from './types';
 
 const editorPanelModel = createModel(
   {
@@ -121,39 +122,83 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
   },
 });
 
-const getPersistText = (isSignedOut: boolean, isUpdateMode: boolean) => {
-  if (isSignedOut) {
-    return 'Login to save';
+export type SourceOwnershipStatus =
+  | 'user-owns-source'
+  | 'no-source'
+  | 'user-does-not-own-source';
+
+const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
+  let sourceStatus: SourceOwnershipStatus = 'no-source';
+
+  if (!sourceState.matches('no_source')) {
+    if (
+      sourceState.context.loggedInUserId === sourceState.context.sourceOwnerId
+    ) {
+      sourceStatus = 'user-owns-source';
+    } else {
+      sourceStatus = 'user-does-not-own-source';
+    }
   }
-  return isUpdateMode ? 'Update' : 'Save';
+
+  return sourceStatus;
+};
+
+const getPersistText = (
+  isSignedOut: boolean,
+  sourceOwnershipStatus: SourceOwnershipStatus,
+): string => {
+  if (isSignedOut) {
+    switch (sourceOwnershipStatus) {
+      case 'no-source':
+        return 'Login to save';
+      case 'user-does-not-own-source':
+      case 'user-owns-source':
+        return 'Login to fork';
+    }
+  }
+  switch (sourceOwnershipStatus) {
+    case 'no-source':
+    case 'user-owns-source':
+      return 'Save';
+    case 'user-does-not-own-source':
+      return 'Fork';
+  }
 };
 
 export const EditorPanel: React.FC<{
   defaultValue: string;
-  isUpdateMode: boolean;
   immediateUpdate: boolean;
   onSave: (code: string) => void;
+  onCreateNew: (code: string) => void;
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
 }> = ({
   defaultValue,
-  isUpdateMode,
   immediateUpdate,
   onSave,
   onChange,
   onChangedCodeValue,
+  onCreateNew,
 }) => {
+  const authService = useAuth();
+  const [authState] = useActor(authService);
+  const sourceService = useSelector(
+    authService,
+    (state) => state.context.sourceRef!,
+  );
+  const [sourceState] = useActor(sourceService);
+
+  const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
+
   const simService = useSimulation();
   const simMode: SimMode = useSelector(simService, (state) =>
     state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
   );
-  const clientService = useClient();
-  const [clientState] = useActor(clientService);
   const persistText = getPersistText(
-    clientState.matches('signed_out'),
-    isUpdateMode,
+    authState.matches('signed_out'),
+    sourceOwnershipStatus,
   );
-  const isPersistPending = clientState.hasTag('persisting');
+
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
@@ -214,7 +259,6 @@ export const EditorPanel: React.FC<{
                 <Button
                   disabled={isVisualizing}
                   isLoading={isVisualizing}
-                  loadingText="Visualize"
                   title="Visualize"
                   onClick={() => {
                     send({
@@ -232,9 +276,8 @@ export const EditorPanel: React.FC<{
                 closeDelay={500}
               >
                 <Button
-                  isLoading={isPersistPending}
-                  loadingText={persistText}
-                  disabled={isPersistPending || isVisualizing}
+                  isLoading={sourceState.hasTag('persisting')}
+                  disabled={sourceState.hasTag('persisting') || isVisualizing}
                   title={persistText}
                   onClick={() => {
                     onSave(current.context.code);
@@ -243,6 +286,20 @@ export const EditorPanel: React.FC<{
                   {persistText}
                 </Button>
               </Tooltip>
+              {sourceOwnershipStatus === 'user-owns-source' && (
+                <Button
+                  disabled={
+                    sourceState.hasTag('forking') ||
+                    current.matches('compiling')
+                  }
+                  isLoading={sourceState.hasTag('forking')}
+                  onClick={() => {
+                    onCreateNew(current.context.code);
+                  }}
+                >
+                  Fork
+                </Button>
+              )}
             </HStack>
           </>
         )}

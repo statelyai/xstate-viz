@@ -1,3 +1,6 @@
+import { createMachine } from 'xstate';
+import { createModel } from 'xstate/lib/model';
+
 /**
  * This is an invoked callback which asks the user
  * to confirm before leaving the browser
@@ -13,3 +16,27 @@ export const confirmBeforeLeavingService = () => () => {
     window.removeEventListener('beforeunload', onUnload);
   };
 };
+
+export const confirmBeforeLeavingMachine = createModel(
+  {},
+  {
+    events: {
+      CODE_UPDATED: () => ({}),
+    },
+  },
+).createMachine({
+  initial: 'notConfirming',
+  on: {
+    CODE_UPDATED: {
+      target: 'confirming',
+    },
+  },
+  states: {
+    notConfirming: {},
+    confirming: {
+      invoke: {
+        src: confirmBeforeLeavingService,
+      },
+    },
+  },
+});
