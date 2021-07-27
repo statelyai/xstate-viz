@@ -24,7 +24,7 @@ import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
 
 const ButtonSeparator = () => (
-  <Box backgroundColor="whiteAlpha.400" width={0.5} height="60%" marginX={1} />
+  <Box backgroundColor="gray.700" width={0.5} height="60%" marginX={2} />
 );
 
 export const CanvasPanel: React.FC<{
@@ -72,7 +72,7 @@ export const CanvasPanel: React.FC<{
               margin={2}
               onClick={() => simService.send('MACHINES.RESET')}
             >
-              {'Reset machine'}
+              RESET
             </Button>
           </Box>
           {sourceState.context.sourceRegistryData && (
