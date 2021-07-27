@@ -62,13 +62,14 @@ export const MachineNameChooserModal = () => {
                     type: 'CLOSE_NAME_CHOOSER_MODAL',
                   })
                 }
+                disabled={sourceState.hasTag('persisting')}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 colorScheme="blue"
-                loading={sourceState.hasTag('persisting')}
+                isLoading={sourceState.hasTag('persisting')}
               >
                 Submit
               </Button>
