@@ -1,3 +1,4 @@
+import { SettingsIcon } from '@chakra-ui/icons';
 import {
   Box,
   ChakraProvider,
@@ -23,7 +24,10 @@ import { Footer } from './Footer';
 import './Graph';
 import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
+import { PaletteProvider } from './PaletteContext';
+import { paletteMachine } from './paletteMachine';
 import { ResizableBox } from './ResizableBox';
+import { SettingsPanel } from './SettingsPanel';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
 import { useSourceActor } from './sourceMachine';
@@ -37,6 +41,7 @@ import { createMachine } from 'xstate';
 `.trim();
 
 function App() {
+  const paletteService = useInterpret(paletteMachine);
   const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
@@ -65,8 +70,8 @@ function App() {
   });
 
   return (
-    <SimulationProvider value={simService}>
-      <AuthProvider value={authService}>
+    <PaletteProvider value={paletteService}>
+      <SimulationProvider value={simService}>
         <Box
           data-testid="app"
           data-viz-theme="dark"
@@ -90,88 +95,96 @@ function App() {
               </Text>
             </Box>
           )}
-          <ChakraProvider theme={theme}>
-            <ResizableBox gridArea="panels">
-              <Login />
-              <MachineNameChooserModal />
-              <Tabs
-                bg="gray.800"
-                display="grid"
-                gridTemplateRows="auto 1fr"
-                height="100%"
-              >
-                <TabList>
-                  <Tab>Code</Tab>
-                  <Tab>State</Tab>
-                  <Tab>Events</Tab>
-                  <Tab>Actors</Tab>
-                </TabList>
+          <MachineNameChooserModal />
+          <AuthProvider value={authService}>
+            <ChakraProvider theme={theme}>
+              <ResizableBox gridArea="panels">
+                <Tabs
+                  bg="gray.800"
+                  display="grid"
+                  gridTemplateRows="auto 1fr"
+                  height="100%"
+                >
+                  <TabList>
+                    <Tab>Code</Tab>
+                    <Tab>State</Tab>
+                    <Tab>Events</Tab>
+                    <Tab>Actors</Tab>
+                    <Tab marginLeft="auto" marginRight="2">
+                      <SettingsIcon />
+                    </Tab>
+                    <Login />
+                  </TabList>
 
-                <TabPanels minHeight={0}>
-                  <TabPanel padding={0} height="100%">
-                    {sourceState.matches({
-                      with_source: 'loading_content',
-                    }) && (
-                      <SpinnerWithText
-                        text={`Loading source from ${sourceState.context.sourceProvider}`}
-                      />
-                    )}
-                    {!sourceState.matches({
-                      with_source: 'loading_content',
-                    }) && (
-                      <EditorPanel
-                        immediateUpdate={Boolean(
-                          sourceState.context.sourceRawContent,
-                        )}
-                        defaultValue={
-                          sourceState.context.sourceRawContent ||
-                          initialMachineCode
-                        }
-                        onChangedCodeValue={(code) => {
-                          sendToSourceService({
-                            type: 'CODE_UPDATED',
-                            code,
-                            sourceID: sourceState.context.sourceID,
-                          });
-                        }}
-                        onSave={(code: string) => {
-                          sendToSourceService({
-                            type: 'SAVE',
-                            rawSource: code,
-                          });
-                        }}
-                        onCreateNew={(code) => {
-                          sendToSourceService({
-                            type: 'CREATE_NEW',
-                            rawSource: code,
-                          });
-                        }}
-                        onChange={(machines) => {
-                          simService.send({
-                            type: 'MACHINES.REGISTER',
-                            machines,
-                          });
-                        }}
-                      />
-                    )}
-                  </TabPanel>
-                  <TabPanel>
-                    <StatePanel />
-                  </TabPanel>
-                  <TabPanel overflow="hidden" height="100%">
-                    <EventsPanel />
-                  </TabPanel>
-                  <TabPanel>
-                    <ActorsPanel />
-                  </TabPanel>
-                </TabPanels>
-              </Tabs>
-            </ResizableBox>
-            <Footer />
-          </ChakraProvider>
+                  <TabPanels minHeight={0}>
+                    <TabPanel padding={0} height="100%">
+                      {sourceState.matches({
+                        with_source: 'loading_content',
+                      }) && (
+                        <SpinnerWithText
+                          text={`Loading source from ${sourceState.context.sourceProvider}`}
+                        />
+                      )}
+                      {!sourceState.matches({
+                        with_source: 'loading_content',
+                      }) && (
+                        <EditorPanel
+                          immediateUpdate={Boolean(
+                            sourceState.context.sourceRawContent,
+                          )}
+                          defaultValue={
+                            sourceState.context.sourceRawContent ||
+                            initialMachineCode
+                          }
+                          onChangedCodeValue={(code) => {
+                            sendToSourceService({
+                              type: 'CODE_UPDATED',
+                              code,
+                              sourceID: sourceState.context.sourceID,
+                            });
+                          }}
+                          onSave={(code: string) => {
+                            sendToSourceService({
+                              type: 'SAVE',
+                              rawSource: code,
+                            });
+                          }}
+                          onChange={(machines) => {
+                            simService.send({
+                              type: 'MACHINES.REGISTER',
+                              machines,
+                            });
+                          }}
+                          onCreateNew={(code) => {
+                            sendToSourceService({
+                              type: 'CREATE_NEW',
+                              rawSource: code,
+                            });
+                          }}
+                        />
+                      )}
+                    </TabPanel>
+                    <TabPanel height="100%">
+                      <StatePanel />
+                    </TabPanel>
+                    <TabPanel overflow="hidden" height="100%">
+                      <EventsPanel />
+                    </TabPanel>
+                    <TabPanel height="100%">
+                      <ActorsPanel />
+                    </TabPanel>
+                    <TabPanel height="100%">
+                      <SettingsPanel />
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
+              </ResizableBox>
+              <Footer />
+            </ChakraProvider>
+          </AuthProvider>
         </Box>
-      </AuthProvider>
-    </SimulationProvider>
+      </SimulationProvider>
+    </PaletteProvider>
   );
 }
 

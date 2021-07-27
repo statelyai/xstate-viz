@@ -11,6 +11,9 @@ export const CanvasContainer: React.FC = ({ children }) => {
       onWheel={(e) => {
         canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
       }}
+      style={{
+        WebkitFontSmoothing: 'auto',
+      }}
     >
       {children}
     </div>
