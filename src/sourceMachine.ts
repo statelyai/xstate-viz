@@ -431,7 +431,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         addForkOfToDesiredName: assign((context, event) => {
           if (
             !context.desiredMachineName ||
-            context.desiredMachineName?.startsWith('Fork of ')
+            context.desiredMachineName?.endsWith('(forked)')
           ) {
             return {};
           }
