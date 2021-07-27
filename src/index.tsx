@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 import App from './App';
 
-if (process.env.REACT_APP_SENTRY_DSN) {
+if (process.env.NODE_ENV === 'production' && process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.REACT_APP_SENTRY_DSN,
     integrations: [new Integrations.BrowserTracing()],
