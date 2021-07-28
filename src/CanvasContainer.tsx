@@ -31,6 +31,9 @@ const dragMachine = dragModel.createMachine({
       meta: {
         cursor: 'default',
       },
+      invoke: {
+        src: 'invokeDetectSpacebar',
+      },
       on: {
         LOCK: 'locked',
       },
@@ -38,6 +41,9 @@ const dragMachine = dragModel.createMachine({
     locked: {
       initial: 'idle',
       on: { RELEASE: 'released' },
+      invoke: {
+        src: 'invokeDetectKeyup',
+      },
       states: {
         idle: {
           meta: {
@@ -74,7 +80,9 @@ const dragMachine = dragModel.createMachine({
               dx: (ctx, e) => ctx.dragPoint.x - e.point.x,
               dy: (ctx, e) => ctx.dragPoint.y - e.point.y,
             }) as any,
+            'disableTextSelection',
           ],
+          exit: ['enableTextSelection'],
           on: {
             DRAG: { target: 'dragging', internal: false },
             UNGRAB: 'idle',
@@ -90,33 +98,57 @@ const getCursorByState = (state: AnyState) =>
 
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();
-  const [state, send] = useMachine(dragMachine);
   const canvasRef = useRef<HTMLDivElement>(null!);
+  const [state, send] = useMachine(
+    dragMachine.withConfig({
+      actions: {
+        disableTextSelection: () => {
+          canvasRef.current.style.userSelect = 'none';
+        },
+        enableTextSelection: () => {
+          canvasRef.current.style.userSelect = 'unset';
+        },
+      },
+      services: {
+        invokeDetectSpacebar: () => (sendBack) => {
+          function keydownListener(e: KeyboardEvent) {
+            // Need this to still be able to use Spacebar in editable elements
+            if (
+              ['TEXTAREA', 'INPUT', 'BUTTON'].includes(
+                document.activeElement?.nodeName!,
+              ) ||
+              document.activeElement?.hasAttribute('contenteditable')
+            ) {
+              return;
+            }
 
-  useEffect(() => {
-    function keydownListener(e: KeyboardEvent) {
-      if (e.code === 'Space') {
-        // preventDefault is needed to disable text selection while moving
-        e.preventDefault();
-        send('LOCK');
-      }
-    }
-    function keyupListener(e: KeyboardEvent) {
-      if (e.code === 'Space') {
-        send('RELEASE');
-      } else {
-        send('UNGRAB');
-      }
-    }
+            if (e.code === 'Space') {
+              sendBack('LOCK');
+            }
+          }
 
-    window.addEventListener('keydown', keydownListener);
-    window.addEventListener('keyup', keyupListener);
+          window.addEventListener('keydown', keydownListener);
+          return () => {
+            window.removeEventListener('keydown', keydownListener);
+          };
+        },
+        invokeDetectKeyup: () => (sendBack) => {
+          function keyupListener(e: KeyboardEvent) {
+            if (e.code === 'Space') {
+              sendBack('RELEASE');
+            } else {
+              sendBack('UNGRAB');
+            }
+          }
 
-    return () => {
-      window.removeEventListener('keydown', keydownListener);
-      window.removeEventListener('keyup', keyupListener);
-    };
-  }, [send]);
+          window.addEventListener('keyup', keyupListener);
+          return () => {
+            window.removeEventListener('keyup', keyupListener);
+          };
+        },
+      },
+    }),
+  );
 
   useEffect(() => {
     if (state.hasTag('dragging')) {
@@ -130,7 +162,10 @@ export const CanvasContainer: React.FC = ({ children }) => {
     <div
       data-panel="viz"
       ref={canvasRef}
-      style={{ cursor: getCursorByState(state), WebkitFontSmoothing: 'auto' }}
+      style={{
+        cursor: getCursorByState(state),
+        WebkitFontSmoothing: 'auto',
+      }}
       onWheel={(e) => {
         if (e.ctrlKey || e.metaKey) {
           if (e.deltaY > 0) {
@@ -143,13 +178,9 @@ export const CanvasContainer: React.FC = ({ children }) => {
         }
       }}
       onPointerDown={(e) => {
-        // preventDefault is needed to disable text selection while moving
-        e.preventDefault();
         send({ type: 'GRAB', point: { x: e.pageX, y: e.pageY } });
       }}
       onPointerMove={(e) => {
-        // preventDefault is needed to disable text selection while moving
-        e.preventDefault();
         send({ type: 'DRAG', point: { x: e.pageX, y: e.pageY } });
       }}
       onPointerUp={() => {
