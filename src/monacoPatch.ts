@@ -78,6 +78,8 @@ function getAutoImport(provider: any, details: any): AutoImport | undefined {
           // make type-related **new** imports safe
           // the resolved specifier might be internal
           // we don't have an easy way to remap it to a more public one that we actually allow when we load the code at runtime
+          //
+          // this kind should work out of the box with `isolatedModules: true` but for some reason it didn't when I've tried it
           newText: textChange.newText.replace(/import/, 'import type'),
         }),
       ),
