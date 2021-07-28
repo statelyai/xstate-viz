@@ -1,0 +1,11 @@
+fragment SourceFile on SourceFile {
+  id
+  updatedAt
+  name
+  text
+  owner {
+    id
+    avatarUrl
+    displayName
+  }
+}

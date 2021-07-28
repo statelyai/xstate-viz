@@ -1,6 +1,6 @@
 import { useSelector } from '@xstate/react';
 import React from 'react';
-import { LPathParam, pathToD, Point, SvgPath } from './pathUtils';
+import { roundPath, LPathParam, pathToD, Point, SvgPath } from './pathUtils';
 import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
 import { DirectedGraphEdge } from './directedGraph';
@@ -74,7 +74,7 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
         stroke="#fff4"
         strokeWidth={2}
         fill="none"
-        d={pathToD(path)}
+        d={pathToD(roundPath(path))}
         data-viz="edge"
         markerEnd={`url(#${markerId})`}
       ></path>

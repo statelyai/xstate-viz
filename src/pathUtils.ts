@@ -33,7 +33,14 @@ export type PathParam =
   | QPathParam;
 
 export type SvgPath = [MPathParam, ...PathParam[]];
+export type SvgPathPortion = PathParam[];
 
+/**
+ * Removes midpoints from a set of points.
+ *
+ * @param points
+ * @returns Points with midpoints removed
+ */
 export function simplifyPoints(points: Point[]): Point[] {
   const pointHashes = new Set<string>();
 
@@ -62,6 +69,12 @@ export function simplifyPoints(points: Point[]): Point[] {
   return result;
 }
 
+/**
+ * Adds midpoints to the center of line segments represented by an array of points.
+ *
+ * @param points Points without midpoints
+ * @returns Points with midpoints
+ */
 export function withMidpoints(points: Point[]): Point[] {
   const pointsWithMid: Point[] = [];
 
@@ -72,11 +85,6 @@ export function withMidpoints(points: Point[]): Point[] {
       pointsWithMid.push(ptA);
       return;
     }
-
-    // if (ptA.command === 'M' || ptB.command === 'M' || ptC.command === 'M') {
-    //   pointsWithMid.push(ptA);
-    //   return;
-    // }
 
     const midpt = {
       x: ptA.x + (ptB.x - ptA.x) / 2,
@@ -440,4 +448,63 @@ export function closestRectIntersections(
   }
 
   return rectIntersections.length > 0 ? rectIntersections : false;
+}
+
+/**
+ * Rounds the corners of an SVG path.
+ *
+ * @param path The SVG path to round
+ * @returns A rounded SVG path
+ */
+export function roundPath(path: SvgPath): SvgPath {
+  const contiguousLinePaths: SvgPathPortion[] = [];
+  const bentPath: SvgPathPortion = [];
+  const current: SvgPathPortion = [];
+
+  for (const svgPoint of path) {
+    const [cmd] = svgPoint;
+    if (cmd !== 'L') {
+      if (current.length > 1) {
+        contiguousLinePaths.push([...current]);
+        current.length = 0;
+      }
+    }
+    if (cmd === 'M') {
+      current.push(svgPoint);
+    } else if (cmd === 'L') {
+      current.push(svgPoint);
+    }
+  }
+  if (current.length > 1) {
+    contiguousLinePaths.push([...current]);
+  }
+
+  for (const linePath of contiguousLinePaths) {
+    const points = linePath.map(([, point]) => point as Point);
+    const pointsWithMid = withMidpoints(simplifyPoints(points));
+    const bentPathPortion: SvgPath = [linePath[0] as MPathParam];
+
+    pointsWithMid.forEach((pt, i, pts) => {
+      if (
+        i >= 2 &&
+        i <= pts.length - 2 &&
+        isBendable(pts[i - 1], pt, pts[i + 1])
+      ) {
+        const { p1, p2, p } = roundOneCorner(
+          pts[i - 1],
+          pt,
+          pts[i + 1],
+          /* radius = */ 10,
+        );
+
+        bentPathPortion.push(['L', p1], ['C', p1, p, p2]);
+      } else {
+        bentPathPortion.push(['L', pt]);
+      }
+    });
+
+    bentPath.push(...bentPathPortion);
+  }
+
+  return bentPath as SvgPath;
 }

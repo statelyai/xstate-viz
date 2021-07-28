@@ -1,8 +1,8 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
+import { useActor, useSelector } from '@xstate/react';
 import {
   ActorRefFrom,
   assign,
-  ContextFrom,
   createMachine,
   DoneInvokeEvent,
   forwardTo,
@@ -12,6 +12,7 @@ import {
   StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
+import { authMachine } from './authMachine';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
 import {
@@ -22,6 +23,7 @@ import {
   GetSourceFileDocument,
   GetSourceFileQuery,
 } from './graphql/GetSourceFile.generated';
+import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
 import {
   UpdateSourceFileDocument,
   UpdateSourceFileMutation,
@@ -35,12 +37,12 @@ type SourceProvider = 'gist' | 'registry';
 export const sourceModel = createModel(
   {
     sourceID: null as string | null,
-    sourceUpdatedAt: null as string | null,
     sourceProvider: null as SourceProvider | null,
     sourceRawContent: null as string | null,
-    sourceOwnerId: null as string | null,
+    sourceRegistryData: null as null | SourceFileFragment,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     loggedInUserId: null! as string | null,
+    desiredMachineName: null as string | null,
   },
   {
     events: {
@@ -62,6 +64,9 @@ export const sourceModel = createModel(
        * Passed in from the parent to the child via events
        */
       LOGGED_IN_USER_ID_UPDATED: (id: string | null | undefined) => ({ id }),
+      CHOOSE_NAME: (name: string) => ({ name }),
+      CLOSE_NAME_CHOOSER_MODAL: () => ({}),
+      MACHINE_ID_CHANGED: (id: string) => ({ id }),
     },
   },
 );
@@ -103,6 +108,17 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             };
           }),
         },
+        /**
+         * When the machine id changes from the sim machine,
+         * set the desiredMachineName to it
+         */
+        MACHINE_ID_CHANGED: {
+          actions: assign((context, event) => {
+            return {
+              desiredMachineName: event.id,
+            };
+          }),
+        },
       },
       states: {
         checking_url: {
@@ -113,12 +129,21 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           ],
         },
         with_source: {
+          id: 'with_source',
           initial: 'loading_content',
           on: {
             CREATE_NEW: [
               {
-                target: '#forking',
+                target: '#creating',
                 cond: isLoggedIn,
+                actions: [
+                  assign((context, event) => {
+                    return {
+                      sourceRawContent: event.rawSource,
+                    };
+                  }),
+                  'addForkOfToDesiredName',
+                ],
               },
               {
                 actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -135,8 +160,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       return {
                         sourceID: event.data.getSourceFile?.id,
                         sourceRawContent: event.data.getSourceFile?.text,
-                        sourceUpdatedAt: event.data.getSourceFile?.updatedAt,
-                        sourceOwnerId: event.data.getSourceFile?.owner?.id,
+                        sourceRegistryData: event.data.getSourceFile,
                       };
                     }),
                   },
@@ -189,7 +213,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                   always: [
                     {
                       cond: (ctx) => {
-                        const ownerId = ctx.sourceOwnerId;
+                        const ownerId = ctx.sourceRegistryData?.owner?.id;
 
                         if (!ownerId || !ctx.loggedInUserId) return false;
 
@@ -208,6 +232,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       {
                         cond: isLoggedIn,
                         target: '#updating',
+                        actions: assign((context, event) => {
+                          return {
+                            sourceRawContent: event.rawSource,
+                          };
+                        }),
                       },
                       {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -221,6 +250,14 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       {
                         cond: isLoggedIn,
                         target: '#creating',
+                        actions: [
+                          'addForkOfToDesiredName',
+                          assign((context, event) => {
+                            return {
+                              sourceRawContent: event.rawSource,
+                            };
+                          }),
+                        ],
                       },
                       {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -250,6 +287,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           },
         },
         no_source: {
+          id: 'no_source',
           on: {
             CODE_UPDATED: {
               actions: [
@@ -261,6 +299,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               {
                 cond: isLoggedIn,
                 target: 'creating',
+                actions: assign((context, event) => {
+                  return {
+                    sourceRawContent: event.rawSource,
+                  };
+                }),
               },
               { actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE') },
             ],
@@ -288,75 +331,67 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         },
         creating: {
           id: 'creating',
-          tags: ['persisting'],
-          invoke: {
-            src: 'createSourceFile',
-            onDone: {
-              target: 'with_source.source_loaded.user_owns_this_source',
-              actions: [
-                'assignCreateSourceFileToContext',
-                'updateURLWithMachineID',
-                send(
-                  notifModel.events.BROADCAST('Saved successfully', 'success'),
-                  {
-                    to: (ctx) => {
-                      return ctx.notifRef!;
-                    },
-                  },
-                ),
-              ],
-            },
-            onError: [
-              {
-                /**
-                 * If the source had an ID, it means we've forking
-                 * someone else's
-                 */
-                cond: (ctx) => Boolean(ctx.sourceID),
-                target:
-                  'with_source.source_loaded.checking_if_user_owns_source',
-                actions: 'showSaveErrorToast',
-              },
-              {
-                target: 'no_source',
-                actions: 'showSaveErrorToast',
-              },
-            ],
-          },
-        },
-        forking: {
-          tags: ['forking'],
-          id: 'forking',
-          invoke: {
-            src: 'createSourceFile',
-            onDone: {
-              target: 'with_source.source_loaded.user_owns_this_source',
-              actions: [
-                'assignCreateSourceFileToContext',
-                'updateURLWithMachineID',
-                send(
-                  notifModel.events.BROADCAST('Forked successfully', 'success'),
-                  {
-                    to: (ctx) => {
-                      return ctx.notifRef!;
-                    },
-                  },
-                ),
-              ],
-            },
-            onError: {
-              target: 'with_source',
-              actions: send(
-                notifModel.events.BROADCAST(
-                  'An error occurred when forking',
-                  'error',
-                ),
-                {
-                  to: (ctx) => {
-                    return ctx.notifRef!;
-                  },
+          initial: 'showingNameModal',
+          states: {
+            showingNameModal: {
+              on: {
+                CHOOSE_NAME: {
+                  target: 'pendingSave',
+                  actions: assign((context, event) => {
+                    return {
+                      desiredMachineName: event.name,
+                    };
+                  }),
                 },
-              ),
+                CLOSE_NAME_CHOOSER_MODAL: [
+                  {
+                    target: '#with_source.source_loaded',
+                    cond: (ctx) => Boolean(ctx.sourceID),
+                  },
+                  { target: '#no_source' },
+                ],
+              },
+            },
+
+            pendingSave: {
+              tags: ['persisting'],
+              invoke: {
+                src: 'createSourceFile',
+                onDone: {
+                  target: '#with_source.source_loaded.user_owns_this_source',
+                  actions: [
+                    'assignCreateSourceFileToContext',
+                    'updateURLWithMachineID',
+                    send(
+                      notifModel.events.BROADCAST(
+                        'New file saved successfully!',
+                        'success',
+                      ),
+                      {
+                        to: (ctx) => {
+                          return ctx.notifRef!;
+                        },
+                      },
+                    ),
+                  ],
+                },
+                onError: [
+                  {
+                    /**
+                     * If the source had an ID, it means we've forking
+                     * someone else's
+                     */
+                    cond: (ctx) => Boolean(ctx.sourceID),
+                    target:
+                      '#with_source.source_loaded.checking_if_user_owns_source',
+                    actions: 'showSaveErrorToast',
+                  },
+                  {
+                    target: '#no_source',
+                    actions: 'showSaveErrorToast',
+                  },
+                ],
+              },
             },
           },
         },
@@ -376,7 +411,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                     return {
                       sourceID: event.data.updateSourceFile.id,
                       sourceProvider: 'registry',
-                      sourceUpdatedAt: event.data.updateSourceFile.updatedAt,
+                      sourceRegistryData: event.data.updateSourceFile,
                     };
                   },
                 ),
@@ -410,6 +445,17 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
     },
     {
       actions: {
+        addForkOfToDesiredName: assign((context, event) => {
+          if (
+            !context.desiredMachineName ||
+            context.desiredMachineName?.endsWith('(forked)')
+          ) {
+            return {};
+          }
+          return {
+            desiredMachineName: `${context.desiredMachineName} (forked)`,
+          };
+        }),
         showSaveErrorToast: send(
           notifModel.events.BROADCAST(
             'An error occurred when saving.',
@@ -426,8 +472,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           return {
             sourceID: event.data?.createSourceFile.id,
             sourceProvider: 'registry',
-            sourceUpdatedAt: event.data?.createSourceFile.updatedAt,
-            sourceOwnerId: event.data?.createSourceFile.ownerId,
+            sourceRegistryData: event.data.createSourceFile,
           };
         }),
         updateURLWithMachineID: (ctx) => {
@@ -441,7 +486,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
             context.sourceID,
-            context.sourceUpdatedAt,
+            context.sourceRegistryData?.updatedAt,
           );
 
           if (!result) {
@@ -467,25 +512,14 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           }
           return {};
         }),
-        saveSourceContent: assign(
-          (
-            ctx: ContextFrom<typeof sourceModel>,
-            e: DoneInvokeEvent<{ text: string; updatedAt?: string }>,
-          ) => {
-            return {
-              sourceRawContent: e.data.text,
-              sourceUpdatedAt: e.data.updatedAt || null,
-            };
-          },
-        ) as any,
       },
       services: {
         createSourceFile: async (ctx, e) => {
-          if (e.type !== 'SAVE' && e.type !== 'CREATE_NEW') return;
           return gQuery(
             CreateSourceFileDocument,
             {
-              text: e.rawSource,
+              text: ctx.sourceRawContent || '',
+              name: ctx.desiredMachineName || '',
             },
             auth.session()?.access_token!,
           ).then((res) => {
@@ -544,4 +578,15 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
       },
     },
   );
+};
+
+export const useSourceActor = (
+  authService: ActorRefFrom<typeof authMachine>,
+) => {
+  const sourceService = useSelector(
+    authService,
+    (state) => state.context.sourceRef,
+  );
+
+  return useActor(sourceService!);
 };
