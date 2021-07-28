@@ -42,8 +42,7 @@ const withTypeAcquisition = (
     }
   };
 
-  const textUpdated = () => {
-    const code = editor.getModel()!.getValue();
+  const textUpdated = (code = editor.getModel()!.getValue()) => {
     detectNewImportsToAcquireTypeFor(
       code,
       addLibraryToRuntime,
@@ -52,17 +51,21 @@ const withTypeAcquisition = (
     );
   };
 
-  let debouncingTimer = false;
-  editor.onDidChangeModelContent((_e) => {
-    if (debouncingTimer) return;
-    debouncingTimer = true;
-    setTimeout(() => {
-      debouncingTimer = false;
-      textUpdated();
-    }, 1000);
-  });
+  // let debouncingTimer = false;
+  // editor.onDidChangeModelContent((_e) => {
+  //   if (debouncingTimer) return;
+  //   debouncingTimer = true;
+  //   setTimeout(() => {
+  //     debouncingTimer = false;
+  //     textUpdated();
+  //   }, 1000);
+  // });
 
-  textUpdated();
+  textUpdated(
+    ['xstate', 'xstate/lib/model', 'xstate/lib/actions']
+      .map((specifier) => `import '${specifier}'`)
+      .join('\n'),
+  );
 
   return editor;
 };
