@@ -63,6 +63,7 @@ const dragMachine = dragModel.createMachine({
           },
         },
         dragging: {
+          tags: 'dragging',
           meta: {
             cursor: 'grabbing',
           },
@@ -118,9 +119,11 @@ export const CanvasContainer: React.FC = ({ children }) => {
   }, [send]);
 
   useEffect(() => {
-    canvasService.send(
-      canvasModel.events.PAN(state.context.dx, state.context.dy),
-    );
+    if (state.hasTag('dragging')) {
+      canvasService.send(
+        canvasModel.events.PAN(state.context.dx, state.context.dy),
+      );
+    }
   }, [state, canvasService]);
 
   return (
