@@ -40,6 +40,8 @@ const dragMachine = dragModel.createMachine({
     },
     locked: {
       initial: 'idle',
+      entry: ['disableTextSelection'],
+      exit: ['enableTextSelection'],
       on: { RELEASE: 'released' },
       invoke: {
         src: 'invokeDetectKeyup',
@@ -80,9 +82,7 @@ const dragMachine = dragModel.createMachine({
               dx: (ctx, e) => ctx.dragPoint.x - e.point.x,
               dy: (ctx, e) => ctx.dragPoint.y - e.point.y,
             }) as any,
-            'disableTextSelection',
           ],
-          exit: ['enableTextSelection'],
           on: {
             DRAG: { target: 'dragging', internal: false },
             UNGRAB: 'idle',
