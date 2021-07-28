@@ -1,6 +1,8 @@
 // codes taken from the TS codebase, this ts-worker is not bundled right now so we can't easily use any module system here to import these
 // https://github.com/microsoft/TypeScript/blob/1aac3555f7ebbfc10515d2ba28f041e03e75d885/src/compiler/diagnosticMessages.json#L1457-L1460
 const CANNOT_FIND_NAME_CODE = 2304;
+// https://github.com/microsoft/TypeScript/blob/1aac3555f7ebbfc10515d2ba28f041e03e75d885/src/compiler/diagnosticMessages.json#L2409-L2412
+const CANNOT_FIND_NAME_DID_YOU_MEAN_CODE = 2552;
 // https://github.com/microsoft/TypeScript/blob/1aac3555f7ebbfc10515d2ba28f041e03e75d885/src/compiler/diagnosticMessages.json#L7110-L7113
 const NO_VALUE_EXISTS_IN_SCOPE_FOR_THE_SHORTHAND_PROPERTY_CODE = 18004;
 
@@ -63,14 +65,15 @@ self.customTSWorkerFactory = (TypeScriptWorker) => {
           .filter((diagnostic) => {
             switch (diagnostic.code) {
               case CANNOT_FIND_NAME_CODE:
+              case CANNOT_FIND_NAME_DID_YOU_MEAN_CODE:
               case NO_VALUE_EXISTS_IN_SCOPE_FOR_THE_SHORTHAND_PROPERTY_CODE:
                 return true;
               default:
                 return false;
             }
           })
-          // the missing name is always quoted in the message text and it's the only thing that is quoted there
-          .map((diagnostic) => diagnostic.messageText.match(/["'](.+)["']/)[1])
+          // the missing name is always quoted in the message text and it's the first quoted thing for all the filtered codes
+          .map((diagnostic) => diagnostic.messageText.match(/["'](.+?)["']/)[1])
           .filter((name) => exposedToGists.has(name)),
       );
     }

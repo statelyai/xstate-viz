@@ -29,7 +29,9 @@ function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
 
   if (rootNames.length) {
     // this uses `uniq` on the `rootNames` list because `actions` could be pushed into it while it was already in the list
-    text = `import { ${uniq(rootNames).join(', ')} } from "xstate";\n${text}`;
+    text = `import { ${uniq(rootNames).join(
+      ', ',
+    )} } from "xstate";\n${text.trimLeft()}\n`;
   }
 
   return text;
