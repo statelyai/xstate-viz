@@ -71,7 +71,7 @@ const dragMachine = dragModel.createMachine({
           },
         },
         dragging: {
-          tags: 'dragging',
+          tags: ['dragging'],
           meta: {
             cursor: 'grabbing',
           },
@@ -136,8 +136,6 @@ export const CanvasContainer: React.FC = ({ children }) => {
           function keyupListener(e: KeyboardEvent) {
             if (e.code === 'Space') {
               sendBack('RELEASE');
-            } else {
-              sendBack('UNGRAB');
             }
           }
 
