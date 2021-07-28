@@ -10,7 +10,11 @@ import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import { useSimulation } from './SimulationContext';
-import { SourceMachineState } from './sourceMachine';
+import {
+  getEditorDefaultValue,
+  getShouldImmediateUpdate,
+  SourceMachineState,
+} from './sourceMachine';
 import type { AnyStateMachine, SimMode } from './types';
 
 const editorPanelModel = createModel(
@@ -167,26 +171,18 @@ const getPersistText = (
 };
 
 export const EditorPanel: React.FC<{
-  defaultValue: string;
-  immediateUpdate: boolean;
-  onSave: (code: string) => void;
-  onCreateNew: (code: string) => void;
+  onSave: () => void;
+  onCreateNew: () => void;
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
-}> = ({
-  defaultValue,
-  immediateUpdate,
-  onSave,
-  onChange,
-  onChangedCodeValue,
-  onCreateNew,
-}) => {
+}> = ({ onSave, onChange, onChangedCodeValue, onCreateNew }) => {
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
     authService,
     (state) => state.context.sourceRef!,
   );
+  // TODO - consider refactoring this to useSelector
   const [sourceState] = useActor(sourceService);
 
   const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
@@ -199,6 +195,9 @@ export const EditorPanel: React.FC<{
     authState.matches('signed_out'),
     sourceOwnershipStatus,
   );
+
+  const immediateUpdate = getShouldImmediateUpdate(sourceState);
+  const defaultValue = getEditorDefaultValue(sourceState);
 
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
@@ -224,7 +223,7 @@ export const EditorPanel: React.FC<{
     <>
       <CommandPalette
         onSave={() => {
-          onSave(current.context.code);
+          onSave();
         }}
         onVisualize={() => {
           send('COMPILE');
@@ -247,7 +246,7 @@ export const EditorPanel: React.FC<{
                 });
               }}
               onSave={() => {
-                onSave(current.context.code);
+                onSave();
               }}
             />
             <HStack padding="2">
@@ -281,7 +280,7 @@ export const EditorPanel: React.FC<{
                   disabled={sourceState.hasTag('persisting') || isVisualizing}
                   title={persistText}
                   onClick={() => {
-                    onSave(current.context.code);
+                    onSave();
                   }}
                 >
                   {persistText}
@@ -295,7 +294,7 @@ export const EditorPanel: React.FC<{
                   }
                   isLoading={sourceState.hasTag('forking')}
                   onClick={() => {
-                    onCreateNew(current.context.code);
+                    onCreateNew();
                   }}
                 >
                   Fork

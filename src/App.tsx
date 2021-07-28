@@ -36,10 +36,6 @@ import { StatePanel } from './StatePanel';
 import { theme } from './theme';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
-const initialMachineCode = `
-import { createMachine } from 'xstate';
-`.trim();
-
 function App() {
   const paletteService = useInterpret(paletteMachine);
   const simService = useInterpret(simulationMachine);
@@ -128,13 +124,6 @@ function App() {
                         with_source: 'loading_content',
                       }) && (
                         <EditorPanel
-                          immediateUpdate={Boolean(
-                            sourceState.context.sourceRawContent,
-                          )}
-                          defaultValue={
-                            sourceState.context.sourceRawContent ||
-                            initialMachineCode
-                          }
                           onChangedCodeValue={(code) => {
                             sendToSourceService({
                               type: 'CODE_UPDATED',
@@ -142,10 +131,9 @@ function App() {
                               sourceID: sourceState.context.sourceID,
                             });
                           }}
-                          onSave={(code: string) => {
+                          onSave={() => {
                             sendToSourceService({
                               type: 'SAVE',
-                              rawSource: code,
                             });
                           }}
                           onChange={(machines) => {
@@ -154,10 +142,9 @@ function App() {
                               machines,
                             });
                           }}
-                          onCreateNew={(code) => {
+                          onCreateNew={() => {
                             sendToSourceService({
                               type: 'CREATE_NEW',
-                              rawSource: code,
                             });
                           }}
                         />
