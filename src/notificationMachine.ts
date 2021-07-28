@@ -22,7 +22,7 @@ export const notifMachine = createMachine<typeof notifModel>({
     BROADCAST: {
       actions: [
         (_, e) => {
-          const id = e.message.toString();
+          const id = e.message;
           if (!toast.isActive(id)) {
             toast({
               id,

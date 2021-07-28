@@ -141,8 +141,8 @@ export const gQuery = <Data, Variables>(
        * Throw the GQL error if it comes - this
        * doesn't happen by default
        */
-      if (res.errors?.[0]?.message) {
-        throw new Error(res.errors?.[0].message);
+      if (res.errors) {
+        throw new Error(res.errors[0]!.message);
       }
       return res;
     });
