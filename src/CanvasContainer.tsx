@@ -1,7 +1,6 @@
-import React, { CSSProperties, KeyboardEvent, useEffect } from 'react';
+import React, { CSSProperties, useEffect, useRef } from 'react';
 import { canvasModel } from './canvasMachine';
 import { useCanvas } from './CanvasContext';
-
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
@@ -91,22 +90,24 @@ const getCursorByState = (state: AnyState) =>
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();
   const [state, send] = useMachine(dragMachine);
+  const canvasRef = useRef<HTMLDivElement>(null!);
 
   useEffect(() => {
-    function keydownListener(e: any) {
+    function keydownListener(e: KeyboardEvent) {
       if (e.code === 'Space') {
         // preventDefault is needed to disable text selection while moving
         e.preventDefault();
         send('LOCK');
       }
     }
-    function keyupListener(e: any) {
+    function keyupListener(e: KeyboardEvent) {
       if (e.code === 'Space') {
         send('RELEASE');
       } else {
         send('UNGRAB');
       }
     }
+
     window.addEventListener('keydown', keydownListener);
     window.addEventListener('keyup', keyupListener);
 
@@ -125,9 +126,18 @@ export const CanvasContainer: React.FC = ({ children }) => {
   return (
     <div
       data-panel="viz"
+      ref={canvasRef}
       style={{ cursor: getCursorByState(state), WebkitFontSmoothing: 'auto' }}
       onWheel={(e) => {
-        canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+        if (e.ctrlKey || e.metaKey) {
+          if (e.deltaY > 0) {
+            canvasService.send(canvasModel.events['ZOOM.OUT']());
+          } else if (e.deltaY < 0) {
+            canvasService.send(canvasModel.events['ZOOM.IN']());
+          }
+        } else {
+          canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+        }
       }}
       onPointerDown={(e) => {
         // preventDefault is needed to disable text selection while moving
