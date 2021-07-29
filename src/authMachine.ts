@@ -208,9 +208,6 @@ export const authMachine = createMachine<typeof authModel>(
       signing_in: {
         invoke: {
           src: 'signInUser',
-          onDone: {
-            target: 'signed_in',
-          },
           onError: {
             target: 'signed_out',
             actions: [
