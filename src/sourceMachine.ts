@@ -31,8 +31,7 @@ import {
 import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
-
-type SourceProvider = 'gist' | 'registry';
+import { SourceProvider } from './types';
 
 export const sourceModel = createModel(
   {
@@ -251,7 +250,10 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               entry: [
                 send(
                   (_, e: any) =>
-                    notifModel.events.BROADCAST(e.data.toString, 'error'),
+                    notifModel.events.BROADCAST(
+                      (e.data as Error).toString(),
+                      'error',
+                    ),
                   { to: (ctx: any) => ctx.notifRef },
                 ),
                 (_, e: any) => {
