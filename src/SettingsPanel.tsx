@@ -71,7 +71,7 @@ export const SettingsPanel: React.FC = () => {
           }}
         >
           {Object.keys(themes).map((themeName) => (
-            <option value={themeName}>
+            <option value={themeName} key={themeName}>
               {themes[themeName as ThemeName].name}
             </option>
           ))}
