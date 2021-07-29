@@ -106,6 +106,7 @@ export const EditorWithXStateImports = (
               props.onChange?.(text);
             }
           }}
+          theme="vs-dark"
           onMount={async (editor, monaco) => {
             editorRef.current = monaco.editor;
             const theme = editorTheme.theme;
