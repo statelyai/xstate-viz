@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import { ThemeName } from './editor-themes';
+import { localCache } from './localCache';
 
 export const useTheme = () => {
-  const [theme, setTheme] = useState<ThemeName>('xstateViz');
+  let startingTheme = localCache.getEditorTheme() || 'xstateViz';
+  const [theme, setTheme] = useState<ThemeName>(startingTheme);
   return {
     theme,
     switchTheme: useCallback((themeName: ThemeName) => {

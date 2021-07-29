@@ -9,6 +9,7 @@ import { SourceProvider } from './types';
 import { useEditorTheme } from './themeContext';
 import { themes } from './editor-themes';
 import { useEffect, useRef } from 'react';
+import { localCache } from './localCache';
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -82,6 +83,7 @@ export const EditorWithXStateImports = (
       editor.defineTheme(theme, themes[theme] as any);
     }
     editor.setTheme(theme);
+    localCache.saveEditorTheme(editorTheme.theme);
   }, [editorTheme.theme]);
 
   return (
