@@ -154,3 +154,7 @@ export function willChange(
 ): boolean {
   return !!machine.transition(state, event).changed;
 }
+
+export function uniq<T>(arr: T[]): T[] {
+  return Array.from(new Set(arr));
+}

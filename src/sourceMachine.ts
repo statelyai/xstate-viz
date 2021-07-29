@@ -31,8 +31,7 @@ import {
 import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
-
-type SourceProvider = 'gist' | 'registry';
+import { SourceProvider } from './types';
 
 export const sourceModel = createModel(
   {
