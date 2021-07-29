@@ -126,3 +126,5 @@ export const EditorWithXStateImports = (
     </ClassNames>
   );
 };
+
+export default EditorWithXStateImports;
