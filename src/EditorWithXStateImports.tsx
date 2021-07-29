@@ -5,8 +5,8 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { format } from 'prettier/standalone';
 import tsParser from 'prettier/parser-typescript';
 import { setMonacoTheme } from './setMonacoTheme';
-import { SourceProvider } from './sourceMachine';
 import { uniq } from './utils';
+import { SourceProvider } from './types';
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
