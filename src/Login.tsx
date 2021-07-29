@@ -47,7 +47,10 @@ export const Login: React.FC = () => {
             <Avatar
               marginRight="2"
               src={session?.user?.user_metadata?.avatar_url || ''}
-              name={session?.user?.user_metadata?.full_name || ''}
+              name={
+                session?.user?.user_metadata?.full_name ||
+                session?.user?.user_metadata?.user_name
+              }
               height="30px"
               width="30px"
             />
