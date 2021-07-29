@@ -51,17 +51,12 @@ const withTypeAcquisition = (
     );
   };
 
-  // let debouncingTimer = false;
-  // editor.onDidChangeModelContent((_e) => {
-  //   if (debouncingTimer) return;
-  //   debouncingTimer = true;
-  //   setTimeout(() => {
-  //     debouncingTimer = false;
-  //     textUpdated();
-  //   }, 1000);
-  // });
+  // to enable type acquisition for any module we can introduce a deboouncer like here:
+  // https://github.com/microsoft/TypeScript-Website/blob/97a97d460d64c3c363878f11db198d0027885d8d/packages/sandbox/src/index.ts#L204-L213
 
   textUpdated(
+    // those are modules that we actually allow when we load the code at runtime
+    // this "prefetches" the types for those modules so the autoimport feature can kick in asap for them
     ['xstate', 'xstate/lib/model', 'xstate/lib/actions']
       .map((specifier) => `import '${specifier}'`)
       .join('\n'),
