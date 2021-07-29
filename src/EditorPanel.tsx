@@ -308,15 +308,15 @@ export const EditorPanel: React.FC<{
               </HStack>
             </>
           )}
-          {simMode === 'inspecting' && (
-            <Box padding="4">
-              <Text as="strong">Inspection mode</Text>
-              <Text>
-                Services from a separate process are currently being inspected.
-              </Text>
-            </Box>
-          )}
         </Suspense>
+        {simMode === 'inspecting' && (
+          <Box padding="4">
+            <Text as="strong">Inspection mode</Text>
+            <Text>
+              Services from a separate process are currently being inspected.
+            </Text>
+          </Box>
+        )}
       </Box>
     </>
   );
