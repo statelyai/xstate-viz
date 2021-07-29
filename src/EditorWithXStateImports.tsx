@@ -1,12 +1,14 @@
 import { ClassNames } from '@emotion/react';
 import Editor, { OnMount } from '@monaco-editor/react';
-import { KeyCode, KeyMod } from 'monaco-editor';
+import { editor, KeyCode, KeyMod } from 'monaco-editor';
 import { SpinnerWithText } from './SpinnerWithText';
 import { format } from 'prettier/standalone';
 import tsParser from 'prettier/parser-typescript';
-import { setMonacoTheme } from './setMonacoTheme';
 import { uniq } from './utils';
 import { SourceProvider } from './types';
+import { useEditorTheme } from './themeContext';
+import { themes } from './editor-themes';
+import { useEffect, useRef } from 'react';
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -63,6 +65,25 @@ interface EditorWithXStateImportsProps {
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
+  const editorTheme = useEditorTheme();
+  const editorRef = useRef<typeof editor>(null!);
+  const definedEditorThemes = useRef(new Set<string>());
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    const definedThemes = definedEditorThemes.current;
+    const theme = editorTheme.theme;
+
+    if (!editor || !definedThemes) {
+      return;
+    }
+
+    if (!definedThemes.has(theme)) {
+      editor.defineTheme(theme, themes[theme] as any);
+    }
+    editor.setTheme(theme);
+  }, [editorTheme.theme]);
+
   return (
     <ClassNames>
       {({ css }) => (
@@ -73,7 +94,6 @@ export const EditorWithXStateImports = (
           defaultPath="main.ts"
           defaultLanguage="typescript"
           defaultValue={props.defaultValue}
-          theme="vs-dark"
           options={{
             minimap: { enabled: false },
             tabSize: 2,
@@ -85,13 +105,18 @@ export const EditorWithXStateImports = (
             }
           }}
           onMount={async (editor, monaco) => {
+            editorRef.current = monaco.editor;
+            const theme = editorTheme.theme;
+            monaco.editor.defineTheme(theme, themes[theme] as any);
+            monaco.editor.setTheme(theme);
+
             monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
               customWorkerPath: `${new URL(
                 process.env.PUBLIC_URL,
                 window.location.origin,
               )}/ts-worker.js`,
             });
-            setMonacoTheme(monaco);
+
             monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
               ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
               module: monaco.languages.typescript.ModuleKind.CommonJS,
