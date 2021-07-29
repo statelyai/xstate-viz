@@ -264,7 +264,6 @@ export const EditorPanel: React.FC<{
                   <Button
                     disabled={isVisualizing}
                     isLoading={isVisualizing}
-                    title="Visualize"
                     onClick={() => {
                       send({
                         type: 'COMPILE',
@@ -283,7 +282,6 @@ export const EditorPanel: React.FC<{
                   <Button
                     isLoading={sourceState.hasTag('persisting')}
                     disabled={sourceState.hasTag('persisting') || isVisualizing}
-                    title={persistText}
                     onClick={() => {
                       onSave();
                     }}

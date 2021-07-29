@@ -37,7 +37,6 @@ const ActorDetails: React.FC<{ state: any; title: string }> = ({
             textOverflow="ellipsis"
             overflow="hidden"
             whiteSpace="nowrap"
-            title={title}
           >
             {title}
           </Box>
