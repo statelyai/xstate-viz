@@ -5,7 +5,7 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { format } from 'prettier/standalone';
 import tsParser from 'prettier/parser-typescript';
 import { uniq } from './utils';
-import { SourceProvider } from './types';
+import { EditorThemeDefinition, SourceProvider } from './types';
 import { useEditorTheme } from './themeContext';
 import { themes } from './editor-themes';
 import { useEffect, useRef } from 'react';
@@ -80,7 +80,7 @@ export const EditorWithXStateImports = (
     }
 
     if (!definedThemes.has(theme)) {
-      editor.defineTheme(theme, themes[theme] as any);
+      editor.defineTheme(theme, themes[theme] as EditorThemeDefinition);
     }
     editor.setTheme(theme);
     localCache.saveEditorTheme(editorTheme.theme);
@@ -109,7 +109,10 @@ export const EditorWithXStateImports = (
           onMount={async (editor, monaco) => {
             editorRef.current = monaco.editor;
             const theme = editorTheme.theme;
-            monaco.editor.defineTheme(theme, themes[theme] as any);
+            monaco.editor.defineTheme(
+              theme,
+              themes[theme] as EditorThemeDefinition,
+            );
             monaco.editor.setTheme(theme);
 
             monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
