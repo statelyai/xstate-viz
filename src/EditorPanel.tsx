@@ -1,17 +1,24 @@
 import { Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react';
-import { Monaco } from '@monaco-editor/react';
+import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { CommandPalette } from './CommandPalette';
-import { EditorWithXStateImports } from './EditorWithXStateImports';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import { useSimulation } from './SimulationContext';
-import { SourceMachineState } from './sourceMachine';
+import {
+  getEditorDefaultValue,
+  getShouldImmediateUpdate,
+  SourceMachineState,
+} from './sourceMachine';
 import type { AnyStateMachine, SimMode } from './types';
+
+const EditorWithXStateImports = React.lazy(
+  () => import('./EditorWithXStateImports'),
+);
 
 const editorPanelModel = createModel(
   {
@@ -167,26 +174,18 @@ const getPersistText = (
 };
 
 export const EditorPanel: React.FC<{
-  defaultValue: string;
-  immediateUpdate: boolean;
-  onSave: (code: string) => void;
-  onCreateNew: (code: string) => void;
+  onSave: () => void;
+  onCreateNew: () => void;
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
-}> = ({
-  defaultValue,
-  immediateUpdate,
-  onSave,
-  onChange,
-  onChangedCodeValue,
-  onCreateNew,
-}) => {
+}> = ({ onSave, onChange, onChangedCodeValue, onCreateNew }) => {
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
     authService,
     (state) => state.context.sourceRef!,
   );
+  // TODO - consider refactoring this to useSelector
   const [sourceState] = useActor(sourceService);
 
   const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
@@ -199,6 +198,9 @@ export const EditorPanel: React.FC<{
     authState.matches('signed_out'),
     sourceOwnershipStatus,
   );
+
+  const immediateUpdate = getShouldImmediateUpdate(sourceState);
+  const defaultValue = getEditorDefaultValue(sourceState);
 
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
@@ -224,86 +226,89 @@ export const EditorPanel: React.FC<{
     <>
       <CommandPalette
         onSave={() => {
-          onSave(current.context.code);
+          onSave();
         }}
         onVisualize={() => {
           send('COMPILE');
         }}
       />
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-        {simMode === 'visualizing' && (
-          <>
-            <EditorWithXStateImports
-              defaultValue={defaultValue}
-              onMount={(_, monaco) => {
-                send({ type: 'EDITOR_READY', editorRef: monaco });
-              }}
-              onChange={(code) => {
-                send({ type: 'EDITOR_CHANGED_VALUE', code });
-              }}
-              onFormat={() => {
-                send({
-                  type: 'COMPILE',
-                });
-              }}
-              onSave={() => {
-                onSave(current.context.code);
-              }}
-            />
-            <HStack padding="2">
-              <Tooltip
-                bg="black"
-                color="white"
-                label="Ctrl/CMD + Enter"
-                closeDelay={500}
-              >
-                <Button
-                  disabled={isVisualizing}
-                  isLoading={isVisualizing}
-                  title="Visualize"
-                  onClick={() => {
-                    send({
-                      type: 'COMPILE',
-                    });
-                  }}
+        <Suspense fallback={null}>
+          {simMode === 'visualizing' && (
+            <>
+              <EditorWithXStateImports
+                sourceProvider={sourceState.context.sourceProvider}
+                defaultValue={defaultValue}
+                onMount={(_, monaco) => {
+                  send({ type: 'EDITOR_READY', editorRef: monaco });
+                }}
+                onChange={(code) => {
+                  send({ type: 'EDITOR_CHANGED_VALUE', code });
+                }}
+                onFormat={() => {
+                  send({
+                    type: 'COMPILE',
+                  });
+                }}
+                onSave={() => {
+                  onSave();
+                }}
+              />
+              <HStack padding="2">
+                <Tooltip
+                  bg="black"
+                  color="white"
+                  label="Ctrl/CMD + Enter"
+                  closeDelay={500}
                 >
-                  Visualize
-                </Button>
-              </Tooltip>
-              <Tooltip
-                bg="black"
-                color="white"
-                label="Ctrl/CMD + S"
-                closeDelay={500}
-              >
-                <Button
-                  isLoading={sourceState.hasTag('persisting')}
-                  disabled={sourceState.hasTag('persisting') || isVisualizing}
-                  title={persistText}
-                  onClick={() => {
-                    onSave(current.context.code);
-                  }}
+                  <Button
+                    disabled={isVisualizing}
+                    isLoading={isVisualizing}
+                    title="Visualize"
+                    onClick={() => {
+                      send({
+                        type: 'COMPILE',
+                      });
+                    }}
+                  >
+                    Visualize
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  bg="black"
+                  color="white"
+                  label="Ctrl/CMD + S"
+                  closeDelay={500}
                 >
-                  {persistText}
-                </Button>
-              </Tooltip>
-              {sourceOwnershipStatus === 'user-owns-source' && (
-                <Button
-                  disabled={
-                    sourceState.hasTag('forking') ||
-                    current.matches('compiling')
-                  }
-                  isLoading={sourceState.hasTag('forking')}
-                  onClick={() => {
-                    onCreateNew(current.context.code);
-                  }}
-                >
-                  Fork
-                </Button>
-              )}
-            </HStack>
-          </>
-        )}
+                  <Button
+                    isLoading={sourceState.hasTag('persisting')}
+                    disabled={sourceState.hasTag('persisting') || isVisualizing}
+                    title={persistText}
+                    onClick={() => {
+                      onSave();
+                    }}
+                  >
+                    {persistText}
+                  </Button>
+                </Tooltip>
+                {sourceOwnershipStatus === 'user-owns-source' && (
+                  <Button
+                    disabled={
+                      sourceState.hasTag('forking') ||
+                      current.matches('compiling')
+                    }
+                    isLoading={sourceState.hasTag('forking')}
+                    onClick={() => {
+                      onCreateNew();
+                    }}
+                  >
+                    Fork
+                  </Button>
+                )}
+              </HStack>
+            </>
+          )}
+        </Suspense>
         {simMode === 'inspecting' && (
           <Box padding="4">
             <Text as="strong">Inspection mode</Text>

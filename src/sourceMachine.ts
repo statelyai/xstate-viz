@@ -31,8 +31,7 @@ import {
 import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
-
-type SourceProvider = 'gist' | 'registry';
+import { SourceProvider } from './types';
 
 export const sourceModel = createModel(
   {
@@ -46,12 +45,8 @@ export const sourceModel = createModel(
   },
   {
     events: {
-      SAVE: (rawSource: string) => ({
-        rawSource,
-      }),
-      CREATE_NEW: (rawSource: string) => ({
-        rawSource,
-      }),
+      SAVE: () => ({}),
+      CREATE_NEW: () => ({}),
       LOADED_FROM_GIST: (rawSource: string) => ({
         rawSource,
       }),
@@ -136,14 +131,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               {
                 target: '#creating',
                 cond: isLoggedIn,
-                actions: [
-                  assign((context, event) => {
-                    return {
-                      sourceRawContent: event.rawSource,
-                    };
-                  }),
-                  'addForkOfToDesiredName',
-                ],
+                actions: ['addForkOfToDesiredName'],
               },
               {
                 actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -184,6 +172,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               on: {
                 CODE_UPDATED: {
                   actions: [
+                    assign({
+                      sourceRawContent: (ctx, e) => e.code,
+                    }),
                     forwardTo('codeCacheMachine'),
                     forwardTo('confirmBeforeLeavingMachine'),
                   ],
@@ -232,11 +223,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       {
                         cond: isLoggedIn,
                         target: '#updating',
-                        actions: assign((context, event) => {
-                          return {
-                            sourceRawContent: event.rawSource,
-                          };
-                        }),
                       },
                       {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -250,14 +236,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                       {
                         cond: isLoggedIn,
                         target: '#creating',
-                        actions: [
-                          'addForkOfToDesiredName',
-                          assign((context, event) => {
-                            return {
-                              sourceRawContent: event.rawSource,
-                            };
-                          }),
-                        ],
+                        actions: ['addForkOfToDesiredName'],
                       },
                       {
                         actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
@@ -271,7 +250,10 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               entry: [
                 send(
                   (_, e: any) =>
-                    notifModel.events.BROADCAST(e.data.toString, 'error'),
+                    notifModel.events.BROADCAST(
+                      (e.data as Error).toString(),
+                      'error',
+                    ),
                   { to: (ctx: any) => ctx.notifRef },
                 ),
                 (_, e: any) => {
@@ -291,6 +273,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           on: {
             CODE_UPDATED: {
               actions: [
+                assign({
+                  sourceRawContent: (ctx, e) => e.code,
+                }),
                 forwardTo('codeCacheMachine'),
                 forwardTo('confirmBeforeLeavingMachine'),
               ],
@@ -299,11 +284,6 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               {
                 cond: isLoggedIn,
                 target: 'creating',
-                actions: assign((context, event) => {
-                  return {
-                    sourceRawContent: event.rawSource,
-                  };
-                }),
               },
               { actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE') },
             ],
@@ -532,7 +512,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             UpdateSourceFileDocument,
             {
               id: ctx.sourceID,
-              text: e.rawSource,
+              text: ctx.sourceRawContent,
             },
             auth.session()?.access_token!,
           ).then((res) => res.data);
@@ -580,13 +560,25 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   );
 };
 
+export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
+  state.context.sourceRef!;
+
 export const useSourceActor = (
   authService: ActorRefFrom<typeof authMachine>,
 ) => {
-  const sourceService = useSelector(
-    authService,
-    (state) => state.context.sourceRef,
-  );
+  const sourceService = useSelector(authService, getSourceActor);
 
   return useActor(sourceService!);
+};
+
+const initialMachineCode = `
+import { createMachine } from 'xstate';
+`.trim();
+
+export const getEditorDefaultValue = (state: SourceMachineState) => {
+  return state.context.sourceRawContent || initialMachineCode;
+};
+
+export const getShouldImmediateUpdate = (state: SourceMachineState) => {
+  return Boolean(state.context.sourceRawContent);
 };
