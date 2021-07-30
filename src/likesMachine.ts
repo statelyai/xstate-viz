@@ -49,13 +49,19 @@ export const likesMachine = createMachine<Context, Event>({
     liked: {
       tags: ['liked'],
       on: {
-        CLICK_BUTTON: 'unliking',
+        CLICK_BUTTON: [
+          { cond: 'isLoggedIn', target: 'unliking' },
+          { actions: 'reportLoggedOutUserTriedToLike' },
+        ],
       },
     },
     notLiked: {
       tags: ['notLiked'],
       on: {
-        CLICK_BUTTON: 'liking',
+        CLICK_BUTTON: [
+          { cond: 'isLoggedIn', target: 'liking' },
+          { actions: 'reportLoggedOutUserTriedToLike' },
+        ],
       },
     },
     liking: {

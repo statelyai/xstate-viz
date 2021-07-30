@@ -88,7 +88,7 @@ export const Login: React.FC = () => {
           <ModalHeader>Sign In</ModalHeader>
           <ModalBody>
             <Text fontSize="sm">
-              Sign in to Stately Registry to be able to save/fork machines.
+              Sign in to Stately to be able to save, fork and like machines.
             </Text>
           </ModalBody>
           <ModalFooter justifyContent="flex-start">

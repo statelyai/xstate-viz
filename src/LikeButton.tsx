@@ -20,6 +20,12 @@ export const LikeButton = () => {
   const notificationService = useInterpret(notifMachine);
 
   const [state, send] = useMachine(likesMachine, {
+    guards: {
+      isLoggedIn: () => {
+        return Boolean(supabaseClient.auth.session());
+      },
+    },
+
     services: {
       like: async () => {
         const accessToken = supabaseClient.auth.session()?.access_token;
@@ -43,6 +49,9 @@ export const LikeButton = () => {
       },
     },
     actions: {
+      reportLoggedOutUserTriedToLike: () => {
+        authService.send('LOGGED_OUT_USER_ATTEMPTED_SAVE');
+      },
       reportUnlikeFailed: () => {
         notificationService.send({
           type: 'BROADCAST',
