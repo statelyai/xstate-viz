@@ -60,7 +60,7 @@ export const simulationMachine = simModel.createMachine({
   invoke: [
     {
       id: 'services',
-      src: (ctx) => (sendBack, onReceive) => {
+      src: () => (sendBack, onReceive) => {
         const serviceMap: Map<string, AnyInterpreter> = new Map();
         let rootMachine: AnyStateMachine;
         let rootService: AnyInterpreter;
