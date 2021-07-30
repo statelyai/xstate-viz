@@ -20,7 +20,6 @@ import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
-import { Footer } from './Footer';
 import './Graph';
 import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
@@ -35,6 +34,7 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
+import { SimMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {
@@ -167,7 +167,6 @@ function App() {
                     </TabPanels>
                   </Tabs>
                 </ResizableBox>
-                <Footer />
                 <MachineNameChooserModal />
               </ChakraProvider>
             </Box>
