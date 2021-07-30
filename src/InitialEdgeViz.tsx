@@ -36,14 +36,14 @@ export const InitialEdgeViz: React.FC<{ node: DirectedGraphNode }> = ({
         <ArrowMarker id={markerId} />
       </defs>
       <circle
-        data-xviz="initialEdge-circle"
+        data-viz="initialEdge-circle"
         r="4"
         cx={startPoint.x}
         cy={startPoint.y}
         fill="var(--stroke)"
       />
       <path
-        data-xviz="initialEdge-path"
+        data-viz="edge"
         d={`M ${startPoint.x},${startPoint.y} Q ${startPoint.x},${endPoint.y} ${
           endPoint.x
         },${endPoint.y} L ${endPoint.x + 1}, ${endPoint.y}`}
