@@ -4,18 +4,28 @@ import type {
   ActionObject,
   AnyEventObject,
   Interpreter,
-  StateFrom,
-  StateMachine,
   StateNode,
   TransitionDefinition,
 } from 'xstate';
 import { AnyState, AnyStateMachine } from './types';
 import { print } from 'graphql';
 
-export function createRequiredContext<
-  TInterpreter extends Interpreter<any, any, any>,
+export function createInterpreterContext<
+  TInterpreter extends Interpreter<any, any, any>
 >(displayName: string) {
-  const context = React.createContext<TInterpreter | null>(null);
+  const [Provider, useContext] = createRequiredContext<TInterpreter>(
+    displayName,
+  );
+
+  const createSelector = <Data>(
+    selector: (state: TInterpreter['state']) => Data,
+  ) => selector;
+
+  return [Provider, useContext, createSelector] as const;
+}
+
+export function createRequiredContext<T>(displayName: string) {
+  const context = React.createContext<T | null>(null);
   context.displayName = displayName;
 
   const useContext = () => {
@@ -28,21 +38,13 @@ export function createRequiredContext<
     return ctx;
   };
 
-  /**
-   * A way to create a typesafe selector you can pass into
-   * useSelector
-   */
-  const createSelector = <Data>(
-    selector: (state: TInterpreter['state']) => Data,
-  ) => selector;
-
-  return [context.Provider, useContext, createSelector] as const;
+  return [context.Provider, useContext] as const;
 }
 
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string,
+  TEventType extends TEvent['type'] = string
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;

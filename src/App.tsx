@@ -34,12 +34,10 @@ import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
-import { EditorThemeContext, useTheme } from './themeContext';
-import { EditorThemeDefinition } from './types';
+import { EditorThemeProvider } from './themeContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {
-  const themeContext = useTheme();
   const paletteService = useInterpret(paletteMachine);
   const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
@@ -69,7 +67,7 @@ function App() {
   });
 
   return (
-    <EditorThemeContext.Provider value={themeContext}>
+    <EditorThemeProvider>
       <AuthProvider value={authService}>
         <PaletteProvider value={paletteService}>
           <SimulationProvider value={simService}>
@@ -176,7 +174,7 @@ function App() {
           </SimulationProvider>
         </PaletteProvider>
       </AuthProvider>
-    </EditorThemeContext.Provider>
+    </EditorThemeProvider>
   );
 }
 
