@@ -55,14 +55,16 @@ const authOptions: Partial<
   >
 > = {
   services: {
+    signOutUser: (ctx) => {
+      return ctx.client.auth.signOut();
+    },
+  },
+  actions: {
     signInUser: (ctx, e) =>
       ctx.client.auth.signIn(
         { provider: (e as any).provider },
         { redirectTo: window.location.href },
       ),
-    signOutUser: (ctx) => {
-      return ctx.client.auth.signOut();
-    },
   },
 };
 
@@ -206,24 +208,15 @@ export const authMachine = createMachine<typeof authModel>(
         },
       },
       signing_in: {
-        invoke: {
-          src: 'signInUser',
-          onDone: {
-            target: 'signed_in',
-          },
-          onError: {
-            target: 'signed_out',
-            actions: [
-              send(
-                (_, e) => ({
-                  type: 'BROADCAST',
-                  status: 'error',
-                  message: e.data,
-                }),
-                { to: (ctx) => ctx.notifRef },
-              ),
-            ],
-          },
+        entry: 'signInUser',
+        type: 'final',
+        meta: {
+          description: `
+            Calling signInUser redirects us away from this
+            page - this is modelled as a final state because
+            the state machine is stopped and recreated when
+            the user gets redirected back.
+          `,
         },
       },
       signing_out: {
