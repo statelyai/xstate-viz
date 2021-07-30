@@ -67,7 +67,7 @@ export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
   const editorTheme = useEditorTheme();
-  const editorRef = useRef<typeof editor>(null!);
+  const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
 
   useEffect(() => {
