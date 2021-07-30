@@ -17,12 +17,14 @@
     --viz-color-bg: #fff;
     --viz-color-fg: #111;
     --viz-node-color-bg: #ddd;
+    --viz-edge-color: #111;
   }
 
   &[data-viz-theme='dark'] {
     --viz-color-fg: #fff;
     --viz-color-bg: #111;
     --viz-node-color-bg: #2d2d2d;
+    --viz-edge-color: white;
   }
 
   --viz-color-transparent: #fff6;
@@ -34,7 +36,6 @@
   --viz-radius: 0.25rem;
   --viz-node-border-style: solid;
   --viz-node-parallel-border-style: dashed;
-  --viz-edge-color: white;
   --viz-font-size-base: 14px;
   --viz-font-size-sm: 12px;
 

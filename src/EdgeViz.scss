@@ -1,15 +1,14 @@
 [data-viz='edgeGroup'] {
-  --stroke: #fff;
-
   &:not([data-viz-active]) {
-    --stroke: #fff1;
+    opacity: 0.25;
   }
 }
 
 [data-viz='edge'] {
-  stroke: var(--stroke);
+  stroke: var(--viz-edge-color);
 }
 
-[data-viz='edge-arrow'] {
-  fill: var(--stroke);
+[data-viz='edge-arrow'],
+[data-viz='initialEdge-circle'] {
+  fill: var(--viz-edge-color);
 }
