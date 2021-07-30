@@ -43,15 +43,6 @@ export interface ServiceData {
 
 export type SimMode = 'inspecting' | 'visualizing';
 
-export type EditorThemeDefinition = {
-  base: editor.BuiltinTheme;
-  inherit: boolean;
+export type EditorThemeDefinition = editor.IStandaloneThemeData & {
   name: string;
-  rules: {
-    foreground?: string;
-    background?: string;
-    token: string;
-    fontStyle?: string;
-  }[];
-  colors: Record<string, string>;
 };

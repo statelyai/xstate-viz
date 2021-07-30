@@ -1,4 +1,6 @@
-const theme = {
+import { EditorThemeDefinition } from '../types';
+
+const theme: EditorThemeDefinition = {
   base: 'vs-dark',
   inherit: true,
   name: 'Cobalt',

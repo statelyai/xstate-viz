@@ -80,7 +80,7 @@ export const EditorWithXStateImports = (
     }
 
     if (!definedThemes.has(theme)) {
-      editor.defineTheme(theme, themes[theme] as EditorThemeDefinition);
+      editor.defineTheme(theme, themes[theme]);
     }
     editor.setTheme(theme);
     localCache.saveEditorTheme(editorTheme.theme);
@@ -110,10 +110,7 @@ export const EditorWithXStateImports = (
           onMount={async (editor, monaco) => {
             editorRef.current = monaco.editor;
             const theme = editorTheme.theme;
-            monaco.editor.defineTheme(
-              theme,
-              themes[theme] as EditorThemeDefinition,
-            );
+            monaco.editor.defineTheme(theme, themes[theme]);
             monaco.editor.setTheme(theme);
 
             monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
