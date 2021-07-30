@@ -176,15 +176,20 @@ export const CanvasContainer: React.FC = ({ children }) => {
         }
       }}
       onPointerDown={(e) => {
-        // TODO: better typing
-        (e.target as any).setPointerCapture(e.pointerId);
-        send({ type: 'GRAB', point: { x: e.pageX, y: e.pageY } });
+        if (state.nextEvents.includes('GRAB')) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          send({ type: 'GRAB', point: { x: e.pageX, y: e.pageY } });
+        }
       }}
       onPointerMove={(e) => {
-        send({ type: 'DRAG', point: { x: e.pageX, y: e.pageY } });
+        if (state.nextEvents.includes('DRAG')) {
+          send({ type: 'DRAG', point: { x: e.pageX, y: e.pageY } });
+        }
       }}
       onPointerUp={() => {
-        send('UNGRAB');
+        if (state.nextEvents.includes('UNGRAB')) {
+          send('UNGRAB');
+        }
       }}
     >
       {children}
