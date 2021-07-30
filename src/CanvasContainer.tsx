@@ -32,7 +32,7 @@ const dragMachine = dragModel.createMachine({
         cursor: 'default',
       },
       invoke: {
-        src: 'invokeDetectSpacebar',
+        src: 'invokeDetectLock',
       },
       on: {
         LOCK: 'locked',
@@ -44,7 +44,7 @@ const dragMachine = dragModel.createMachine({
       exit: ['enableTextSelection'],
       on: { RELEASE: 'released' },
       invoke: {
-        src: 'invokeDetectKeyup',
+        src: 'invokeDetectRelease',
       },
       states: {
         idle: {
@@ -110,7 +110,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
         },
       },
       services: {
-        invokeDetectSpacebar: () => (sendBack) => {
+        invokeDetectLock: () => (sendBack) => {
           function keydownListener(e: KeyboardEvent) {
             // Need this to still be able to use Spacebar in editable elements
             if (
@@ -132,7 +132,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
             window.removeEventListener('keydown', keydownListener);
           };
         },
-        invokeDetectKeyup: () => (sendBack) => {
+        invokeDetectRelease: () => (sendBack) => {
           function keyupListener(e: KeyboardEvent) {
             if (e.code === 'Space') {
               sendBack('RELEASE');
