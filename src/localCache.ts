@@ -19,7 +19,7 @@ export interface CachedSource {
 
 const POSITION_CACHE_PREFIX = `xstate_viz_position`;
 const RAW_SOURCE_CACHE_PREFIX = `xstate_viz_raw_source`;
-const EDITOR_THEME_CACHE_PREFIX = `xstate_viz_editor_theme`;
+const EDITOR_THEME_CACHE_KEY = `xstate_viz_editor_theme`;
 
 const makePositionCacheKey = (sourceID: string | null) =>
   `${POSITION_CACHE_PREFIX}|${sourceID || 'no_source'}`;
@@ -113,7 +113,7 @@ const getSourceRawContent = (
 
 const getEditorTheme = () => {
   try {
-    return JSON.parse(storage.getItem(EDITOR_THEME_CACHE_PREFIX) as ThemeName);
+    return JSON.parse(storage.getItem(EDITOR_THEME_CACHE_KEY) as ThemeName);
   } catch (e) {
     return null;
   }
@@ -121,7 +121,7 @@ const getEditorTheme = () => {
 
 const saveEditorTheme = (themeName: ThemeName) => {
   try {
-    storage.setItem(EDITOR_THEME_CACHE_PREFIX, JSON.stringify(themeName));
+    storage.setItem(EDITOR_THEME_CACHE_KEY, JSON.stringify(themeName));
   } catch (er) {}
 };
 

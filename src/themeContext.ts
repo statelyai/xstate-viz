@@ -1,22 +1,21 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { ThemeName } from './editor-themes';
 import { localCache } from './localCache';
 
 export const useTheme = () => {
-  let startingTheme = localCache.getEditorTheme() || 'xstateViz';
-  const [theme, setTheme] = useState<ThemeName>(startingTheme);
+  const [theme, setTheme] = useState<ThemeName>(
+    () => localCache.getEditorTheme() || 'xstateViz',
+  );
   return {
     theme,
-    switchTheme: useCallback((themeName: ThemeName) => {
-      setTheme(themeName);
-    }, []),
+    switchTheme: setTheme,
   };
 };
 
 export const EditorThemeContext = createContext<{
   theme: ThemeName;
   switchTheme(themeName: ThemeName): void;
-}>(null!);
+}>(undefined!);
 
 export const useEditorTheme = () => {
   const ctx = useContext(EditorThemeContext);
