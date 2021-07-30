@@ -13,6 +13,7 @@ import {
   MachineOptions,
   send,
   spawn,
+  StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import {
@@ -251,3 +252,7 @@ export const authMachine = createMachine<typeof authModel>(
   },
   authOptions,
 );
+
+export const getSupabaseClient = (state: StateFrom<typeof authMachine>) => {
+  return state.context.client;
+};

@@ -22,6 +22,8 @@ import {
 } from './canvasMachine';
 import { DirectedGraphNode } from './directedGraph';
 import { Graph } from './Graph';
+import { Heart, HeartOutlined } from './Icons';
+import { LikeButton } from './LikeButton';
 import { registryLinks } from './registryLinks';
 import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
@@ -92,7 +94,7 @@ export const CanvasPanel: React.FC<{
             </Button>
           </Box>
           {sourceState.context.sourceRegistryData && (
-            <Stack direction="row" spacing="3" alignItems="center" pr="4">
+            <Stack direction="row" spacing="4" alignItems="center" pr="4">
               <Text fontWeight="medium" fontSize="sm" color="gray.100">
                 {sourceState.context.sourceRegistryData?.name ||
                   'Unnamed Source'}
@@ -117,6 +119,7 @@ export const CanvasPanel: React.FC<{
                     ></Avatar>
                   </Link>
                 )}
+              <LikeButton />
             </Stack>
           )}
         </HStack>

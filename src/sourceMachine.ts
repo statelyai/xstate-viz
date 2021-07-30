@@ -540,9 +540,13 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               });
               break;
             case 'registry':
-              const result = await gQuery(GetSourceFileDocument, {
-                id: ctx.sourceID,
-              });
+              const result = await gQuery(
+                GetSourceFileDocument,
+                {
+                  id: ctx.sourceID,
+                },
+                auth.session()?.access_token!,
+              );
               if (!result.data?.getSourceFile) {
                 throw new NotFoundError('Source not found in Registry');
               }

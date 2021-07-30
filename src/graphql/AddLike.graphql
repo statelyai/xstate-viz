@@ -1,0 +1,5 @@
+mutation AddLike($sourceFileId: String!) {
+  addLike(sourceFileId: $sourceFileId) {
+    ...SourceFileFragment
+  }
+}
