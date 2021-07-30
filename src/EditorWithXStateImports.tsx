@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { ClassNames } from '@emotion/react';
 import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
@@ -40,9 +41,7 @@ function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
 
   if (rootNames.length) {
     // this uses `uniq` on the `rootNames` list because `actions` could be pushed into it while it was already in the list
-    text = `import { ${uniq(rootNames).join(
-      ', ',
-    )} } from "xstate";\n${text.trimLeft()}\n`;
+    text = `import { ${uniq(rootNames).join(', ')} } from "xstate";\n${text}`;
   }
 
   return text;
@@ -116,6 +115,7 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
+  const isReadyRef = React.useRef(false);
   const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
@@ -152,7 +152,8 @@ export const EditorWithXStateImports = (
           }}
           loading={<SpinnerWithText text="Preparing the editor" />}
           onChange={(text) => {
-            if (text) {
+            // skip notifying the parent about changes for edits to the editor's value done before `props.onMount` gets called
+            if (isReadyRef.current && typeof text === 'string') {
               props.onChange?.(text);
             }
           }}
@@ -234,16 +235,17 @@ export const EditorWithXStateImports = (
                 tsWorker as any
               ).queryXStateGistIdentifiers(uri.toString());
               if (usedXStateGistIdentifiers.length > 0) {
-                editor.executeEdits(uri.toString(), [
-                  {
-                    range: new monaco.Range(0, 0, 0, 0),
-                    text: buildGistFixupImportsText(usedXStateGistIdentifiers),
-                  },
-                ]);
+                const fixupImportsText = buildGistFixupImportsText(
+                  usedXStateGistIdentifiers,
+                );
+                const currentValue = editor.getValue();
+                editor.setValue(`${fixupImportsText}\n${currentValue}`);
               }
             }
 
-            props.onMount?.(withTypeAcquisition(editor, monaco), monaco);
+            const wrappedEditor = withTypeAcquisition(editor, monaco);
+            isReadyRef.current = true;
+            props.onMount?.(wrappedEditor, monaco);
           }}
         />
       )}
