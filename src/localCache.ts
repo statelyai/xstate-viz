@@ -1,6 +1,6 @@
 import { isAfter } from 'date-fns';
 import { createStorage, testStorageSupport } from 'memory-web-storage';
-import { ThemeName } from './editor-themes';
+import { ThemeName, themes } from './editor-themes';
 
 const storage = testStorageSupport() ? window.localStorage : createStorage();
 
@@ -113,7 +113,15 @@ const getSourceRawContent = (
 
 const getEditorTheme = (): ThemeName | null => {
   try {
-    return JSON.parse(storage.getItem(EDITOR_THEME_CACHE_KEY) as ThemeName);
+    const themeName = storage.getItem(EDITOR_THEME_CACHE_KEY);
+    let parsedTheme = null;
+    if (themeName) {
+      const parsed = JSON.parse(themeName) as ThemeName;
+      if (themes[parsed]) {
+        parsedTheme = parsed;
+      }
+    }
+    return parsedTheme;
   } catch (e) {
     return null;
   }
