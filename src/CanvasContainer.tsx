@@ -176,7 +176,8 @@ export const CanvasContainer: React.FC = ({ children }) => {
         }
       }}
       onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
+        // TODO: better typing
+        (e.target as any).setPointerCapture(e.pointerId);
         send({ type: 'GRAB', point: { x: e.pageX, y: e.pageY } });
       }}
       onPointerMove={(e) => {
