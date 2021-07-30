@@ -111,7 +111,7 @@ const getSourceRawContent = (
   return null;
 };
 
-const getEditorTheme = () => {
+const getEditorTheme = (): ThemeName | null => {
   try {
     return JSON.parse(storage.getItem(EDITOR_THEME_CACHE_KEY) as ThemeName);
   } catch (e) {
