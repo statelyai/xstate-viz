@@ -1,5 +1,5 @@
 mutation RemoveLike($sourceFileId: String!) {
   removeLike(sourceFileId: $sourceFileId) {
-    ...SourceFileFragment
+    ...SourceFile
   }
 }
