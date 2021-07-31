@@ -58,8 +58,7 @@ const StateNodeKey: React.FC<{ value: string }> = ({ value }) => {
 export const StateNodeViz: React.FC<{
   node: DirectedGraphNode;
   stateNode: StateNode;
-  parent?: StateNodeDef;
-}> = ({ stateNode, node, parent }) => {
+}> = ({ stateNode, node }) => {
   const service = useSimulation();
   const [state] = useActor(service);
 
@@ -120,10 +119,10 @@ export const StateNodeViz: React.FC<{
         ref={ref}
         data-viz="stateNode"
         data-viz-type={stateNode.type}
+        data-viz-parent-type={stateNode.parent?.type}
         data-viz-atomic={
           ['atomic', 'final'].includes(stateNode.type) || undefined
         }
-        data-viz-parent-type={parent?.type}
         title={`#${stateNode.id}`}
         style={{
           // position: 'absolute',

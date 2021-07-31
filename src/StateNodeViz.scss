@@ -47,7 +47,11 @@
   }
 
   &[data-viz-parent-type='parallel'] {
-    border-style: var(--viz-node-parallel-border-style);
+    --viz-node-border-style: var(--viz-node-parallel-border-style);
+  }
+
+  &:not([data-viz-parent-type='parallel']) {
+    --viz-node-border-style: solid;
   }
 }
 
