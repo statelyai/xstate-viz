@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect, useRef } from 'react';
-import { canvasModel } from './canvasMachine';
+import { canvasModel, ZoomFactor } from './canvasMachine';
 import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
@@ -167,9 +167,9 @@ export const CanvasContainer: React.FC = ({ children }) => {
       onWheel={(e) => {
         if (e.ctrlKey || e.metaKey) {
           if (e.deltaY > 0) {
-            canvasService.send(canvasModel.events['ZOOM.OUT']());
+            canvasService.send(canvasModel.events['ZOOM.OUT'](ZoomFactor.slow));
           } else if (e.deltaY < 0) {
-            canvasService.send(canvasModel.events['ZOOM.IN']());
+            canvasService.send(canvasModel.events['ZOOM.IN'](ZoomFactor.slow));
           }
         } else {
           canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
