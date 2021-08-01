@@ -7,10 +7,8 @@ import Editor, { OnMount, Monaco } from '@monaco-editor/react';
 import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
 import { uniq } from './utils';
 import { SourceProvider } from './types';
-import { useEditorTheme } from './themeContext';
-import { themes } from './editor-themes';
-import { useEffect, useRef } from 'react';
-import { localCache } from './localCache';
+import { useMonacoTheme } from './themeContext';
+import { useRef } from 'react';
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -103,25 +101,10 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
-  const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
-  const definedEditorThemes = useRef(new Set<string>());
-
-  useEffect(() => {
-    const editor = editorRef.current;
-    const definedThemes = definedEditorThemes.current;
-    const theme = editorTheme.theme;
-
-    if (!editor || !definedThemes) {
-      return;
-    }
-
-    if (!definedThemes.has(theme)) {
-      editor.defineTheme(theme, themes[theme]);
-    }
-    editor.setTheme(theme);
-    localCache.saveEditorTheme(editorTheme.theme);
-  }, [editorTheme.theme]);
+  const { theme } = useMonacoTheme({
+    editorRef: editorRef.current,
+  });
 
   return (
     <ClassNames>
@@ -143,11 +126,9 @@ export const EditorWithXStateImports = (
               props.onChange?.(text);
             }
           }}
-          theme="vs-dark"
+          theme={theme}
           onMount={async (editor, monaco) => {
             editorRef.current = monaco.editor;
-            const theme = editorTheme.theme;
-            monaco.editor.defineTheme(theme, themes[theme]);
             monaco.editor.setTheme(theme);
 
             monaco.languages.typescript.typescriptDefaults.setWorkerOptions({

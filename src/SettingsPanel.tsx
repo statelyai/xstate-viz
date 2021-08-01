@@ -12,10 +12,10 @@ import {
   Select,
 } from '@chakra-ui/react';
 import { ThemeName, themes } from './editor-themes';
-import { useEditorTheme } from './themeContext';
+import { useMonacoTheme } from './themeContext';
 
 export const SettingsPanel: React.FC = () => {
-  const editorTheme = useEditorTheme();
+  const editorTheme = useMonacoTheme();
   return (
     <VStack paddingY="5" spacing="7" alignItems="stretch">
       <Box>

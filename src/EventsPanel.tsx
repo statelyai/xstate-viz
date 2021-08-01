@@ -22,7 +22,7 @@ import {
   PopoverHeader,
 } from '@chakra-ui/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
@@ -38,6 +38,8 @@ import {
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { vizReactJsonTheme } from './vizReactJsonTheme';
+import { useMonacoTheme } from './themeContext';
+import { editor } from 'monaco-editor';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -377,6 +379,8 @@ const NewEvent: React.FC<{
   onSend: (scxmlEvent: SCXML.Event<any>) => void;
   nextEvents?: string[];
 }> = ({ onSend, nextEvents }) => {
+  const editorRef = useRef<typeof editor | null>(null!);
+  const { theme } = useMonacoTheme();
   const [state, send] = useMachine(newEventMachine, {
     actions: {
       sendEvent: (ctx) => {
@@ -449,6 +453,11 @@ const NewEvent: React.FC<{
                     value={state.context.eventString}
                     onChange={(text) => {
                       text && send(newEventModel.events['EVENT.PAYLOAD'](text));
+                    }}
+                    theme={theme}
+                    onMount={(_, monaco) => {
+                      editorRef.current = monaco.editor;
+                      monaco.editor.setTheme(theme);
                     }}
                   />
                 </PopoverBody>
