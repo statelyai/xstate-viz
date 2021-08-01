@@ -17,7 +17,7 @@ import { useEditorTheme } from './themeContext';
 export const SettingsPanel: React.FC = () => {
   const editorTheme = useEditorTheme();
   return (
-    <VStack paddingY="5" spacing="7" alignItems="flex-start">
+    <VStack paddingY="5" spacing="7" alignItems="stretch">
       <Box>
         <Heading as="h2" fontSize="l" marginBottom="5">
           Keyboard shorcuts
@@ -64,6 +64,7 @@ export const SettingsPanel: React.FC = () => {
           Editor theme
         </Heading>
         <Select
+          maxWidth="fit-content"
           defaultValue={editorTheme.theme}
           onChange={(e) => {
             const theme = e.target.value as ThemeName;
