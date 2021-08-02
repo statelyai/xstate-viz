@@ -379,7 +379,7 @@ const NewEvent: React.FC<{
   onSend: (scxmlEvent: SCXML.Event<any>) => void;
   nextEvents?: string[];
 }> = ({ onSend, nextEvents }) => {
-  const editorRef = useRef<typeof editor | null>(null!);
+  const editorRef = useRef<typeof editor | null>(null);
   const { theme } = useMonacoTheme();
   const [state, send] = useMachine(newEventMachine, {
     actions: {
