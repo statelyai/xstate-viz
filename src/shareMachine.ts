@@ -41,6 +41,11 @@ export const shareMachine = model.createMachine({
     copied: {
       entry: ['copyLinkToClipboard'],
       tags: 'copied',
+      after: {
+        2000: {
+          target: 'notCopied',
+        },
+      },
     },
   },
 });
