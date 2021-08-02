@@ -1,4 +1,4 @@
-import { Box } from '@chakra-ui/react';
+import { Box, BoxProps } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
 import { useEffect, useState } from 'react';
 import { createModel } from 'xstate/lib/model';
@@ -104,9 +104,10 @@ const ResizeHandle: React.FC<{
   );
 };
 
-export const ResizableBox: React.FC<
-  Omit<React.ComponentProps<typeof Box>, 'width'>
-> = ({ children, ...props }) => {
+export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
+  children,
+  ...props
+}) => {
   const [widthDelta, setWidthDelta] = useState(0);
 
   return (
