@@ -57,9 +57,11 @@ const errorMsg = (msg: string, response: any, config: ATAConfig) => {
  */
 const parseFileForModuleReferences = (sourceCode: string) => {
   // https://regex101.com/r/Jxa3KX/4
-  const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/gm;
+  const requirePattern =
+    /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/gm;
   // this handle ths 'from' imports  https://regex101.com/r/hdEpzO/4
-  const es6Pattern = /(import|export)((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm;
+  const es6Pattern =
+    /(import|export)((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm;
   // https://regex101.com/r/hdEpzO/8
   const es6ImportOnly = /import\s+?\(?('|")(.*)('|")\)?;?/gm;
 
@@ -521,7 +523,8 @@ const getDependenciesForModule = (
         return;
       }
 
-      config.logger.log(`[ATA] Looking at ${moduleToDownload}`);
+      process.env.NODE_ENV !== 'production' &&
+        config.logger.log(`[ATA] Looking at ${moduleToDownload}`);
 
       const modIsScopedPackageOnly =
         moduleToDownload.indexOf('@') === 0 &&
