@@ -37,7 +37,6 @@ const rootLayoutOptions: LayoutOptions = {
   'elk.layered.crossingMinimization.semiInteractive': 'true',
   // 'elk.layering.strategy': 'NIKOLOV',
   // 'elk.wrapping.strategy': 'SINGLE_EDGE',
-  // 'elk.direction': 'DOWN',
   'elk.aspectRatio': '0.5',
 };
 
@@ -106,13 +105,15 @@ function getRelativeNodeEdgeMap(
   return [map, edgeMap];
 }
 
-function getElkEdge(edge: DirectedGraphEdge) {
+function getElkEdge(edge: DirectedGraphEdge): ElkExtendedEdge & { edge: any } {
   const edgeRect = readRect(edge.id);
+  const targetPortId = getPortId(edge);
+  const isSelfEdge = edge.source === edge.target;
 
   return {
     id: edge.id,
-    sources: [edge.source.id],
-    targets: [getPortId(edge)],
+    sources: [isSelfEdge ? targetPortId : edge.source.id],
+    targets: [targetPortId],
     labels: [
       {
         id: edge.id + '--label',
@@ -127,6 +128,7 @@ function getElkEdge(edge: DirectedGraphEdge) {
     ],
     edge,
     sections: [],
+    layoutOptions: {},
   };
 }
 
@@ -141,10 +143,8 @@ function getElkChild(
 ): StateElkNode {
   const nodeRect = getRect(node.id);
   const contentRect = readRect(`${node.id}:content`);
-
   const edges = rMap[0].get(node.data) || [];
-
-  const nodeBackEdges = backLinkMap.get(node.data);
+  const nodeBackEdges = Array.from(backLinkMap.get(node.data) ?? []);
 
   return {
     id: node.id,
@@ -154,26 +154,20 @@ function getElkChild(
           height: nodeRect?.height!,
         }
       : undefined),
-    // width: node.rects.full.width,
-    // height: node.rects.full.height,
-
     node,
-    ...(node.children.length
-      ? { children: getElkChildren(node, rMap, backLinkMap) }
-      : undefined),
+    children: getElkChildren(node, rMap, backLinkMap),
     absolutePosition: { x: 0, y: 0 },
     edges: edges.map((edge) => {
       return getElkEdge(edge);
     }),
-    ports: nodeBackEdges
-      ? Array.from(nodeBackEdges).map((backEdge) => {
-          return {
-            id: getPortId(backEdge),
-            width: 5, // TODO: don't hardcode, find way to reference arrow marker size
-            height: 5,
-          };
-        })
-      : undefined,
+    ports: nodeBackEdges.map((backEdge, i) => {
+      return {
+        id: getPortId(backEdge),
+        width: 5, // TODO: don't hardcode, find way to reference arrow marker size
+        height: 5,
+        layoutOptions: {},
+      };
+    }),
     layoutOptions: {
       'elk.padding': `[top=${
         (contentRect?.height || 0) + 30
@@ -199,6 +193,10 @@ interface StateElkNode extends ElkNode {
 }
 interface StateElkEdge extends ElkExtendedEdge {
   edge: DirectedGraphEdge;
+}
+
+export function isStateElkNode(node: ElkNode): node is StateElkNode {
+  return 'absolutePosition' in node;
 }
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
@@ -292,7 +290,9 @@ export async function getElkGraph(
     });
 
     elkNode.children?.forEach((cn) => {
-      setLayout(cn as StateElkNode, elkNode);
+      if (isStateElkNode(cn)) {
+        setLayout(cn, elkNode);
+      }
     });
   };
 
