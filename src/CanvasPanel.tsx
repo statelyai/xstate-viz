@@ -4,6 +4,7 @@ import {
   RepeatIcon,
   HamburgerIcon,
   ExternalLinkIcon,
+  EditIcon,
 } from '@chakra-ui/icons';
 import {
   Avatar,
@@ -129,7 +130,10 @@ export const CanvasPanel: React.FC<{
                           sourceState.context.sourceID,
                         )}
                       >
-                        Edit
+                        <HStack spacing="3">
+                          <EditIcon />
+                          <Text>Edit</Text>
+                        </HStack>
                       </MenuItem>
                     )}
                     {registryData.owner && (
@@ -143,7 +147,9 @@ export const CanvasPanel: React.FC<{
                           <Avatar
                             src={registryData.owner?.avatarUrl || ''}
                             name={registryData.owner?.displayName || ''}
-                            style={{ height: '30px', width: '30px' }}
+                            size="xs"
+                            height="24px"
+                            width="24px"
                           ></Avatar>
                           <Text>View Author</Text>
                         </HStack>
