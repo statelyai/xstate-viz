@@ -3,12 +3,15 @@ import { useActor, useSelector } from '@xstate/react';
 import {
   ActorRefFrom,
   assign,
+  ContextFrom,
   createMachine,
   DoneInvokeEvent,
+  EventFrom,
   forwardTo,
   send,
   sendParent,
   spawn,
+  State,
   StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
@@ -70,8 +73,9 @@ export type SourceMachineActorRef = ActorRefFrom<
   ReturnType<typeof makeSourceMachine>
 >;
 
-export type SourceMachineState = StateFrom<
-  ReturnType<typeof makeSourceMachine>
+export type SourceMachineState = State<
+  ContextFrom<typeof sourceModel>,
+  EventFrom<typeof sourceModel>
 >;
 
 class NotFoundError extends Error {
@@ -134,7 +138,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 actions: ['addForkOfToDesiredName'],
               },
               {
-                actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                actions: sendParent(
+                  'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                ),
               },
             ],
           },
@@ -225,7 +231,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                         target: '#updating',
                       },
                       {
-                        actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                        actions: sendParent(
+                          'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                        ),
                       },
                     ],
                   },
@@ -239,7 +247,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                         actions: ['addForkOfToDesiredName'],
                       },
                       {
-                        actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                        actions: sendParent(
+                          'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                        ),
                       },
                     ],
                   },
@@ -285,7 +295,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 cond: isLoggedIn,
                 target: 'creating',
               },
-              { actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE') },
+              {
+                actions: sendParent(
+                  'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                ),
+              },
             ],
           },
           invoke: [
@@ -540,9 +554,13 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               });
               break;
             case 'registry':
-              const result = await gQuery(GetSourceFileDocument, {
-                id: ctx.sourceID,
-              });
+              const result = await gQuery(
+                GetSourceFileDocument,
+                {
+                  id: ctx.sourceID,
+                },
+                auth.session()?.access_token!,
+              );
               if (!result.data?.getSourceFile) {
                 throw new NotFoundError('Source not found in Registry');
               }
