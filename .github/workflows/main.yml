@@ -20,6 +20,7 @@ jobs:
         uses: cypress-io/github-action@v2
         with:
           start: yarn graphql-codegen && yarn start:app
+          wait-on: 'http://localhost:3000'
         env:
           REACT_APP_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
 
