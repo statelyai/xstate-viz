@@ -1,5 +1,5 @@
 import { Button, Text } from '@chakra-ui/react';
-import { useInterpret, useMachine, useSelector } from '@xstate/react';
+import { useMachine, useSelector } from '@xstate/react';
 import React, { useEffect } from 'react';
 import { useAuth } from './authContext';
 import { getSupabaseClient } from './authMachine';
@@ -7,7 +7,6 @@ import { AddLikeDocument } from './graphql/AddLike.generated';
 import { RemoveLikeDocument } from './graphql/RemoveLike.generated';
 import { Heart, HeartOutlined } from './Icons';
 import { likesMachine } from './likesMachine';
-import { notifMachine } from './notificationMachine';
 import { useSourceActor } from './sourceMachine';
 import { gQuery } from './utils';
 
@@ -16,8 +15,6 @@ export const LikeButton = () => {
   const supabaseClient = useSelector(authService, getSupabaseClient);
 
   const [sourceState] = useSourceActor(authService);
-
-  const notificationService = useInterpret(notifMachine);
 
   const [state, send] = useMachine(likesMachine, {
     guards: {
@@ -50,20 +47,6 @@ export const LikeButton = () => {
     actions: {
       reportLoggedOutUserTriedToLike: () => {
         authService.send('LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION');
-      },
-      reportUnlikeFailed: () => {
-        notificationService.send({
-          type: 'BROADCAST',
-          message: 'Unliking failed - an unknown error occurred.',
-          status: 'error',
-        });
-      },
-      reportLikeFailed: () => {
-        notificationService.send({
-          type: 'BROADCAST',
-          message: 'Liking failed - an unknown error occurred.',
-          status: 'error',
-        });
       },
     },
   });

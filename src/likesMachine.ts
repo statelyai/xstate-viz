@@ -1,7 +1,9 @@
-import { createMachine, assign } from 'xstate';
+import { createMachine, assign, ActorRefFrom, spawn, send } from 'xstate';
+import { notifMachine } from './notificationMachine';
 
 interface Context {
   likesCount: number | undefined;
+  notifRef: ActorRefFrom<typeof notifMachine>;
 }
 
 type Event =
@@ -22,6 +24,9 @@ type Event =
 export const likesMachine = createMachine<Context, Event>({
   id: 'likes',
   initial: 'waitingForSourceData',
+  entry: assign({
+    notifRef: () => spawn(notifMachine),
+  }),
   on: {
     SOURCE_DATA_CHANGED: [
       {
@@ -85,7 +90,16 @@ export const likesMachine = createMachine<Context, Event>({
         },
         onError: {
           target: 'notLiked',
-          actions: 'reportLikeFailure',
+          actions: send(
+            {
+              type: 'BROADCAST',
+              message: 'Liking failed - an unknown error occurred.',
+              status: 'error',
+            },
+            {
+              to: (ctx) => ctx.notifRef,
+            },
+          ),
         },
       },
     },
@@ -105,7 +119,16 @@ export const likesMachine = createMachine<Context, Event>({
         },
         onError: {
           target: 'liked',
-          actions: 'reportUnlikeFailed',
+          actions: send(
+            {
+              type: 'BROADCAST',
+              message: 'Unliking failed - an unknown error occurred.',
+              status: 'error',
+            },
+            {
+              to: (ctx) => ctx.notifRef,
+            },
+          ),
         },
       },
     },
