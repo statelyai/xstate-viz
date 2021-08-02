@@ -34,13 +34,13 @@ import {
 } from './canvasMachine';
 import { DirectedGraphNode } from './directedGraph';
 import { Graph } from './Graph';
-import { Heart, HeartOutlined } from './Icons';
 import { LikeButton } from './LikeButton';
 import { registryLinks } from './registryLinks';
 import { ShareButton } from './ShareButton';
 import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
+import { Logo } from './Logo';
 
 const ButtonSeparator = () => (
   <Box backgroundColor="gray.700" width={0.5} height="60%" marginX={2} />
@@ -71,40 +71,18 @@ export const CanvasPanel: React.FC<{
   const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
 
   return (
-    <Box display="grid" gridTemplateRows="auto 1fr">
-      <ChakraProvider theme={theme}>
+    <ChakraProvider theme={theme}>
+      <Box display="grid" gridTemplateRows="auto 1fr">
         <HStack bg="black" justifyContent="space-between" zIndex={1}>
-          <Box zIndex={1} display="flex" alignItems="center">
-            <ButtonGroup size="sm" spacing={2} padding={2}>
-              <IconButton
-                aria-label="Zoom out"
-                title="Zoom out"
-                icon={<MinusIcon />}
-                disabled={!shouldEnableZoomOutButton}
-                onClick={() => canvasService.send('ZOOM.OUT')}
-              />
-              <IconButton
-                aria-label="Zoom in"
-                title="Zoom in"
-                icon={<AddIcon />}
-                disabled={!shouldEnableZoomInButton}
-                onClick={() => canvasService.send('ZOOM.IN')}
-              />
-              <IconButton
-                aria-label="Reset canvas"
-                title="Reset canvas"
-                icon={<RepeatIcon />}
-                onClick={() => canvasService.send('POSITION.RESET')}
-              />
-            </ButtonGroup>
-            <ButtonSeparator />
-            <Button
-              size="sm"
-              margin={2}
-              onClick={() => simService.send('MACHINES.RESET')}
-            >
-              RESET
-            </Button>
+          <Box zIndex={1} display="flex" alignItems="center" height="3rem">
+            <Logo
+              style={{
+                // @ts-ignore
+                '--fill': 'white',
+                height: '100%',
+                padding: '.25rem 1rem',
+              }}
+            />
           </Box>
           {registryData && (
             <Stack direction="row" spacing="4" alignItems="center" pr="4">
@@ -161,10 +139,46 @@ export const CanvasPanel: React.FC<{
             </Stack>
           )}
         </HStack>
-      </ChakraProvider>
-      <CanvasContainer>
-        <Graph digraph={digraph} />
-      </CanvasContainer>
-    </Box>
+        <CanvasContainer>
+          <Graph digraph={digraph} />
+        </CanvasContainer>
+        <HStack position="absolute" bottom="4" left="4" zIndex={1}>
+          <ButtonGroup size="sm" spacing={2} padding={2} isAttached>
+            <IconButton
+              aria-label="Zoom out"
+              title="Zoom out"
+              icon={<MinusIcon />}
+              disabled={!shouldEnableZoomOutButton}
+              onClick={() => canvasService.send('ZOOM.OUT')}
+              colorScheme="blue"
+            />
+            <IconButton
+              aria-label="Zoom in"
+              title="Zoom in"
+              icon={<AddIcon />}
+              disabled={!shouldEnableZoomInButton}
+              onClick={() => canvasService.send('ZOOM.IN')}
+              colorScheme="blue"
+            />
+            <IconButton
+              aria-label="Reset canvas"
+              title="Reset canvas"
+              icon={<RepeatIcon />}
+              onClick={() => canvasService.send('POSITION.RESET')}
+              colorScheme="blue"
+            />
+          </ButtonGroup>
+          <ButtonSeparator />
+          <Button
+            size="sm"
+            margin={2}
+            onClick={() => simService.send('MACHINES.RESET')}
+            colorScheme="blue"
+          >
+            RESET
+          </Button>
+        </HStack>
+      </Box>
+    </ChakraProvider>
   );
 };
