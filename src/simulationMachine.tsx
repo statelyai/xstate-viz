@@ -108,9 +108,13 @@ export const simulationMachine = simModel.createMachine({
             }
           } else if (event.type === 'xstate.event') {
             const service = serviceMap.get(event.sessionId);
-
             if (service) {
-              service.send(event.event);
+              try {
+                service.send(event.event);
+              } catch (err) {
+                console.error(err);
+                sendBack(simModel.events.ERROR((err as Error).message));
+              }
             }
           } else if (event.type === 'RESET') {
             rootService?.stop();

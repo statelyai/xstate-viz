@@ -20,7 +20,6 @@ import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
-import { Footer } from './Footer';
 import './Graph';
 import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
@@ -34,6 +33,8 @@ import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
+import { EditorThemeProvider } from './themeContext';
+import { SimMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {
@@ -66,112 +67,113 @@ function App() {
   });
 
   return (
-    <AuthProvider value={authService}>
-      <PaletteProvider value={paletteService}>
-        <SimulationProvider value={simService}>
-          <Box
-            data-testid="app"
-            data-viz-theme="dark"
-            as="main"
-            display="grid"
-            gridTemplateColumns="1fr auto"
-            gridTemplateRows="1fr auto"
-            gridTemplateAreas="'canvas panels' 'footer footer'"
-            height="100vh"
-          >
-            {digraph ? (
-              <CanvasProvider value={canvasService}>
-                <CanvasPanel digraph={digraph} />
-              </CanvasProvider>
-            ) : (
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <Text textAlign="center">
-                  No machines to display yet...
-                  <br />
-                  Create one!
-                </Text>
-              </Box>
-            )}
-            <ChakraProvider theme={theme}>
-              <ResizableBox gridArea="panels">
-                <Tabs
-                  bg="gray.800"
-                  display="grid"
-                  gridTemplateRows="auto 1fr"
-                  height="100%"
-                >
-                  <TabList>
-                    <Tab>Code</Tab>
-                    <Tab>State</Tab>
-                    <Tab>Events</Tab>
-                    <Tab>Actors</Tab>
-                    <Tab marginLeft="auto" marginRight="2">
-                      <SettingsIcon />
-                    </Tab>
-                    <Login />
-                  </TabList>
+    <EditorThemeProvider>
+      <AuthProvider value={authService}>
+        <PaletteProvider value={paletteService}>
+          <SimulationProvider value={simService}>
+            <Box
+              data-testid="app"
+              data-viz-theme="dark"
+              as="main"
+              display="grid"
+              gridTemplateColumns="1fr auto"
+              gridTemplateRows="1fr auto"
+              gridTemplateAreas="'canvas panels' 'footer footer'"
+              height="100vh"
+            >
+              {digraph ? (
+                <CanvasProvider value={canvasService}>
+                  <CanvasPanel digraph={digraph} />
+                </CanvasProvider>
+              ) : (
+                <Box display="flex" justifyContent="center" alignItems="center">
+                  <Text textAlign="center">
+                    No machines to display yet...
+                    <br />
+                    Create one!
+                  </Text>
+                </Box>
+              )}
+              <ChakraProvider theme={theme}>
+                <ResizableBox gridArea="panels">
+                  <Tabs
+                    bg="gray.800"
+                    display="grid"
+                    gridTemplateRows="auto 1fr"
+                    height="100%"
+                  >
+                    <TabList>
+                      <Tab>Code</Tab>
+                      <Tab>State</Tab>
+                      <Tab>Events</Tab>
+                      <Tab>Actors</Tab>
+                      <Tab marginLeft="auto" marginRight="2">
+                        <SettingsIcon />
+                      </Tab>
+                      <Login />
+                    </TabList>
 
-                  <TabPanels minHeight={0}>
-                    <TabPanel padding={0} height="100%">
-                      {sourceState.matches({
-                        with_source: 'loading_content',
-                      }) && (
-                        <SpinnerWithText
-                          text={`Loading source from ${sourceState.context.sourceProvider}`}
-                        />
-                      )}
-                      {!sourceState.matches({
-                        with_source: 'loading_content',
-                      }) && (
-                        <EditorPanel
-                          onChangedCodeValue={(code) => {
-                            sendToSourceService({
-                              type: 'CODE_UPDATED',
-                              code,
-                              sourceID: sourceState.context.sourceID,
-                            });
-                          }}
-                          onSave={() => {
-                            sendToSourceService({
-                              type: 'SAVE',
-                            });
-                          }}
-                          onChange={(machines) => {
-                            simService.send({
-                              type: 'MACHINES.REGISTER',
-                              machines,
-                            });
-                          }}
-                          onCreateNew={() => {
-                            sendToSourceService({
-                              type: 'CREATE_NEW',
-                            });
-                          }}
-                        />
-                      )}
-                    </TabPanel>
-                    <TabPanel height="100%">
-                      <StatePanel />
-                    </TabPanel>
-                    <TabPanel overflow="hidden" height="100%">
-                      <EventsPanel />
-                    </TabPanel>
-                    <TabPanel height="100%">
-                      <ActorsPanel />
-                    </TabPanel>
-                    <TabPanel height="100%">
-                      <SettingsPanel />
-                    </TabPanel>
-                  </TabPanels>
-                </Tabs>
-              </ResizableBox>
-              <Footer />
-              <MachineNameChooserModal />
-            </ChakraProvider>
-          </Box>
-        </SimulationProvider>
-      </PaletteProvider>
-    </AuthProvider>
+                    <TabPanels minHeight={0}>
+                      <TabPanel padding={0} height="100%">
+                        {sourceState.matches({
+                          with_source: 'loading_content',
+                        }) && (
+                          <SpinnerWithText
+                            text={`Loading source from ${sourceState.context.sourceProvider}`}
+                          />
+                        )}
+                        {!sourceState.matches({
+                          with_source: 'loading_content',
+                        }) && (
+                          <EditorPanel
+                            onChangedCodeValue={(code) => {
+                              sendToSourceService({
+                                type: 'CODE_UPDATED',
+                                code,
+                                sourceID: sourceState.context.sourceID,
+                              });
+                            }}
+                            onSave={() => {
+                              sendToSourceService({
+                                type: 'SAVE',
+                              });
+                            }}
+                            onChange={(machines) => {
+                              simService.send({
+                                type: 'MACHINES.REGISTER',
+                                machines,
+                              });
+                            }}
+                            onCreateNew={() => {
+                              sendToSourceService({
+                                type: 'CREATE_NEW',
+                              });
+                            }}
+                          />
+                        )}
+                      </TabPanel>
+                      <TabPanel height="100%">
+                        <StatePanel />
+                      </TabPanel>
+                      <TabPanel overflow="hidden" height="100%">
+                        <EventsPanel />
+                      </TabPanel>
+                      <TabPanel height="100%">
+                        <ActorsPanel />
+                      </TabPanel>
+                      <TabPanel height="100%">
+                        <SettingsPanel />
+                      </TabPanel>
+                    </TabPanels>
+                  </Tabs>
+                </ResizableBox>
+                <MachineNameChooserModal />
+              </ChakraProvider>
+            </Box>
+          </SimulationProvider>
+        </PaletteProvider>
+      </AuthProvider>
+    </EditorThemeProvider>
   );
 }
 

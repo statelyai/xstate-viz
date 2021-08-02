@@ -1,5 +1,6 @@
 import { isAfter } from 'date-fns';
 import { createStorage, testStorageSupport } from 'memory-web-storage';
+import { ThemeName, themes } from './editor-themes';
 
 const storage = testStorageSupport() ? window.localStorage : createStorage();
 
@@ -18,6 +19,7 @@ export interface CachedSource {
 
 const POSITION_CACHE_PREFIX = `xstate_viz_position`;
 const RAW_SOURCE_CACHE_PREFIX = `xstate_viz_raw_source`;
+const EDITOR_THEME_CACHE_KEY = `xstate_viz_editor_theme`;
 
 const makePositionCacheKey = (sourceID: string | null) =>
   `${POSITION_CACHE_PREFIX}|${sourceID || 'no_source'}`;
@@ -109,9 +111,33 @@ const getSourceRawContent = (
   return null;
 };
 
+const getEditorTheme = (): ThemeName | null => {
+  try {
+    const themeName = storage.getItem(EDITOR_THEME_CACHE_KEY);
+    let parsedTheme = null;
+    if (themeName) {
+      const parsed = JSON.parse(themeName) as ThemeName;
+      if (themes[parsed]) {
+        parsedTheme = parsed;
+      }
+    }
+    return parsedTheme;
+  } catch (e) {
+    return null;
+  }
+};
+
+const saveEditorTheme = (themeName: ThemeName) => {
+  try {
+    storage.setItem(EDITOR_THEME_CACHE_KEY, JSON.stringify(themeName));
+  } catch (er) {}
+};
+
 export const localCache = {
   getPosition,
   savePosition,
   saveSourceRawContent,
   getSourceRawContent,
+  getEditorTheme,
+  saveEditorTheme,
 };
