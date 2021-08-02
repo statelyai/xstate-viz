@@ -1,4 +1,4 @@
-import { ActorRefFrom, assign, send, spawn } from 'xstate';
+import { ActorRefFrom, assign, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { notifMachine } from './notificationMachine';
 
