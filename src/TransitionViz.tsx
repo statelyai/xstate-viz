@@ -1,9 +1,8 @@
 import { useSelector } from '@xstate/react';
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { AnyStateNodeDefinition, Guard } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
-import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
@@ -92,16 +91,6 @@ export const TransitionViz: React.FC<{
     [definition.eventType, delayOptions, state],
   );
 
-  const ref = useRef<any>(null);
-  useEffect(() => {
-    if (ref.current) {
-      setRect(edge.id, ref.current);
-    }
-    return () => {
-      deleteRect(edge.id);
-    };
-  }, [edge.id]);
-
   if (!state) {
     return null;
   }
@@ -114,11 +103,11 @@ export const TransitionViz: React.FC<{
           !!state.configuration.find((sn) => sn === edge.source)) ||
         undefined
       }
+      data-rect-id={edge.id}
       style={{
         position: 'absolute',
         ...(position && { left: `${position.x}px`, top: `${position.y}px` }),
       }}
-      ref={ref}
     >
       <button
         data-viz="transition-label"

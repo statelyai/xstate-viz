@@ -13,7 +13,6 @@ import ELK, {
 } from 'elkjs/lib/main';
 import { useEffect, useMemo, memo } from 'react';
 import { Edges } from './Edges';
-import { deleteRect, getRect, onRect, readRect } from './getRect';
 import { Point } from './pathUtils';
 import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
@@ -106,8 +105,8 @@ function getRelativeNodeEdgeMap(
   return [map, edgeMap];
 }
 
-function getElkEdge(edge: DirectedGraphEdge) {
-  const edgeRect = readRect(edge.id);
+function getElkEdge(edge: DirectedGraphEdge, rectMap: DOMRectMap) {
+  const edgeRect = rectMap.get(edge.id)!;
 
   return {
     id: edge.id,
@@ -116,8 +115,8 @@ function getElkEdge(edge: DirectedGraphEdge) {
     labels: [
       {
         id: edge.id + '--label',
-        width: edgeRect?.width ?? 0,
-        height: edgeRect?.height ?? 100,
+        width: edgeRect.width,
+        height: edgeRect.height,
         text: edge.label.text || 'always',
         layoutOptions: {
           'edgeLabels.inline': 'true',
@@ -134,13 +133,26 @@ function getPortId(edge: DirectedGraphEdge): string {
   return `port:${edge.id}`;
 }
 
+type DOMRectMap = Map<string, DOMRect>;
+
+const getRectMap = (): DOMRectMap => {
+  const rectMap: DOMRectMap = new Map();
+  document.querySelectorAll('[data-rect-id]').forEach((el) => {
+    const rectId = (el as HTMLElement).dataset.rectId!;
+    const rect = el.getBoundingClientRect();
+    rectMap.set(rectId, rect);
+  });
+  return rectMap;
+};
+
 function getElkChild(
   node: DirectedGraphNode,
   rMap: RelativeNodeEdgeMap,
   backLinkMap: DigraphBackLinkMap,
+  rectMap: DOMRectMap,
 ): StateElkNode {
-  const nodeRect = getRect(node.id);
-  const contentRect = readRect(`${node.id}:content`);
+  const nodeRect = rectMap.get(node.id)!;
+  const contentRect = rectMap.get(`${node.id}:content`)!;
 
   const edges = rMap[0].get(node.data) || [];
 
@@ -150,8 +162,8 @@ function getElkChild(
     id: node.id,
     ...(!node.children.length
       ? {
-          width: nodeRect?.width!,
-          height: nodeRect?.height!,
+          width: nodeRect.width,
+          height: nodeRect.height,
         }
       : undefined),
     // width: node.rects.full.width,
@@ -159,11 +171,11 @@ function getElkChild(
 
     node,
     ...(node.children.length
-      ? { children: getElkChildren(node, rMap, backLinkMap) }
+      ? { children: getElkChildren(node, rMap, backLinkMap, rectMap) }
       : undefined),
     absolutePosition: { x: 0, y: 0 },
     edges: edges.map((edge) => {
-      return getElkEdge(edge);
+      return getElkEdge(edge, rectMap);
     }),
     ports: nodeBackEdges
       ? Array.from(nodeBackEdges).map((backEdge) => {
@@ -176,7 +188,7 @@ function getElkChild(
       : undefined,
     layoutOptions: {
       'elk.padding': `[top=${
-        (contentRect?.height || 0) + 30
+        contentRect.height + 30
       }, left=30, right=30, bottom=30]`,
       hierarchyHandling: 'INCLUDE_CHILDREN',
     },
@@ -186,9 +198,10 @@ function getElkChildren(
   node: DirectedGraphNode,
   rMap: RelativeNodeEdgeMap,
   backLinkMap: DigraphBackLinkMap,
+  rectMap: DOMRectMap,
 ): ElkNode[] {
   return node.children.map((childNode) => {
-    return getElkChild(childNode, rMap, backLinkMap);
+    return getElkChild(childNode, rMap, backLinkMap, rectMap);
   });
 }
 
@@ -205,30 +218,19 @@ const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
   return <StateNodeViz stateNode={elkNode.node.data} node={elkNode.node} />;
 };
 
-function sleep(ms: number) {
-  return new Promise((res) => {
-    setTimeout(res, ms);
-  });
-}
-
 export async function getElkGraph(
   rootDigraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
-  // The below timeout allows for the layout to change so we can measure the DOM nodes
-  await sleep(20); // TODO: temporary fix
-  await new Promise((res) => {
-    onRect(rootDigraphNode.id, (data) => {
-      res(void 0);
-    });
-  });
-
+  const rectMap = getRectMap();
   const relativeNodeEdgeMap = getRelativeNodeEdgeMap(rootDigraphNode);
   const backlinkMap = getBackLinkMap(rootDigraphNode);
   const rootEdges = relativeNodeEdgeMap[0].get(undefined) || [];
   const elkNode: ElkNode = {
     id: 'root',
-    edges: rootEdges.map(getElkEdge),
-    children: [getElkChild(rootDigraphNode, relativeNodeEdgeMap, backlinkMap)],
+    edges: rootEdges.map((edge) => getElkEdge(edge, rectMap)),
+    children: [
+      getElkChild(rootDigraphNode, relativeNodeEdgeMap, backlinkMap, rectMap),
+    ],
     layoutOptions: rootLayoutOptions,
   };
 
@@ -320,12 +322,6 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
   }, [digraph, send]);
-
-  useEffect(() => {
-    return () => {
-      deleteRect(digraph.id);
-    };
-  }, [digraph.id]);
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
