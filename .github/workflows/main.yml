@@ -19,8 +19,9 @@ jobs:
       - name: Run Cypress
         uses: cypress-io/github-action@v2
         with:
-          # TODO - refactor this to a better syntax
-          start: REACT_APP_GRAPHQL_API_URL=https://dev.stately.ai/registry/api/graphql yarn start
+          start: yarn start
+        env:
+          REACT_APP_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
 
       - name: Upload Screenshots
         uses: actions/upload-artifact@v1
