@@ -6,29 +6,34 @@ interface Context {
 
 type Event =
   | {
-      type: 'LIKES_CHANGED';
-      youHaveLiked: boolean | undefined;
-      likesCount: number | undefined;
+      type: 'SOURCE_DATA_CHANGED';
+      data:
+        | {
+            youHaveLiked: boolean;
+            likesCount: number;
+          }
+        | undefined
+        | null;
     }
   | {
-      type: 'CLICK_BUTTON';
+      type: 'LIKE_BUTTON_TOGGLED';
     };
 
 export const likesMachine = createMachine<Context, Event>({
   id: 'likes',
-  initial: 'checkingIfLiked',
+  initial: 'waitingForSourceData',
   on: {
-    LIKES_CHANGED: [
+    SOURCE_DATA_CHANGED: [
       {
-        cond: (ctx, e) => typeof e.youHaveLiked === 'undefined',
-        target: '.checkingIfLiked',
+        cond: (ctx, e) => !e.data,
+        target: '.waitingForSourceData',
       },
       {
-        cond: (ctx, e) => e.youHaveLiked!,
+        cond: (ctx, e) => e.data!.youHaveLiked,
         target: '.liked',
         actions: assign((context, event) => {
           return {
-            likesCount: event.likesCount,
+            likesCount: event.data!.likesCount,
           };
         }),
       },
@@ -36,20 +41,20 @@ export const likesMachine = createMachine<Context, Event>({
         target: '.notLiked',
         actions: assign((context, event) => {
           return {
-            likesCount: event.likesCount,
+            likesCount: event.data!.likesCount,
           };
         }),
       },
     ],
   },
   states: {
-    checkingIfLiked: {
+    waitingForSourceData: {
       tags: 'hidden',
     },
     liked: {
       tags: ['liked'],
       on: {
-        CLICK_BUTTON: [
+        LIKE_BUTTON_TOGGLED: [
           { cond: 'isLoggedIn', target: 'unliking' },
           { actions: 'reportLoggedOutUserTriedToLike' },
         ],
@@ -58,7 +63,7 @@ export const likesMachine = createMachine<Context, Event>({
     notLiked: {
       tags: ['notLiked'],
       on: {
-        CLICK_BUTTON: [
+        LIKE_BUTTON_TOGGLED: [
           { cond: 'isLoggedIn', target: 'liking' },
           { actions: 'reportLoggedOutUserTriedToLike' },
         ],

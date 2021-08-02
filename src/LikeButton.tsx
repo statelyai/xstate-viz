@@ -25,7 +25,6 @@ export const LikeButton = () => {
         return Boolean(supabaseClient.auth.session());
       },
     },
-
     services: {
       like: async () => {
         const accessToken = supabaseClient.auth.session()?.access_token;
@@ -50,7 +49,7 @@ export const LikeButton = () => {
     },
     actions: {
       reportLoggedOutUserTriedToLike: () => {
-        authService.send('LOGGED_OUT_USER_ATTEMPTED_SAVE');
+        authService.send('LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION');
       },
       reportUnlikeFailed: () => {
         notificationService.send({
@@ -71,15 +70,10 @@ export const LikeButton = () => {
 
   useEffect(() => {
     send({
-      type: 'LIKES_CHANGED',
-      youHaveLiked: sourceState.context.sourceRegistryData?.youHaveLiked,
-      likesCount: sourceState.context.sourceRegistryData?.likesCount,
+      type: 'SOURCE_DATA_CHANGED',
+      data: sourceState.context.sourceRegistryData,
     });
-  }, [
-    sourceState.context.sourceRegistryData?.youHaveLiked,
-    sourceState.context.sourceRegistryData?.likesCount,
-    send,
-  ]);
+  }, [sourceState.context.sourceRegistryData, send]);
 
   const userHasLiked = state.hasTag('liked');
 
@@ -99,7 +93,7 @@ export const LikeButton = () => {
       color="gray.100"
       size="sm"
       onClick={() => {
-        send('CLICK_BUTTON');
+        send('LIKE_BUTTON_TOGGLED');
       }}
       isLoading={state.hasTag('pending')}
       loadingText={`${state.context.likesCount || 0}`}
