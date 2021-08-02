@@ -13,15 +13,22 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2.2.0
 
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+        env:
+          REACT_APP_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
+          REACT_APP_SUPABASE_API_URL: 'https://owxhbmonbfrgnegwprcq.supabase.co'
+          REACT_APP_SUPABASE_ANON_API_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYyMzkzNTUzOCwiZXhwIjoxOTM5NTExNTM4fQ.srHSjKsgKFPREW6M0jGbFrvIWsmI0XfSTthBTFOZXI8'
+          CI: 'false'
+
       - name: Run Cypress
         uses: cypress-io/github-action@v2
         with:
           start: yarn serve build -p 3000 -s
-          build: yarn build
           wait-on: http://localhost:3000
-        env:
-          REACT_APP_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
-          CI: 'false'
 
       - name: Upload Screenshots
         uses: actions/upload-artifact@v1
