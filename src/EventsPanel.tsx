@@ -28,7 +28,7 @@ import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
 import { SimEvent, simulationMachine } from './simulationMachine';
 import { toSCXMLEvent } from 'xstate/lib/utils';
-import { assign, SCXML, send, StateFrom } from 'xstate';
+import { assign, SCXML, send, StateFrom, ActionTypes } from 'xstate';
 import Editor from '@monaco-editor/react';
 import {
   ChevronDownIcon,
@@ -136,7 +136,10 @@ const deriveFinalEvents = (ctx: typeof eventsModel.initialContext) => {
   let finalEvents = ctx.rawEvents;
   if (!ctx.showBuiltins) {
     finalEvents = finalEvents.filter(
-      (event) => !event.name.startsWith('xstate.'),
+      (event) =>
+        Object.values(ActionTypes).some(
+          (prefix) => !event.name.startsWith(prefix),
+        ) || event.name === '',
     );
   }
   if (ctx.filterKeyword) {
