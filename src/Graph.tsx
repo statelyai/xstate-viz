@@ -110,10 +110,14 @@ function getElkEdge(edge: DirectedGraphEdge): ElkExtendedEdge & { edge: any } {
   const targetPortId = getPortId(edge);
   const isSelfEdge = edge.source === edge.target;
 
+  const sources = isSelfEdge ? [edge.target.id] : [edge.source.id];
+  const targets = isSelfEdge ? [getSelfPortId(edge.target.id)] : [targetPortId];
+
   return {
     id: edge.id,
-    sources: [isSelfEdge ? targetPortId : edge.source.id],
-    targets: [targetPortId],
+    sources,
+    targets,
+
     labels: [
       {
         id: edge.id + '--label',
@@ -134,6 +138,10 @@ function getElkEdge(edge: DirectedGraphEdge): ElkExtendedEdge & { edge: any } {
 
 function getPortId(edge: DirectedGraphEdge): string {
   return `port:${edge.id}`;
+}
+
+function getSelfPortId(nodeId: string): string {
+  return `self:${nodeId}`;
 }
 
 function getElkChild(
@@ -160,19 +168,29 @@ function getElkChild(
     edges: edges.map((edge) => {
       return getElkEdge(edge);
     }),
-    ports: nodeBackEdges.map((backEdge, i) => {
-      return {
-        id: getPortId(backEdge),
-        width: 5, // TODO: don't hardcode, find way to reference arrow marker size
-        height: 5,
-        layoutOptions: {},
-      };
-    }),
+    ports: nodeBackEdges
+      .map((backEdge) => {
+        return {
+          id: getPortId(backEdge),
+          width: 5, // TODO: don't hardcode, find way to reference arrow marker size
+          height: 5,
+          layoutOptions: {},
+        };
+      })
+      .concat([
+        {
+          id: getSelfPortId(node.id),
+          width: 5,
+          height: 5,
+          layoutOptions: {},
+        },
+      ]),
     layoutOptions: {
       'elk.padding': `[top=${
         (contentRect?.height || 0) + 30
       }, left=30, right=30, bottom=30]`,
       hierarchyHandling: 'INCLUDE_CHILDREN',
+      'elk.spacing.labelLabel': '10',
     },
   };
 }
