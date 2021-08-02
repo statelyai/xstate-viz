@@ -1,4 +1,10 @@
-import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
+import {
+  AddIcon,
+  MinusIcon,
+  RepeatIcon,
+  HamburgerIcon,
+  ExternalLinkIcon,
+} from '@chakra-ui/icons';
 import {
   Avatar,
   Box,
@@ -8,6 +14,11 @@ import {
   HStack,
   IconButton,
   Link,
+  Menu,
+  MenuButton,
+  MenuIcon,
+  MenuItem,
+  MenuList,
   Stack,
   Text,
 } from '@chakra-ui/react';
@@ -25,6 +36,7 @@ import { Graph } from './Graph';
 import { Heart, HeartOutlined } from './Icons';
 import { LikeButton } from './LikeButton';
 import { registryLinks } from './registryLinks';
+import { ShareButton } from './ShareButton';
 import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
@@ -44,9 +56,6 @@ export const CanvasPanel: React.FC<{
 
   const loggedInUserData = useSelector(authService, getLoggedInUserData);
 
-  const userOwnsSource =
-    loggedInUserData?.id === sourceState.context.sourceRegistryData?.owner?.id;
-
   const shouldEnableZoomOutButton = useSelector(
     canvasService,
     getShouldEnableZoomOutButton,
@@ -56,6 +65,9 @@ export const CanvasPanel: React.FC<{
     canvasService,
     getShouldEnableZoomInButton,
   );
+
+  const registryData = sourceState.context.sourceRegistryData;
+  const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
 
   return (
     <Box display="grid" gridTemplateRows="auto 1fr">
@@ -93,33 +105,53 @@ export const CanvasPanel: React.FC<{
               RESET
             </Button>
           </Box>
-          {sourceState.context.sourceRegistryData && (
+          {registryData && (
             <Stack direction="row" spacing="4" alignItems="center" pr="4">
-              <Text fontWeight="medium" fontSize="sm" color="gray.100">
-                {sourceState.context.sourceRegistryData?.name ||
-                  'Unnamed Source'}
+              <Text fontWeight="semibold" fontSize="sm" color="gray.100">
+                {registryData?.name || 'Unnamed Source'}
               </Text>
-              {sourceState.context.sourceRegistryData?.owner &&
-                !userOwnsSource && (
-                  <Link
-                    href={registryLinks.viewUserById(
-                      sourceState.context.sourceRegistryData?.owner?.id,
+              <HStack>
+                <LikeButton />
+                <ShareButton />
+                <Menu closeOnSelect>
+                  <MenuButton>
+                    <IconButton
+                      aria-label="Menu"
+                      icon={<HamburgerIcon />}
+                      size="sm"
+                    ></IconButton>
+                  </MenuButton>
+                  <MenuList>
+                    {userOwnsSource && sourceState.context.sourceID && (
+                      <MenuItem
+                        as="a"
+                        href={registryLinks.editSourceFile(
+                          sourceState.context.sourceID,
+                        )}
+                      >
+                        Edit
+                      </MenuItem>
                     )}
-                  >
-                    <Avatar
-                      src={
-                        sourceState.context.sourceRegistryData.owner
-                          ?.avatarUrl || ''
-                      }
-                      name={
-                        sourceState.context.sourceRegistryData.owner
-                          ?.displayName || ''
-                      }
-                      style={{ height: '30px', width: '30px' }}
-                    ></Avatar>
-                  </Link>
-                )}
-              <LikeButton />
+                    {registryData.owner && (
+                      <MenuItem
+                        as="a"
+                        href={registryLinks.viewUserById(
+                          registryData?.owner?.id,
+                        )}
+                      >
+                        <HStack spacing="3">
+                          <Avatar
+                            src={registryData.owner?.avatarUrl || ''}
+                            name={registryData.owner?.displayName || ''}
+                            style={{ height: '30px', width: '30px' }}
+                          ></Avatar>
+                          <Text>View Author</Text>
+                        </HStack>
+                      </MenuItem>
+                    )}
+                  </MenuList>
+                </Menu>
+              </HStack>
             </Stack>
           )}
         </HStack>
