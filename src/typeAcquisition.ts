@@ -444,11 +444,13 @@ const getReferenceDependencies = async (
   }
 };
 
+type Logger = Record<'log' | 'warn' | 'error', (...args: any[]) => void>;
+
 interface ATAConfig {
   sourceCode: string;
   addLibraryToRuntime: AddLibToRuntimeFunc;
   fetcher: typeof fetch;
-  logger: Console;
+  logger: Logger;
 }
 
 /**
@@ -458,7 +460,9 @@ export const detectNewImportsToAcquireTypeFor = async (
   sourceCode: string,
   userAddLibraryToRuntime: AddLibToRuntimeFunc,
   fetcher = fetch,
-  playgroundConfig: { logger: Console },
+  playgroundConfig: {
+    logger: Logger;
+  },
 ) => {
   // Wrap the runtime func with our own side-effect for visibility
   const addLibraryToRuntime = (code: string, path: string) => {
