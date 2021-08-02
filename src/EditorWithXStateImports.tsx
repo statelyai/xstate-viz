@@ -82,7 +82,13 @@ const withTypeAcquisition = (
       code,
       addLibraryToRuntime,
       window.fetch.bind(window),
-      { logger: console },
+      {
+        logger: {
+          log: process.env.NODE_ENV !== 'production' ? console.log : () => {},
+          error: console.error,
+          warn: console.warn,
+        },
+      },
     );
   };
 

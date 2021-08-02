@@ -57,9 +57,11 @@ const errorMsg = (msg: string, response: any, config: ATAConfig) => {
  */
 const parseFileForModuleReferences = (sourceCode: string) => {
   // https://regex101.com/r/Jxa3KX/4
-  const requirePattern = /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/gm;
+  const requirePattern =
+    /(const|let|var)(.|\n)*? require\(('|")(.*)('|")\);?$/gm;
   // this handle ths 'from' imports  https://regex101.com/r/hdEpzO/4
-  const es6Pattern = /(import|export)((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm;
+  const es6Pattern =
+    /(import|export)((?!from)(?!require)(.|\n))*?(from|require\()\s?('|")(.*)('|")\)?;?$/gm;
   // https://regex101.com/r/hdEpzO/8
   const es6ImportOnly = /import\s+?\(?('|")(.*)('|")\)?;?/gm;
 
@@ -442,11 +444,13 @@ const getReferenceDependencies = async (
   }
 };
 
+type Logger = Record<'log' | 'warn' | 'error', (...args: any[]) => void>;
+
 interface ATAConfig {
   sourceCode: string;
   addLibraryToRuntime: AddLibToRuntimeFunc;
   fetcher: typeof fetch;
-  logger: Console;
+  logger: Logger;
 }
 
 /**
@@ -456,7 +460,9 @@ export const detectNewImportsToAcquireTypeFor = async (
   sourceCode: string,
   userAddLibraryToRuntime: AddLibToRuntimeFunc,
   fetcher = fetch,
-  playgroundConfig: { logger: Console },
+  playgroundConfig: {
+    logger: Logger;
+  },
 ) => {
   // Wrap the runtime func with our own side-effect for visibility
   const addLibraryToRuntime = (code: string, path: string) => {
@@ -521,7 +527,8 @@ const getDependenciesForModule = (
         return;
       }
 
-      config.logger.log(`[ATA] Looking at ${moduleToDownload}`);
+      process.env.NODE_ENV !== 'production' &&
+        config.logger.log(`[ATA] Looking at ${moduleToDownload}`);
 
       const modIsScopedPackageOnly =
         moduleToDownload.indexOf('@') === 0 &&
