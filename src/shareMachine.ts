@@ -1,11 +1,7 @@
-import { ActorRefFrom, assign, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { notifMachine } from './notificationMachine';
 
 const model = createModel(
-  {
-    notifRef: null as ActorRefFrom<typeof notifMachine>,
-  },
+  {},
   {
     events: {
       CLICK_SHARE: () => ({}),
@@ -17,9 +13,6 @@ const model = createModel(
 
 export const shareMachine = model.createMachine({
   id: 'shareMachine',
-  entry: assign({
-    notifRef: spawn(notifMachine),
-  }),
   on: {
     COPY_LINK: {
       target: '.pending',
