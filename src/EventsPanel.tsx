@@ -132,15 +132,20 @@ const eventsMachine = createMachine<typeof eventsModel>({
   },
 });
 
+const isNullEvent = (eventName: string) => eventName === ActionTypes.NullEvent;
+const allInternalEventsButNullEvent = Object.values(ActionTypes).filter(
+  (prefix) => !isNullEvent(prefix),
+);
+const isInternalEvent = (eventName: string) =>
+  allInternalEventsButNullEvent.some((prefix) => eventName.startsWith(prefix));
+
 const deriveFinalEvents = (ctx: typeof eventsModel.initialContext) => {
   let finalEvents = ctx.rawEvents;
   if (!ctx.showBuiltins) {
-    finalEvents = finalEvents.filter(
-      (event) =>
-        Object.values(ActionTypes).some(
-          (prefix) => !event.name.startsWith(prefix),
-        ) || event.name === '',
-    );
+    (window as any).finalEvents = finalEvents;
+    finalEvents = finalEvents.filter((event) => {
+      return !isInternalEvent(event.name) && !isNullEvent(event.name);
+    });
   }
   if (ctx.filterKeyword) {
     finalEvents = finalEvents.filter((evt) =>
