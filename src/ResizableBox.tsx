@@ -110,6 +110,8 @@ export const ResizableBox: React.FC<
   const [widthDelta, setWidthDelta] = useState(0);
 
   return (
+    // 35rem to avoid shortcut codes breaking
+    // into multiple lines
     <Box width={`clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`} {...props}>
       {children}
       <ResizeHandle onChange={(value) => setWidthDelta(value)} />
