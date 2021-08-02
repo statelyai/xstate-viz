@@ -34,7 +34,7 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
-import { SimMode } from './types';
+import { SimulationMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {

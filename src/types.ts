@@ -41,7 +41,7 @@ export interface ServiceData {
   source?: 'inspector' | 'visualizer';
 }
 
-export type SimMode = 'inspecting' | 'visualizing';
+export type SimulationMode = 'inspecting' | 'visualizing';
 
 export type EditorThemeDefinition = editor.IStandaloneThemeData & {
   name: string;

@@ -13,52 +13,57 @@ import {
 } from '@chakra-ui/react';
 import { ThemeName, themes } from './editor-themes';
 import { useEditorTheme } from './themeContext';
+import { useSimulationMode } from './SimulationContext';
+
+const KeyboardShortcuts = () => (
+  <Box>
+    <Heading as="h2" fontSize="l" marginBottom="5">
+      Keyboard shorcuts
+    </Heading>
+    <Table size="sm">
+      <Thead>
+        <Tr>
+          <Th>Keybinding</Th>
+          <Th>Description</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        <Tr>
+          <Td>
+            <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
+          </Td>
+          <Td>Saves or updates the code in Stately Registry</Td>
+        </Tr>
+        <Tr>
+          <Td>
+            <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
+          </Td>
+          <Td>Visualizes the current editor code</Td>
+        </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <span>
+                <Kbd>Ctrl/CMD</Kbd> + <Kbd>K</Kbd>
+              </span>
+              <span>
+                <Kbd>Shift</Kbd> + <Kbd>?</Kbd>
+              </span>
+            </VStack>
+          </Td>
+          <Td>Show the Command palette</Td>
+        </Tr>
+      </Tbody>
+    </Table>
+  </Box>
+);
 
 export const SettingsPanel: React.FC = () => {
   const editorTheme = useEditorTheme();
+  const simulationMode = useSimulationMode();
   return (
     <VStack paddingY="5" spacing="7" alignItems="stretch">
-      <Box>
-        <Heading as="h2" fontSize="l" marginBottom="5">
-          Keyboard shorcuts
-        </Heading>
-        <Table size="sm">
-          <Thead>
-            <Tr>
-              <Th>Keybinding</Th>
-              <Th>Description</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            <Tr>
-              <Td>
-                <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
-              </Td>
-              <Td>Saves or updates the code in Stately Registry</Td>
-            </Tr>
-            <Tr>
-              <Td>
-                <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
-              </Td>
-              <Td>Visualizes the current editor code</Td>
-            </Tr>
-            <Tr>
-              <Td>
-                <VStack alignItems="flex-start">
-                  <span>
-                    <Kbd>Ctrl/CMD</Kbd> + <Kbd>K</Kbd>
-                  </span>
-                  <span>
-                    <Kbd>Shift</Kbd> + <Kbd>?</Kbd>
-                  </span>
-                </VStack>
-              </Td>
-              <Td>Show the Command palette</Td>
-            </Tr>
-          </Tbody>
-        </Table>
-      </Box>
-
+      {simulationMode === 'visualizing' && <KeyboardShortcuts />}
       <Box>
         <Heading as="h2" fontSize="l" marginBottom="5">
           Editor theme
