@@ -1,6 +1,6 @@
 describe('Gists', () => {
   const dummyFile = `
-  createMachine({
+  Machine({
     id: 'gistMachine',
     initial: 'idle',
     states: {
@@ -32,6 +32,9 @@ describe('Gists', () => {
     cy.contains(`initial: 'idle'`);
 
     cy.getCanvas().contains('gistMachine');
+
+    // It should automatically fix up imports
+    cy.contains(`import`);
   });
 
   it('Should allow you to fork a source file from a gist', () => {
