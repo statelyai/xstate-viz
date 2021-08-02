@@ -16,11 +16,9 @@ jobs:
       - name: Run Cypress
         uses: cypress-io/github-action@v2
         with:
-          build: yarn graphql-codegen
-          start: yarn start:app
+          start: yarn serve build -p 3000 -s
+          build: yarn build
           wait-on: http://localhost:3000
-          # Wait 5 mins for the server to start
-          wait-on-timeout: 300
         env:
           REACT_APP_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
 
