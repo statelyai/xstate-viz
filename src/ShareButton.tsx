@@ -16,7 +16,7 @@ import { shareMachine } from './shareMachine';
 
 export const ShareButton = () => {
   const linkText = window.location.href;
-  const twitterText = `Check out the machine I built in the @statelyai visualizer! ${linkText}`;
+  const twitterText = `Check out the state machine I built in the @statelyai visualizer: ${linkText}`;
 
   const clipboard = useClipboard(linkText);
   const [state, send] = useMachine(shareMachine, {
