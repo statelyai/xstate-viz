@@ -1,7 +1,5 @@
 describe('Gists', () => {
   const dummyFile = `
-  import { createMachine } from 'xstate';
-  
   createMachine({
     id: 'gistMachine',
     initial: 'idle',
@@ -11,7 +9,7 @@ describe('Gists', () => {
   })
   `;
 
-  beforeEach(() => {
+  const setup = () => {
     cy.interceptGraphQL({
       getLoggedInUser: {},
     });
@@ -27,15 +25,17 @@ describe('Gists', () => {
     });
     cy.intercept('https://api.github.com/gist-id.blob', dummyFile);
     cy.visit('/?gist=gist-id');
-  });
+  };
 
   it('Should allow you to load a source file from a gist', () => {
+    setup();
     cy.contains(`initial: 'idle'`);
 
     cy.getCanvas().contains('gistMachine');
   });
 
   it('Should allow you to fork a source file from a gist', () => {
+    setup();
     cy.interceptGraphQL({
       createSourceFile: {
         id: 'new-id',
