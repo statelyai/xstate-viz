@@ -21,6 +21,7 @@ jobs:
           wait-on: http://localhost:3000
         env:
           REACT_APP_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
+          CI: 'false'
 
       - name: Upload Screenshots
         uses: actions/upload-artifact@v1
