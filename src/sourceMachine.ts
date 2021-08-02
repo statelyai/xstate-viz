@@ -565,7 +565,7 @@ export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
 
 export const useSourceActor = (
   authService: ActorRefFrom<typeof authMachine>,
-) => {
+): [SourceMachineState, SourceMachineActorRef['send']] => {
   const sourceService = useSelector(authService, getSourceActor);
 
   return useActor(sourceService!);
