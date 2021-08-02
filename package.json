@@ -41,8 +41,7 @@
     "build": "graphql-codegen && react-scripts build",
     "graphql:codegen": "graphql-codegen --watch",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "postinstall": "mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
