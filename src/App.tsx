@@ -95,7 +95,7 @@ function App() {
                 </Box>
               )}
               <ChakraProvider theme={theme}>
-                <ResizableBox gridArea="panels">
+                <ResizableBox gridArea="panels" minHeight={0}>
                   <Tabs
                     bg="gray.800"
                     display="grid"
