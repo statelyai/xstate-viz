@@ -37,7 +37,6 @@ class SyntaxError extends Error {
   metadata: SyntaxErrorMetadata;
   constructor(message: string, metadata: SyntaxErrorMetadata) {
     super(message);
-    // this.message = message;
     this.metadata = metadata;
   }
 
