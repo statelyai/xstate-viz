@@ -8,7 +8,7 @@ import {
 } from '@chakra-ui/react';
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
-import { editor, Range } from 'monaco-editor/esm/vs/editor/editor.api';
+import { editor, Range } from 'monaco-editor';
 import React, { Suspense } from 'react';
 import {
   ActorRefFrom,
@@ -136,7 +136,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
 
               const start = model?.getPositionAt(error.start!);
               const end = model?.getPositionAt(error.start! + error.length!);
-              const errorRange = new Range(
+              const errorRange = new ctx.monacoRef!.Range(
                 start?.lineNumber!,
                 0, // beginning of the line where error occured
                 end?.lineNumber!,
