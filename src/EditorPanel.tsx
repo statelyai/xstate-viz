@@ -81,143 +81,154 @@ const editorPanelModel = createModel(
   },
 );
 
-const editorPanelMachine = createMachine<typeof editorPanelModel>({
-  context: editorPanelModel.initialContext,
-  entry: [assign({ notifRef: () => spawn(notifMachine) })],
-  initial: 'booting',
-  states: {
-    booting: {
-      on: {
-        EDITOR_READY: [
-          {
-            cond: (ctx) => ctx.immediateUpdate,
+const editorPanelMachine = createMachine<typeof editorPanelModel>(
+  {
+    context: editorPanelModel.initialContext,
+    entry: [assign({ notifRef: () => spawn(notifMachine) })],
+    initial: 'booting',
+    states: {
+      booting: {
+        on: {
+          EDITOR_READY: [
+            {
+              cond: (ctx) => ctx.immediateUpdate,
+              actions: [
+                editorPanelModel.assign((_, e) => ({
+                  monacoRef: e.monacoRef,
+                  standaloneEditorRef: e.standaloneEditorRef,
+                })),
+              ],
+              target: 'compiling',
+            },
+            {
+              target: 'active',
+              actions: editorPanelModel.assign({
+                monacoRef: (_, e) => e.monacoRef,
+                standaloneEditorRef: (_, e) => e.standaloneEditorRef,
+              }),
+            },
+          ],
+        },
+      },
+      active: {},
+      updating: {
+        tags: ['visualizing'],
+        entry: send('UPDATE_MACHINE_PRESSED'),
+        always: 'active',
+      },
+      compiling: {
+        tags: ['visualizing'],
+        invoke: {
+          src: async (ctx) => {
+            const monaco = ctx.monacoRef!;
+            const uri = monaco.Uri.parse(ctx.mainFile);
+            const tsWoker = await monaco.languages.typescript
+              .getTypeScriptWorker()
+              .then((worker) => worker(uri));
+
+            const syntaxErrors = await tsWoker.getSyntacticDiagnostics(
+              uri.toString(),
+            );
+
+            if (syntaxErrors.length > 0) {
+              const model = ctx.monacoRef?.editor.getModel(uri);
+              // Only report one error at a time
+              const error = syntaxErrors[0];
+              const errorPosition = model?.getPositionAt(error.start!);
+              return Promise.reject(
+                new SyntaxError(error.messageText.toString(), {
+                  position: errorPosition,
+                  length: error.length,
+                }),
+              );
+            }
+
+            const compiledSource = await tsWoker
+              .getEmitOutput(uri.toString())
+              .then((result) => result.outputFiles[0].text);
+
+            return parseMachines(compiledSource);
+          },
+          onDone: {
+            target: 'updating',
             actions: [
-              editorPanelModel.assign((_, e) => ({
-                monacoRef: e.monacoRef,
-                standaloneEditorRef: e.standaloneEditorRef,
-              })),
+              assign({
+                machines: (_, e: any) => e.data,
+              }),
             ],
-            target: 'compiling',
           },
-          {
-            target: 'active',
-            actions: editorPanelModel.assign({
-              monacoRef: (_, e) => e.monacoRef,
-              standaloneEditorRef: (_, e) => e.standaloneEditorRef,
-            }),
-          },
+          onError: [
+            {
+              cond: 'isSyntaxError',
+              target: 'active',
+              actions: ['highlightError', 'broadcastError'],
+            },
+            {
+              target: 'active',
+              actions: ['broadcastError'],
+            },
+          ],
+        },
+      },
+    },
+    on: {
+      EDITOR_CHANGED_VALUE: {
+        actions: [
+          editorPanelModel.assign({ code: (_, e) => e.code }),
+          'onChangedCodeValue',
         ],
       },
+      EDITOR_ENCOUNTERED_ERROR: {
+        actions: send(
+          (_, e) => ({
+            type: 'BROADCAST',
+            status: 'error',
+            message: e.message,
+            title: e.title,
+          }),
+          {
+            to: (ctx) => ctx.notifRef,
+          },
+        ),
+      },
+      UPDATE_MACHINE_PRESSED: {
+        actions: 'onChange',
+      },
+      COMPILE: 'compiling',
     },
-    active: {},
-    updating: {
-      tags: ['visualizing'],
-      entry: send('UPDATE_MACHINE_PRESSED'),
-      always: 'active',
+  },
+  {
+    guards: {
+      isSyntaxError: (_, e: any) => e.data instanceof SyntaxError,
     },
-    compiling: {
-      tags: ['visualizing'],
-      invoke: {
-        src: async (ctx) => {
-          const monaco = ctx.monacoRef!;
-          const uri = monaco.Uri.parse(ctx.mainFile);
-          const tsWoker = await monaco.languages.typescript
-            .getTypeScriptWorker()
-            .then((worker) => worker(uri));
-
-          const syntaxErrors = await tsWoker.getSyntacticDiagnostics(
-            uri.toString(),
+    actions: {
+      broadcastError: send((_, e: any) => ({
+        type: 'EDITOR_ENCOUNTERED_ERROR',
+        title: e.data.title,
+        message: e.data.message,
+      })),
+      highlightError: (ctx, e) => {
+        const {
+          data: {
+            metadata: { position, length = 0 },
+          },
+        } = e as any;
+        const editor = ctx.standaloneEditorRef;
+        if (position) {
+          editor?.revealLineInCenterIfOutsideViewport(position.lineNumber);
+          editor?.setSelection(
+            new Range(
+              position.lineNumber,
+              0,
+              position.lineNumber,
+              position.column + length,
+            ),
           );
-
-          if (syntaxErrors.length > 0) {
-            const model = ctx.monacoRef?.editor.getModel(uri);
-            // Only report one error at a time
-            const error = syntaxErrors[0];
-            const errorPosition = model?.getPositionAt(error.start!);
-            return Promise.reject(
-              new SyntaxError(error.messageText.toString(), {
-                position: errorPosition,
-                length: error.length,
-              }),
-            );
-          }
-
-          const compiledSource = await tsWoker
-            .getEmitOutput(uri.toString())
-            .then((result) => result.outputFiles[0].text);
-
-          return parseMachines(compiledSource);
-        },
-        onDone: {
-          target: 'updating',
-          actions: [
-            assign({
-              machines: (_, e: any) => e.data,
-            }),
-          ],
-        },
-        onError: {
-          target: 'active',
-          actions: [
-            (ctx, e) => {
-              if (e.data instanceof SyntaxError) {
-                const {
-                  data: {
-                    metadata: { position, length = 0 },
-                  },
-                } = e;
-                const editor = ctx.standaloneEditorRef;
-                if (position) {
-                  editor?.revealLineInCenterIfOutsideViewport(
-                    position.lineNumber,
-                  );
-                  editor?.setSelection(
-                    new Range(
-                      position.lineNumber,
-                      0,
-                      position.lineNumber,
-                      position.column + length,
-                    ),
-                  );
-                }
-              }
-            },
-            send((_, e) => ({
-              type: 'EDITOR_ENCOUNTERED_ERROR',
-              title: e.data.title,
-              message: e.data.message,
-            })),
-          ],
-        },
+        }
       },
     },
   },
-  on: {
-    EDITOR_CHANGED_VALUE: {
-      actions: [
-        editorPanelModel.assign({ code: (_, e) => e.code }),
-        'onChangedCodeValue',
-      ],
-    },
-    EDITOR_ENCOUNTERED_ERROR: {
-      actions: send(
-        (_, e) => ({
-          type: 'BROADCAST',
-          status: 'error',
-          message: e.message,
-          title: e.title,
-        }),
-        {
-          to: (ctx) => ctx.notifRef,
-        },
-      ),
-    },
-    UPDATE_MACHINE_PRESSED: {
-      actions: 'onChange',
-    },
-    COMPILE: 'compiling',
-  },
-});
+);
 
 export type SourceOwnershipStatus =
   | 'user-owns-source'
