@@ -1,7 +1,7 @@
 describe('Forking', () => {
   describe('When you do not own the file', () => {
     it('Should allow you to fork it', () => {
-      cy.login();
+      cy.setMockAuthToken();
       cy.interceptGraphQL({
         getLoggedInUser: {
           id: 'id',
@@ -42,7 +42,7 @@ describe('Forking', () => {
 
   describe('When you do own the file', () => {
     it('Should allow you to fork it', () => {
-      cy.login();
+      cy.setMockAuthToken();
       cy.interceptGraphQL({
         getLoggedInUser: {
           id: 'user-id',

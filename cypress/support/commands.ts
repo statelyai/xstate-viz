@@ -16,7 +16,7 @@ beforeEach(() => {
   });
 });
 
-const login = () => {
+const setMockAuthToken = () => {
   cy.setLocalStorage(
     'supabase.auth.token',
     JSON.stringify({
@@ -75,9 +75,10 @@ declare global {
   namespace Cypress {
     interface Chainable {
       /**
-       * Log in to the app
+       * Sets a mock auth token into localStorage to
+       * mimic us being logged in to Supabase
        */
-      login: typeof login;
+      setMockAuthToken: typeof setMockAuthToken;
 
       /**
        * Allows the tester to mock the GraphQL API to return whatever
@@ -92,7 +93,7 @@ declare global {
   }
 }
 
-Cypress.Commands.add('login', login);
+Cypress.Commands.add('setMockAuthToken', setMockAuthToken);
 Cypress.Commands.add('getMonacoEditor', getMonacoEditor);
 Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);

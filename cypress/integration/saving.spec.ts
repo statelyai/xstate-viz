@@ -1,6 +1,6 @@
 describe('Saving', () => {
   it('Should allow you to save a file for the first time', () => {
-    cy.login();
+    cy.setMockAuthToken();
     cy.interceptGraphQL({
       getLoggedInUser: {
         id: 'id',
@@ -30,7 +30,7 @@ describe('Saving', () => {
   });
 
   it('Should allow you to save an existing file', () => {
-    cy.login();
+    cy.setMockAuthToken();
     cy.interceptGraphQL({
       getLoggedInUser: {
         id: 'id',
