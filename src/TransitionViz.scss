@@ -24,6 +24,7 @@
 }
 
 [data-viz='transition-label'] {
+  flex-shrink: 0;
   font-size: var(--viz-font-size-sm);
   font-weight: bold;
   color: white;

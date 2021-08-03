@@ -1,16 +1,23 @@
 import { ClassNames } from '@emotion/react';
-import { editor, KeyCode, KeyMod } from 'monaco-editor';
-import { SpinnerWithText } from './SpinnerWithText';
-import { format } from 'prettier/standalone';
-import tsParser from 'prettier/parser-typescript';
-import Editor, { OnMount, Monaco } from '@monaco-editor/react';
-import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
-import { uniq } from './utils';
-import { SourceProvider } from './types';
-import { useEditorTheme } from './themeContext';
-import { themes } from './editor-themes';
+import Editor, { Monaco, OnMount } from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
 import { useEffect, useRef } from 'react';
+import { themes } from './editor-themes';
 import { localCache } from './localCache';
+import { SpinnerWithText } from './SpinnerWithText';
+import { useEditorTheme } from './themeContext';
+import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
+import { SourceProvider } from './types';
+import { uniq } from './utils';
+
+/**
+ * We're importing prettier via CDN - this declaration
+ * allows us to use it globally
+ */
+declare global {
+  export const prettier: typeof import('prettier');
+  export const prettierPlugins: (string | import('prettier').Plugin)[];
+}
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -42,9 +49,9 @@ function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
 }
 
 function prettify(code: string) {
-  return format(code, {
+  return prettier.format(code, {
     parser: 'typescript',
-    plugins: [tsParser],
+    plugins: prettierPlugins,
   });
 }
 
@@ -176,7 +183,7 @@ export const EditorWithXStateImports = (
             editor.addAction({
               id: 'format',
               label: 'Format',
-              keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
+              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
               run: (editor) => {
                 editor.getAction('editor.action.formatDocument').run();
               },
@@ -206,7 +213,12 @@ export const EditorWithXStateImports = (
             editor.addAction({
               id: 'save',
               label: 'Save',
-              keybindings: [KeyMod.CtrlCmd | KeyCode.KEY_S],
+              keybindings: [
+                // KeyMod.CtrlCmd
+                2048 |
+                  // KeyCode.KEY_S
+                  49,
+              ],
               run: () => {
                 props.onSave?.();
                 editor.getAction('editor.action.formatDocument').run();
@@ -215,11 +227,12 @@ export const EditorWithXStateImports = (
 
             if (props.sourceProvider === 'gist') {
               const uri = monaco.Uri.parse('main.ts');
-              const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+              const getWorker =
+                await monaco.languages.typescript.getTypeScriptWorker();
               const tsWorker = await getWorker(uri);
-              const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
-                uri.toString(),
-              );
+              const usedXStateGistIdentifiers: string[] = await (
+                tsWorker as any
+              ).queryXStateGistIdentifiers(uri.toString());
               if (usedXStateGistIdentifiers.length > 0) {
                 editor.executeEdits(uri.toString(), [
                   {

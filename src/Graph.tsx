@@ -5,7 +5,7 @@ import {
   getBackLinkMap,
 } from './directedGraph';
 import { useMachine, useSelector } from '@xstate/react';
-import ELK, {
+import type {
   ElkEdgeSection,
   ElkExtendedEdge,
   ElkNode,
@@ -21,6 +21,11 @@ import { createElkMachine } from './elkMachine';
 import { StateNode } from 'xstate';
 import { MachineViz } from './MachineViz';
 import { useCanvas } from './CanvasContext';
+
+declare global {
+  export const ELK: typeof import('elkjs/lib/main').default;
+}
+
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
@@ -37,7 +42,6 @@ const rootLayoutOptions: LayoutOptions = {
   'elk.layered.crossingMinimization.semiInteractive': 'true',
   // 'elk.layering.strategy': 'NIKOLOV',
   // 'elk.wrapping.strategy': 'SINGLE_EDGE',
-  // 'elk.direction': 'DOWN',
   'elk.aspectRatio': '0.5',
 };
 
@@ -106,13 +110,19 @@ function getRelativeNodeEdgeMap(
   return [map, edgeMap];
 }
 
-function getElkEdge(edge: DirectedGraphEdge) {
+function getElkEdge(edge: DirectedGraphEdge): ElkExtendedEdge & { edge: any } {
   const edgeRect = readRect(edge.id);
+  const targetPortId = getPortId(edge);
+  const isSelfEdge = edge.source === edge.target;
+
+  const sources = [edge.source.id];
+  const targets = isSelfEdge ? [getSelfPortId(edge.target.id)] : [targetPortId];
 
   return {
     id: edge.id,
-    sources: [edge.source.id],
-    targets: [getPortId(edge)],
+    sources,
+    targets,
+
     labels: [
       {
         id: edge.id + '--label',
@@ -127,11 +137,16 @@ function getElkEdge(edge: DirectedGraphEdge) {
     ],
     edge,
     sections: [],
+    layoutOptions: {},
   };
 }
 
 function getPortId(edge: DirectedGraphEdge): string {
   return `port:${edge.id}`;
+}
+
+function getSelfPortId(nodeId: string): string {
+  return `self:${nodeId}`;
 }
 
 function getElkChild(
@@ -141,10 +156,8 @@ function getElkChild(
 ): StateElkNode {
   const nodeRect = getRect(node.id);
   const contentRect = readRect(`${node.id}:content`);
-
   const edges = rMap[0].get(node.data) || [];
-
-  const nodeBackEdges = backLinkMap.get(node.data);
+  const nodeBackEdges = Array.from(backLinkMap.get(node.data) ?? []);
 
   return {
     id: node.id,
@@ -154,31 +167,35 @@ function getElkChild(
           height: nodeRect?.height!,
         }
       : undefined),
-    // width: node.rects.full.width,
-    // height: node.rects.full.height,
-
     node,
-    ...(node.children.length
-      ? { children: getElkChildren(node, rMap, backLinkMap) }
-      : undefined),
+    children: getElkChildren(node, rMap, backLinkMap),
     absolutePosition: { x: 0, y: 0 },
     edges: edges.map((edge) => {
       return getElkEdge(edge);
     }),
     ports: nodeBackEdges
-      ? Array.from(nodeBackEdges).map((backEdge) => {
-          return {
-            id: getPortId(backEdge),
-            width: 5, // TODO: don't hardcode, find way to reference arrow marker size
-            height: 5,
-          };
-        })
-      : undefined,
+      .map((backEdge) => {
+        return {
+          id: getPortId(backEdge),
+          width: 5, // TODO: don't hardcode, find way to reference arrow marker size
+          height: 5,
+          layoutOptions: {},
+        };
+      })
+      .concat([
+        {
+          id: getSelfPortId(node.id),
+          width: 5,
+          height: 5,
+          layoutOptions: {},
+        },
+      ]),
     layoutOptions: {
       'elk.padding': `[top=${
         (contentRect?.height || 0) + 30
       }, left=30, right=30, bottom=30]`,
       hierarchyHandling: 'INCLUDE_CHILDREN',
+      'elk.spacing.labelLabel': '10',
     },
   };
 }
@@ -199,6 +216,10 @@ interface StateElkNode extends ElkNode {
 }
 interface StateElkEdge extends ElkExtendedEdge {
   edge: DirectedGraphEdge;
+}
+
+export function isStateElkNode(node: ElkNode): node is StateElkNode {
+  return 'absolutePosition' in node;
 }
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
@@ -292,7 +313,9 @@ export async function getElkGraph(
     });
 
     elkNode.children?.forEach((cn) => {
-      setLayout(cn as StateElkNode, elkNode);
+      if (isStateElkNode(cn)) {
+        setLayout(cn, elkNode);
+      }
     });
   };
 

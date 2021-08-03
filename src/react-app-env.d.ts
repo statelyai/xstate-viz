@@ -7,6 +7,7 @@ declare namespace NodeJS {
 
     REACT_APP_SENTRY_DSN?: string;
     REACT_APP_DEPLOY_ENVIRONMENT?: string;
+    REACT_APP_USE_LOCAL_MONACO?: string;
 
     PUBLIC_URL: string;
   }
