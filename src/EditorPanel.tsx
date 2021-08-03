@@ -140,7 +140,9 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
               } = e;
               const editor = ctx.standaloneEditorRef;
               if (position) {
-                editor?.revealLineInCenter(position.lineNumber);
+                editor?.revealLineInCenterIfOutsideViewport(
+                  position.lineNumber,
+                );
                 editor?.setSelection(
                   new Range(
                     position.lineNumber,
