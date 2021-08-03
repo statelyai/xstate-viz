@@ -132,6 +132,11 @@ function App() {
                                 sourceID: sourceState.context.sourceID,
                               });
                             }}
+                            onCreateNew={() =>
+                              sendToSourceService({
+                                type: 'CREATE_NEW',
+                              })
+                            }
                             onSave={() => {
                               sendToSourceService({
                                 type: 'SAVE',
@@ -143,9 +148,9 @@ function App() {
                                 machines,
                               });
                             }}
-                            onCreateNew={() => {
+                            onFork={() => {
                               sendToSourceService({
-                                type: 'CREATE_NEW',
+                                type: 'FORK',
                               });
                             }}
                           />

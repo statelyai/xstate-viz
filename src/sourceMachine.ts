@@ -49,6 +49,7 @@ export const sourceModel = createModel(
   {
     events: {
       SAVE: () => ({}),
+      FORK: () => ({}),
       CREATE_NEW: () => ({}),
       LOADED_FROM_GIST: (rawSource: string) => ({
         rawSource,
@@ -131,7 +132,10 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           id: 'with_source',
           initial: 'loading_content',
           on: {
-            CREATE_NEW: [
+            CREATE_NEW: {
+              actions: 'openNewWindowAtRoot',
+            },
+            FORK: [
               {
                 target: '#creating',
                 cond: isLoggedIn,
@@ -506,6 +510,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           }
           return {};
         }),
+        openNewWindowAtRoot: () => {
+          window.open('/', '_blank');
+        },
       },
       services: {
         createSourceFile: async (ctx, e) => {
