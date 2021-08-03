@@ -115,7 +115,7 @@ function getElkEdge(edge: DirectedGraphEdge): ElkExtendedEdge & { edge: any } {
   const targetPortId = getPortId(edge);
   const isSelfEdge = edge.source === edge.target;
 
-  const sources = isSelfEdge ? [edge.target.id] : [edge.source.id];
+  const sources = [edge.source.id];
   const targets = isSelfEdge ? [getSelfPortId(edge.target.id)] : [targetPortId];
 
   return {
