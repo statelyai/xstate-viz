@@ -136,7 +136,6 @@ const eventsMachine = createMachine<typeof eventsModel>({
 const deriveFinalEvents = (ctx: typeof eventsModel.initialContext) => {
   let finalEvents = ctx.rawEvents;
   if (!ctx.showBuiltins) {
-    (window as any).finalEvents = finalEvents;
     finalEvents = finalEvents.filter((event) => {
       return !isInternalEvent(event.name) && !isNullEvent(event.name);
     });
