@@ -62,12 +62,9 @@ export const simulationMachine = simModel.createMachine({
       id: 'services',
       src: () => (sendBack, onReceive) => {
         const serviceMap: Map<string, AnyInterpreter> = new Map();
-        let rootMachine: AnyStateMachine;
-        let rootService: AnyInterpreter;
+        let currentRootMachines: AnyStateMachine[] = [];
 
-        function locallyInterpret(machine: AnyStateMachine) {
-          rootMachine = machine;
-          // stop all existing services
+        function stopExistingServices() {
           Array.from(serviceMap.values()).forEach((runningService) => {
             runningService.stop();
             sendBack({
@@ -76,36 +73,46 @@ export const simulationMachine = simModel.createMachine({
             });
           });
           serviceMap.clear();
+        }
 
-          rootService = interpret(machine);
-          serviceMap.set(rootService.sessionId, rootService);
+        function locallyInterpret(machine: AnyStateMachine) {
+          const service = interpret(machine);
+          serviceMap.set(service.sessionId, service);
 
           sendBack({
             type: 'SERVICE.REGISTER',
             service: {
-              sessionId: rootService.sessionId,
-              machine: rootService.machine,
-              state: rootService.machine.initialState,
+              sessionId: service.sessionId,
+              machine: service.machine,
+              state: service.machine.initialState,
             },
           });
 
-          rootService.subscribe((state) => {
+          service.subscribe((state) => {
             sendBack({
               type: 'SERVICE.STATE',
               state,
-              sessionId: rootService.sessionId,
+              sessionId: service.sessionId,
             });
           });
-          rootService.start();
+          service.start();
+        }
+
+        function freshStart(machines: AnyStateMachine[]) {
+          try {
+            stopExistingServices();
+            machines.forEach(locallyInterpret);
+          } catch (e) {
+            sendBack(simModel.events.ERROR((e as Error).message));
+          }
         }
 
         onReceive((event) => {
           if (event.type === 'INTERPRET') {
-            try {
-              locallyInterpret(event.machine);
-            } catch (e) {
-              sendBack(simModel.events.ERROR((e as Error).message));
-            }
+            currentRootMachines = event.machines;
+            freshStart(currentRootMachines);
+          } else if (event.type === 'RESET') {
+            freshStart(currentRootMachines);
           } else if (event.type === 'xstate.event') {
             const service = serviceMap.get(event.sessionId);
             if (service) {
@@ -116,9 +123,6 @@ export const simulationMachine = simModel.createMachine({
                 sendBack(simModel.events.ERROR((err as Error).message));
               }
             }
-          } else if (event.type === 'RESET') {
-            rootService?.stop();
-            locallyInterpret(rootMachine);
           }
         });
 
@@ -360,7 +364,7 @@ export const simulationMachine = simModel.createMachine({
         send(
           (_, e) => ({
             type: 'INTERPRET',
-            machine: e.machines[0],
+            machines: e.machines,
           }),
           { to: 'services' },
         ),
