@@ -8,6 +8,7 @@ import {
 } from '@chakra-ui/react';
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
+import { editor, Range } from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { Suspense } from 'react';
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
@@ -33,16 +34,23 @@ const editorPanelModel = createModel(
     code: '',
     immediateUpdate: false,
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
-    editorRef: null as Monaco | null,
+    monacoRef: null as Monaco | null,
+    standaloneEditorRef: null as editor.IStandaloneCodeEditor | null,
     mainFile: 'main.ts',
     machines: null as AnyStateMachine[] | null,
   },
   {
     events: {
       COMPILE: () => ({}),
-      EDITOR_READY: (editorRef: Monaco) => ({ editorRef }),
+      EDITOR_READY: (
+        monacoRef: Monaco,
+        standaloneEditorRef: editor.IStandaloneCodeEditor,
+      ) => ({ monacoRef, standaloneEditorRef }),
       UPDATE_MACHINE_PRESSED: () => ({}),
-      EDITOR_ENCOUNTERED_ERROR: (message: string) => ({ message }),
+      EDITOR_ENCOUNTERED_ERROR: (message: string, title: string) => ({
+        message,
+        title,
+      }),
       EDITOR_CHANGED_VALUE: (code: string) => ({ code }),
     },
   },
@@ -59,14 +67,18 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
           {
             cond: (ctx) => ctx.immediateUpdate,
             actions: [
-              editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
+              editorPanelModel.assign((_, e) => ({
+                monacoRef: e.monacoRef,
+                standaloneEditorRef: e.standaloneEditorRef,
+              })),
             ],
             target: 'compiling',
           },
           {
             target: 'active',
             actions: editorPanelModel.assign({
-              editorRef: (_, e) => e.editorRef,
+              monacoRef: (_, e) => e.monacoRef,
+              standaloneEditorRef: (_, e) => e.standaloneEditorRef,
             }),
           },
         ],
@@ -81,18 +93,35 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     compiling: {
       tags: ['visualizing'],
       invoke: {
-        src: (ctx) => {
-          const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
-          const compiledJSPromise = ctx
-            .editorRef!.languages.typescript.getTypeScriptWorker()
-            .then((worker) => worker(uri))
-            .then((client) => client.getEmitOutput(uri.toString()))
-            .then((result) => result.outputFiles[0].text) as Promise<string>;
+        src: async (ctx) => {
+          const monaco = ctx.monacoRef!;
+          const uri = monaco.Uri.parse(ctx.mainFile);
+          const tsWoker = await monaco.languages.typescript
+            .getTypeScriptWorker()
+            .then((worker) => worker(uri));
 
-          return compiledJSPromise.then((js) => {
-            const machines = parseMachines(js);
-            return machines;
-          });
+          const syntaxErrors = await tsWoker.getSyntacticDiagnostics(
+            uri.toString(),
+          );
+
+          if (syntaxErrors.length > 0) {
+            const model = ctx.monacoRef?.editor.getModel(uri);
+            // Only report one error at a time
+            const error = syntaxErrors[0];
+            const errorPosition = model?.getPositionAt(error.start!);
+            return Promise.reject({
+              title: `SyntaxError at Line:${errorPosition?.lineNumber} Col:${errorPosition?.column}`,
+              message: error.messageText.toString(),
+              position: errorPosition,
+              length: error.length,
+            });
+          }
+
+          const compiledSource = await tsWoker
+            .getEmitOutput(uri.toString())
+            .then((result) => result.outputFiles[0].text);
+
+          return parseMachines(compiledSource);
         },
         onDone: {
           target: 'updating',
@@ -105,9 +134,26 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
         onError: {
           target: 'active',
           actions: [
-            (_, e) => console.error(e.data),
+            (ctx, e) => {
+              const {
+                data: { position, length = 0 },
+              } = e;
+              const editor = ctx.standaloneEditorRef;
+              if (position) {
+                editor?.revealLineInCenter(position.lineNumber);
+                editor?.setSelection(
+                  new Range(
+                    position.lineNumber,
+                    0,
+                    position.lineNumber,
+                    position.column + length,
+                  ),
+                );
+              }
+            },
             send((_, e) => ({
               type: 'EDITOR_ENCOUNTERED_ERROR',
+              title: e.data.title,
               message: e.data.message,
             })),
           ],
@@ -124,7 +170,12 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
     },
     EDITOR_ENCOUNTERED_ERROR: {
       actions: send(
-        (_, e) => ({ type: 'BROADCAST', status: 'error', message: e.message }),
+        (_, e) => ({
+          type: 'BROADCAST',
+          status: 'error',
+          message: e.message,
+          title: e.title,
+        }),
         {
           to: (ctx) => ctx.notifRef,
         },
@@ -247,8 +298,13 @@ export const EditorPanel: React.FC<{
               <EditorWithXStateImports
                 sourceProvider={sourceState.context.sourceProvider}
                 defaultValue={defaultValue}
-                onMount={(_, monaco) => {
-                  send({ type: 'EDITOR_READY', editorRef: monaco });
+                onMount={(standaloneEditor, monaco) => {
+                  console.log('mount', standaloneEditor);
+                  send({
+                    type: 'EDITOR_READY',
+                    monacoRef: monaco,
+                    standaloneEditorRef: standaloneEditor,
+                  });
                 }}
                 onChange={(code) => {
                   send({ type: 'EDITOR_CHANGED_VALUE', code });
