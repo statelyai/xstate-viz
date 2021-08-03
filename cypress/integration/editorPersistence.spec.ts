@@ -27,6 +27,8 @@ describe('Editor persistence', () => {
   describe('When you have changes in localStorage that are newer than the registry', () => {
     it('Should use your localStorage changes', () => {
       cy.login();
+      
+      // Plant a fake entry in localStorage
       cy.setLocalStorage(
         'xstate_viz_raw_source|source-file-id',
         JSON.stringify({
