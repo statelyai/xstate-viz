@@ -9,6 +9,7 @@ import { useEditorTheme } from './themeContext';
 import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
 import { SourceProvider } from './types';
 import { uniq } from './utils';
+import './editor.scss';
 
 /**
  * We're importing prettier via CDN - this declaration
@@ -149,6 +150,7 @@ export const EditorWithXStateImports = (
           options={{
             minimap: { enabled: false },
             tabSize: 2,
+            glyphMargin: true,
           }}
           loading={<SpinnerWithText text="Preparing the editor" />}
           onChange={(text) => {
@@ -227,12 +229,11 @@ export const EditorWithXStateImports = (
 
             if (props.sourceProvider === 'gist') {
               const uri = monaco.Uri.parse('main.ts');
-              const getWorker =
-                await monaco.languages.typescript.getTypeScriptWorker();
+              const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
               const tsWorker = await getWorker(uri);
-              const usedXStateGistIdentifiers: string[] = await (
-                tsWorker as any
-              ).queryXStateGistIdentifiers(uri.toString());
+              const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
+                uri.toString(),
+              );
               if (usedXStateGistIdentifiers.length > 0) {
                 editor.executeEdits(uri.toString(), [
                   {

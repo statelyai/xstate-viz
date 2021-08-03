@@ -8,13 +8,16 @@ import {
 } from '@chakra-ui/react';
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
-import {
-  editor,
-  Position,
-  Range,
-} from 'monaco-editor/esm/vs/editor/editor.api';
+import { editor, Range } from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { Suspense } from 'react';
-import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
+import {
+  ActorRefFrom,
+  assign,
+  createMachine,
+  DoneInvokeEvent,
+  send,
+  spawn,
+} from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { CommandPalette } from './CommandPalette';
@@ -29,19 +32,15 @@ import {
 } from './sourceMachine';
 import type { AnyStateMachine, SimMode } from './types';
 
-interface SyntaxErrorMetadata {
-  position?: Position;
-  length?: number; // number of chars the error spans from starting point
-}
 class SyntaxError extends Error {
-  metadata: SyntaxErrorMetadata;
-  constructor(message: string, metadata: SyntaxErrorMetadata) {
+  range: Range;
+  constructor(message: string, range: Range) {
     super(message);
-    this.metadata = metadata;
+    this.range = range;
   }
 
   get title() {
-    return `SyntaxError at Line:${this.metadata.position?.lineNumber} Col:${this.metadata.position?.column}`;
+    return `SyntaxError at Line:${this.range.startLineNumber} Col:${this.range.endColumn}`;
   }
 
   toString() {
@@ -62,6 +61,7 @@ const editorPanelModel = createModel(
     standaloneEditorRef: null as editor.IStandaloneCodeEditor | null,
     mainFile: 'main.ts',
     machines: null as AnyStateMachine[] | null,
+    deltaDecorations: [] as string[],
   },
   {
     events: {
@@ -112,7 +112,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
       active: {},
       updating: {
         tags: ['visualizing'],
-        entry: send('UPDATE_MACHINE_PRESSED'),
+        entry: [send('UPDATE_MACHINE_PRESSED')],
         always: 'active',
       },
       compiling: {
@@ -133,12 +133,17 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
               const model = ctx.monacoRef?.editor.getModel(uri);
               // Only report one error at a time
               const error = syntaxErrors[0];
-              const errorPosition = model?.getPositionAt(error.start!);
+
+              const start = model?.getPositionAt(error.start!);
+              const end = model?.getPositionAt(error.start! + error.length!);
+              const errorRange = new Range(
+                start?.lineNumber!,
+                0, // beginning of the line where error occured
+                end?.lineNumber!,
+                end?.column!,
+              );
               return Promise.reject(
-                new SyntaxError(error.messageText.toString(), {
-                  position: errorPosition,
-                  length: error.length,
-                }),
+                new SyntaxError(error.messageText.toString(), errorRange),
               );
             }
 
@@ -160,7 +165,11 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
             {
               cond: 'isSyntaxError',
               target: 'active',
-              actions: ['highlightError', 'broadcastError'],
+              actions: [
+                'addDecorations',
+                'scrollToLineWithError',
+                'broadcastError',
+              ],
             },
             {
               target: 'active',
@@ -175,6 +184,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
         actions: [
           editorPanelModel.assign({ code: (_, e) => e.code }),
           'onChangedCodeValue',
+          'clearDecorations',
         ],
       },
       EDITOR_ENCOUNTERED_ERROR: {
@@ -206,24 +216,37 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
         title: e.data.title,
         message: e.data.message,
       })),
-      highlightError: (ctx, e) => {
-        const {
-          data: {
-            metadata: { position, length = 0 },
-          },
-        } = e as any;
-        const editor = ctx.standaloneEditorRef;
-        if (position) {
-          editor?.revealLineInCenterIfOutsideViewport(position.lineNumber);
-          editor?.setSelection(
-            new Range(
-              position.lineNumber,
-              0,
-              position.lineNumber,
-              position.column + length,
-            ),
+      addDecorations: assign({
+        deltaDecorations: (ctx, e) => {
+          const {
+            data: { range },
+          } = e as DoneInvokeEvent<{ message: string; range: Range }>;
+          const newDecorations = ctx.standaloneEditorRef!.deltaDecorations(
+            ctx.deltaDecorations,
+            [
+              {
+                range,
+                options: {
+                  isWholeLine: true,
+                  glyphMarginClassName: 'editor__glyph-margin',
+                  className: 'editor__error-content',
+                },
+              },
+            ],
           );
-        }
+          return newDecorations;
+        },
+      }),
+      clearDecorations: assign({
+        deltaDecorations: (ctx) =>
+          ctx.standaloneEditorRef!.deltaDecorations(ctx.deltaDecorations, []),
+      }),
+      scrollToLineWithError: (ctx, e) => {
+        const {
+          data: { range },
+        } = e as DoneInvokeEvent<{ message: string; range: Range }>;
+        const editor = ctx.standaloneEditorRef;
+        editor?.revealLineInCenterIfOutsideViewport(range.startLineNumber);
       },
     },
   },
