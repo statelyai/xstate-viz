@@ -330,7 +330,6 @@ export const EditorPanel: React.FC<{
                 sourceProvider={sourceState.context.sourceProvider}
                 defaultValue={defaultValue}
                 onMount={(standaloneEditor, monaco) => {
-                  console.log('mount', standaloneEditor);
                   send({
                     type: 'EDITOR_READY',
                     monacoRef: monaco,
