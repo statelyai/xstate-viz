@@ -10,11 +10,11 @@ if (process.env.NODE_ENV === 'production' && process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.REACT_APP_SENTRY_DSN,
     integrations: [new Integrations.BrowserTracing()],
-
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
-    tracesSampleRate: 1.0,
+    /**
+     * This allows us to work out if a bug came
+     * from staging, dev or prod
+     */
+    environment: process.env.REACT_APP_SENTRY_ENVIRONMENT,
   });
 }
 
