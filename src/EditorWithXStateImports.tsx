@@ -183,12 +183,7 @@ export const EditorWithXStateImports = (
             editor.addAction({
               id: 'format',
               label: 'Format',
-              keybindings: [
-                // KeyMod.CtrlCmd
-                2048 |
-                  // KeyCode.Enter
-                  3,
-              ],
+              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
               run: (editor) => {
                 editor.getAction('editor.action.formatDocument').run();
               },
