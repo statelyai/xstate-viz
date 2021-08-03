@@ -511,7 +511,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           return {};
         }),
         openNewWindowAtRoot: () => {
-          window.open('/', '_blank');
+          window.open('/viz', '_blank', 'noopener');
         },
       },
       services: {
