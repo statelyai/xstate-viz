@@ -1,4 +1,11 @@
-import { Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  HStack,
+  IconProps,
+  Text,
+  Tooltip,
+} from '@chakra-ui/react';
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React, { Suspense } from 'react';
@@ -6,6 +13,7 @@ import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { CommandPalette } from './CommandPalette';
+import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import { useSimulation } from './SimulationContext';
@@ -151,25 +159,25 @@ const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
   return sourceStatus;
 };
 
-const getPersistText = (
+const getPersistTextAndIcon = (
   isSignedOut: boolean,
   sourceOwnershipStatus: SourceOwnershipStatus,
-): string => {
+): { text: string; Icon: React.FC<IconProps> } => {
   if (isSignedOut) {
     switch (sourceOwnershipStatus) {
       case 'no-source':
-        return 'Login to save';
+        return { text: 'Login to save', Icon: SaveIcon };
       case 'user-does-not-own-source':
       case 'user-owns-source':
-        return 'Login to fork';
+        return { text: 'Login to fork', Icon: ForkIcon };
     }
   }
   switch (sourceOwnershipStatus) {
     case 'no-source':
     case 'user-owns-source':
-      return 'Save';
+      return { text: 'Save', Icon: SaveIcon };
     case 'user-does-not-own-source':
-      return 'Fork';
+      return { text: 'Fork', Icon: ForkIcon };
   }
 };
 
@@ -194,7 +202,7 @@ export const EditorPanel: React.FC<{
   const simMode: SimMode = useSelector(simService, (state) =>
     state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
   );
-  const persistText = getPersistText(
+  const persistMeta = getPersistTextAndIcon(
     authState.matches('signed_out'),
     sourceOwnershipStatus,
   );
@@ -265,6 +273,9 @@ export const EditorPanel: React.FC<{
                     disabled={isVisualizing}
                     isLoading={isVisualizing}
                     title="Visualize"
+                    leftIcon={
+                      <MagicIcon fill="gray.200" height="16px" width="16px" />
+                    }
                     onClick={() => {
                       send({
                         type: 'COMPILE',
@@ -283,12 +294,19 @@ export const EditorPanel: React.FC<{
                   <Button
                     isLoading={sourceState.hasTag('persisting')}
                     disabled={sourceState.hasTag('persisting') || isVisualizing}
-                    title={persistText}
+                    title={persistMeta.text}
                     onClick={() => {
                       onSave();
                     }}
+                    leftIcon={
+                      <persistMeta.Icon
+                        fill="gray.200"
+                        height="16px"
+                        width="16px"
+                      />
+                    }
                   >
-                    {persistText}
+                    {persistMeta.text}
                   </Button>
                 </Tooltip>
                 {sourceOwnershipStatus === 'user-owns-source' && (
@@ -301,6 +319,9 @@ export const EditorPanel: React.FC<{
                     onClick={() => {
                       onCreateNew();
                     }}
+                    leftIcon={
+                      <ForkIcon fill="gray.200" height="16px" width="16px" />
+                    }
                   >
                     Fork
                   </Button>

@@ -3,6 +3,8 @@ fragment SourceFile on SourceFile {
   updatedAt
   name
   text
+  youHaveLiked
+  likesCount
   owner {
     id
     avatarUrl
