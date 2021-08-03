@@ -10,6 +10,15 @@ import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
 import { SourceProvider } from './types';
 import { uniq } from './utils';
 
+/**
+ * We're importing prettier via CDN - this declaration
+ * allows us to use it globally
+ */
+declare global {
+  export const prettier: typeof import('prettier');
+  export const prettierPlugins: (string | import('prettier').Plugin)[];
+}
+
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
   let text = '';
@@ -37,13 +46,6 @@ function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   }
 
   return text;
-}
-
-declare global {
-  export const prettier: {
-    format: (code: string, opts?: any) => string;
-  };
-  export const prettierPlugins: any[];
 }
 
 function prettify(code: string) {
