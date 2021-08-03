@@ -13,6 +13,7 @@ import {
   MachineOptions,
   send,
   spawn,
+  StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import {
@@ -43,7 +44,7 @@ const authModel = createModel(
       SIGN_OUT: () => ({}),
       CHOOSE_PROVIDER: () => ({}),
       CANCEL_PROVIDER: () => ({}),
-      LOGGED_OUT_USER_ATTEMPTED_SAVE: () => ({}),
+      LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION: () => ({}),
     },
   },
 );
@@ -125,7 +126,7 @@ export const authMachine = createMachine<typeof authModel>(
       signed_out: {
         on: {
           CHOOSE_PROVIDER: '.choosing_provider',
-          LOGGED_OUT_USER_ATTEMPTED_SAVE: '.choosing_provider',
+          LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION: '.choosing_provider',
         },
         initial: 'idle',
         states: {
@@ -244,3 +245,7 @@ export const authMachine = createMachine<typeof authModel>(
   },
   authOptions,
 );
+
+export const getSupabaseClient = (state: StateFrom<typeof authMachine>) => {
+  return state.context.client;
+};
