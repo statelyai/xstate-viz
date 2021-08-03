@@ -8,9 +8,14 @@ export const notifModel = createModel(
   {},
   {
     events: {
-      BROADCAST: (message: string, status: UseToastOptions['status']) => ({
+      BROADCAST: (
+        message: string,
+        status: UseToastOptions['status'],
+        title?: string,
+      ) => ({
         message,
         status,
+        title,
       }),
     },
   },
@@ -27,7 +32,7 @@ export const notifMachine = createMachine<typeof notifModel>({
             toast({
               id,
               status: e.status,
-              title: e.status?.toUpperCase(),
+              title: e.title || e.status?.toUpperCase(),
               description: id,
               isClosable: true,
               position: 'bottom-left',
