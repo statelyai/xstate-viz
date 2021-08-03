@@ -24,10 +24,19 @@ const login = () => {
 };
 
 const interceptGraphQL = (data: DeepPartial<Mutation & Query>) => {
-  cy.intercept('https://stately-registry-dev.vercel.app/api/graphql', {
+  // TODO - get this from an env variable
+  cy.intercept('https://dev.stately.ai/registry/api/graphql', {
     body: {
       data,
     },
+  });
+};
+
+const getCanvas = () => {
+  return cy.get('[data-panel="viz"]', {
+    // This needs to be this long in order for the
+    // ts worker to load initially
+    timeout: 8000,
   });
 };
 
@@ -56,9 +65,12 @@ declare global {
        * values they like
        */
       interceptGraphQL: typeof interceptGraphQL;
+
+      getCanvas: typeof getCanvas;
     }
   }
 }
 
 Cypress.Commands.add('login', login);
+Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);

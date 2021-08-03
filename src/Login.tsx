@@ -15,7 +15,7 @@ import {
   ModalOverlay,
   Text,
 } from '@chakra-ui/react';
-import { useActor, useSelector } from '@xstate/react';
+import { useActor } from '@xstate/react';
 import React from 'react';
 import { useAuth } from './authContext';
 import { registryLinks } from './registryLinks';

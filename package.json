@@ -36,12 +36,16 @@
     "xstate": "^4.23.0"
   },
   "scripts": {
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",
     "start:app": "react-scripts start",
     "build": "graphql-codegen && react-scripts build",
     "graphql:codegen": "graphql-codegen --watch",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "postinstall": "mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public",
+    "cypress:open": "cypress open",
+    "cypress:test": "cypress run"
   },
   "eslintConfig": {
     "extends": [
@@ -77,6 +81,8 @@
     "cypress-real-events": "^1.5.0",
     "graphql": "^15.5.0",
     "sass": "^1.33.0",
+    "serve": "^12.0.0",
+    "source-map-explorer": "^2.5.2",
     "typescript": "^4.3.5"
   }
 }
