@@ -355,7 +355,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 onDone: {
                   target: '#with_source.source_loaded.user_owns_this_source',
                   actions: [
-                    'clearLocalStorageEntryForCurrentUrl',
+                    'clearLocalStorageEntryForCurrentSource',
                     'assignCreateSourceFileToContext',
                     'updateURLWithMachineID',
                     send(
@@ -441,7 +441,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
     },
     {
       actions: {
-        clearLocalStorageEntryForCurrentUrl: (ctx) => {
+        clearLocalStorageEntryForCurrentSource: (ctx) => {
           localCache.removeSourceRawContent(ctx.sourceID);
         },
         addForkOfToDesiredName: assign((context, event) => {
