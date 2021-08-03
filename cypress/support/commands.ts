@@ -40,6 +40,14 @@ const getCanvas = () => {
   });
 };
 
+/**
+ * Grab the monaco editor. Added here
+ * to allow for test brevity
+ */
+const getMonacoEditor = () => {
+  return cy.get('.monaco-editor').first();
+};
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -67,10 +75,13 @@ declare global {
       interceptGraphQL: typeof interceptGraphQL;
 
       getCanvas: typeof getCanvas;
+
+      getMonacoEditor: typeof getMonacoEditor;
     }
   }
 }
 
 Cypress.Commands.add('login', login);
+Cypress.Commands.add('getMonacoEditor', getMonacoEditor);
 Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
