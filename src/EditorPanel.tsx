@@ -8,7 +8,11 @@ import {
 } from '@chakra-ui/react';
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
-import { editor, Range } from 'monaco-editor/esm/vs/editor/editor.api';
+import {
+  editor,
+  Position,
+  Range,
+} from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { Suspense } from 'react';
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
@@ -24,6 +28,27 @@ import {
   SourceMachineState,
 } from './sourceMachine';
 import type { AnyStateMachine, SimMode } from './types';
+
+interface SyntaxErrorMetadata {
+  position?: Position;
+  length?: number; // number of chars the error spans from starting point
+}
+class SyntaxError extends Error {
+  metadata: SyntaxErrorMetadata;
+  constructor(message: string, metadata: SyntaxErrorMetadata) {
+    super(message);
+    // this.message = message;
+    this.metadata = metadata;
+  }
+
+  get title() {
+    return `SyntaxError at Line:${this.metadata.position?.lineNumber} Col:${this.metadata.position?.column}`;
+  }
+
+  toString() {
+    return this.message;
+  }
+}
 
 const EditorWithXStateImports = React.lazy(
   () => import('./EditorWithXStateImports'),
@@ -109,12 +134,12 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
             // Only report one error at a time
             const error = syntaxErrors[0];
             const errorPosition = model?.getPositionAt(error.start!);
-            return Promise.reject({
-              title: `SyntaxError at Line:${errorPosition?.lineNumber} Col:${errorPosition?.column}`,
-              message: error.messageText.toString(),
-              position: errorPosition,
-              length: error.length,
-            });
+            return Promise.reject(
+              new SyntaxError(error.messageText.toString(), {
+                position: errorPosition,
+                length: error.length,
+              }),
+            );
           }
 
           const compiledSource = await tsWoker
@@ -135,22 +160,26 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>({
           target: 'active',
           actions: [
             (ctx, e) => {
-              const {
-                data: { position, length = 0 },
-              } = e;
-              const editor = ctx.standaloneEditorRef;
-              if (position) {
-                editor?.revealLineInCenterIfOutsideViewport(
-                  position.lineNumber,
-                );
-                editor?.setSelection(
-                  new Range(
+              if (e.data instanceof SyntaxError) {
+                const {
+                  data: {
+                    metadata: { position, length = 0 },
+                  },
+                } = e;
+                const editor = ctx.standaloneEditorRef;
+                if (position) {
+                  editor?.revealLineInCenterIfOutsideViewport(
                     position.lineNumber,
-                    0,
-                    position.lineNumber,
-                    position.column + length,
-                  ),
-                );
+                  );
+                  editor?.setSelection(
+                    new Range(
+                      position.lineNumber,
+                      0,
+                      position.lineNumber,
+                      position.column + length,
+                    ),
+                  );
+                }
               }
             },
             send((_, e) => ({
