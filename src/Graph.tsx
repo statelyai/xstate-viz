@@ -5,7 +5,7 @@ import {
   getBackLinkMap,
 } from './directedGraph';
 import { useMachine, useSelector } from '@xstate/react';
-import ELK, {
+import type {
   ElkEdgeSection,
   ElkExtendedEdge,
   ElkNode,
@@ -21,6 +21,11 @@ import { createElkMachine } from './elkMachine';
 import { StateNode } from 'xstate';
 import { MachineViz } from './MachineViz';
 import { useCanvas } from './CanvasContext';
+
+declare global {
+  export const ELK: typeof import('elkjs/lib/main').default;
+}
+
 const elk = new ELK({
   defaultLayoutOptions: {
     // algorithm: 'layered',
