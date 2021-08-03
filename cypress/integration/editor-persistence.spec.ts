@@ -27,7 +27,7 @@ describe('Editor persistence', () => {
   describe('When you have changes in localStorage that are newer than the registry', () => {
     it('Should use your localStorage changes', () => {
       cy.login();
-      
+
       // Plant a fake entry in localStorage
       cy.setLocalStorage(
         'xstate_viz_raw_source|source-file-id',
@@ -53,7 +53,7 @@ describe('Editor persistence', () => {
     });
   });
 
-  describe('When there are unsaved changes in the registry that are more recent than your localStorage', () => {
+  describe('When there are changes in the registry that are more recent than your localStorage', () => {
     it('Should override localStorage', () => {
       cy.login();
 
