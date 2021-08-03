@@ -293,7 +293,7 @@ export const EditorPanel: React.FC<{
                 >
                   <Button
                     isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting') || isVisualizing}
+                    disabled={sourceState.hasTag('persisting')}
                     title={persistMeta.text}
                     onClick={() => {
                       onSave();
@@ -311,10 +311,7 @@ export const EditorPanel: React.FC<{
                 </Tooltip>
                 {sourceOwnershipStatus === 'user-owns-source' && (
                   <Button
-                    disabled={
-                      sourceState.hasTag('forking') ||
-                      current.matches('compiling')
-                    }
+                    disabled={sourceState.hasTag('forking')}
                     isLoading={sourceState.hasTag('forking')}
                     onClick={() => {
                       onCreateNew();
