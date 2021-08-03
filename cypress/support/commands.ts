@@ -5,6 +5,17 @@ import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
 import { Mutation, Query } from '../../src/graphql/schemaTypes.generated';
 
+/**
+ * Removes win.onbeforeunload
+ *
+ * If we don't do this, Cypress hangs
+ */
+beforeEach(() => {
+  cy.window().then((win) => {
+    win.onbeforeunload = null;
+  });
+});
+
 const login = () => {
   cy.setLocalStorage(
     'supabase.auth.token',

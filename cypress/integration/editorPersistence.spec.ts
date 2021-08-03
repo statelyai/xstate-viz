@@ -18,7 +18,7 @@ describe('Editor persistence', () => {
        * There's a good reason for this specific wait!
        * We wait for the throttle of the code cache to catch up
        */
-      cy.wait(300);
+      cy.wait(500);
       cy.reload();
       cy.contains('Code changes');
     });
