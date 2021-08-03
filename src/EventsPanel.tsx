@@ -28,7 +28,7 @@ import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
 import { SimEvent, simulationMachine } from './simulationMachine';
 import { toSCXMLEvent } from 'xstate/lib/utils';
-import { assign, SCXML, send, StateFrom, ActionTypes } from 'xstate';
+import { assign, SCXML, send, StateFrom } from 'xstate';
 import Editor from '@monaco-editor/react';
 import {
   ChevronDownIcon,
@@ -38,6 +38,7 @@ import {
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { vizReactJsonTheme } from './vizReactJsonTheme';
+import { isInternalEvent, isNullEvent } from './utils';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -131,13 +132,6 @@ const eventsMachine = createMachine<typeof eventsModel>({
     },
   },
 });
-
-const isNullEvent = (eventName: string) => eventName === ActionTypes.NullEvent;
-const allInternalEventsButNullEvent = Object.values(ActionTypes).filter(
-  (prefix) => !isNullEvent(prefix),
-);
-const isInternalEvent = (eventName: string) =>
-  allInternalEventsButNullEvent.some((prefix) => eventName.startsWith(prefix));
 
 const deriveFinalEvents = (ctx: typeof eventsModel.initialContext) => {
   let finalEvents = ctx.rawEvents;
