@@ -6,7 +6,7 @@ declare namespace NodeJS {
     REACT_APP_GRAPHQL_API_URL: string;
 
     REACT_APP_SENTRY_DSN?: string;
-    REACT_APP_SENTRY_ENVIRONMENT?: string;
+    REACT_APP_DEPLOY_ENVIRONMENT?: string;
 
     PUBLIC_URL: string;
   }

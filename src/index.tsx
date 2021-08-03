@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === 'production' && process.env.REACT_APP_SENTRY_DSN) {
      * This allows us to work out if a bug came
      * from staging, dev or prod
      */
-    environment: process.env.REACT_APP_SENTRY_ENVIRONMENT,
+    environment: process.env.REACT_APP_DEPLOY_ENVIRONMENT,
   });
 }
 
