@@ -275,7 +275,6 @@ export const EditorPanel: React.FC<{
                     <Button
                       disabled={isVisualizing}
                       isLoading={isVisualizing}
-                      title="Visualize"
                       leftIcon={
                         <MagicIcon fill="gray.200" height="16px" width="16px" />
                       }
@@ -297,7 +296,6 @@ export const EditorPanel: React.FC<{
                     <Button
                       isLoading={sourceState.hasTag('persisting')}
                       disabled={sourceState.hasTag('persisting')}
-                      title={persistMeta.text}
                       onClick={() => {
                         onSave();
                       }}

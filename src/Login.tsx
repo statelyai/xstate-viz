@@ -43,11 +43,14 @@ export const Login: React.FC = () => {
 
       {state.hasTag('authorized') && (
         <Menu closeOnSelect={true}>
-          <MenuButton title={session?.user?.user_metadata?.full_name}>
+          <MenuButton>
             <Avatar
               marginRight="2"
               src={session?.user?.user_metadata?.avatar_url || ''}
-              name={session?.user?.user_metadata?.display_name || ''}
+              name={
+                session?.user?.user_metadata?.full_name ||
+                session?.user?.user_metadata?.user_name
+              }
               height="30px"
               width="30px"
             />
