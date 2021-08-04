@@ -25,7 +25,7 @@ import {
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React from 'react';
-import { getLoggedInUserData, useAuth } from './authContext';
+import { useLoggedInUserData, useAuth } from './authContext';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
 import {
@@ -55,7 +55,7 @@ export const CanvasPanel: React.FC<{
 
   const [sourceState] = useSourceActor(authService);
 
-  const loggedInUserData = useSelector(authService, getLoggedInUserData);
+  const loggedInUserData = useLoggedInUserData();
 
   const shouldEnableZoomOutButton = useSelector(
     canvasService,

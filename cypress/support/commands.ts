@@ -5,7 +5,18 @@ import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
 import { Mutation, Query } from '../../src/graphql/schemaTypes.generated';
 
-const login = () => {
+/**
+ * Removes win.onbeforeunload
+ *
+ * If we don't do this, Cypress hangs
+ */
+beforeEach(() => {
+  cy.window().then((win) => {
+    win.onbeforeunload = null;
+  });
+});
+
+const setMockAuthToken = () => {
   cy.setLocalStorage(
     'supabase.auth.token',
     JSON.stringify({
@@ -40,6 +51,14 @@ const getCanvas = () => {
   });
 };
 
+/**
+ * Grab the monaco editor. Added here
+ * to allow for test brevity
+ */
+const getMonacoEditor = () => {
+  return cy.get('.monaco-editor').first();
+};
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -56,9 +75,10 @@ declare global {
   namespace Cypress {
     interface Chainable {
       /**
-       * Log in to the app
+       * Sets a mock auth token into localStorage to
+       * mimic us being logged in to Supabase
        */
-      login: typeof login;
+      setMockAuthToken: typeof setMockAuthToken;
 
       /**
        * Allows the tester to mock the GraphQL API to return whatever
@@ -67,10 +87,13 @@ declare global {
       interceptGraphQL: typeof interceptGraphQL;
 
       getCanvas: typeof getCanvas;
+
+      getMonacoEditor: typeof getMonacoEditor;
     }
   }
 }
 
-Cypress.Commands.add('login', login);
+Cypress.Commands.add('setMockAuthToken', setMockAuthToken);
+Cypress.Commands.add('getMonacoEditor', getMonacoEditor);
 Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);

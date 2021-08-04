@@ -13,7 +13,7 @@ describe('Gists', () => {
     cy.interceptGraphQL({
       getLoggedInUser: {},
     });
-    cy.login();
+    cy.setMockAuthToken();
     cy.intercept('https://api.github.com/gists/gist-id', {
       body: {
         files: {
