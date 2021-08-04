@@ -12,17 +12,17 @@ import React, { Suspense } from 'react';
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
+import { useSimulationMode } from './SimulationContext';
 import { CommandPalette } from './CommandPalette';
 import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import { useSimulation } from './SimulationContext';
 import {
   getEditorDefaultValue,
   getShouldImmediateUpdate,
   SourceMachineState,
 } from './sourceMachine';
-import type { AnyStateMachine, SimMode } from './types';
+import type { AnyStateMachine } from './types';
 
 const EditorWithXStateImports = React.lazy(
   () => import('./EditorWithXStateImports'),
@@ -198,10 +198,8 @@ export const EditorPanel: React.FC<{
 
   const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
 
-  const simService = useSimulation();
-  const simMode: SimMode = useSelector(simService, (state) =>
-    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
-  );
+  const simulationMode = useSimulationMode();
+
   const persistMeta = getPersistTextAndIcon(
     authState.matches('signed_out'),
     sourceOwnershipStatus,
@@ -232,17 +230,19 @@ export const EditorPanel: React.FC<{
 
   return (
     <>
-      <CommandPalette
-        onSave={() => {
-          onSave();
-        }}
-        onVisualize={() => {
-          send('COMPILE');
-        }}
-      />
+      {simulationMode === 'visualizing' && (
+        <CommandPalette
+          onSave={() => {
+            onSave();
+          }}
+          onVisualize={() => {
+            send('COMPILE');
+          }}
+        />
+      )}
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
         <Suspense fallback={null}>
-          {simMode === 'visualizing' && (
+          {simulationMode === 'visualizing' && (
             <>
               <EditorWithXStateImports
                 sourceProvider={sourceState.context.sourceProvider}
@@ -327,7 +327,7 @@ export const EditorPanel: React.FC<{
             </>
           )}
         </Suspense>
-        {simMode === 'inspecting' && (
+        {simulationMode === 'inspecting' && (
           <Box padding="4">
             <Text as="strong">Inspection mode</Text>
             <Text>
