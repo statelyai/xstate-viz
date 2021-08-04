@@ -9,4 +9,17 @@ const config: ThemeConfig = {
 // 3. extend the theme
 export const theme = extendTheme({
   config,
+  components: {
+    Button: {
+      variants: {
+        canvas: {
+          bg: 'gray.600',
+          color: 'white',
+          _hover: {
+            bg: 'gray.400',
+          },
+        },
+      },
+    },
+  },
 });

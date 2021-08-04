@@ -3,7 +3,6 @@ import {
   MinusIcon,
   RepeatIcon,
   HamburgerIcon,
-  ExternalLinkIcon,
   EditIcon,
 } from '@chakra-ui/icons';
 import {
@@ -17,7 +16,6 @@ import {
   Link,
   Menu,
   MenuButton,
-  MenuIcon,
   MenuItem,
   MenuList,
   Stack,
@@ -46,6 +44,33 @@ const ButtonSeparator = () => (
   <Box backgroundColor="gray.700" width={0.5} height="60%" marginX={2} />
 );
 
+const CanvasHeader: React.FC = () => {
+  return (
+    <Box zIndex={1} display="flex" alignItems="center" height="3rem">
+      <Link
+        href="https://github.com/statelyai/xstate"
+        title="XState GitHub Repo"
+        display="block"
+        height="100%"
+        _hover={{
+          opacity: 0.8,
+        }}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <Logo
+          style={{
+            // @ts-ignore
+            '--fill': 'white',
+            height: '100%',
+            padding: '.5rem 1rem',
+          }}
+        />
+      </Link>
+    </Box>
+  );
+};
+
 export const CanvasPanel: React.FC<{
   digraph: DirectedGraphNode;
 }> = ({ digraph }) => {
@@ -72,18 +97,9 @@ export const CanvasPanel: React.FC<{
 
   return (
     <ChakraProvider theme={theme}>
-      <Box display="grid" gridTemplateRows="auto 1fr">
-        <HStack bg="black" justifyContent="space-between" zIndex={1}>
-          <Box zIndex={1} display="flex" alignItems="center" height="3rem">
-            <Logo
-              style={{
-                // @ts-ignore
-                '--fill': 'white',
-                height: '100%',
-                padding: '.25rem 1rem',
-              }}
-            />
-          </Box>
+      <Box display="grid" gridTemplateRows="3rem 1fr">
+        <HStack bg="gray.800" justifyContent="space-between" zIndex={1}>
+          <CanvasHeader />
           {registryData && (
             <Stack direction="row" spacing="4" alignItems="center" pr="4">
               <Text fontWeight="semibold" fontSize="sm" color="gray.100">
@@ -150,7 +166,7 @@ export const CanvasPanel: React.FC<{
               icon={<MinusIcon />}
               disabled={!shouldEnableZoomOutButton}
               onClick={() => canvasService.send('ZOOM.OUT')}
-              colorScheme="blue"
+              variant="canvas"
             />
             <IconButton
               aria-label="Zoom in"
@@ -158,14 +174,14 @@ export const CanvasPanel: React.FC<{
               icon={<AddIcon />}
               disabled={!shouldEnableZoomInButton}
               onClick={() => canvasService.send('ZOOM.IN')}
-              colorScheme="blue"
+              variant="canvas"
             />
             <IconButton
               aria-label="Reset canvas"
               title="Reset canvas"
               icon={<RepeatIcon />}
               onClick={() => canvasService.send('POSITION.RESET')}
-              colorScheme="blue"
+              variant="canvas"
             />
           </ButtonGroup>
           <ButtonSeparator />
@@ -173,7 +189,7 @@ export const CanvasPanel: React.FC<{
             size="sm"
             margin={2}
             onClick={() => simService.send('MACHINES.RESET')}
-            colorScheme="blue"
+            variant="canvas"
           >
             RESET
           </Button>

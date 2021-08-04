@@ -98,7 +98,7 @@ function App() {
                   <Tabs
                     bg="gray.800"
                     display="grid"
-                    gridTemplateRows="auto 1fr"
+                    gridTemplateRows="3rem 1fr"
                     height="100%"
                   >
                     <TabList>
