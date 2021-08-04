@@ -81,6 +81,10 @@ const saveSourceRawContent = (
   );
 };
 
+const removeSourceRawContent = (sourceID: string | null) => {
+  storage.removeItem(makeRawSourceCacheKey(sourceID));
+};
+
 const getSourceRawContent = (
   sourceID: string | null,
   updatedAt: string | null,
@@ -140,4 +144,5 @@ export const localCache = {
   getSourceRawContent,
   getEditorTheme,
   saveEditorTheme,
+  removeSourceRawContent,
 };
