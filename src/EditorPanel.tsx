@@ -21,8 +21,37 @@ import {
   getEditorDefaultValue,
   getShouldImmediateUpdate,
   SourceMachineState,
+  SourceMachineActorRef,
 } from './sourceMachine';
+import { uniq } from './utils';
 import type { AnyStateMachine } from './types';
+
+function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
+  const rootNames: string[] = [];
+  let text = '';
+
+  for (const identifier of usedXStateGistIdentifiers) {
+    switch (identifier) {
+      case 'raise':
+        rootNames.push('actions');
+        text += 'const { raise } = actions;\n';
+        break;
+      case 'XState':
+        text += 'import * as XState from "xstate";\n';
+        break;
+      default:
+        rootNames.push(identifier);
+        break;
+    }
+  }
+
+  if (rootNames.length) {
+    // this uses `uniq` on the `rootNames` list because `actions` could be pushed into it while it was already in the list
+    text = `import { ${uniq(rootNames).join(', ')} } from "xstate";\n${text}`;
+  }
+
+  return text;
+}
 
 const EditorWithXStateImports = React.lazy(
   () => import('./EditorWithXStateImports'),
@@ -31,9 +60,9 @@ const EditorWithXStateImports = React.lazy(
 const editorPanelModel = createModel(
   {
     code: '',
-    immediateUpdate: false,
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
     editorRef: null as Monaco | null,
+    sourceRef: null as SourceMachineActorRef,
     mainFile: 'main.ts',
     machines: null as AnyStateMachine[] | null,
   },
@@ -48,94 +77,147 @@ const editorPanelModel = createModel(
   },
 );
 
-const editorPanelMachine = createMachine<typeof editorPanelModel>({
-  context: editorPanelModel.initialContext,
-  entry: [assign({ notifRef: () => spawn(notifMachine) })],
-  initial: 'booting',
-  states: {
-    booting: {
-      on: {
-        EDITOR_READY: [
+const editorPanelMachine = createMachine<typeof editorPanelModel>(
+  {
+    context: editorPanelModel.initialContext,
+    entry: [assign({ notifRef: () => spawn(notifMachine) })],
+    initial: 'booting',
+    states: {
+      booting: {
+        initial: 'waiting_for_monaco',
+        states: {
+          waiting_for_monaco: {
+            on: {
+              EDITOR_READY: [
+                {
+                  cond: 'isGist',
+                  target: 'fixing_gist_imports',
+                  actions: editorPanelModel.assign({
+                    editorRef: (_, e) => e.editorRef,
+                  }),
+                },
+                {
+                  target: 'done',
+                  actions: editorPanelModel.assign({
+                    editorRef: (_, e) => e.editorRef,
+                  }),
+                },
+              ],
+            },
+          },
+          fixing_gist_imports: {
+            invoke: {
+              src: async (ctx) => {
+                const monaco = ctx.editorRef!;
+                const uri = monaco.Uri.parse(ctx.mainFile);
+                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+                const tsWorker = await getWorker(uri);
+                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
+                  uri.toString(),
+                );
+
+                if (usedXStateGistIdentifiers.length > 0) {
+                  const fixupImportsText = buildGistFixupImportsText(
+                    usedXStateGistIdentifiers,
+                  );
+                  const model = monaco.editor.getModel(uri)!;
+                  const currentValue = model.getValue();
+                  model.setValue(`${fixupImportsText}\n${currentValue}`);
+                }
+              },
+              onDone: 'done',
+            },
+          },
+          done: {
+            type: 'final',
+          },
+        },
+        onDone: [
           {
-            cond: (ctx) => ctx.immediateUpdate,
-            actions: [
-              editorPanelModel.assign({ editorRef: (_, e) => e.editorRef }),
-            ],
+            cond: (ctx) =>
+              getShouldImmediateUpdate(ctx.sourceRef.getSnapshot()!),
             target: 'compiling',
           },
           {
             target: 'active',
-            actions: editorPanelModel.assign({
-              editorRef: (_, e) => e.editorRef,
-            }),
           },
         ],
       },
-    },
-    active: {},
-    updating: {
-      tags: ['visualizing'],
-      entry: send('UPDATE_MACHINE_PRESSED'),
-      always: 'active',
-    },
-    compiling: {
-      tags: ['visualizing'],
-      invoke: {
-        src: (ctx) => {
-          const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
-          const compiledJSPromise = ctx
-            .editorRef!.languages.typescript.getTypeScriptWorker()
-            .then((worker) => worker(uri))
-            .then((client) => client.getEmitOutput(uri.toString()))
-            .then((result) => result.outputFiles[0].text) as Promise<string>;
+      active: {},
+      updating: {
+        tags: ['visualizing'],
+        entry: send('UPDATE_MACHINE_PRESSED'),
+        always: 'active',
+      },
+      compiling: {
+        tags: ['visualizing'],
+        invoke: {
+          src: (ctx) => {
+            const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
+            const compiledJSPromise = ctx
+              .editorRef!.languages.typescript.getTypeScriptWorker()
+              .then((worker) => worker(uri))
+              .then((client) => client.getEmitOutput(uri.toString()))
+              .then((result) => result.outputFiles[0].text) as Promise<string>;
 
-          return compiledJSPromise.then((js) => {
-            const machines = parseMachines(js);
-            return machines;
-          });
-        },
-        onDone: {
-          target: 'updating',
-          actions: [
-            assign({
-              machines: (_, e: any) => e.data,
-            }),
-          ],
-        },
-        onError: {
-          target: 'active',
-          actions: [
-            (_, e) => console.error(e.data),
-            send((_, e) => ({
-              type: 'EDITOR_ENCOUNTERED_ERROR',
-              message: e.data.message,
-            })),
-          ],
+            return compiledJSPromise.then((js) => {
+              const machines = parseMachines(js);
+              return machines;
+            });
+          },
+          onDone: {
+            target: 'updating',
+            actions: [
+              assign({
+                machines: (_, e: any) => e.data,
+              }),
+            ],
+          },
+          onError: {
+            target: 'active',
+            actions: [
+              (_, e) => console.error(e.data),
+              send((_, e) => ({
+                type: 'EDITOR_ENCOUNTERED_ERROR',
+                message: e.data.message,
+              })),
+            ],
+          },
         },
       },
     },
+    on: {
+      EDITOR_CHANGED_VALUE: {
+        actions: [
+          editorPanelModel.assign({ code: (_, e) => e.code }),
+          'onChangedCodeValue',
+        ],
+      },
+      EDITOR_ENCOUNTERED_ERROR: {
+        actions: send(
+          (_, e) => ({
+            type: 'BROADCAST',
+            status: 'error',
+            message: e.message,
+          }),
+          {
+            to: (ctx) => ctx.notifRef,
+          },
+        ),
+      },
+      UPDATE_MACHINE_PRESSED: {
+        actions: 'onChange',
+      },
+      COMPILE: 'compiling',
+    },
   },
-  on: {
-    EDITOR_CHANGED_VALUE: {
-      actions: [
-        editorPanelModel.assign({ code: (_, e) => e.code }),
-        'onChangedCodeValue',
-      ],
+  {
+    guards: {
+      isGist: (ctx) =>
+        ctx.sourceRef.getSnapshot()!.context.sourceProvider === 'gist',
     },
-    EDITOR_ENCOUNTERED_ERROR: {
-      actions: send(
-        (_, e) => ({ type: 'BROADCAST', status: 'error', message: e.message }),
-        {
-          to: (ctx) => ctx.notifRef,
-        },
-      ),
-    },
-    UPDATE_MACHINE_PRESSED: {
-      actions: 'onChange',
-    },
-    COMPILE: 'compiling',
   },
-});
+);
 
 export type SourceOwnershipStatus =
   | 'user-owns-source'
@@ -193,7 +275,6 @@ export const EditorPanel: React.FC<{
     authService,
     (state) => state.context.sourceRef!,
   );
-  // TODO - consider refactoring this to useSelector
   const [sourceState] = useActor(sourceService);
 
   const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
@@ -205,15 +286,14 @@ export const EditorPanel: React.FC<{
     sourceOwnershipStatus,
   );
 
-  const immediateUpdate = getShouldImmediateUpdate(sourceState);
   const defaultValue = getEditorDefaultValue(sourceState);
 
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
       ...editorPanelModel.initialContext,
-      immediateUpdate,
       code: defaultValue,
+      sourceRef: sourceService,
     }),
     {
       actions: {
@@ -245,7 +325,6 @@ export const EditorPanel: React.FC<{
           {simulationMode === 'visualizing' && (
             <>
               <EditorWithXStateImports
-                sourceProvider={sourceState.context.sourceProvider}
                 defaultValue={defaultValue}
                 onMount={(_, monaco) => {
                   send({ type: 'EDITOR_READY', editorRef: monaco });

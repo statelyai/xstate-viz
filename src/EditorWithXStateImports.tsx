@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { ClassNames } from '@emotion/react';
 import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
@@ -8,8 +7,6 @@ import { localCache } from './localCache';
 import { SpinnerWithText } from './SpinnerWithText';
 import { useEditorTheme } from './themeContext';
 import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
-import { SourceProvider } from './types';
-import { uniq } from './utils';
 
 /**
  * We're importing prettier via CDN - this declaration
@@ -18,33 +15,6 @@ import { uniq } from './utils';
 declare global {
   export const prettier: typeof import('prettier');
   export const prettierPlugins: (string | import('prettier').Plugin)[];
-}
-
-function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
-  const rootNames: string[] = [];
-  let text = '';
-
-  for (const identifier of usedXStateGistIdentifiers) {
-    switch (identifier) {
-      case 'raise':
-        rootNames.push('actions');
-        text += 'const { raise } = actions;\n';
-        break;
-      case 'XState':
-        text += 'import * as XState from "xstate";\n';
-        break;
-      default:
-        rootNames.push(identifier);
-        break;
-    }
-  }
-
-  if (rootNames.length) {
-    // this uses `uniq` on the `rootNames` list because `actions` could be pushed into it while it was already in the list
-    text = `import { ${uniq(rootNames).join(', ')} } from "xstate";\n${text}`;
-  }
-
-  return text;
 }
 
 function prettify(code: string) {
@@ -66,7 +36,6 @@ interface EditorWithXStateImportsProps {
   onMount?: OnMount;
   onSave?: () => void;
   onFormat?: () => void;
-  sourceProvider: SourceProvider | null;
   defaultValue?: string;
 }
 
@@ -115,7 +84,6 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
-  const isReadyRef = React.useRef(false);
   const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
@@ -152,8 +120,7 @@ export const EditorWithXStateImports = (
           }}
           loading={<SpinnerWithText text="Preparing the editor" />}
           onChange={(text) => {
-            // skip notifying the parent about changes for edits to the editor's value done before `props.onMount` gets called
-            if (isReadyRef.current && typeof text === 'string') {
+            if (typeof text === 'string') {
               props.onChange?.(text);
             }
           }}
@@ -214,37 +181,14 @@ export const EditorWithXStateImports = (
             editor.addAction({
               id: 'save',
               label: 'Save',
-              keybindings: [
-                // KeyMod.CtrlCmd
-                2048 |
-                  // KeyCode.KEY_S
-                  49,
-              ],
+              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
               run: () => {
                 props.onSave?.();
                 editor.getAction('editor.action.formatDocument').run();
               },
             });
 
-            if (props.sourceProvider === 'gist') {
-              const uri = monaco.Uri.parse('main.ts');
-              const getWorker =
-                await monaco.languages.typescript.getTypeScriptWorker();
-              const tsWorker = await getWorker(uri);
-              const usedXStateGistIdentifiers: string[] = await (
-                tsWorker as any
-              ).queryXStateGistIdentifiers(uri.toString());
-              if (usedXStateGistIdentifiers.length > 0) {
-                const fixupImportsText = buildGistFixupImportsText(
-                  usedXStateGistIdentifiers,
-                );
-                const currentValue = editor.getValue();
-                editor.setValue(`${fixupImportsText}\n${currentValue}`);
-              }
-            }
-
             const wrappedEditor = withTypeAcquisition(editor, monaco);
-            isReadyRef.current = true;
             props.onMount?.(wrappedEditor, monaco);
           }}
         />
