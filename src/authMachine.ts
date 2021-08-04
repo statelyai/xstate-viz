@@ -34,7 +34,7 @@ const authModel = createModel(
     client: null! as SupabaseClient,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     sourceRef: null as SourceMachineActorRef | null,
-    loggedInUserData: null as null | LoggedInUserFragment,
+    loggedInUserData: null as LoggedInUserFragment | null,
   },
   {
     events: {
