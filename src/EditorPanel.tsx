@@ -85,6 +85,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
     states: {
       booting: {
         initial: 'waiting_for_monaco',
+        on: { EDITOR_CHANGED_VALUE: undefined },
         states: {
           waiting_for_monaco: {
             on: {
