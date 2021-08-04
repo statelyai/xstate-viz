@@ -4,7 +4,7 @@ describe('Autocomplete in the editor', () => {
     cy.getMonacoEditor().type('{enter}{enter}ass');
 
     // Wait for the autocomplete to show up
-    cy.contains('assign', { timeout: 8000 });
+    cy.contains('assign');
 
     cy.getMonacoEditor().type('{downarrow}{downarrow}{enter}');
 
@@ -16,7 +16,7 @@ describe('Autocomplete in the editor', () => {
     cy.getMonacoEditor().type('{enter}{enter}createMod');
 
     // Wait for the autocomplete to show up
-    cy.contains('createModel', { timeout: 8000 });
+    cy.contains('createModel');
 
     cy.getMonacoEditor().type('{downarrow}{enter}');
 
