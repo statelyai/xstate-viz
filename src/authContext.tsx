@@ -1,10 +1,12 @@
 import { InterpreterFrom } from 'xstate';
 import { authMachine } from './authMachine';
-import { createRequiredContext } from './utils';
+import { createInterpreterContext } from './utils';
 
-export const [AuthProvider, useAuth, createAuthSelector] =
-  createRequiredContext<InterpreterFrom<typeof authMachine>>('Auth');
+const [AuthProvider, useAuth, createAuthSelector] =
+  createInterpreterContext<InterpreterFrom<typeof authMachine>>('Auth');
 
-export const getLoggedInUserData = createAuthSelector(
+export { AuthProvider, useAuth };
+
+export const useLoggedInUserData = createAuthSelector(
   (state) => state.context.loggedInUserData,
 );

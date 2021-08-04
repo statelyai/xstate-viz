@@ -5,6 +5,7 @@ import type {
   StateMachine,
 } from 'xstate';
 import { Model } from 'xstate/lib/model.types';
+import type { editor } from 'monaco-editor';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
@@ -40,4 +41,8 @@ export interface ServiceData {
   source?: 'inspector' | 'visualizer';
 }
 
-export type SimMode = 'inspecting' | 'visualizing';
+export type SimulationMode = 'inspecting' | 'visualizing';
+
+export type EditorThemeDefinition = editor.IStandaloneThemeData & {
+  name: string;
+};

@@ -1,21 +1,47 @@
 import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import * as React from 'react';
-import type {
+import {
   ActionObject,
+  ActionTypes,
   AnyEventObject,
   Interpreter,
-  StateFrom,
-  StateMachine,
   StateNode,
   TransitionDefinition,
 } from 'xstate';
 import { AnyState, AnyStateMachine } from './types';
 import { print } from 'graphql';
+import { useSelector } from '@xstate/react';
 
-export function createRequiredContext<
+export const isNullEvent = (eventName: string) =>
+  eventName === ActionTypes.NullEvent;
+
+export const isInternalEvent = (eventName: string) => {
+  const allInternalEventsButNullEvent = Object.values(ActionTypes).filter(
+    (prefix) => !isNullEvent(prefix),
+  );
+  return allInternalEventsButNullEvent.some((prefix) =>
+    eventName.startsWith(prefix),
+  );
+};
+
+export function createInterpreterContext<
   TInterpreter extends Interpreter<any, any, any>,
 >(displayName: string) {
-  const context = React.createContext<TInterpreter | null>(null);
+  const [Provider, useContext] =
+    createRequiredContext<TInterpreter>(displayName);
+
+  const createUseSelector =
+    <Data>(selector: (state: TInterpreter['state']) => Data) =>
+    () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      return useSelector(useContext(), selector);
+    };
+
+  return [Provider, useContext, createUseSelector] as const;
+}
+
+export function createRequiredContext<T>(displayName: string) {
+  const context = React.createContext<T | null>(null);
   context.displayName = displayName;
 
   const useContext = () => {
@@ -28,15 +54,7 @@ export function createRequiredContext<
     return ctx;
   };
 
-  /**
-   * A way to create a typesafe selector you can pass into
-   * useSelector
-   */
-  const createSelector = <Data>(
-    selector: (state: TInterpreter['state']) => Data,
-  ) => selector;
-
-  return [context.Provider, useContext, createSelector] as const;
+  return [context.Provider, useContext] as const;
 }
 
 export interface Edge<

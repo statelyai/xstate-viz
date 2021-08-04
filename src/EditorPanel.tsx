@@ -1,20 +1,29 @@
-import { Box, Button, HStack, Text, Tooltip } from '@chakra-ui/react';
+import { AddIcon } from '@chakra-ui/icons';
+import {
+  Box,
+  Button,
+  HStack,
+  IconProps,
+  Text,
+  Tooltip,
+} from '@chakra-ui/react';
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React, { Suspense } from 'react';
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
+import { useSimulationMode } from './SimulationContext';
 import { CommandPalette } from './CommandPalette';
+import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import { useSimulation } from './SimulationContext';
 import {
   getEditorDefaultValue,
   getShouldImmediateUpdate,
   SourceMachineState,
 } from './sourceMachine';
-import type { AnyStateMachine, SimMode } from './types';
+import type { AnyStateMachine } from './types';
 
 const EditorWithXStateImports = React.lazy(
   () => import('./EditorWithXStateImports'),
@@ -151,34 +160,35 @@ const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
   return sourceStatus;
 };
 
-const getPersistText = (
+const getPersistTextAndIcon = (
   isSignedOut: boolean,
   sourceOwnershipStatus: SourceOwnershipStatus,
-): string => {
+): { text: string; Icon: React.FC<IconProps> } => {
   if (isSignedOut) {
     switch (sourceOwnershipStatus) {
       case 'no-source':
-        return 'Login to save';
+        return { text: 'Login to save', Icon: SaveIcon };
       case 'user-does-not-own-source':
       case 'user-owns-source':
-        return 'Login to fork';
+        return { text: 'Login to fork', Icon: ForkIcon };
     }
   }
   switch (sourceOwnershipStatus) {
     case 'no-source':
     case 'user-owns-source':
-      return 'Save';
+      return { text: 'Save', Icon: SaveIcon };
     case 'user-does-not-own-source':
-      return 'Fork';
+      return { text: 'Fork', Icon: ForkIcon };
   }
 };
 
 export const EditorPanel: React.FC<{
   onSave: () => void;
+  onFork: () => void;
   onCreateNew: () => void;
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
-}> = ({ onSave, onChange, onChangedCodeValue, onCreateNew }) => {
+}> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
@@ -190,11 +200,9 @@ export const EditorPanel: React.FC<{
 
   const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
 
-  const simService = useSimulation();
-  const simMode: SimMode = useSelector(simService, (state) =>
-    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
-  );
-  const persistText = getPersistText(
+  const simulationMode = useSimulationMode();
+
+  const persistMeta = getPersistTextAndIcon(
     authState.matches('signed_out'),
     sourceOwnershipStatus,
   );
@@ -224,17 +232,19 @@ export const EditorPanel: React.FC<{
 
   return (
     <>
-      <CommandPalette
-        onSave={() => {
-          onSave();
-        }}
-        onVisualize={() => {
-          send('COMPILE');
-        }}
-      />
+      {simulationMode === 'visualizing' && (
+        <CommandPalette
+          onSave={() => {
+            onSave();
+          }}
+          onVisualize={() => {
+            send('COMPILE');
+          }}
+        />
+      )}
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
         <Suspense fallback={null}>
-          {simMode === 'visualizing' && (
+          {simulationMode === 'visualizing' && (
             <>
               <EditorWithXStateImports
                 sourceProvider={sourceState.context.sourceProvider}
@@ -254,60 +264,80 @@ export const EditorPanel: React.FC<{
                   onSave();
                 }}
               />
-              <HStack padding="2">
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + Enter"
-                  closeDelay={500}
-                >
-                  <Button
-                    disabled={isVisualizing}
-                    isLoading={isVisualizing}
-                    onClick={() => {
-                      send({
-                        type: 'COMPILE',
-                      });
-                    }}
+              <HStack padding="2" justifyContent="space-between">
+                <HStack>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + Enter"
+                    closeDelay={500}
                   >
-                    Visualize
-                  </Button>
-                </Tooltip>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + S"
-                  closeDelay={500}
-                >
-                  <Button
-                    isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting') || isVisualizing}
-                    onClick={() => {
-                      onSave();
-                    }}
+                    <Button
+                      disabled={isVisualizing}
+                      isLoading={isVisualizing}
+                      leftIcon={
+                        <MagicIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      onClick={() => {
+                        send({
+                          type: 'COMPILE',
+                        });
+                      }}
+                    >
+                      Visualize
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + S"
+                    closeDelay={500}
                   >
-                    {persistText}
-                  </Button>
-                </Tooltip>
-                {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      isLoading={sourceState.hasTag('persisting')}
+                      disabled={sourceState.hasTag('persisting')}
+                      onClick={() => {
+                        onSave();
+                      }}
+                      leftIcon={
+                        <persistMeta.Icon
+                          fill="gray.200"
+                          height="16px"
+                          width="16px"
+                        />
+                      }
+                    >
+                      {persistMeta.text}
+                    </Button>
+                  </Tooltip>
+                  {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      disabled={sourceState.hasTag('forking')}
+                      isLoading={sourceState.hasTag('forking')}
+                      onClick={() => {
+                        onFork();
+                      }}
+                      leftIcon={
+                        <ForkIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                    >
+                      Fork
+                    </Button>
+                  )}
+                </HStack>
+                {sourceOwnershipStatus !== 'no-source' && (
                   <Button
-                    disabled={
-                      sourceState.hasTag('forking') ||
-                      current.matches('compiling')
-                    }
-                    isLoading={sourceState.hasTag('forking')}
-                    onClick={() => {
-                      onCreateNew();
-                    }}
+                    leftIcon={<AddIcon fill="gray.200" />}
+                    onClick={onCreateNew}
                   >
-                    Fork
+                    New
                   </Button>
                 )}
               </HStack>
             </>
           )}
         </Suspense>
-        {simMode === 'inspecting' && (
+        {simulationMode === 'inspecting' && (
           <Box padding="4">
             <Text as="strong">Inspection mode</Text>
             <Text>

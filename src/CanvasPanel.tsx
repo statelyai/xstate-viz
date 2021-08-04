@@ -1,4 +1,11 @@
-import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
+import {
+  AddIcon,
+  MinusIcon,
+  RepeatIcon,
+  HamburgerIcon,
+  ExternalLinkIcon,
+  EditIcon,
+} from '@chakra-ui/icons';
 import {
   Avatar,
   Box,
@@ -8,12 +15,17 @@ import {
   HStack,
   IconButton,
   Link,
+  Menu,
+  MenuButton,
+  MenuIcon,
+  MenuItem,
+  MenuList,
   Stack,
   Text,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React from 'react';
-import { getLoggedInUserData, useAuth } from './authContext';
+import { useLoggedInUserData, useAuth } from './authContext';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
 import {
@@ -22,7 +34,10 @@ import {
 } from './canvasMachine';
 import { DirectedGraphNode } from './directedGraph';
 import { Graph } from './Graph';
+import { Heart, HeartOutlined } from './Icons';
+import { LikeButton } from './LikeButton';
 import { registryLinks } from './registryLinks';
+import { ShareButton } from './ShareButton';
 import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
@@ -40,10 +55,7 @@ export const CanvasPanel: React.FC<{
 
   const [sourceState] = useSourceActor(authService);
 
-  const loggedInUserData = useSelector(authService, getLoggedInUserData);
-
-  const userOwnsSource =
-    loggedInUserData?.id === sourceState.context.sourceRegistryData?.owner?.id;
+  const loggedInUserData = useLoggedInUserData();
 
   const shouldEnableZoomOutButton = useSelector(
     canvasService,
@@ -54,6 +66,9 @@ export const CanvasPanel: React.FC<{
     canvasService,
     getShouldEnableZoomInButton,
   );
+
+  const registryData = sourceState.context.sourceRegistryData;
+  const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
 
   return (
     <Box display="grid" gridTemplateRows="auto 1fr">
@@ -91,32 +106,58 @@ export const CanvasPanel: React.FC<{
               RESET
             </Button>
           </Box>
-          {sourceState.context.sourceRegistryData && (
-            <Stack direction="row" spacing="3" alignItems="center" pr="4">
-              <Text fontWeight="medium" fontSize="sm" color="gray.100">
-                {sourceState.context.sourceRegistryData?.name ||
-                  'Unnamed Source'}
+          {registryData && (
+            <Stack direction="row" spacing="4" alignItems="center" pr="4">
+              <Text fontWeight="semibold" fontSize="sm" color="gray.100">
+                {registryData?.name || 'Unnamed Source'}
               </Text>
-              {sourceState.context.sourceRegistryData?.owner &&
-                !userOwnsSource && (
-                  <Link
-                    href={registryLinks.viewUserById(
-                      sourceState.context.sourceRegistryData?.owner?.id,
+              <HStack>
+                <LikeButton />
+                <ShareButton />
+                <Menu closeOnSelect>
+                  <MenuButton>
+                    <IconButton
+                      aria-label="Menu"
+                      icon={<HamburgerIcon />}
+                      size="sm"
+                    ></IconButton>
+                  </MenuButton>
+                  <MenuList>
+                    {userOwnsSource && sourceState.context.sourceID && (
+                      <MenuItem
+                        as="a"
+                        href={registryLinks.editSourceFile(
+                          sourceState.context.sourceID,
+                        )}
+                      >
+                        <HStack spacing="3">
+                          <EditIcon />
+                          <Text>Edit</Text>
+                        </HStack>
+                      </MenuItem>
                     )}
-                  >
-                    <Avatar
-                      src={
-                        sourceState.context.sourceRegistryData.owner
-                          ?.avatarUrl || ''
-                      }
-                      name={
-                        sourceState.context.sourceRegistryData.owner
-                          ?.displayName || ''
-                      }
-                      style={{ height: '30px', width: '30px' }}
-                    ></Avatar>
-                  </Link>
-                )}
+                    {registryData.owner && (
+                      <MenuItem
+                        as="a"
+                        href={registryLinks.viewUserById(
+                          registryData?.owner?.id,
+                        )}
+                      >
+                        <HStack spacing="3">
+                          <Avatar
+                            src={registryData.owner?.avatarUrl || ''}
+                            name={registryData.owner?.displayName || ''}
+                            size="xs"
+                            height="24px"
+                            width="24px"
+                          ></Avatar>
+                          <Text>View Author</Text>
+                        </HStack>
+                      </MenuItem>
+                    )}
+                  </MenuList>
+                </Menu>
+              </HStack>
             </Stack>
           )}
         </HStack>

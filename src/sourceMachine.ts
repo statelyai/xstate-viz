@@ -3,12 +3,15 @@ import { useActor, useSelector } from '@xstate/react';
 import {
   ActorRefFrom,
   assign,
+  ContextFrom,
   createMachine,
   DoneInvokeEvent,
+  EventFrom,
   forwardTo,
   send,
   sendParent,
   spawn,
+  State,
   StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
@@ -46,6 +49,7 @@ export const sourceModel = createModel(
   {
     events: {
       SAVE: () => ({}),
+      FORK: () => ({}),
       CREATE_NEW: () => ({}),
       LOADED_FROM_GIST: (rawSource: string) => ({
         rawSource,
@@ -70,8 +74,9 @@ export type SourceMachineActorRef = ActorRefFrom<
   ReturnType<typeof makeSourceMachine>
 >;
 
-export type SourceMachineState = StateFrom<
-  ReturnType<typeof makeSourceMachine>
+export type SourceMachineState = State<
+  ContextFrom<typeof sourceModel>,
+  EventFrom<typeof sourceModel>
 >;
 
 class NotFoundError extends Error {
@@ -93,6 +98,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   return createMachine<typeof sourceModel>(
     {
       initial: 'checking_url',
+      preserveActionOrder: true,
       context: sourceModel.initialContext,
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
@@ -127,14 +133,19 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           id: 'with_source',
           initial: 'loading_content',
           on: {
-            CREATE_NEW: [
+            CREATE_NEW: {
+              actions: 'openNewWindowAtRoot',
+            },
+            FORK: [
               {
                 target: '#creating',
                 cond: isLoggedIn,
                 actions: ['addForkOfToDesiredName'],
               },
               {
-                actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                actions: sendParent(
+                  'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                ),
               },
             ],
           },
@@ -225,7 +236,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                         target: '#updating',
                       },
                       {
-                        actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                        actions: sendParent(
+                          'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                        ),
                       },
                     ],
                   },
@@ -239,7 +252,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                         actions: ['addForkOfToDesiredName'],
                       },
                       {
-                        actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE'),
+                        actions: sendParent(
+                          'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                        ),
                       },
                     ],
                   },
@@ -285,7 +300,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 cond: isLoggedIn,
                 target: 'creating',
               },
-              { actions: sendParent('LOGGED_OUT_USER_ATTEMPTED_SAVE') },
+              {
+                actions: sendParent(
+                  'LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION',
+                ),
+              },
             ],
           },
           invoke: [
@@ -340,6 +359,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 onDone: {
                   target: '#with_source.source_loaded.user_owns_this_source',
                   actions: [
+                    'clearLocalStorageEntryForCurrentSource',
                     'assignCreateSourceFileToContext',
                     'updateURLWithMachineID',
                     send(
@@ -425,6 +445,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
     },
     {
       actions: {
+        clearLocalStorageEntryForCurrentSource: (ctx) => {
+          localCache.removeSourceRawContent(ctx.sourceID);
+        },
         addForkOfToDesiredName: assign((context, event) => {
           if (
             !context.desiredMachineName ||
@@ -492,6 +515,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           }
           return {};
         }),
+        openNewWindowAtRoot: () => {
+          window.open('/viz', '_blank', 'noopener');
+        },
       },
       services: {
         createSourceFile: async (ctx, e) => {
@@ -540,9 +566,13 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               });
               break;
             case 'registry':
-              const result = await gQuery(GetSourceFileDocument, {
-                id: ctx.sourceID,
-              });
+              const result = await gQuery(
+                GetSourceFileDocument,
+                {
+                  id: ctx.sourceID,
+                },
+                auth.session()?.access_token!,
+              );
               if (!result.data?.getSourceFile) {
                 throw new NotFoundError('Source not found in Registry');
               }
@@ -565,7 +595,7 @@ export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
 
 export const useSourceActor = (
   authService: ActorRefFrom<typeof authMachine>,
-) => {
+): [SourceMachineState, SourceMachineActorRef['send']] => {
   const sourceService = useSelector(authService, getSourceActor);
 
   return useActor(sourceService!);

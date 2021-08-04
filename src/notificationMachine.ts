@@ -30,7 +30,7 @@ export const notifMachine = createMachine<typeof notifModel>({
               title: e.status?.toUpperCase(),
               description: id,
               isClosable: true,
-              position: 'bottom-right',
+              position: 'bottom-left',
             });
           }
         },

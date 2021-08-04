@@ -1,27 +1,116 @@
 // This file exists to configure and patch the Monaco editor
 import monacoLoader from '@monaco-editor/loader';
+import type { languages } from 'monaco-editor';
 
-// this makes debugging in development easier (with non-minified version of the Monaco)
+// should be in sync with the "modules" allowed by our eval Function
+import * as XState from 'xstate';
+import * as XStateModel from 'xstate/lib/model';
+import * as XStateActions from 'xstate/lib/actions';
+
+const MONACO_LOCATION =
+  process.env.NODE_ENV === 'development' ||
+  Boolean(process.env.REACT_APP_USE_LOCAL_MONACO)
+    ? // this makes debugging in development easier
+      // (with non-minified version of the Monaco)
+      // and ensures Cypress caches the result on disk
+      `/monaco-editor/dev/vs`
+    : // use the version that @monaco-editor/loader defaults to
+      `https://unpkg.com/monaco-editor@0.25.2/min/vs`;
+
 monacoLoader.config({
   paths: {
-    // use the version that @monaco-editor/loader defaults to
-    vs: `https://unpkg.com/monaco-editor@0.25.2/${
-      process.env.NODE_ENV === 'development' ? 'dev' : 'min'
-    }/vs`,
+    vs: MONACO_LOCATION,
   },
 });
 
-function toTextEdit(provider: any, textChange: any) {
+const fixupXStateSpecifier = (specifier: string) =>
+  specifier
+    .replace(/\.\/node_modules\//, '')
+    // redirect 'xstate/lib' to 'xstate'
+    .replace(/xstate\/lib(?!\/)/, 'xstate');
+
+function toTextEdit(provider: any, textChange: any): languages.TextEdit {
   return {
     // if there is no existing xstate import in the file then a new import has to be created
     // in such a situation TS most likely fails to compute the proper module specifier for this "node module"
     // because it exits its `tryGetModuleNameAsNodeModule` when it doesn't have fs layer installed:
     // https://github.com/microsoft/TypeScript/blob/328e888a9d0a11952f4ff949848d4336bce91b18/src/compiler/moduleSpecifiers.ts#L553
     // it then generates a relative path which we just patch here
-    text: textChange.newText.replace(/\.\/node_modules\/xstate/, 'xstate'),
+    text: fixupXStateSpecifier(textChange.newText),
     range: (provider as any)._textSpanToRange(
       provider.__model,
       textChange.span,
+    ),
+  };
+}
+
+type AutoImport = { detailText: string; textEdits: languages.TextEdit[] };
+
+function getAutoImport(provider: any, details: any): AutoImport | undefined {
+  const codeAction = details.codeActions?.[0];
+
+  if (!codeAction) {
+    return;
+  }
+
+  const { textChanges } = codeAction.changes[0];
+
+  if (
+    textChanges.every((textChange: any) => !/import/.test(textChange.newText))
+  ) {
+    // if the new text doesn't start with an import it means that it's going to be added to the existing import
+    // it can be safely (for the most part) accepted as is
+
+    // example description:
+    // Add 'createMachine' to existing import declaration from "xstate"
+    const specifier = codeAction.description.match(/from ["'](.+)["']/)![1];
+    return {
+      detailText: `Auto import from '${specifier}'`,
+      textEdits: textChanges.map((textChange: any) =>
+        toTextEdit(provider, textChange),
+      ),
+    };
+  }
+
+  if (details.kind === 'interface' || details.kind === 'type') {
+    const specifier = codeAction.description.match(
+      /from module ["'](.+)["']/,
+    )![1];
+    return {
+      detailText: `Auto import from '${fixupXStateSpecifier(specifier)}'`,
+      textEdits: textChanges.map((textChange: any) =>
+        toTextEdit(provider, {
+          ...textChange,
+          // make type-related **new** imports safe
+          // the resolved specifier might be internal
+          // we don't have an easy way to remap it to a more public one that we actually allow when we load the code at runtime
+          //
+          // this kind should work out of the box with `isolatedModules: true` but for some reason it didn't when I've tried it
+          newText: textChange.newText.replace(/import/, 'import type'),
+        }),
+      ),
+    };
+  }
+
+  let specifier = '';
+
+  // fortunately auto-imports are not suggested for types
+  if (details.name in XState) {
+    specifier = 'xstate';
+  } else if (details.name in XStateModel) {
+    specifier = 'xstate/lib/model';
+  } else if (details.name in XStateActions) {
+    specifier = 'xstate/lib/actions';
+  }
+
+  if (!specifier) {
+    return;
+  }
+
+  return {
+    detailText: `Auto import from '${specifier}'`,
+    textEdits: textChanges.map((textChange: any) =>
+      toTextEdit(provider, textChange),
     ),
   };
 }
@@ -141,36 +230,26 @@ monacoLoader.init = function (...args) {
                 return item;
               }
 
-              const codeAction = details.codeActions?.[0];
-              const additionalTextChange =
-                codeAction?.changes[0].textChanges[0];
-
-              // assume that if the codeAction is there it's about auto import
-              // and since the only external "module" that is supported is xstate we can just use it literally here
-              const detailText = codeAction
-                ? `Auto import from 'xstate'`
-                : details.displayParts
-                    ?.map((displayPart: any) => displayPart.text)
-                    .join('') ?? '';
+              const autoImport = getAutoImport(provider, details);
 
               return {
                 uri: item.uri,
                 position: item.position,
                 label: details.name,
                 kind: (provider.constructor as any).convertKind(details.kind),
-                detail: detailText,
+                detail:
+                  autoImport?.detailText ||
+                  (details.displayParts
+                    ?.map((displayPart: any) => displayPart.text)
+                    .join('') ??
+                    ''),
 
                 // properties below were added here
-                // ---
-                // this could be flatMaped with all text edit
-                // but we don't rly have a use case for multiple additional text edits at the same time
-                additionalTextEdits: additionalTextChange && [
-                  toTextEdit(provider, additionalTextChange),
-                ],
+                additionalTextEdits: autoImport?.textEdits,
                 documentation: {
-                  value: (provider.constructor as any).createDocumentationString(
-                    details,
-                  ),
+                  value: (
+                    provider.constructor as any
+                  ).createDocumentationString(details),
                 },
               };
             });

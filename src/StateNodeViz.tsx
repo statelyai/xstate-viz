@@ -1,16 +1,15 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import type { StateNode } from 'xstate';
-import './StateNodeViz.scss';
-import './InvokeViz.scss';
-import './ActionViz.scss';
-
+import { ChakraProvider, Link } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
-import { deleteRect, setRect } from './getRect';
-import { useSimulation } from './SimulationContext';
-import { DirectedGraphNode } from './directedGraph';
-import { getActionLabel } from './utils';
+import React, { useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ChakraProvider, Link, Text } from '@chakra-ui/react';
+import type { StateNode } from 'xstate';
+import './ActionViz.scss';
+import { DirectedGraphNode } from './directedGraph';
+import { deleteRect, setRect } from './getRect';
+import './InvokeViz.scss';
+import { useSimulation } from './SimulationContext';
+import './StateNodeViz.scss';
+import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {
   key: string;
@@ -58,8 +57,7 @@ const StateNodeKey: React.FC<{ value: string }> = ({ value }) => {
 export const StateNodeViz: React.FC<{
   node: DirectedGraphNode;
   stateNode: StateNode;
-  parent?: StateNodeDef;
-}> = ({ stateNode, node, parent }) => {
+}> = ({ stateNode, node }) => {
   const service = useSimulation();
   const [state] = useActor(service);
 
@@ -120,10 +118,10 @@ export const StateNodeViz: React.FC<{
         ref={ref}
         data-viz="stateNode"
         data-viz-type={stateNode.type}
+        data-viz-parent-type={stateNode.parent?.type}
         data-viz-atomic={
           ['atomic', 'final'].includes(stateNode.type) || undefined
         }
-        data-viz-parent-type={parent?.type}
         style={{
           // position: 'absolute',
           ...(node.layout && {

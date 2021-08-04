@@ -13,6 +13,7 @@ import {
   MachineOptions,
   send,
   spawn,
+  StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import {
@@ -43,7 +44,7 @@ const authModel = createModel(
       SIGN_OUT: () => ({}),
       CHOOSE_PROVIDER: () => ({}),
       CANCEL_PROVIDER: () => ({}),
-      LOGGED_OUT_USER_ATTEMPTED_SAVE: () => ({}),
+      LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION: () => ({}),
     },
   },
 );
@@ -55,14 +56,16 @@ const authOptions: Partial<
   >
 > = {
   services: {
+    signOutUser: (ctx) => {
+      return ctx.client.auth.signOut();
+    },
+  },
+  actions: {
     signInUser: (ctx, e) =>
       ctx.client.auth.signIn(
         { provider: (e as any).provider },
         { redirectTo: window.location.href },
       ),
-    signOutUser: (ctx) => {
-      return ctx.client.auth.signOut();
-    },
   },
 };
 
@@ -123,7 +126,7 @@ export const authMachine = createMachine<typeof authModel>(
       signed_out: {
         on: {
           CHOOSE_PROVIDER: '.choosing_provider',
-          LOGGED_OUT_USER_ATTEMPTED_SAVE: '.choosing_provider',
+          LOGGED_OUT_USER_ATTEMPTED_RESTRICTED_ACTION: '.choosing_provider',
         },
         initial: 'idle',
         states: {
@@ -206,24 +209,15 @@ export const authMachine = createMachine<typeof authModel>(
         },
       },
       signing_in: {
-        invoke: {
-          src: 'signInUser',
-          onDone: {
-            target: 'signed_in',
-          },
-          onError: {
-            target: 'signed_out',
-            actions: [
-              send(
-                (_, e) => ({
-                  type: 'BROADCAST',
-                  status: 'error',
-                  message: e.data,
-                }),
-                { to: (ctx) => ctx.notifRef },
-              ),
-            ],
-          },
+        entry: 'signInUser',
+        type: 'final',
+        meta: {
+          description: `
+            Calling signInUser redirects us away from this
+            page - this is modelled as a final state because
+            the state machine is stopped and recreated when
+            the user gets redirected back.
+          `,
         },
       },
       signing_out: {
@@ -251,3 +245,7 @@ export const authMachine = createMachine<typeof authModel>(
   },
   authOptions,
 );
+
+export const getSupabaseClient = (state: StateFrom<typeof authMachine>) => {
+  return state.context.client;
+};

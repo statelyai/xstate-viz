@@ -39,7 +39,7 @@ import {
 import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { vizReactJsonTheme } from './vizReactJsonTheme';
-import { setMonacoTheme } from './setMonacoTheme';
+import { isInternalEvent, isNullEvent } from './utils';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -137,9 +137,9 @@ const eventsMachine = createMachine<typeof eventsModel>({
 const deriveFinalEvents = (ctx: typeof eventsModel.initialContext) => {
   let finalEvents = ctx.rawEvents;
   if (!ctx.showBuiltins) {
-    finalEvents = finalEvents.filter(
-      (event) => !event.name.startsWith('xstate.'),
-    );
+    finalEvents = finalEvents.filter((event) => {
+      return !isInternalEvent(event.name) && !isNullEvent(event.name);
+    });
   }
   if (ctx.filterKeyword) {
     finalEvents = finalEvents.filter((evt) =>
@@ -445,9 +445,6 @@ const NewEvent: React.FC<{
                       minimap: { enabled: false },
                       lineNumbers: 'off',
                       tabSize: 2,
-                    }}
-                    onMount={(editor, monaco) => {
-                      setMonacoTheme(monaco);
                     }}
                     height="150px"
                     width="auto"

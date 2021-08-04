@@ -1,40 +1,46 @@
 name: CI/CD
 
-on:
-  push:
-    branches:
-      - main
+on: [push]
 
 jobs:
-  ci:
+  cypress-tests:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [14.x]
 
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.2.0
-        with:
-          node-version: ${{ matrix.node-version }}
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: Install dependencies
+      - name: Use Node.js
+        uses: actions/setup-node@v2.2.0
+
+      - name: Install
         run: yarn install --frozen-lockfile
 
       - name: Build
         run: yarn build
-
-      - name: Test
-        run: yarn test
-
-      - name: Deploy
-        uses: netlify/actions/cli@master
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          REACT_APP_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
+          REACT_APP_SUPABASE_API_URL: ${{ secrets.SUPABASE_API_URL }}
+          REACT_APP_SUPABASE_ANON_API_KEY: ${{ secrets.SUPABASE_ANON_API_KEY }}
+          REACT_APP_USE_LOCAL_MONACO: 'true'
+          CI: 'false'
+
+      - name: Run Cypress
+        uses: cypress-io/github-action@v2
         with:
-          args: deploy --dir=build --prod
-          secrets: '["NETLIFY_AUTH_TOKEN", "NETLIFY_SITE_ID"]'
+          start: yarn serve build -p 3000 -s
+          wait-on: http://localhost:3000
+
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+
+      - name: Upload Videos
+        uses: actions/upload-artifact@v1
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos

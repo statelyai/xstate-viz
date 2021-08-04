@@ -1,5 +1,5 @@
 schema:
-  - https://registry-prod.graphcdn.app
+  - https://api-prod.stately.ai
 documents:
   - 'src/graphql/**/*.graphql'
 generates:

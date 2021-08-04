@@ -3,6 +3,11 @@ import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
 
+export enum ZoomFactor {
+  slow = 1.075,
+  normal = 1.15,
+}
+
 const initialPosition = {
   zoom: 1,
   pan: {
@@ -13,8 +18,8 @@ const initialPosition = {
 
 export const canvasModel = createModel(initialPosition, {
   events: {
-    'ZOOM.OUT': () => ({}),
-    'ZOOM.IN': () => ({}),
+    'ZOOM.OUT': (zoomFactor?: ZoomFactor) => ({ zoomFactor }),
+    'ZOOM.IN': (zoomFactor?: ZoomFactor) => ({ zoomFactor }),
     'POSITION.RESET': () => ({}),
     PAN: (dx: number, dy: number) => ({ dx, dy }),
     /**
@@ -26,9 +31,10 @@ export const canvasModel = createModel(initialPosition, {
   },
 });
 
-const ZOOM_IN_FACTOR = 1.15;
+const DEFAULT_ZOOM_IN_FACTOR = ZoomFactor.normal;
 // exactly reversed factor so zooming in & out results in the same zoom values
-const ZOOM_OUT_FACTOR = 1 / ZOOM_IN_FACTOR;
+const calculateZoomOutFactor = (zoomInFactor: ZoomFactor = ZoomFactor.normal) =>
+  1 / zoomInFactor;
 const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
@@ -38,14 +44,16 @@ export const canvasMachine = createMachine<typeof canvasModel>({
   on: {
     'ZOOM.OUT': {
       actions: canvasModel.assign({
-        zoom: (ctx) => ctx.zoom * ZOOM_OUT_FACTOR,
+        zoom: (ctx, e) => ctx.zoom * calculateZoomOutFactor(e.zoomFactor),
       }),
       cond: (ctx) => ctx.zoom > MAX_ZOOM_OUT_FACTOR,
       target: '.throttling',
       internal: false,
     },
     'ZOOM.IN': {
-      actions: canvasModel.assign({ zoom: (ctx) => ctx.zoom * ZOOM_IN_FACTOR }),
+      actions: canvasModel.assign({
+        zoom: (ctx, e) => ctx.zoom * (e.zoomFactor || DEFAULT_ZOOM_IN_FACTOR),
+      }),
       cond: (ctx) => ctx.zoom < MAX_ZOOM_IN_FACTOR,
       target: '.throttling',
       internal: false,
