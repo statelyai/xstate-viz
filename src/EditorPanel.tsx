@@ -221,20 +221,23 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
           const {
             data: { range },
           } = e as DoneInvokeEvent<{ message: string; range: Range }>;
-          const newDecorations = ctx.standaloneEditorRef!.deltaDecorations(
-            ctx.deltaDecorations,
-            [
-              {
-                range,
-                options: {
-                  isWholeLine: true,
-                  glyphMarginClassName: 'editor__glyph-margin',
-                  className: 'editor__error-content',
+          if (ctx.standaloneEditorRef) {
+            const newDecorations = ctx.standaloneEditorRef.deltaDecorations(
+              ctx.deltaDecorations,
+              [
+                {
+                  range,
+                  options: {
+                    isWholeLine: true,
+                    glyphMarginClassName: 'editor__glyph-margin',
+                    className: 'editor__error-content',
+                  },
                 },
-              },
-            ],
-          );
-          return newDecorations;
+              ],
+            );
+            return newDecorations;
+          }
+          return ctx.deltaDecorations;
         },
       }),
       clearDecorations: assign({
