@@ -6,6 +6,7 @@ export const Logo: React.FC<React.SVGProps<SVGSVGElement>> = ({ style }) => {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 279.8 98.5"
       style={style}
+      aria-label="XState logo"
     >
       <g fill="var(--fill, black)">
         <path d="M55.8 10.4h19.5L55.6 44.6c-6-10.7-5.9-23.7.2-34.2zM75.4 88.1L30.5 10.4H11l22.4 38.9L11 88.1h19.5l12.7-21.9 12.6 21.9z" />
