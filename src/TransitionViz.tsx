@@ -7,7 +7,7 @@ import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
-import { getActionLabel } from './utils';
+import { getActionLabel, isInternalEvent } from './utils';
 import { AnyStateMachine, StateFrom } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';
@@ -26,42 +26,46 @@ const getDelayFromEventType = (
   context: AnyStateNodeDefinition['context'],
   event: any,
 ): DelayedTransitionMetadata => {
-  const isDelayedEvent = eventType.startsWith('xstate.after');
+  try {
+    const isDelayedEvent = eventType.startsWith('xstate.after');
 
-  if (!isDelayedEvent) return { delayType: 'NOT_DELAYED' };
+    if (!isDelayedEvent) return { delayType: 'NOT_DELAYED' };
 
-  const DELAYED_EVENT_REGEXT = /^xstate\.after\((.*)\)#.*$/;
-  // Validate the delay duration
-  const match = eventType.match(DELAYED_EVENT_REGEXT);
+    const DELAYED_EVENT_REGEXT = /^xstate\.after\((.*)\)#.*$/;
+    // Validate the delay duration
+    const match = eventType.match(DELAYED_EVENT_REGEXT);
 
-  if (!match) return { delayType: 'DELAYED_INVALID' };
+    if (!match) return { delayType: 'DELAYED_INVALID' };
 
-  let [, delay] = match;
+    let [, delay] = match;
 
-  // normal number or stringified number delays
-  let finalDelay = +delay;
+    // normal number or stringified number delays
+    let finalDelay = +delay;
 
-  // if configurable delay, get it from the machine options
-  if (Number.isNaN(finalDelay)) {
-    const delayExpr = delayOptions[delay];
-    // if configured delay is a fixed number value
-    if (typeof delayExpr === 'number') {
-      finalDelay = delayExpr;
-    } else {
-      // if configured delay is getter function
-      // @ts-expect-error
-      finalDelay = delayExpr(context, event);
+    // if configurable delay, get it from the machine options
+    if (Number.isNaN(finalDelay)) {
+      const delayExpr = delayOptions[delay];
+      // if configured delay is a fixed number value
+      if (typeof delayExpr === 'number') {
+        finalDelay = delayExpr;
+      } else {
+        // if configured delay is getter function
+        console.log({ event, delay, finalDelay, delayExpr });
+        // @ts-expect-error
+        finalDelay = delayExpr(context, event);
+      }
     }
+
+    return {
+      delayType: 'DELAYED_VALID',
+      delay: finalDelay,
+      delayString: toDelayString(delay),
+    };
+  } catch (err) {
+    console.log(err);
+    return { delayType: 'NOT_DELAYED' };
   }
-
-  return {
-    delayType: 'DELAYED_VALID',
-    delay: finalDelay,
-    delayString: toDelayString(delay),
-  };
 };
-
-const isBuiltinEvent = (eventType: string) => eventType.startsWith('xstate.');
 
 const delayOptionsSelector = (state: StateFrom<typeof simulationMachine>) =>
   state.context.serviceDataMap[state.context.currentSessionId!]?.machine.options
@@ -146,7 +150,7 @@ export const TransitionViz: React.FC<{
         onClick={() => {
           // TODO: only if no parameters/schema
           const { eventType } = definition;
-          if (!isBuiltinEvent(eventType)) {
+          if (!isInternalEvent(eventType)) {
             service.send({
               type: 'SERVICE.SEND',
               event: toSCXMLEvent(

@@ -7,13 +7,19 @@ import * as XState from 'xstate';
 import * as XStateModel from 'xstate/lib/model';
 import * as XStateActions from 'xstate/lib/actions';
 
-// this makes debugging in development easier (with non-minified version of the Monaco)
+const MONACO_LOCATION =
+  process.env.NODE_ENV === 'development' ||
+  Boolean(process.env.REACT_APP_USE_LOCAL_MONACO)
+    ? // this makes debugging in development easier
+      // (with non-minified version of the Monaco)
+      // and ensures Cypress caches the result on disk
+      `/monaco-editor/dev/vs`
+    : // use the version that @monaco-editor/loader defaults to
+      `https://unpkg.com/monaco-editor@0.25.2/min/vs`;
+
 monacoLoader.config({
   paths: {
-    // use the version that @monaco-editor/loader defaults to
-    vs: `https://unpkg.com/monaco-editor@0.25.2/${
-      process.env.NODE_ENV === 'development' ? 'dev' : 'min'
-    }/vs`,
+    vs: MONACO_LOCATION,
   },
 });
 
@@ -241,9 +247,9 @@ monacoLoader.init = function (...args) {
                 // properties below were added here
                 additionalTextEdits: autoImport?.textEdits,
                 documentation: {
-                  value: (provider.constructor as any).createDocumentationString(
-                    details,
-                  ),
+                  value: (
+                    provider.constructor as any
+                  ).createDocumentationString(details),
                 },
               };
             });

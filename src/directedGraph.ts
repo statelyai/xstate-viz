@@ -1,4 +1,4 @@
-import { ElkExtendedEdge } from 'elkjs';
+import type { ElkExtendedEdge } from 'elkjs';
 import { StateNode, TransitionDefinition } from 'xstate';
 import { flatten } from 'xstate/lib/utils';
 import { Point } from './pathUtils';

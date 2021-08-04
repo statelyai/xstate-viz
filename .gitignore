@@ -23,3 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 *.generated.*
+public/monaco-editor
+cypress/videos

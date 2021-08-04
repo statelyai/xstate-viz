@@ -1,4 +1,3 @@
-import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 
 /**

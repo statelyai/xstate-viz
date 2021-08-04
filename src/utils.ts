@@ -1,7 +1,8 @@
 import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import * as React from 'react';
-import type {
+import {
   ActionObject,
+  ActionTypes,
   AnyEventObject,
   Interpreter,
   StateNode,
@@ -10,6 +11,18 @@ import type {
 import { AnyState, AnyStateMachine } from './types';
 import { print } from 'graphql';
 import { useSelector } from '@xstate/react';
+
+export const isNullEvent = (eventName: string) =>
+  eventName === ActionTypes.NullEvent;
+
+export const isInternalEvent = (eventName: string) => {
+  const allInternalEventsButNullEvent = Object.values(ActionTypes).filter(
+    (prefix) => !isNullEvent(prefix),
+  );
+  return allInternalEventsButNullEvent.some((prefix) =>
+    eventName.startsWith(prefix),
+  );
+};
 
 export function createInterpreterContext<
   TInterpreter extends Interpreter<any, any, any>,

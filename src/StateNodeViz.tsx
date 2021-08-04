@@ -1,16 +1,15 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import type { StateNode } from 'xstate';
-import './StateNodeViz.scss';
-import './InvokeViz.scss';
-import './ActionViz.scss';
-
+import { ChakraProvider, Link } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
-import { deleteRect, setRect } from './getRect';
-import { useSimulation } from './SimulationContext';
-import { DirectedGraphNode } from './directedGraph';
-import { getActionLabel } from './utils';
+import React, { useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ChakraProvider, Link, Text } from '@chakra-ui/react';
+import type { StateNode } from 'xstate';
+import './ActionViz.scss';
+import { DirectedGraphNode } from './directedGraph';
+import { deleteRect, setRect } from './getRect';
+import './InvokeViz.scss';
+import { useSimulation } from './SimulationContext';
+import './StateNodeViz.scss';
+import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {
   key: string;

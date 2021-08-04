@@ -34,7 +34,6 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
-import { SimulationMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {
@@ -95,7 +94,7 @@ function App() {
                 </Box>
               )}
               <ChakraProvider theme={theme}>
-                <ResizableBox gridArea="panels">
+                <ResizableBox gridArea="panels" minHeight={0}>
                   <Tabs
                     bg="gray.800"
                     display="grid"
