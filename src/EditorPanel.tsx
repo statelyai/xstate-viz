@@ -1,3 +1,4 @@
+import { AddIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
@@ -183,10 +184,11 @@ const getPersistTextAndIcon = (
 
 export const EditorPanel: React.FC<{
   onSave: () => void;
+  onFork: () => void;
   onCreateNew: () => void;
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
-}> = ({ onSave, onChange, onChangedCodeValue, onCreateNew }) => {
+}> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
@@ -262,65 +264,75 @@ export const EditorPanel: React.FC<{
                   onSave();
                 }}
               />
-              <HStack padding="2">
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + Enter"
-                  closeDelay={500}
-                >
-                  <Button
-                    disabled={isVisualizing}
-                    isLoading={isVisualizing}
-                    title="Visualize"
-                    leftIcon={
-                      <MagicIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    onClick={() => {
-                      send({
-                        type: 'COMPILE',
-                      });
-                    }}
+              <HStack padding="2" justifyContent="space-between">
+                <HStack>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + Enter"
+                    closeDelay={500}
                   >
-                    Visualize
-                  </Button>
-                </Tooltip>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + S"
-                  closeDelay={500}
-                >
-                  <Button
-                    isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting')}
-                    title={persistMeta.text}
-                    onClick={() => {
-                      onSave();
-                    }}
-                    leftIcon={
-                      <persistMeta.Icon
-                        fill="gray.200"
-                        height="16px"
-                        width="16px"
-                      />
-                    }
+                    <Button
+                      disabled={isVisualizing}
+                      isLoading={isVisualizing}
+                      title="Visualize"
+                      leftIcon={
+                        <MagicIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      onClick={() => {
+                        send({
+                          type: 'COMPILE',
+                        });
+                      }}
+                    >
+                      Visualize
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + S"
+                    closeDelay={500}
                   >
-                    {persistMeta.text}
-                  </Button>
-                </Tooltip>
-                {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      isLoading={sourceState.hasTag('persisting')}
+                      disabled={sourceState.hasTag('persisting')}
+                      title={persistMeta.text}
+                      onClick={() => {
+                        onSave();
+                      }}
+                      leftIcon={
+                        <persistMeta.Icon
+                          fill="gray.200"
+                          height="16px"
+                          width="16px"
+                        />
+                      }
+                    >
+                      {persistMeta.text}
+                    </Button>
+                  </Tooltip>
+                  {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      disabled={sourceState.hasTag('forking')}
+                      isLoading={sourceState.hasTag('forking')}
+                      onClick={() => {
+                        onFork();
+                      }}
+                      leftIcon={
+                        <ForkIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                    >
+                      Fork
+                    </Button>
+                  )}
+                </HStack>
+                {sourceOwnershipStatus !== 'no-source' && (
                   <Button
-                    disabled={sourceState.hasTag('forking')}
-                    isLoading={sourceState.hasTag('forking')}
-                    onClick={() => {
-                      onCreateNew();
-                    }}
-                    leftIcon={
-                      <ForkIcon fill="gray.200" height="16px" width="16px" />
-                    }
+                    leftIcon={<AddIcon fill="gray.200" />}
+                    onClick={onCreateNew}
                   >
-                    Fork
+                    New
                   </Button>
                 )}
               </HStack>
