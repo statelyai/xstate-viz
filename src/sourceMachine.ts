@@ -35,6 +35,7 @@ import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 import { SourceProvider } from './types';
+import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
 
 export const sourceModel = createModel(
   {
@@ -471,11 +472,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           },
         ),
         assignCreateSourceFileToContext: assign((context, _event: any) => {
-          const event: DoneInvokeEvent<CreateSourceFileMutation> = _event;
+          const event: DoneInvokeEvent<SourceFileFragment> = _event;
           return {
-            sourceID: event.data?.createSourceFile.id,
+            sourceID: event.data?.id,
             sourceProvider: 'registry',
-            sourceRegistryData: event.data.createSourceFile,
+            sourceRegistryData: event.data,
           };
         }),
         updateURLWithMachineID: (ctx) => {
@@ -520,7 +521,18 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         },
       },
       services: {
-        createSourceFile: async (ctx, e) => {
+        createSourceFile: async (ctx, e): Promise<SourceFileFragment> => {
+          if (ctx.sourceID && ctx.sourceProvider === 'registry') {
+            return gQuery(
+              ForkSourceFileDocument,
+              {
+                text: ctx.sourceRawContent || '',
+                name: ctx.desiredMachineName || '',
+                forkFromId: ctx.sourceID,
+              },
+              auth.session()?.access_token!,
+            ).then((res) => res.data?.forkSourceFile!);
+          }
           return gQuery(
             CreateSourceFileDocument,
             {
@@ -529,7 +541,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
             },
             auth.session()?.access_token!,
           ).then((res) => {
-            return res.data;
+            return res.data?.createSourceFile!;
           });
         },
         updateSourceFile: async (ctx, e) => {

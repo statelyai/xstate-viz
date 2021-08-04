@@ -44,11 +44,7 @@ const interceptGraphQL = (data: DeepPartial<Mutation & Query>) => {
 };
 
 const getCanvas = () => {
-  return cy.get('[data-panel="viz"]', {
-    // This needs to be this long in order for the
-    // ts worker to load initially
-    timeout: 8000,
-  });
+  return cy.get('[data-panel="viz"]');
 };
 
 /**
