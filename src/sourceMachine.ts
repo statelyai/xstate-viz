@@ -98,6 +98,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   return createMachine<typeof sourceModel>(
     {
       initial: 'checking_url',
+      preserveActionOrder: true,
       context: sourceModel.initialContext,
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
@@ -358,6 +359,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 onDone: {
                   target: '#with_source.source_loaded.user_owns_this_source',
                   actions: [
+                    'clearLocalStorageEntryForCurrentSource',
                     'assignCreateSourceFileToContext',
                     'updateURLWithMachineID',
                     send(
@@ -443,6 +445,9 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
     },
     {
       actions: {
+        clearLocalStorageEntryForCurrentSource: (ctx) => {
+          localCache.removeSourceRawContent(ctx.sourceID);
+        },
         addForkOfToDesiredName: assign((context, event) => {
           if (
             !context.desiredMachineName ||
