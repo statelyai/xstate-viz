@@ -138,7 +138,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
               const end = model?.getPositionAt(error.start! + error.length!);
               const errorRange = new ctx.monacoRef!.Range(
                 start?.lineNumber!,
-                0, // beginning of the line where error occured
+                1, // Highlight the entire line where the error occured (line cols start from 1)
                 end?.lineNumber!,
                 end?.column!,
               );
