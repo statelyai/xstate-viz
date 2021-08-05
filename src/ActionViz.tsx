@@ -92,7 +92,6 @@ export const CancelActionLabel: React.FC<{ action: CancelAction }> = ({
 export const StopActionLabel: React.FC<{ action: StopAction<any, any> }> = ({
   action,
 }) => {
-  console.log(action);
   return (
     <div data-viz="action-type">
       <strong>stop</strong>{' '}
