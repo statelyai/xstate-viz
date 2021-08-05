@@ -1,0 +1,16 @@
+diff --git a/node_modules/@supabase/gotrue-js/dist/module/GoTrueClient.js b/node_modules/@supabase/gotrue-js/dist/module/GoTrueClient.js
+index d62fce1..ade16ea 100644
+--- a/node_modules/@supabase/gotrue-js/dist/module/GoTrueClient.js
++++ b/node_modules/@supabase/gotrue-js/dist/module/GoTrueClient.js
+@@ -16,7 +16,10 @@ const DEFAULT_OPTIONS = {
+     url: GOTRUE_URL,
+     autoRefreshToken: true,
+     persistSession: true,
+-    localStorage: globalThis.localStorage,
++    // accessing this in 3rd party iframe (like when inspector is embedded as iframe on a page) in the incognito mode might throw:
++    // Uncaught DOMException: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
++    //
++    // localStorage: globalThis.localStorage,
+     detectSessionInUrl: true,
+     headers: DEFAULT_HEADERS,
+ };

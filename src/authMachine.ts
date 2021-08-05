@@ -27,6 +27,7 @@ import {
   SourceMachineActorRef,
   sourceModel,
 } from './sourceMachine';
+import { storage } from './localCache';
 import { gQuery } from './utils';
 
 const authModel = createModel(
@@ -102,6 +103,7 @@ export const authMachine = createMachine<typeof authModel>(
             const client = createClient(
               process.env.REACT_APP_SUPABASE_API_URL,
               process.env.REACT_APP_SUPABASE_ANON_API_KEY,
+              { localStorage: storage as Storage },
             );
 
             return {
