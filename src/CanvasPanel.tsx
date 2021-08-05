@@ -1,28 +1,15 @@
+import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
 import {
-  AddIcon,
-  MinusIcon,
-  RepeatIcon,
-  HamburgerIcon,
-  EditIcon,
-} from '@chakra-ui/icons';
-import {
-  Avatar,
   Box,
   Button,
   ButtonGroup,
   ChakraProvider,
   HStack,
   IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  Stack,
   Text,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
-import { useLoggedInUserData, useAuth } from './authContext';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
 import {
@@ -31,18 +18,13 @@ import {
 } from './canvasMachine';
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
-import { LikeButton } from './LikeButton';
-import { registryLinks } from './registryLinks';
-import { ShareButton } from './ShareButton';
 import { useSimulation } from './SimulationContext';
-import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
 import { CanvasPanelHeader } from './CanvasPanelHeader';
 
 export const CanvasPanel: React.FC = () => {
   const simService = useSimulation();
   const canvasService = useCanvas();
-  const authService = useAuth();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -52,10 +34,6 @@ export const CanvasPanel: React.FC = () => {
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
-
-  const [sourceState] = useSourceActor(authService);
-
-  const loggedInUserData = useLoggedInUserData();
 
   const shouldEnableZoomOutButton = useSelector(
     canvasService,
@@ -67,68 +45,11 @@ export const CanvasPanel: React.FC = () => {
     getShouldEnableZoomInButton,
   );
 
-  const registryData = sourceState.context.sourceRegistryData;
-  const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
-
   return (
     <ChakraProvider theme={theme}>
       <Box display="grid" gridTemplateRows="3rem 1fr">
         <HStack bg="gray.800" justifyContent="space-between" zIndex={1}>
           <CanvasPanelHeader />
-          {registryData && (
-            <Stack direction="row" spacing="4" alignItems="center" pr="4">
-              <Text fontWeight="semibold" fontSize="sm" color="gray.100">
-                {registryData?.name || 'Unnamed Source'}
-              </Text>
-              <HStack>
-                <LikeButton />
-                <ShareButton />
-                <Menu closeOnSelect>
-                  <MenuButton>
-                    <IconButton
-                      aria-label="Menu"
-                      icon={<HamburgerIcon />}
-                      size="sm"
-                    ></IconButton>
-                  </MenuButton>
-                  <MenuList>
-                    {userOwnsSource && sourceState.context.sourceID && (
-                      <MenuItem
-                        as="a"
-                        href={registryLinks.editSourceFile(
-                          sourceState.context.sourceID,
-                        )}
-                      >
-                        <HStack spacing="3">
-                          <EditIcon />
-                          <Text>Edit</Text>
-                        </HStack>
-                      </MenuItem>
-                    )}
-                    {registryData.owner && (
-                      <MenuItem
-                        as="a"
-                        href={registryLinks.viewUserById(
-                          registryData?.owner?.id,
-                        )}
-                      >
-                        <HStack spacing="3">
-                          <Avatar
-                            src={registryData.owner?.avatarUrl || ''}
-                            name={registryData.owner?.displayName || ''}
-                            size="xs"
-                            height="24px"
-                            width="24px"
-                          ></Avatar>
-                          <Text>View Author</Text>
-                        </HStack>
-                      </MenuItem>
-                    )}
-                  </MenuList>
-                </Menu>
-              </HStack>
-            </Stack>
-          )}
         </HStack>
         <CanvasContainer>
           {digraph ? (
