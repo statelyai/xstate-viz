@@ -1,3 +1,4 @@
+import { AddIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
@@ -20,17 +21,46 @@ import {
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
+import { useSimulationMode } from './SimulationContext';
 import { CommandPalette } from './CommandPalette';
 import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import { useSimulation } from './SimulationContext';
 import {
   getEditorDefaultValue,
   getShouldImmediateUpdate,
   SourceMachineState,
+  SourceMachineActorRef,
 } from './sourceMachine';
-import type { AnyStateMachine, SimMode } from './types';
+import { uniq } from './utils';
+import type { AnyStateMachine } from './types';
+
+function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
+  const rootNames: string[] = [];
+  let text = '';
+
+  for (const identifier of usedXStateGistIdentifiers) {
+    switch (identifier) {
+      case 'raise':
+        rootNames.push('actions');
+        text += 'const { raise } = actions;\n';
+        break;
+      case 'XState':
+        text += 'import * as XState from "xstate";\n';
+        break;
+      default:
+        rootNames.push(identifier);
+        break;
+    }
+  }
+
+  if (rootNames.length) {
+    // this uses `uniq` on the `rootNames` list because `actions` could be pushed into it while it was already in the list
+    text = `import { ${uniq(rootNames).join(', ')} } from "xstate";\n${text}`;
+  }
+
+  return text;
+}
 
 class SyntaxError extends Error {
   range: Range;
@@ -55,10 +85,10 @@ const EditorWithXStateImports = React.lazy(
 const editorPanelModel = createModel(
   {
     code: '',
-    immediateUpdate: false,
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
     monacoRef: null as Monaco | null,
     standaloneEditorRef: null as editor.IStandaloneCodeEditor | null,
+    sourceRef: null as SourceMachineActorRef,
     mainFile: 'main.ts',
     machines: null as AnyStateMachine[] | null,
     deltaDecorations: [] as string[],
@@ -71,7 +101,7 @@ const editorPanelModel = createModel(
         standaloneEditorRef: editor.IStandaloneCodeEditor,
       ) => ({ monacoRef, standaloneEditorRef }),
       UPDATE_MACHINE_PRESSED: () => ({}),
-      EDITOR_ENCOUNTERED_ERROR: (message: string, title: string) => ({
+      EDITOR_ENCOUNTERED_ERROR: (message: string, title?: string) => ({
         message,
         title,
       }),
@@ -80,39 +110,80 @@ const editorPanelModel = createModel(
   },
 );
 
-const editorPanelMachine = createMachine<typeof editorPanelModel>(
+const editorPanelMachine = editorPanelModel.createMachine(
   {
-    context: editorPanelModel.initialContext,
     entry: [assign({ notifRef: () => spawn(notifMachine) })],
     initial: 'booting',
     states: {
       booting: {
-        on: {
-          EDITOR_READY: [
-            {
-              cond: (ctx) => ctx.immediateUpdate,
-              actions: [
-                editorPanelModel.assign((_, e) => ({
-                  monacoRef: e.monacoRef,
-                  standaloneEditorRef: e.standaloneEditorRef,
-                })),
+        initial: 'waiting_for_monaco',
+        on: { EDITOR_CHANGED_VALUE: undefined },
+        states: {
+          waiting_for_monaco: {
+            on: {
+              EDITOR_READY: [
+                {
+                  cond: 'isGist',
+                  target: 'fixing_gist_imports',
+                  actions: editorPanelModel.assign({
+                    monacoRef: (_, e) => e.monacoRef,
+                    standaloneEditorRef: (_, e) => e.standaloneEditorRef,
+                  }),
+                },
+                {
+                  target: 'done',
+                  actions: editorPanelModel.assign({
+                    monacoRef: (_, e) => e.monacoRef,
+                    standaloneEditorRef: (_, e) => e.standaloneEditorRef,
+                  }),
+                },
               ],
-              target: 'compiling',
             },
-            {
-              target: 'active',
-              actions: editorPanelModel.assign({
-                monacoRef: (_, e) => e.monacoRef,
-                standaloneEditorRef: (_, e) => e.standaloneEditorRef,
-              }),
+          },
+          fixing_gist_imports: {
+            invoke: {
+              src: async (ctx) => {
+                const monaco = ctx.monacoRef!;
+                const uri = monaco.Uri.parse(ctx.mainFile);
+                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+                const tsWorker = await getWorker(uri);
+
+                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
+                  uri.toString(),
+                );
+
+                if (usedXStateGistIdentifiers.length > 0) {
+                  const fixupImportsText = buildGistFixupImportsText(
+                    usedXStateGistIdentifiers,
+                  );
+                  const model = monaco.editor.getModel(uri)!;
+                  const currentValue = model.getValue();
+                  model.setValue(`${fixupImportsText}\n${currentValue}`);
+                }
+              },
+              onDone: 'done',
+              onError: {
+                actions: ['broadcastError'],
+              },
             },
-          ],
+          },
+          done: {
+            type: 'final',
+          },
         },
+        onDone: [
+          {
+            cond: (ctx) =>
+              getShouldImmediateUpdate(ctx.sourceRef.getSnapshot()!),
+            target: 'compiling',
+          },
+          { target: 'active' },
+        ],
       },
       active: {},
       updating: {
         tags: ['visualizing'],
-        entry: [send('UPDATE_MACHINE_PRESSED')],
+        entry: send('UPDATE_MACHINE_PRESSED'),
         always: 'active',
       },
       compiling: {
@@ -138,7 +209,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
               const end = model?.getPositionAt(error.start! + error.length!);
               const errorRange = new ctx.monacoRef!.Range(
                 start?.lineNumber!,
-                1, // Highlight the entire line where the error occured (line cols start from 1)
+                0, // beginning of the line where error occured
                 end?.lineNumber!,
                 end?.column!,
               );
@@ -193,7 +264,6 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
             type: 'BROADCAST',
             status: 'error',
             message: e.message,
-            title: e.title,
           }),
           {
             to: (ctx) => ctx.notifRef,
@@ -208,6 +278,8 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
   },
   {
     guards: {
+      isGist: (ctx) =>
+        ctx.sourceRef.getSnapshot()!.context.sourceProvider === 'gist',
       isSyntaxError: (_, e: any) => e.data instanceof SyntaxError,
     },
     actions: {
@@ -222,6 +294,8 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
             data: { range },
           } = e as DoneInvokeEvent<{ message: string; range: Range }>;
           if (ctx.standaloneEditorRef) {
+            // TODO: this Monaco API performs a side effect of clearing previous deltaDecorations while creating new decorations
+            // Since XState reserves the right to assume assign actions are pure, think of a way to split the effect from assignment
             const newDecorations = ctx.standaloneEditorRef.deltaDecorations(
               ctx.deltaDecorations,
               [
@@ -301,39 +375,36 @@ const getPersistTextAndIcon = (
 
 export const EditorPanel: React.FC<{
   onSave: () => void;
+  onFork: () => void;
   onCreateNew: () => void;
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
-}> = ({ onSave, onChange, onChangedCodeValue, onCreateNew }) => {
+}> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
     authService,
     (state) => state.context.sourceRef!,
   );
-  // TODO - consider refactoring this to useSelector
   const [sourceState] = useActor(sourceService);
 
   const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
 
-  const simService = useSimulation();
-  const simMode: SimMode = useSelector(simService, (state) =>
-    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
-  );
+  const simulationMode = useSimulationMode();
+
   const persistMeta = getPersistTextAndIcon(
     authState.matches('signed_out'),
     sourceOwnershipStatus,
   );
 
-  const immediateUpdate = getShouldImmediateUpdate(sourceState);
   const defaultValue = getEditorDefaultValue(sourceState);
 
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
       ...editorPanelModel.initialContext,
-      immediateUpdate,
       code: defaultValue,
+      sourceRef: sourceService,
     }),
     {
       actions: {
@@ -350,20 +421,21 @@ export const EditorPanel: React.FC<{
 
   return (
     <>
-      <CommandPalette
-        onSave={() => {
-          onSave();
-        }}
-        onVisualize={() => {
-          send('COMPILE');
-        }}
-      />
+      {simulationMode === 'visualizing' && (
+        <CommandPalette
+          onSave={() => {
+            onSave();
+          }}
+          onVisualize={() => {
+            send('COMPILE');
+          }}
+        />
+      )}
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
         <Suspense fallback={null}>
-          {simMode === 'visualizing' && (
+          {simulationMode === 'visualizing' && (
             <>
               <EditorWithXStateImports
-                sourceProvider={sourceState.context.sourceProvider}
                 defaultValue={defaultValue}
                 onMount={(standaloneEditor, monaco) => {
                   send({
@@ -384,75 +456,80 @@ export const EditorPanel: React.FC<{
                   onSave();
                 }}
               />
-              <HStack padding="2">
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + Enter"
-                  closeDelay={500}
-                >
-                  <Button
-                    disabled={isVisualizing}
-                    isLoading={isVisualizing}
-                    title="Visualize"
-                    leftIcon={
-                      <MagicIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    onClick={() => {
-                      send({
-                        type: 'COMPILE',
-                      });
-                    }}
+              <HStack padding="2" justifyContent="space-between">
+                <HStack>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + Enter"
+                    closeDelay={500}
                   >
-                    Visualize
-                  </Button>
-                </Tooltip>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + S"
-                  closeDelay={500}
-                >
-                  <Button
-                    isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting') || isVisualizing}
-                    title={persistMeta.text}
-                    onClick={() => {
-                      onSave();
-                    }}
-                    leftIcon={
-                      <persistMeta.Icon
-                        fill="gray.200"
-                        height="16px"
-                        width="16px"
-                      />
-                    }
+                    <Button
+                      disabled={isVisualizing}
+                      isLoading={isVisualizing}
+                      leftIcon={
+                        <MagicIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      onClick={() => {
+                        send({
+                          type: 'COMPILE',
+                        });
+                      }}
+                    >
+                      Visualize
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + S"
+                    closeDelay={500}
                   >
-                    {persistMeta.text}
-                  </Button>
-                </Tooltip>
-                {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      isLoading={sourceState.hasTag('persisting')}
+                      disabled={sourceState.hasTag('persisting')}
+                      onClick={() => {
+                        onSave();
+                      }}
+                      leftIcon={
+                        <persistMeta.Icon
+                          fill="gray.200"
+                          height="16px"
+                          width="16px"
+                        />
+                      }
+                    >
+                      {persistMeta.text}
+                    </Button>
+                  </Tooltip>
+                  {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      disabled={sourceState.hasTag('forking')}
+                      isLoading={sourceState.hasTag('forking')}
+                      onClick={() => {
+                        onFork();
+                      }}
+                      leftIcon={
+                        <ForkIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                    >
+                      Fork
+                    </Button>
+                  )}
+                </HStack>
+                {sourceOwnershipStatus !== 'no-source' && (
                   <Button
-                    disabled={
-                      sourceState.hasTag('forking') ||
-                      current.matches('compiling')
-                    }
-                    isLoading={sourceState.hasTag('forking')}
-                    onClick={() => {
-                      onCreateNew();
-                    }}
-                    leftIcon={
-                      <ForkIcon fill="gray.200" height="16px" width="16px" />
-                    }
+                    leftIcon={<AddIcon fill="gray.200" />}
+                    onClick={onCreateNew}
                   >
-                    Fork
+                    New
                   </Button>
                 )}
               </HStack>
             </>
           )}
         </Suspense>
-        {simMode === 'inspecting' && (
+        {simulationMode === 'inspecting' && (
           <Box padding="4">
             <Text as="strong">Inspection mode</Text>
             <Text>

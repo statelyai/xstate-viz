@@ -4,7 +4,7 @@ import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
 
 export enum ZoomFactor {
-  slow = 1.025,
+  slow = 1.075,
   normal = 1.15,
 }
 
