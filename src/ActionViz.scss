@@ -30,4 +30,8 @@
 
 [data-viz='action-type'] {
   font-size: var(--chakra-fontSizes-sm);
+  max-width: 15ch;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }

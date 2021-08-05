@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import {
   ActionObject,
   ActionTypes,
@@ -29,13 +30,33 @@ export function getActionLabel(
   return action.type;
 }
 
+export const ActionType: React.FC<{ title?: string }> = ({
+  children,
+  title,
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [resolvedTitle, setTitle] = useState(title || '');
+
+  useEffect(() => {
+    if (ref.current && !title) {
+      setTitle(ref.current.textContent!);
+    }
+  }, [title]);
+
+  return (
+    <div data-viz="action-type" title={resolvedTitle} ref={ref}>
+      {children}
+    </div>
+  );
+};
+
 export const RaiseActionLabel: React.FC<{ action: RaiseAction<any> }> = ({
   action,
 }) => {
   return (
-    <div data-viz="action-type">
+    <ActionType>
       <strong>raise</strong> {action.event}
-    </div>
+    </ActionType>
   );
 };
 
@@ -61,9 +82,9 @@ export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
       ''
     );
     return (
-      <div data-viz="action-type">
+      <ActionType>
         {actionLabel} {actionTo}
-      </div>
+      </ActionType>
     );
   };
 
@@ -71,9 +92,9 @@ export const LogActionLabel: React.FC<{ action: LogAction<any, any> }> = ({
   action,
 }) => {
   return (
-    <div data-viz="action-type">
+    <ActionType>
       <strong>log</strong> {action.label}
-    </div>
+    </ActionType>
   );
 };
 
@@ -81,9 +102,9 @@ export const CancelActionLabel: React.FC<{ action: CancelAction }> = ({
   action,
 }) => {
   return (
-    <div data-viz="action-type">
+    <ActionType>
       <strong>cancel</strong> {action.sendId}
-    </div>
+    </ActionType>
   );
 };
 
@@ -91,37 +112,38 @@ export const StopActionLabel: React.FC<{ action: StopAction<any, any> }> = ({
   action,
 }) => {
   return (
-    <div data-viz="action-type">
+    <ActionType>
       <strong>stop</strong>{' '}
       {typeof action.activity === 'object' && 'id' in action.activity ? (
         action.activity.id
       ) : (
         <em>expr</em>
       )}
-    </div>
+    </ActionType>
   );
 };
 
 export const AssignActionLabel: React.FC<{ action: AssignAction<any, any> }> =
   ({ action }) => {
     return (
-      <div data-viz="action-type">
+      <ActionType>
         <strong>assign</strong>{' '}
         {typeof action.assignment === 'object' ? (
           Object.keys(action.assignment).join(', ')
         ) : (
           <em>{action.assignment.name || 'expr'}</em>
         )}
-      </div>
+      </ActionType>
     );
   };
 
 export const ChooseActionLabel: React.FC<{ action: ChooseAction<any, any> }> =
-  ({ action }) => {
+  () => {
     return (
-      <div data-viz="action-type">
+      <ActionType>
         <strong>choose</strong>
-      </div>
+        {/* TODO: recursively add actions/guards */}
+      </ActionType>
     );
   };
 
