@@ -104,6 +104,8 @@ export const EditorWithXStateImports = (
     localCache.saveEditorTheme(editorTheme.theme);
   }, [editorTheme.theme]);
 
+  if (typeof window === 'undefined') return null;
+
   return (
     <ClassNames>
       {({ css }) => (
@@ -134,9 +136,8 @@ export const EditorWithXStateImports = (
 
             monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
               customWorkerPath: `${new URL(
-                process.env.PUBLIC_URL,
                 window.location.origin,
-              )}/ts-worker.js`,
+              )}ts-worker.js`,
             });
 
             monaco.languages.typescript.typescriptDefaults.setCompilerOptions({

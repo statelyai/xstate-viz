@@ -5,7 +5,9 @@ type RectListener = (rect: ClientRect | undefined) => void;
 export const rectMap: Map<string, ClientRect> = new Map();
 const rectListenersMap = new Map<string, Set<RectListener>>();
 
-(window as any).rectMap = rectMap;
+if (typeof window !== 'undefined') {
+  (window as any).rectMap = rectMap;
+}
 
 const run = () => {
   document.querySelectorAll('[data-rect]').forEach((el) => {
@@ -16,7 +18,9 @@ const run = () => {
   requestAnimationFrame(run);
 };
 
-requestAnimationFrame(run);
+if (typeof requestAnimationFrame !== 'undefined') {
+  requestAnimationFrame(run);
+}
 
 export const getRect = (id: string): ClientRect | undefined => {
   return rectMap.get(id);

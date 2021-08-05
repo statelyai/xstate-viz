@@ -6,6 +6,7 @@ import {
 } from './directedGraph';
 import { useMachine, useSelector } from '@xstate/react';
 import type {
+  ELK,
   ElkEdgeSection,
   ElkExtendedEdge,
   ElkNode,
@@ -26,15 +27,19 @@ declare global {
   export const ELK: typeof import('elkjs/lib/main').default;
 }
 
-const elk = new ELK({
-  defaultLayoutOptions: {
-    // algorithm: 'layered',
-    // 'elk.spacing.labelEdge': '1000',
-    // 'elk.edgeRouting': 'ORTHOGONAL',
-    // 'elk.edgeLabels.inline': 'true',
-    // hierarchyHandling: 'INCLUDE_CHILDREN',
-  },
-});
+let elk: ELK;
+
+if (typeof ELK !== 'undefined') {
+  elk = new ELK({
+    defaultLayoutOptions: {
+      // algorithm: 'layered',
+      // 'elk.spacing.labelEdge': '1000',
+      // 'elk.edgeRouting': 'ORTHOGONAL',
+      // 'elk.edgeLabels.inline': 'true',
+      // hierarchyHandling: 'INCLUDE_CHILDREN',
+    },
+  });
+}
 
 const rootLayoutOptions: LayoutOptions = {
   'elk.hierarchyHandling': 'INCLUDE_CHILDREN',

@@ -1,7 +1,6 @@
 import { useSelector } from '@xstate/react';
 import React from 'react';
 import { roundPath, LPathParam, pathToD, Point, SvgPath } from './pathUtils';
-import './EdgeViz.scss';
 import { ArrowMarker } from './ArrowMarker';
 import { DirectedGraphEdge } from './directedGraph';
 import { useSimulation } from './SimulationContext';

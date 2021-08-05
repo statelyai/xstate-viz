@@ -3,12 +3,9 @@ import { useActor } from '@xstate/react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { StateNode } from 'xstate';
-import './ActionViz.scss';
 import { DirectedGraphNode } from './directedGraph';
 import { deleteRect, setRect } from './getRect';
-import './InvokeViz.scss';
 import { useSimulation } from './SimulationContext';
-import './StateNodeViz.scss';
 import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {

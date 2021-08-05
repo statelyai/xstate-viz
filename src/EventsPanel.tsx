@@ -24,7 +24,6 @@ import {
 } from '@chakra-ui/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React, { useEffect, useState } from 'react';
-import ReactJson from 'react-json-view';
 import { useSimulation } from './SimulationContext';
 import { format } from 'date-fns';
 import { SimEvent, simulationMachine } from './simulationMachine';
@@ -40,6 +39,7 @@ import { createMachine } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { vizReactJsonTheme } from './vizReactJsonTheme';
 import { isInternalEvent, isNullEvent } from './utils';
+import dynamic from 'next/dynamic';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -308,7 +308,9 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
       {show ? (
         <Tr>
           <Td colSpan={3}>
-            <ReactJson src={event.data} theme={vizReactJsonTheme} />
+            {/* {typeof document !== 'undefined' && (
+              <ReactJson src={event.data} theme={vizReactJsonTheme} />
+            )} */}
           </Td>
         </Tr>
       ) : null}

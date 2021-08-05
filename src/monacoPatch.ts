@@ -9,7 +9,7 @@ import * as XStateActions from 'xstate/lib/actions';
 
 const MONACO_LOCATION =
   process.env.NODE_ENV === 'development' ||
-  Boolean(process.env.REACT_APP_USE_LOCAL_MONACO)
+  Boolean(process.env.NEXT_PUBLIC_USE_LOCAL_MONACO)
     ? // this makes debugging in development easier
       // (with non-minified version of the Monaco)
       // and ensures Cypress caches the result on disk

@@ -25,6 +25,7 @@
     "lz-string": "^1.4.4",
     "memory-web-storage": "^1.0.0",
     "monaco-editor": "^0.25.2",
+    "next": "^11.0.1",
     "prettier": "^2.3.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -38,7 +39,7 @@
   "scripts": {
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",
-    "start:app": "react-scripts start",
+    "start:app": "next",
     "build": "graphql-codegen && react-scripts build",
     "graphql:codegen": "graphql-codegen --watch",
     "test": "react-scripts test",

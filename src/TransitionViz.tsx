@@ -5,7 +5,6 @@ import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
-import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
 import { getActionLabel, isInternalEvent } from './utils';
 import { AnyStateMachine, StateFrom } from './types';

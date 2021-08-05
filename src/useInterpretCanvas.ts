@@ -1,6 +1,5 @@
 import { useInterpret } from '@xstate/react';
 import { useEffect } from 'react';
-import './base.scss';
 import { canvasMachine } from './canvasMachine';
 import './Graph';
 import { localCache } from './localCache';
