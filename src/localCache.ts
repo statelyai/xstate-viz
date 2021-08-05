@@ -2,7 +2,9 @@ import { isAfter } from 'date-fns';
 import { createStorage, testStorageSupport } from 'memory-web-storage';
 import { ThemeName, themes } from './editor-themes';
 
-const storage = testStorageSupport() ? window.localStorage : createStorage();
+export const storage = testStorageSupport()
+  ? window.localStorage
+  : createStorage();
 
 export interface CachedPosition {
   zoom: number;
