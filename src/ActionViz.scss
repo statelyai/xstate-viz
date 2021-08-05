@@ -28,6 +28,6 @@
   }
 }
 
-[data-viz='action-text'] {
-  display: inline-block;
+[data-viz='action-type'] {
+  font-size: var(--chakra-fontSizes-sm);
 }
