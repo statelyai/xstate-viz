@@ -282,7 +282,7 @@ export const EditorPanel: React.FC<{
                         type: 'COMPILE',
                       });
                     }}
-                    variant="canvas"
+                    variant="secondary"
                   >
                     Visualize
                   </Button>
@@ -330,6 +330,7 @@ export const EditorPanel: React.FC<{
                   <Button
                     leftIcon={<AddIcon fill="gray.200" />}
                     onClick={onCreateNew}
+                    variant="outline"
                   >
                     New
                   </Button>

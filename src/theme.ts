@@ -12,7 +12,7 @@ export const theme = extendTheme({
   components: {
     Button: {
       variants: {
-        canvas: {
+        secondary: {
           bg: 'gray.600',
           color: 'white',
           _hover: {

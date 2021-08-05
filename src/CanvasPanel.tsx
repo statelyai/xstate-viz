@@ -13,7 +13,6 @@ import {
   ChakraProvider,
   HStack,
   IconButton,
-  Link,
   Menu,
   MenuButton,
   MenuItem,
@@ -38,35 +37,7 @@ import { ShareButton } from './ShareButton';
 import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
-import { Logo } from './Logo';
-
-const CanvasHeader: React.FC = () => {
-  return (
-    <Box zIndex={1} display="flex" alignItems="center" height="3rem">
-      <Link
-        href="https://github.com/statelyai/xstate"
-        title="XState GitHub Repo"
-        display="block"
-        height="100%"
-        _hover={{
-          opacity: 0.8,
-        }}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <Logo
-          fill="white"
-          style={{
-            // @ts-ignore
-            '--fill': 'white',
-            height: '100%',
-            padding: '0 .5rem',
-          }}
-        />
-      </Link>
-    </Box>
-  );
-};
+import { CanvasPanelHeader } from './CanvasPanelHeader';
 
 export const CanvasPanel: React.FC = () => {
   const simService = useSimulation();
@@ -103,7 +74,7 @@ export const CanvasPanel: React.FC = () => {
     <ChakraProvider theme={theme}>
       <Box display="grid" gridTemplateRows="3rem 1fr">
         <HStack bg="gray.800" justifyContent="space-between" zIndex={1}>
-          <CanvasHeader />
+          <CanvasPanelHeader />
           {registryData && (
             <Stack direction="row" spacing="4" alignItems="center" pr="4">
               <Text fontWeight="semibold" fontSize="sm" color="gray.100">
@@ -185,7 +156,7 @@ export const CanvasPanel: React.FC = () => {
               icon={<MinusIcon />}
               disabled={!shouldEnableZoomOutButton}
               onClick={() => canvasService.send('ZOOM.OUT')}
-              variant="canvas"
+              variant="secondary"
             />
             <IconButton
               aria-label="Zoom in"
@@ -193,21 +164,21 @@ export const CanvasPanel: React.FC = () => {
               icon={<AddIcon />}
               disabled={!shouldEnableZoomInButton}
               onClick={() => canvasService.send('ZOOM.IN')}
-              variant="canvas"
+              variant="secondary"
             />
             <IconButton
               aria-label="Reset canvas"
               title="Reset canvas"
               icon={<RepeatIcon />}
               onClick={() => canvasService.send('POSITION.RESET')}
-              variant="canvas"
+              variant="secondary"
             />
           </ButtonGroup>
           <Button
             size="sm"
             margin={2}
             onClick={() => simService.send('MACHINES.RESET')}
-            variant="canvas"
+            variant="secondary"
           >
             RESET
           </Button>
