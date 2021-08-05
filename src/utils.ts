@@ -1,7 +1,6 @@
 import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import * as React from 'react';
 import {
-  ActionObject,
   ActionTypes,
   AnyEventObject,
   Interpreter,
@@ -106,24 +105,8 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
   return edges;
 }
 
-const isStringifiedFunction = (str: string): boolean =>
+export const isStringifiedFunction = (str: string): boolean =>
   /^function\s*\(/.test(str) || str.includes('=>');
-
-export const getActionLabel = (action: ActionObject<any, any>) => {
-  if (typeof action.exec === 'function') {
-    return isStringifiedFunction(action.type) ? 'anonymous' : action.type;
-  }
-  if (action.type !== 'xstate.assign') {
-    return action.type;
-  }
-  switch (typeof action.assignment) {
-    case 'object':
-      const keys = Object.keys(action.assignment).join();
-      return `assign ${keys}`;
-    default:
-      return 'assign';
-  }
-};
 
 // export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
 //   const children = getChildren(stateNode);

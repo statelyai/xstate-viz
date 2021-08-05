@@ -10,7 +10,6 @@ import { deleteRect, setRect } from './getRect';
 import './InvokeViz.scss';
 import { useSimulation } from './SimulationContext';
 import './StateNodeViz.scss';
-import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {
   key: string;

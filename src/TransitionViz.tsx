@@ -7,7 +7,7 @@ import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
-import { getActionLabel, isInternalEvent } from './utils';
+import { isInternalEvent } from './utils';
 import { AnyStateMachine, StateFrom } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';

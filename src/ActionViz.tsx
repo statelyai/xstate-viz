@@ -1,16 +1,33 @@
 import {
   ActionObject,
   ActionTypes,
+  AssignAction,
   CancelAction,
+  ChooseAction,
   LogAction,
-  LogActionObject,
   RaiseAction,
-  RaiseActionObject,
-  SendAction,
   SendActionObject,
+  SpecialTargets,
   StopAction,
 } from 'xstate';
-import { getActionLabel } from './utils';
+import { isStringifiedFunction } from './utils';
+
+export function getActionLabel(
+  action: ActionObject<any, any>,
+): string | JSX.Element {
+  if (typeof action.exec === 'function') {
+    return isStringifiedFunction(action.type) ? (
+      <em>anonymous</em>
+    ) : (
+      action.type
+    );
+  }
+  if (action.type.startsWith('xstate.')) {
+    const builtInActionType = action.type.match(/^xstate\.(.+)$/)![1];
+    return <strong>{builtInActionType}</strong>;
+  }
+  return action.type;
+}
 
 export const RaiseActionLabel: React.FC<{ action: RaiseAction<any> }> = ({
   action,
@@ -24,11 +41,28 @@ export const RaiseActionLabel: React.FC<{ action: RaiseAction<any> }> = ({
 
 export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
   ({ action }) => {
-    console.log(action);
+    const actionLabel =
+      action.event.type === 'xstate.update' ? (
+        <strong>send update</strong>
+      ) : (
+        <>
+          <strong>send</strong> {action.event.type}
+        </>
+      );
+    const actionTo = action.to ? (
+      action.to === SpecialTargets.Parent ? (
+        <>
+          to <em>parent</em>
+        </>
+      ) : (
+        <>to {action.to}</>
+      )
+    ) : (
+      ''
+    );
     return (
       <div data-viz="action-type">
-        <strong>send</strong> {action.event.type}{' '}
-        {action.to ? `to ${action.to}` : ''}
+        {actionLabel} {actionTo}
       </div>
     );
   };
@@ -71,11 +105,37 @@ export const StopActionLabel: React.FC<{ action: StopAction<any, any> }> = ({
   );
 };
 
+export const AssignActionLabel: React.FC<{ action: AssignAction<any, any> }> =
+  ({ action }) => {
+    return (
+      <div data-viz="action-type">
+        <strong>assign</strong>{' '}
+        {typeof action.assignment === 'object' ? (
+          Object.keys(action.assignment).join(', ')
+        ) : (
+          <em>expr</em>
+        )}
+      </div>
+    );
+  };
+
+export const ChooseActionLabel: React.FC<{ action: ChooseAction<any, any> }> =
+  ({ action }) => {
+    return (
+      <div data-viz="action-type">
+        <strong>choose</strong>
+      </div>
+    );
+  };
+
 export const ActionViz: React.FC<{
   action: ActionObject<any, any>;
   kind: 'entry' | 'exit' | 'do';
 }> = ({ action, kind }) => {
   const actionType = {
+    [ActionTypes.Assign]: (
+      <AssignActionLabel action={action as AssignAction<any, any>} />
+    ),
     [ActionTypes.Raise]: (
       <RaiseActionLabel action={action as RaiseAction<any>} />
     ),
@@ -88,6 +148,9 @@ export const ActionViz: React.FC<{
     [ActionTypes.Cancel]: <CancelActionLabel action={action as CancelAction} />,
     [ActionTypes.Stop]: (
       <StopActionLabel action={action as StopAction<any, any>} />
+    ),
+    [ActionTypes.Choose]: (
+      <ChooseActionLabel action={action as ChooseAction<any, any>} />
     ),
   }[action.type] ?? <div data-viz="action-type">{getActionLabel(action)}</div>;
 
