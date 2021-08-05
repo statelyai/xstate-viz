@@ -184,7 +184,6 @@ export const CanvasPanel: React.FC<{
               variant="canvas"
             />
           </ButtonGroup>
-          <ButtonSeparator />
           <Button
             size="sm"
             margin={2}
