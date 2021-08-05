@@ -5,16 +5,27 @@
 // This is a great place to put global configuration and
 // behavior that modifies Cypress.
 //
-// You can change the location of this file or turn off
-// automatically serving support files with the
-// 'supportFile' configuration option.
-//
-// You can read more here:
-// https://on.cypress.io/configuration
 // ***********************************************************
 
-// Import commands.js using ES2015 syntax:
+import { InspectorOptions } from '@xstate/inspect';
 import './commands';
+import { state } from './state';
 
-// Alternatively you can use CommonJS syntax:
-// require('./commands')
+type AnyFunction = (...args: any[]) => any;
+
+declare global {
+  interface Window {
+    __xstate__: Exclude<InspectorOptions['devTools'], AnyFunction>;
+  }
+}
+
+afterEach(() => {
+  const inspector = state('@@viz/inspector');
+  if (!inspector) {
+    return;
+  }
+  inspector.disconnect();
+  // https://github.com/statelyai/xstate/blob/fb7ea97465dfba0b7ef17edbf327c7c21848c7e8/packages/xstate-inspect/src/browser.ts#L68
+  const devTools = window.__xstate__;
+  devTools.services.forEach(devTools.unregister);
+});
