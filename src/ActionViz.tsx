@@ -111,7 +111,7 @@ export const AssignActionLabel: React.FC<{ action: AssignAction<any, any> }> =
         {typeof action.assignment === 'object' ? (
           Object.keys(action.assignment).join(', ')
         ) : (
-          <em>expr</em>
+          <em>{action.assignment.name || 'expr'}</em>
         )}
       </div>
     );
