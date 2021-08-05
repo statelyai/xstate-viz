@@ -21,6 +21,7 @@ export type DelayedTransitionMetadata =
   | { delayType: 'NOT_DELAYED' }
   | { delayType: 'DELAYED_INVALID' }
   | { delayType: 'DELAYED_VALID'; delay: number; delayString: string };
+
 const getDelayFromEventType = (
   eventType: string,
   delayOptions: AnyStateMachine['options']['delays'],

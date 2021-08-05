@@ -10,7 +10,7 @@ import {
   SpecialTargets,
   StopAction,
 } from 'xstate';
-import { isStringifiedFunction } from './utils';
+import { isDelayedTransitionAction, isStringifiedFunction } from './utils';
 
 export function getActionLabel(
   action: ActionObject<any, any>,
@@ -70,7 +70,6 @@ export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
 export const LogActionLabel: React.FC<{ action: LogAction<any, any> }> = ({
   action,
 }) => {
-  console.log(action);
   return (
     <div data-viz="action-type">
       <strong>log</strong> {action.label}
@@ -130,6 +129,11 @@ export const ActionViz: React.FC<{
   action: ActionObject<any, any>;
   kind: 'entry' | 'exit' | 'do';
 }> = ({ action, kind }) => {
+  if (isDelayedTransitionAction(action)) {
+    // Don't show implicit actions for delayed transitions
+    return null;
+  }
+
   const actionType = {
     [ActionTypes.Assign]: (
       <AssignActionLabel action={action as AssignAction<any, any>} />

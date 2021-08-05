@@ -1,9 +1,12 @@
 import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import * as React from 'react';
 import {
+  ActionObject,
   ActionTypes,
   AnyEventObject,
+  CancelAction,
   Interpreter,
+  SendAction,
   StateNode,
   TransitionDefinition,
 } from 'xstate';
@@ -163,4 +166,17 @@ export function willChange(
 
 export function uniq<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
+}
+
+export function isDelayedTransitionAction(
+  action: ActionObject<any, any>,
+): boolean {
+  return (
+    (action.type === ActionTypes.Send &&
+      (action as SendAction<any, any, any>).event.type.startsWith(
+        'xstate.after',
+      )) ||
+    (action.type === ActionTypes.Cancel &&
+      `${(action as CancelAction).sendId}`.startsWith('xstate.after'))
+  );
 }
