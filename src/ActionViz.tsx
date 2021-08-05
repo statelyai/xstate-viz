@@ -81,7 +81,6 @@ export const LogActionLabel: React.FC<{ action: LogAction<any, any> }> = ({
 export const CancelActionLabel: React.FC<{ action: CancelAction }> = ({
   action,
 }) => {
-  console.log(action);
   return (
     <div data-viz="action-type">
       <strong>cancel</strong> {action.sendId}
