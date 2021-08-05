@@ -80,19 +80,9 @@ function App() {
               gridTemplateAreas="'canvas panels' 'footer footer'"
               height="100vh"
             >
-              {digraph ? (
-                <CanvasProvider value={canvasService}>
-                  <CanvasPanel digraph={digraph} />
-                </CanvasProvider>
-              ) : (
-                <Box display="flex" justifyContent="center" alignItems="center">
-                  <Text textAlign="center">
-                    No machines to display yet...
-                    <br />
-                    Create one!
-                  </Text>
-                </Box>
-              )}
+              <CanvasProvider value={canvasService}>
+                <CanvasPanel />
+              </CanvasProvider>
               <ChakraProvider theme={theme}>
                 <ResizableBox gridArea="panels" minHeight={0}>
                   <Tabs

@@ -17,7 +17,7 @@
 [data-viz='stateNode'] {
   color: var(--viz-color-fg);
   align-self: start;
-  opacity: calc(0.5 * (1 - var(--viz-node-active)) + var(--viz-node-active));
+  opacity: calc(0.7 * (1 - var(--viz-node-active)) + var(--viz-node-active));
   font-size: 1em;
   border-radius: var(--viz-radius);
   overflow: hidden;

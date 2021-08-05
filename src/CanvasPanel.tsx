@@ -22,7 +22,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLoggedInUserData, useAuth } from './authContext';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
@@ -30,7 +30,7 @@ import {
   getShouldEnableZoomInButton,
   getShouldEnableZoomOutButton,
 } from './canvasMachine';
-import { DirectedGraphNode } from './directedGraph';
+import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
 import { LikeButton } from './LikeButton';
 import { registryLinks } from './registryLinks';
@@ -39,10 +39,6 @@ import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
 import { Logo } from './Logo';
-
-const ButtonSeparator = () => (
-  <Box backgroundColor="gray.700" width={0.5} height="60%" marginX={2} />
-);
 
 const CanvasHeader: React.FC = () => {
   return (
@@ -59,11 +55,12 @@ const CanvasHeader: React.FC = () => {
         rel="noreferrer"
       >
         <Logo
+          fill="white"
           style={{
             // @ts-ignore
             '--fill': 'white',
             height: '100%',
-            padding: '.5rem 1rem',
+            padding: '0 .5rem',
           }}
         />
       </Link>
@@ -71,12 +68,19 @@ const CanvasHeader: React.FC = () => {
   );
 };
 
-export const CanvasPanel: React.FC<{
-  digraph: DirectedGraphNode;
-}> = ({ digraph }) => {
+export const CanvasPanel: React.FC = () => {
   const simService = useSimulation();
   const canvasService = useCanvas();
   const authService = useAuth();
+  const machine = useSelector(simService, (state) => {
+    return state.context.currentSessionId
+      ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
+      : undefined;
+  });
+  const digraph = useMemo(
+    () => (machine ? toDirectedGraph(machine) : undefined),
+    [machine],
+  );
 
   const [sourceState] = useSourceActor(authService);
 
@@ -156,10 +160,25 @@ export const CanvasPanel: React.FC<{
           )}
         </HStack>
         <CanvasContainer>
-          <Graph digraph={digraph} />
+          {digraph ? (
+            <Graph digraph={digraph} />
+          ) : (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              padding="8"
+            >
+              <Text textAlign="center">
+                No machines to display yet...
+                <br />
+                Create one!
+              </Text>
+            </Box>
+          )}
         </CanvasContainer>
-        <HStack position="absolute" bottom="4" left="4" zIndex={1}>
-          <ButtonGroup size="sm" spacing={2} padding={2} isAttached>
+        <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
+          <ButtonGroup size="sm" spacing={2} isAttached>
             <IconButton
               aria-label="Zoom out"
               title="Zoom out"
