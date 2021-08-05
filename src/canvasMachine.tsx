@@ -69,6 +69,11 @@ const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
 
+/**
+ * Implementation copied from:
+ *
+ * https://github.com/excalidraw/excalidraw/blob/10cd6a24b0d5715d25ad413784a4b5b57f500b79/src/scene/zoom.ts
+ */
 const getNewZoomAndPan = (
   prevZoomValue: number,
   newZoomValue: number,
