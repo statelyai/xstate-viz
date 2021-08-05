@@ -4,7 +4,7 @@ import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
 
 export enum ZoomFactor {
-  slow = 1.075,
+  slow = 1.09,
   normal = 1.15,
 }
 
@@ -14,12 +14,31 @@ const initialPosition = {
     dx: 0,
     dy: 0,
   },
+  canvasPanel: {
+    offsetY: 50,
+    offsetX: 0,
+    width: 0,
+    height: 0,
+  },
+};
+
+export type Pan = {
+  dx: number;
+  dy: number;
 };
 
 export const canvasModel = createModel(initialPosition, {
   events: {
-    'ZOOM.OUT': (zoomFactor?: ZoomFactor) => ({ zoomFactor }),
-    'ZOOM.IN': (zoomFactor?: ZoomFactor) => ({ zoomFactor }),
+    'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+      zoomFactor,
+      x,
+      y,
+    }),
+    'ZOOM.IN': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+      zoomFactor,
+      x,
+      y,
+    }),
     'POSITION.RESET': () => ({}),
     PAN: (dx: number, dy: number) => ({ dx, dy }),
     /**
@@ -27,6 +46,17 @@ export const canvasModel = createModel(initialPosition, {
      */
     SOURCE_CHANGED: (id: string | null) => ({
       id,
+    }),
+    CANVAS_POSITION_UPDATED: (
+      offsetY: number,
+      offsetX: number,
+      width: number,
+      height: number,
+    ) => ({
+      offsetX,
+      offsetY,
+      width,
+      height,
     }),
   },
 });
@@ -39,20 +69,99 @@ const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
 
+const getNewZoomAndPan = (
+  prevZoomValue: number,
+  newZoomValue: number,
+  currentPan: Pan,
+  cursorPosition: Pan,
+  canvasOffset: {
+    offsetY: number;
+    offsetX: number;
+  },
+): { zoom: number; pan: Pan } => {
+  return {
+    zoom: newZoomValue,
+    pan: {
+      dx:
+        cursorPosition.dx -
+        canvasOffset.offsetX -
+        (cursorPosition.dx - canvasOffset.offsetX - currentPan.dx) *
+          (newZoomValue / prevZoomValue),
+      dy:
+        cursorPosition.dy -
+        canvasOffset.offsetY -
+        (cursorPosition.dy - canvasOffset.offsetY - currentPan.dy) *
+          (newZoomValue / prevZoomValue),
+    },
+  };
+};
+
 export const canvasMachine = createMachine<typeof canvasModel>({
   context: canvasModel.initialContext,
+  invoke: {
+    src: () => (sendBack) => {
+      const interval = setInterval(() => {
+        const canvasPanel = document.querySelector('[data-panel="viz"]');
+
+        if (canvasPanel) {
+          const rect = canvasPanel.getBoundingClientRect();
+          sendBack({
+            type: 'CANVAS_POSITION_UPDATED',
+            offsetX: rect.x,
+            offsetY: rect.y,
+            height: rect.height,
+            width: rect.width,
+          });
+        }
+      }, 2000);
+
+      return () => {
+        clearInterval(interval);
+      };
+    },
+  },
   on: {
+    CANVAS_POSITION_UPDATED: {
+      actions: canvasModel.assign((ctx, e) => {
+        return {
+          canvasPanel: {
+            offsetY: e.offsetY,
+            offsetX: e.offsetX,
+            height: e.height,
+            width: e.width,
+          },
+        };
+      }),
+    },
     'ZOOM.OUT': {
-      actions: canvasModel.assign({
-        zoom: (ctx, e) => ctx.zoom * calculateZoomOutFactor(e.zoomFactor),
+      actions: canvasModel.assign((ctx, e) => {
+        return getNewZoomAndPan(
+          ctx.zoom,
+          ctx.zoom * calculateZoomOutFactor(e.zoomFactor),
+          ctx.pan,
+          {
+            dx: e.x || ctx.canvasPanel.width / 2,
+            dy: e.y || ctx.canvasPanel.height / 2,
+          },
+          ctx.canvasPanel,
+        );
       }),
       cond: (ctx) => ctx.zoom > MAX_ZOOM_OUT_FACTOR,
       target: '.throttling',
       internal: false,
     },
     'ZOOM.IN': {
-      actions: canvasModel.assign({
-        zoom: (ctx, e) => ctx.zoom * (e.zoomFactor || DEFAULT_ZOOM_IN_FACTOR),
+      actions: canvasModel.assign((ctx, e) => {
+        return getNewZoomAndPan(
+          ctx.zoom,
+          ctx.zoom * (e.zoomFactor || DEFAULT_ZOOM_IN_FACTOR),
+          ctx.pan,
+          {
+            dx: e.x || ctx.canvasPanel.width / 2,
+            dy: e.y || ctx.canvasPanel.height / 2,
+          },
+          ctx.canvasPanel,
+        );
       }),
       cond: (ctx) => ctx.zoom < MAX_ZOOM_IN_FACTOR,
       target: '.throttling',

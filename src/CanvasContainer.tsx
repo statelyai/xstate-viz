@@ -167,9 +167,21 @@ export const CanvasContainer: React.FC = ({ children }) => {
       onWheel={(e) => {
         if (e.ctrlKey || e.metaKey) {
           if (e.deltaY > 0) {
-            canvasService.send(canvasModel.events['ZOOM.OUT'](ZoomFactor.slow));
+            canvasService.send(
+              canvasModel.events['ZOOM.OUT'](
+                e.clientX,
+                e.clientY,
+                ZoomFactor.slow,
+              ),
+            );
           } else if (e.deltaY < 0) {
-            canvasService.send(canvasModel.events['ZOOM.IN'](ZoomFactor.slow));
+            canvasService.send(
+              canvasModel.events['ZOOM.IN'](
+                e.clientX,
+                e.clientY,
+                ZoomFactor.slow,
+              ),
+            );
           }
         } else {
           canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
