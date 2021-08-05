@@ -1,3 +1,4 @@
+import { AddIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
@@ -12,17 +13,17 @@ import React, { Suspense } from 'react';
 import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
+import { useSimulationMode } from './SimulationContext';
 import { CommandPalette } from './CommandPalette';
 import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
-import { useSimulation } from './SimulationContext';
 import {
   getEditorDefaultValue,
   getShouldImmediateUpdate,
   SourceMachineState,
 } from './sourceMachine';
-import type { AnyStateMachine, SimMode } from './types';
+import type { AnyStateMachine } from './types';
 
 const EditorWithXStateImports = React.lazy(
   () => import('./EditorWithXStateImports'),
@@ -183,10 +184,11 @@ const getPersistTextAndIcon = (
 
 export const EditorPanel: React.FC<{
   onSave: () => void;
+  onFork: () => void;
   onCreateNew: () => void;
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
-}> = ({ onSave, onChange, onChangedCodeValue, onCreateNew }) => {
+}> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
@@ -198,10 +200,8 @@ export const EditorPanel: React.FC<{
 
   const sourceOwnershipStatus = getSourceOwnershipStatus(sourceState);
 
-  const simService = useSimulation();
-  const simMode: SimMode = useSelector(simService, (state) =>
-    state.hasTag('inspecting') ? 'inspecting' : 'visualizing',
-  );
+  const simulationMode = useSimulationMode();
+
   const persistMeta = getPersistTextAndIcon(
     authState.matches('signed_out'),
     sourceOwnershipStatus,
@@ -232,17 +232,19 @@ export const EditorPanel: React.FC<{
 
   return (
     <>
-      <CommandPalette
-        onSave={() => {
-          onSave();
-        }}
-        onVisualize={() => {
-          send('COMPILE');
-        }}
-      />
+      {simulationMode === 'visualizing' && (
+        <CommandPalette
+          onSave={() => {
+            onSave();
+          }}
+          onVisualize={() => {
+            send('COMPILE');
+          }}
+        />
+      )}
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
         <Suspense fallback={null}>
-          {simMode === 'visualizing' && (
+          {simulationMode === 'visualizing' && (
             <>
               <EditorWithXStateImports
                 sourceProvider={sourceState.context.sourceProvider}
@@ -262,72 +264,80 @@ export const EditorPanel: React.FC<{
                   onSave();
                 }}
               />
-              <HStack padding="2">
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + Enter"
-                  closeDelay={500}
-                >
-                  <Button
-                    disabled={isVisualizing}
-                    isLoading={isVisualizing}
-                    title="Visualize"
-                    leftIcon={
-                      <MagicIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    onClick={() => {
-                      send({
-                        type: 'COMPILE',
-                      });
-                    }}
+              <HStack padding="2" justifyContent="space-between">
+                <HStack>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + Enter"
+                    closeDelay={500}
                   >
-                    Visualize
-                  </Button>
-                </Tooltip>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + S"
-                  closeDelay={500}
-                >
-                  <Button
-                    isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting')}
-                    title={persistMeta.text}
-                    onClick={() => {
-                      onSave();
-                    }}
-                    leftIcon={
-                      <persistMeta.Icon
-                        fill="gray.200"
-                        height="16px"
-                        width="16px"
-                      />
-                    }
+                    <Button
+                      disabled={isVisualizing}
+                      isLoading={isVisualizing}
+                      leftIcon={
+                        <MagicIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      onClick={() => {
+                        send({
+                          type: 'COMPILE',
+                        });
+                      }}
+                    >
+                      Visualize
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + S"
+                    closeDelay={500}
                   >
-                    {persistMeta.text}
-                  </Button>
-                </Tooltip>
-                {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      isLoading={sourceState.hasTag('persisting')}
+                      disabled={sourceState.hasTag('persisting')}
+                      onClick={() => {
+                        onSave();
+                      }}
+                      leftIcon={
+                        <persistMeta.Icon
+                          fill="gray.200"
+                          height="16px"
+                          width="16px"
+                        />
+                      }
+                    >
+                      {persistMeta.text}
+                    </Button>
+                  </Tooltip>
+                  {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      disabled={sourceState.hasTag('forking')}
+                      isLoading={sourceState.hasTag('forking')}
+                      onClick={() => {
+                        onFork();
+                      }}
+                      leftIcon={
+                        <ForkIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                    >
+                      Fork
+                    </Button>
+                  )}
+                </HStack>
+                {sourceOwnershipStatus !== 'no-source' && (
                   <Button
-                    disabled={sourceState.hasTag('forking')}
-                    isLoading={sourceState.hasTag('forking')}
-                    onClick={() => {
-                      onCreateNew();
-                    }}
-                    leftIcon={
-                      <ForkIcon fill="gray.200" height="16px" width="16px" />
-                    }
+                    leftIcon={<AddIcon fill="gray.200" />}
+                    onClick={onCreateNew}
                   >
-                    Fork
+                    New
                   </Button>
                 )}
               </HStack>
             </>
           )}
         </Suspense>
-        {simMode === 'inspecting' && (
+        {simulationMode === 'inspecting' && (
           <Box padding="4">
             <Text as="strong">Inspection mode</Text>
             <Text>

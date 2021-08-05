@@ -10,6 +10,7 @@ import {
 } from 'xstate';
 import { AnyState, AnyStateMachine } from './types';
 import { print } from 'graphql';
+import { useSelector } from '@xstate/react';
 
 export const isNullEvent = (eventName: string) =>
   eventName === ActionTypes.NullEvent;
@@ -24,17 +25,19 @@ export const isInternalEvent = (eventName: string) => {
 };
 
 export function createInterpreterContext<
-  TInterpreter extends Interpreter<any, any, any>
+  TInterpreter extends Interpreter<any, any, any>,
 >(displayName: string) {
-  const [Provider, useContext] = createRequiredContext<TInterpreter>(
-    displayName,
-  );
+  const [Provider, useContext] =
+    createRequiredContext<TInterpreter>(displayName);
 
-  const createSelector = <Data>(
-    selector: (state: TInterpreter['state']) => Data,
-  ) => selector;
+  const createUseSelector =
+    <Data>(selector: (state: TInterpreter['state']) => Data) =>
+    () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      return useSelector(useContext(), selector);
+    };
 
-  return [Provider, useContext, createSelector] as const;
+  return [Provider, useContext, createUseSelector] as const;
 }
 
 export function createRequiredContext<T>(displayName: string) {
@@ -57,7 +60,7 @@ export function createRequiredContext<T>(displayName: string) {
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string
+  TEventType extends TEvent['type'] = string,
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;
@@ -103,11 +106,16 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
   return edges;
 }
 
+const isStringifiedFunction = (str: string): boolean =>
+  /^function\s*\(/.test(str) || str.includes('=>');
+
 export const getActionLabel = (action: ActionObject<any, any>) => {
+  if (typeof action.exec === 'function') {
+    return isStringifiedFunction(action.type) ? 'anonymous' : action.type;
+  }
   if (action.type !== 'xstate.assign') {
     return action.type;
   }
-
   switch (typeof action.assignment) {
     case 'object':
       const keys = Object.keys(action.assignment).join();

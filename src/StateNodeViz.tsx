@@ -48,7 +48,7 @@ type StateNodeDef =
 
 const StateNodeKey: React.FC<{ value: string }> = ({ value }) => {
   return (
-    <div data-viz="stateNode-key" title={value}>
+    <div data-viz="stateNode-key">
       <div data-viz="stateNode-keyText">{value}</div>
     </div>
   );
@@ -122,7 +122,6 @@ export const StateNodeViz: React.FC<{
         data-viz-atomic={
           ['atomic', 'final'].includes(stateNode.type) || undefined
         }
-        title={`#${stateNode.id}`}
         style={{
           // position: 'absolute',
           ...(node.layout && {

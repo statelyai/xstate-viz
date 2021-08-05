@@ -1,8 +1,15 @@
 import { InterpreterFrom } from 'xstate';
 import { simulationMachine } from './simulationMachine';
-import { createRequiredContext } from './utils';
+import { createInterpreterContext } from './utils';
+import { SimulationMode } from './types';
 
-export const [SimulationProvider, useSimulation] =
-  createRequiredContext<InterpreterFrom<typeof simulationMachine>>(
+const [SimulationProvider, useSimulation, createSimulationSelector] =
+  createInterpreterContext<InterpreterFrom<typeof simulationMachine>>(
     'Simulation',
   );
+
+export { SimulationProvider, useSimulation };
+
+export const useSimulationMode = createSimulationSelector<SimulationMode>(
+  (state) => (state.hasTag('inspecting') ? 'inspecting' : 'visualizing'),
+);

@@ -13,7 +13,7 @@ describe('Forking', () => {
           },
           text: '// Source file',
         },
-        createSourceFile: {
+        forkSourceFile: {
           id: 'source-file-id-2',
           name: 'Source File',
           owner: {
@@ -54,7 +54,7 @@ describe('Forking', () => {
           },
           text: '// Source file',
         },
-        createSourceFile: {
+        forkSourceFile: {
           id: 'source-file-id-2',
           name: 'Source File',
           owner: {

@@ -142,6 +142,7 @@ export const EditorWithXStateImports = (
         <Editor
           wrapperClassName={`${css`
             min-height: 0;
+            min-width: 0;
           `} js-monaco-editor`}
           defaultPath="main.ts"
           defaultLanguage="typescript"

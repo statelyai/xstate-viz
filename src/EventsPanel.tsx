@@ -10,6 +10,7 @@ import {
   Th,
   Button,
   ButtonGroup,
+  IconButton,
   Popover,
   PopoverArrow,
   PopoverBody,
@@ -234,10 +235,12 @@ export const EventsPanel: React.FC = () => {
                   verticalAlign="middle"
                   marginLeft="1"
                 >
-                  <Button
+                  <IconButton
+                    aria-label="sort by timestamp descending"
+                    title="sort by timestamp descending"
+                    icon={<ChevronUpIcon />}
                     variant="unstyled"
                     size="xs"
-                    title="sort by timestamp descending"
                     bg={
                       eventsState.context.sortCriteria === 'DESC'
                         ? 'var(--chakra-colors-gray-700)'
@@ -249,13 +252,13 @@ export const EventsPanel: React.FC = () => {
                         sortCriteria: 'DESC',
                       });
                     }}
-                  >
-                    <ChevronUpIcon />
-                  </Button>
-                  <Button
+                  />
+                  <IconButton
+                    aria-label="sort by timestamp ascending"
+                    title="sort by timestamp ascending"
+                    icon={<ChevronDownIcon />}
                     variant="unstyled"
                     size="xs"
-                    title="sort by timestamp ascending"
                     bg={
                       eventsState.context.sortCriteria === 'ASC'
                         ? 'var(--chakra-colors-gray-700)'
@@ -267,9 +270,7 @@ export const EventsPanel: React.FC = () => {
                         sortCriteria: 'ASC',
                       });
                     }}
-                  >
-                    <ChevronDownIcon />
-                  </Button>
+                  />
                 </Box>
               </Th>
             </Tr>
