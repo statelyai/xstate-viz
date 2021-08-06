@@ -456,71 +456,73 @@ export const EditorPanel: React.FC<{
                   onSave();
                 }}
               />
-              <HStack padding="2" justifyContent="space-between">
-                <HStack>
-                  <Tooltip
-                    bg="black"
-                    color="white"
-                    label="Ctrl/CMD + Enter"
-                    closeDelay={500}
+              <HStack padding="2">
+                <Tooltip
+                  bg="black"
+                  color="white"
+                  label="Ctrl/CMD + Enter"
+                  closeDelay={500}
+                >
+                  <Button
+                    disabled={isVisualizing}
+                    isLoading={isVisualizing}
+                    leftIcon={
+                      <MagicIcon fill="gray.200" height="16px" width="16px" />
+                    }
+                    onClick={() => {
+                      send({
+                        type: 'COMPILE',
+                      });
+                    }}
+                    variant="secondary"
                   >
-                    <Button
-                      disabled={isVisualizing}
-                      isLoading={isVisualizing}
-                      leftIcon={
-                        <MagicIcon fill="gray.200" height="16px" width="16px" />
-                      }
-                      onClick={() => {
-                        send({
-                          type: 'COMPILE',
-                        });
-                      }}
-                    >
-                      Visualize
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    bg="black"
-                    color="white"
-                    label="Ctrl/CMD + S"
-                    closeDelay={500}
+                    Visualize
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  bg="black"
+                  color="white"
+                  label="Ctrl/CMD + S"
+                  closeDelay={500}
+                >
+                  <Button
+                    isLoading={sourceState.hasTag('persisting')}
+                    disabled={sourceState.hasTag('persisting')}
+                    onClick={() => {
+                      onSave();
+                    }}
+                    leftIcon={
+                      <persistMeta.Icon
+                        fill="gray.200"
+                        height="16px"
+                        width="16px"
+                      />
+                    }
+                    variant="outline"
                   >
-                    <Button
-                      isLoading={sourceState.hasTag('persisting')}
-                      disabled={sourceState.hasTag('persisting')}
-                      onClick={() => {
-                        onSave();
-                      }}
-                      leftIcon={
-                        <persistMeta.Icon
-                          fill="gray.200"
-                          height="16px"
-                          width="16px"
-                        />
-                      }
-                    >
-                      {persistMeta.text}
-                    </Button>
-                  </Tooltip>
-                  {sourceOwnershipStatus === 'user-owns-source' && (
-                    <Button
-                      disabled={sourceState.hasTag('forking')}
-                      isLoading={sourceState.hasTag('forking')}
-                      onClick={() => {
-                        onFork();
-                      }}
-                      leftIcon={
-                        <ForkIcon fill="gray.200" height="16px" width="16px" />
-                      }
-                    >
-                      Fork
-                    </Button>
-                  )}
-                </HStack>
+                    {persistMeta.text}
+                  </Button>
+                </Tooltip>
+                {sourceOwnershipStatus === 'user-owns-source' && (
+                  <Button
+                    disabled={sourceState.hasTag('forking')}
+                    isLoading={sourceState.hasTag('forking')}
+                    onClick={() => {
+                      onFork();
+                    }}
+                    leftIcon={
+                      <ForkIcon fill="gray.200" height="16px" width="16px" />
+                    }
+                    variant="outline"
+                  >
+                    Fork
+                  </Button>
+                )}
                 {sourceOwnershipStatus !== 'no-source' && (
                   <Button
                     leftIcon={<AddIcon fill="gray.200" />}
                     onClick={onCreateNew}
+                    variant="outline"
                   >
                     New
                   </Button>

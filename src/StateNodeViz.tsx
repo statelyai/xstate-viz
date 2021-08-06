@@ -49,7 +49,9 @@ type StateNodeDef =
 const StateNodeKey: React.FC<{ value: string }> = ({ value }) => {
   return (
     <div data-viz="stateNode-key">
-      <div data-viz="stateNode-keyText">{value}</div>
+      <div data-viz="stateNode-keyText" title={value}>
+        {value}
+      </div>
     </div>
   );
 };

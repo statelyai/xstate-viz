@@ -42,7 +42,7 @@ const rootLayoutOptions: LayoutOptions = {
   'elk.layered.crossingMinimization.semiInteractive': 'true',
   // 'elk.layering.strategy': 'NIKOLOV',
   // 'elk.wrapping.strategy': 'SINGLE_EDGE',
-  'elk.aspectRatio': '0.5',
+  'elk.aspectRatio': '0.75',
 };
 
 type RelativeNodeEdgeMap = [
