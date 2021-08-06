@@ -45,7 +45,7 @@ describe('Gists', () => {
       },
     });
 
-    cy.getCanvas();
+    cy.getCanvas().contains('gistMachine');
 
     cy.findByRole('button', { name: /Fork/i }).click();
 
