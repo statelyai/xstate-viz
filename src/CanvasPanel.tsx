@@ -48,9 +48,9 @@ export const CanvasPanel: React.FC = () => {
   return (
     <ChakraProvider theme={theme}>
       <Box display="grid" gridTemplateRows="3rem 1fr">
-        <HStack bg="gray.800" justifyContent="space-between" zIndex={1}>
+        <Box bg="gray.800" zIndex={1} padding="0">
           <CanvasPanelHeader />
-        </HStack>
+        </Box>
         <CanvasContainer>
           {digraph ? (
             <Graph digraph={digraph} />
