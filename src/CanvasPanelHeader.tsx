@@ -29,7 +29,7 @@ export const CanvasPanelHeader: React.FC = () => {
   const registryData = sourceState.context.sourceRegistryData;
   const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
   return (
-    <Box zIndex={1} display="flex" alignItems="center" height="3rem">
+    <HStack zIndex={1} justifyContent="space-between" height="3rem">
       <Link
         href="https://stately.ai"
         title="Stately.ai"
@@ -104,6 +104,6 @@ export const CanvasPanelHeader: React.FC = () => {
           </HStack>
         </Stack>
       )}
-    </Box>
+    </HStack>
   );
 };
