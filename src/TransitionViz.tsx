@@ -7,10 +7,11 @@ import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
-import { getActionLabel, isInternalEvent } from './utils';
+import { isInternalEvent } from './utils';
 import { AnyStateMachine, StateFrom } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';
+import { ActionViz } from './ActionViz';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -20,6 +21,7 @@ export type DelayedTransitionMetadata =
   | { delayType: 'NOT_DELAYED' }
   | { delayType: 'DELAYED_INVALID' }
   | { delayType: 'DELAYED_VALID'; delay: number; delayString: string };
+
 const getDelayFromEventType = (
   eventType: string,
   delayOptions: AnyStateMachine['options']['delays'],
@@ -178,11 +180,7 @@ export const TransitionViz: React.FC<{
       {definition.actions.length > 0 && (
         <div data-viz="transition-actions">
           {definition.actions.map((action, index) => {
-            return (
-              <div data-viz="action" data-viz-action="do" key={index}>
-                <span data-viz="action-text">{getActionLabel(action)}</span>
-              </div>
-            );
+            return <ActionViz key={index} action={action} kind="do" />;
           })}
         </div>
       )}

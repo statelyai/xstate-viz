@@ -3,13 +3,13 @@ import { useActor } from '@xstate/react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { StateNode } from 'xstate';
+import { ActionViz } from './ActionViz';
 import './ActionViz.scss';
 import { DirectedGraphNode } from './directedGraph';
 import { deleteRect, setRect } from './getRect';
 import './InvokeViz.scss';
 import { useSimulation } from './SimulationContext';
 import './StateNodeViz.scss';
-import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {
   key: string;
@@ -164,23 +164,15 @@ export const StateNodeViz: React.FC<{
           )}
           {stateNode.definition.entry.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="entry">
-              {stateNode.definition.entry.map((action, idx) => {
-                return (
-                  <div data-viz="action" data-viz-action="entry" key={idx}>
-                    <div data-viz="action-type">{getActionLabel(action)}</div>
-                  </div>
-                );
+              {stateNode.definition.entry.map((action, index) => {
+                return <ActionViz key={index} action={action} kind="entry" />;
               })}
             </div>
           )}
           {stateNode.definition.exit.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="exit">
-              {stateNode.definition.exit.map((action, idx) => {
-                return (
-                  <div data-viz="action" data-viz-action="exit" key={idx}>
-                    <div data-viz="action-type">{getActionLabel(action)}</div>
-                  </div>
-                );
+              {stateNode.definition.exit.map((action, index) => {
+                return <ActionViz key={index} action={action} kind="exit" />;
               })}
             </div>
           )}
