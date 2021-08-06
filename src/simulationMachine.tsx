@@ -144,7 +144,13 @@ export const simulationMachine = simModel.createMachine({
     {
       id: 'receiver',
       src: () => (sendBack, onReceive) => {
-        const receiver = createWindowReceiver();
+        const receiver = createWindowReceiver({
+          // for some random reason the `window.top` is being rewritten to `window.self`
+          // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
+          // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
+          // so we pass it explicitly here
+          targetWindow: window.parent,
+        });
         (window as any).receiver = receiver;
 
         onReceive((event) => {
