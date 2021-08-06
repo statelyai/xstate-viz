@@ -156,6 +156,31 @@ export const CanvasContainer: React.FC = ({ children }) => {
     }
   }, [state, canvasService]);
 
+  /**
+   * Observes the canvas's size and reports it to the canvasService
+   */
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+
+      if (!entry) return;
+
+      canvasService.send({
+        type: 'CANVAS_POSITION_UPDATED',
+        height: entry.contentRect.height,
+        width: entry.contentRect.width,
+        offsetX: entry.contentRect.left,
+        offsetY: entry.contentRect.top,
+      });
+    });
+
+    resizeObserver.observe(canvasRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [canvasService]);
+
   return (
     <div
       data-panel="viz"

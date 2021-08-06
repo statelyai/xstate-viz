@@ -1,4 +1,4 @@
-import { assign, createMachine, StateFrom } from 'xstate';
+import { assign, createMachine, Receiver, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
@@ -14,7 +14,7 @@ const initialPosition = {
     dx: 0,
     dy: 0,
   },
-  canvasPanel: {
+  canvasPanelPosition: {
     offsetY: 50,
     offsetX: 0,
     width: 0,
@@ -103,33 +103,11 @@ const getNewZoomAndPan = (
 
 export const canvasMachine = createMachine<typeof canvasModel>({
   context: canvasModel.initialContext,
-  invoke: {
-    src: () => (sendBack) => {
-      const interval = setInterval(() => {
-        const canvasPanel = document.querySelector('[data-panel="viz"]');
-
-        if (canvasPanel) {
-          const rect = canvasPanel.getBoundingClientRect();
-          sendBack({
-            type: 'CANVAS_POSITION_UPDATED',
-            offsetX: rect.x,
-            offsetY: rect.y,
-            height: rect.height,
-            width: rect.width,
-          });
-        }
-      }, 2000);
-
-      return () => {
-        clearInterval(interval);
-      };
-    },
-  },
   on: {
     CANVAS_POSITION_UPDATED: {
       actions: canvasModel.assign((ctx, e) => {
         return {
-          canvasPanel: {
+          canvasPanelPosition: {
             offsetY: e.offsetY,
             offsetX: e.offsetX,
             height: e.height,
@@ -145,10 +123,10 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           ctx.zoom * calculateZoomOutFactor(e.zoomFactor),
           ctx.pan,
           {
-            dx: e.x || ctx.canvasPanel.width / 2,
-            dy: e.y || ctx.canvasPanel.height / 2,
+            dx: e.x || ctx.canvasPanelPosition.width / 2,
+            dy: e.y || ctx.canvasPanelPosition.height / 2,
           },
-          ctx.canvasPanel,
+          ctx.canvasPanelPosition,
         );
       }),
       cond: (ctx) => ctx.zoom > MAX_ZOOM_OUT_FACTOR,
@@ -162,10 +140,10 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           ctx.zoom * (e.zoomFactor || DEFAULT_ZOOM_IN_FACTOR),
           ctx.pan,
           {
-            dx: e.x || ctx.canvasPanel.width / 2,
-            dy: e.y || ctx.canvasPanel.height / 2,
+            dx: e.x || ctx.canvasPanelPosition.width / 2,
+            dy: e.y || ctx.canvasPanelPosition.height / 2,
           },
-          ctx.canvasPanel,
+          ctx.canvasPanelPosition,
         );
       }),
       cond: (ctx) => ctx.zoom < MAX_ZOOM_IN_FACTOR,
