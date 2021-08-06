@@ -47,7 +47,7 @@ export const canvasModel = createModel(initialPosition, {
     SOURCE_CHANGED: (id: string | null) => ({
       id,
     }),
-    CANVAS_POSITION_UPDATED: (
+    CANVAS_RECT_CHANGED: (
       offsetY: number,
       offsetX: number,
       width: number,
@@ -104,7 +104,7 @@ const getNewZoomAndPan = (
 export const canvasMachine = createMachine<typeof canvasModel>({
   context: canvasModel.initialContext,
   on: {
-    CANVAS_POSITION_UPDATED: {
+    CANVAS_RECT_CHANGED: {
       actions: canvasModel.assign((ctx, e) => {
         return {
           canvasPanelPosition: {

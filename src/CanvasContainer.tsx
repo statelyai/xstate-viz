@@ -166,7 +166,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
       if (!entry) return;
 
       canvasService.send({
-        type: 'CANVAS_POSITION_UPDATED',
+        type: 'CANVAS_RECT_CHANGED',
         height: entry.contentRect.height,
         width: entry.contentRect.width,
         offsetX: entry.contentRect.left,
