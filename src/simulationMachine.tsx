@@ -149,7 +149,7 @@ export const simulationMachine = simModel.createMachine({
           // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
           // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
           // so we pass it explicitly here
-          targetWindow: window.parent,
+          targetWindow: window.opener || window.parent,
         });
         (window as any).receiver = receiver;
 
