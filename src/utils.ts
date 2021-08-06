@@ -171,12 +171,21 @@ export function uniq<T>(arr: T[]): T[] {
 export function isDelayedTransitionAction(
   action: ActionObject<any, any>,
 ): boolean {
-  return (
-    (action.type === ActionTypes.Send &&
-      (action as SendAction<any, any, any>).event.type.startsWith(
-        'xstate.after',
-      )) ||
-    (action.type === ActionTypes.Cancel &&
-      `${(action as CancelAction).sendId}`.startsWith('xstate.after'))
-  );
+  switch (action.type) {
+    case ActionTypes.Send: {
+      const sendAction = action as SendAction<
+        unknown,
+        AnyEventObject,
+        AnyEventObject
+      >;
+      return (
+        typeof sendAction.event === 'object' &&
+        sendAction.event.type.startsWith('xstate.after')
+      );
+    }
+    case ActionTypes.Cancel:
+      return `${(action as CancelAction).sendId}`.startsWith('xstate.after');
+    default:
+      return false;
+  }
 }
