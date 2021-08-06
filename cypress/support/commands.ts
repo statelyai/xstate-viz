@@ -4,12 +4,7 @@ import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
 import { inspect, Inspector } from '@xstate/inspect';
-import {
-  createMachine,
-  interpret,
-  InterpreterFrom,
-  StateMachine,
-} from 'xstate';
+import { interpret, InterpreterFrom, StateMachine } from 'xstate';
 import { state } from './state';
 import { Mutation, Query } from '../../src/graphql/schemaTypes.generated';
 
@@ -72,7 +67,7 @@ const visitInspector = () => {
     const inspector = inspect({
       iframe: () =>
         window.parent.document.querySelector<HTMLIFrameElement>('.aut-iframe'),
-      url: Cypress.config('baseUrl')!,
+      url: `${Cypress.config('baseUrl')!}?inspect`,
     })!;
     state('@@viz/inspector', inspector);
   });

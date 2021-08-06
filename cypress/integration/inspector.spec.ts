@@ -16,4 +16,15 @@ describe('Inspector', () => {
 
     cy.getCanvas().contains('my_inspected_machine');
   });
+
+  it.only('should list events sent to an inspected machine', () => {
+    cy.visitInspector();
+
+    cy.inspectMachine(createMachine({})).then((service) => {
+      service.send({ type: 'MY_EVENT' });
+
+      cy.findByRole('tab', { name: 'Events' }).realClick();
+      cy.findByRole('tabpanel', { name: 'Events' }).contains('MY_EVENT');
+    });
+  });
 });
