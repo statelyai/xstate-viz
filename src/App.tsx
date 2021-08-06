@@ -103,7 +103,7 @@ function App() {
                     </TabList>
 
                     <TabPanels minHeight={0}>
-                      <TabPanel padding={0} height="100%">
+                      <TabPanel height="100%" padding={0}>
                         {sourceState.matches({
                           with_source: 'loading_content',
                         }) && (
@@ -146,16 +146,16 @@ function App() {
                           />
                         )}
                       </TabPanel>
-                      <TabPanel height="100%">
+                      <TabPanel height="100%" overflowY="auto">
                         <StatePanel />
                       </TabPanel>
-                      <TabPanel overflow="hidden" height="100%">
+                      <TabPanel height="100%" overflow="hidden">
                         <EventsPanel />
                       </TabPanel>
-                      <TabPanel height="100%">
+                      <TabPanel height="100%" overflowY="auto">
                         <ActorsPanel />
                       </TabPanel>
-                      <TabPanel height="100%">
+                      <TabPanel height="100%" overflowY="auto">
                         <SettingsPanel />
                       </TabPanel>
                     </TabPanels>
