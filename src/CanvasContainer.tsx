@@ -183,7 +183,6 @@ export const CanvasContainer: React.FC = ({ children }) => {
 
   return (
     <div
-      data-panel="viz"
       ref={canvasRef}
       style={{
         cursor: getCursorByState(state),
