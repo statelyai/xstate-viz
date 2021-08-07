@@ -65,7 +65,7 @@ export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
     if (!action.event) {
       return (
         <ActionType>
-          <strong>send</strong> to <em>unknown</em>
+          <strong>send</strong> <em>unknown</em>
         </ActionType>
       );
     }
@@ -78,7 +78,6 @@ export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
           <strong>send</strong> {action.event.type}
         </>
       );
-
     const actionTo = action.to ? (
       action.to === SpecialTargets.Parent ? (
         <>
