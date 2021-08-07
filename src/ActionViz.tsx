@@ -62,6 +62,14 @@ export const RaiseActionLabel: React.FC<{ action: RaiseAction<any> }> = ({
 
 export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
   ({ action }) => {
+    if (!action.event) {
+      return (
+        <ActionType>
+          <strong>send</strong> <em>unknown</em>
+        </ActionType>
+      );
+    }
+
     const actionLabel =
       action.event.type === 'xstate.update' ? (
         <strong>send update</strong>
@@ -81,6 +89,7 @@ export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
     ) : (
       ''
     );
+
     return (
       <ActionType>
         {actionLabel} {actionTo}
