@@ -40,9 +40,11 @@ const rootLayoutOptions: LayoutOptions = {
   'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
   'elk.algorithm': 'layered',
   'elk.layered.crossingMinimization.semiInteractive': 'true',
-  // 'elk.layering.strategy': 'NIKOLOV',
-  // 'elk.wrapping.strategy': 'SINGLE_EDGE',
-  'elk.aspectRatio': '0.75',
+  'org.eclipse.elk.layered.layering.strategy': 'NIKOLOV',
+  'elk.layered.wrapping.strategy': 'SINGLE_EDGE',
+  'elk.aspectRatio': '1',
+  'elk.direction': 'RIGHT',
+  'elk.layered.unnecessaryBendpoints': 'true',
 };
 
 type RelativeNodeEdgeMap = [
