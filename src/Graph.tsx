@@ -355,6 +355,7 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   if (state.matches('success')) {
     return (
       <div
+        data-testid="canvas-graph"
         style={{
           transformOrigin: '0 0', // Since our layout is LTR, it's more predictable for zoom to happen from top left point
           transform: `translate3d(${pan.dx}px, ${pan.dy}px, 0) scale(${zoom})`,

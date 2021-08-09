@@ -145,12 +145,13 @@ const editorPanelMachine = editorPanelModel.createMachine(
               src: async (ctx) => {
                 const monaco = ctx.monacoRef!;
                 const uri = monaco.Uri.parse(ctx.mainFile);
-                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+                const getWorker =
+                  await monaco.languages.typescript.getTypeScriptWorker();
                 const tsWorker = await getWorker(uri);
 
-                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
-                  uri.toString(),
-                );
+                const usedXStateGistIdentifiers: string[] = await (
+                  tsWorker as any
+                ).queryXStateGistIdentifiers(uri.toString());
 
                 if (usedXStateGistIdentifiers.length > 0) {
                   const fixupImportsText = buildGistFixupImportsText(
@@ -456,68 +457,70 @@ export const EditorPanel: React.FC<{
                   onSave();
                 }}
               />
-              <HStack padding="2">
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + Enter"
-                  closeDelay={500}
-                >
-                  <Button
-                    disabled={isVisualizing}
-                    isLoading={isVisualizing}
-                    leftIcon={
-                      <MagicIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    onClick={() => {
-                      send({
-                        type: 'COMPILE',
-                      });
-                    }}
-                    variant="secondary"
+              <HStack padding="2" w="full" justifyContent="space-between">
+                <HStack>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + Enter"
+                    closeDelay={500}
                   >
-                    Visualize
-                  </Button>
-                </Tooltip>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label="Ctrl/CMD + S"
-                  closeDelay={500}
-                >
-                  <Button
-                    isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting')}
-                    onClick={() => {
-                      onSave();
-                    }}
-                    leftIcon={
-                      <persistMeta.Icon
-                        fill="gray.200"
-                        height="16px"
-                        width="16px"
-                      />
-                    }
-                    variant="outline"
+                    <Button
+                      disabled={isVisualizing}
+                      isLoading={isVisualizing}
+                      leftIcon={
+                        <MagicIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      onClick={() => {
+                        send({
+                          type: 'COMPILE',
+                        });
+                      }}
+                      variant="secondary"
+                    >
+                      Visualize
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label="Ctrl/CMD + S"
+                    closeDelay={500}
                   >
-                    {persistMeta.text}
-                  </Button>
-                </Tooltip>
-                {sourceOwnershipStatus === 'user-owns-source' && (
-                  <Button
-                    disabled={sourceState.hasTag('forking')}
-                    isLoading={sourceState.hasTag('forking')}
-                    onClick={() => {
-                      onFork();
-                    }}
-                    leftIcon={
-                      <ForkIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    variant="outline"
-                  >
-                    Fork
-                  </Button>
-                )}
+                    <Button
+                      isLoading={sourceState.hasTag('persisting')}
+                      disabled={sourceState.hasTag('persisting')}
+                      onClick={() => {
+                        onSave();
+                      }}
+                      leftIcon={
+                        <persistMeta.Icon
+                          fill="gray.200"
+                          height="16px"
+                          width="16px"
+                        />
+                      }
+                      variant="outline"
+                    >
+                      {persistMeta.text}
+                    </Button>
+                  </Tooltip>
+                  {sourceOwnershipStatus === 'user-owns-source' && (
+                    <Button
+                      disabled={sourceState.hasTag('forking')}
+                      isLoading={sourceState.hasTag('forking')}
+                      onClick={() => {
+                        onFork();
+                      }}
+                      leftIcon={
+                        <ForkIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      variant="outline"
+                    >
+                      Fork
+                    </Button>
+                  )}
+                </HStack>
                 {sourceOwnershipStatus !== 'no-source' && (
                   <Button
                     leftIcon={<AddIcon fill="gray.200" />}

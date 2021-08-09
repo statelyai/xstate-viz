@@ -128,7 +128,7 @@ function inspectMachine<T extends StateMachine<any, any, any, any>>(
 }
 
 const getCanvas = () => {
-  return cy.get('[data-panel="viz"]');
+  return cy.findByTestId('canvas-graph');
 };
 
 /**
