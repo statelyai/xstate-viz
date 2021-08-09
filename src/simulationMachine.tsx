@@ -1,5 +1,11 @@
 import produce from 'immer';
-import { ActorRefFrom, AnyInterpreter, InterpreterStatus, SCXML } from 'xstate';
+import {
+  ActorRefFrom,
+  AnyInterpreter,
+  EventFrom,
+  InterpreterStatus,
+  SCXML,
+} from 'xstate';
 import { AnyEventObject, assign, interpret, send, spawn, State } from 'xstate';
 import { createWindowReceiver } from '@xstate/inspect';
 
@@ -387,7 +393,9 @@ export const simulationMachine = simModel.createMachine(
   },
   {
     actions: {
-      resetVisualizationState: simModel.assign<any>({
+      resetVisualizationState: simModel.assign<
+        EventFrom<typeof simModel>['type']
+      >({
         events: [],
         previewEvent: undefined,
         currentSessionId: null,
