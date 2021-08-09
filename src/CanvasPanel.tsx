@@ -18,7 +18,7 @@ import {
 } from './canvasMachine';
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
-import { useSimulation } from './SimulationContext';
+import { useSimulation, useSimulationMode } from './SimulationContext';
 import { theme } from './theme';
 import { CanvasPanelHeader } from './CanvasPanelHeader';
 
@@ -44,6 +44,8 @@ export const CanvasPanel: React.FC = () => {
     canvasService,
     getShouldEnableZoomInButton,
   );
+
+  const simulationMode = useSimulationMode();
 
   return (
     <ChakraProvider theme={theme}>
@@ -95,14 +97,16 @@ export const CanvasPanel: React.FC = () => {
               variant="secondary"
             />
           </ButtonGroup>
-          <Button
-            size="sm"
-            margin={2}
-            onClick={() => simService.send('MACHINES.RESET')}
-            variant="secondary"
-          >
-            RESET
-          </Button>
+          {simulationMode === 'visualizing' && (
+            <Button
+              size="sm"
+              margin={2}
+              onClick={() => simService.send('MACHINES.RESET')}
+              variant="secondary"
+            >
+              RESET
+            </Button>
+          )}
         </HStack>
       </Box>
     </ChakraProvider>
