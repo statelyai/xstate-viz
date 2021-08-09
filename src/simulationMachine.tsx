@@ -235,7 +235,10 @@ export const simulationMachine = simModel.createMachine(
           'MACHINES.RESET': {
             target: 'active',
             internal: false,
-            actions: 'resetVisualizationState',
+            actions: [
+              'resetVisualizationState',
+              send('RESET', { to: 'services' }),
+            ],
           },
           'MACHINES.SET': {},
           'EVENT.PREVIEW': {
