@@ -17,7 +17,7 @@ export const simModel = createModel(
   {
     state: undefined as AnyState | undefined,
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
-    serviceDataMap: {} as Record<string, ServiceData>,
+    serviceDataMap: {} as Record<string, ServiceData | undefined>,
     currentSessionId: null as string | null,
     events: [] as SimEvent[],
     previewEvent: undefined as string | undefined,
