@@ -119,12 +119,12 @@ function getElkEdge(
 
     labels: [
       {
-        id: edge.id + '__label',
+        id: 'label:' + edge.id,
         width: edgeRect.width,
         height: edgeRect.height,
         text: edge.label.text || 'always',
         layoutOptions: {
-          'edgeLabels.inline': 'true',
+          'edgeLabels.inline': !isSelfEdge ? 'true' : 'false',
           'edgeLabels.placement': 'CENTER',
           'edgeLabels.centerLabelPlacementStrategy': 'TAIL_LAYER',
         },
@@ -229,9 +229,10 @@ function getElkChild(
       }, left=30, right=30, bottom=30]`,
       'elk.spacing.labelLabel': '10',
       ...(shouldWrap && {
-        'elk.aspectRatio': '1',
+        'elk.aspectRatio': '2',
         'elk.layered.wrapping.strategy': 'MULTI_EDGE',
       }),
+      // 'elk.layered.compaction.postCompaction.strategy': 'LEFT',
     },
   };
 }
@@ -281,6 +282,7 @@ function elkJSON(elkNode: StateElkNode): any {
           width: label.width,
           height: label.height,
           text: label.text,
+          layoutOptions: label.layoutOptions,
         })),
         layoutOptions: edge.layoutOptions,
         sources: edge.sources?.map((id) => getElkId(id)),
