@@ -220,7 +220,7 @@ export const EventsPanel: React.FC = () => {
         </Box>
       </Box>
       <Box overflowY="auto">
-        <Table width="100%" isolation="isolate">
+        <Table width="100%">
           <Thead>
             <Tr>
               <Th {...stickyProps} width="100%">
