@@ -14,17 +14,18 @@ import { AnyState, AnyStateMachine } from './types';
 import { print } from 'graphql';
 import { useSelector } from '@xstate/react';
 
-export const isNullEvent = (eventName: string) =>
-  eventName === ActionTypes.NullEvent;
+export function isNullEvent(eventName: string) {
+  return eventName === ActionTypes.NullEvent;
+}
 
-export const isInternalEvent = (eventName: string) => {
+export function isInternalEvent(eventName: string) {
   const allInternalEventsButNullEvent = Object.values(ActionTypes).filter(
     (prefix) => !isNullEvent(prefix),
   );
   return allInternalEventsButNullEvent.some((prefix) =>
     eventName.startsWith(prefix),
   );
-};
+}
 
 export function createInterpreterContext<
   TInterpreter extends Interpreter<any, any, any>,
