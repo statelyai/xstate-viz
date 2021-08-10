@@ -7,14 +7,14 @@ import { AddLikeDocument } from './graphql/AddLike.generated';
 import { RemoveLikeDocument } from './graphql/RemoveLike.generated';
 import { Heart, HeartOutlined } from './Icons';
 import { likesMachine } from './likesMachine';
-import { useSourceActor } from './sourceMachine';
+import { useSelectSourceActor } from './sourceMachine';
 import { gQuery } from './utils';
 
 export const LikeButton = () => {
   const authService = useAuth();
   const supabaseClient = useSelector(authService, getSupabaseClient);
 
-  const [sourceState] = useSourceActor(authService);
+  const [sourceState] = useSelectSourceActor(authService);
 
   const [state, send] = useMachine(likesMachine, {
     guards: {

@@ -29,7 +29,7 @@ import { ResizableBox } from './ResizableBox';
 import { SettingsPanel } from './SettingsPanel';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { useSourceActor } from './sourceMachine';
+import { useSelectSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
@@ -44,13 +44,9 @@ function App() {
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const digraph = useMemo(
-    () => (machine ? toDirectedGraph(machine) : undefined),
-    [machine],
-  );
   const authService = useInterpret(authMachine);
 
-  const [sourceState, sendToSourceService] = useSourceActor(authService);
+  const [sourceState, sendToSourceService] = useSelectSourceActor(authService);
 
   useEffect(() => {
     sendToSourceService({

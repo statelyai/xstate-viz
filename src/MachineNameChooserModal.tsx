@@ -12,11 +12,11 @@ import {
   ModalOverlay,
 } from '@chakra-ui/react';
 import { useAuth } from './authContext';
-import { useSourceActor } from './sourceMachine';
+import { useSelectSourceActor } from './sourceMachine';
 
 export const MachineNameChooserModal = () => {
   const authService = useAuth();
-  const [sourceState, send] = useSourceActor(authService);
+  const [sourceState, send] = useSelectSourceActor(authService);
 
   return (
     <Modal

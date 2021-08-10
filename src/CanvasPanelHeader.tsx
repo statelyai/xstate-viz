@@ -18,12 +18,12 @@ import { LikeButton } from './LikeButton';
 import { Logo } from './Logo';
 import { registryLinks } from './registryLinks';
 import { ShareButton } from './ShareButton';
-import { useSourceActor } from './sourceMachine';
+import { useSelectSourceActor } from './sourceMachine';
 
 export const CanvasPanelHeader: React.FC = () => {
   const authService = useAuth();
 
-  const [sourceState] = useSourceActor(authService);
+  const [sourceState] = useSelectSourceActor(authService);
 
   const loggedInUserData = useLoggedInUserData();
   const registryData = sourceState.context.sourceRegistryData;

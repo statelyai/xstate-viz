@@ -605,7 +605,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
 export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
   state.context.sourceRef!;
 
-export const useSourceActor = (
+export const useSelectSourceActor = (
   authService: ActorRefFrom<typeof authMachine>,
 ): [SourceMachineState, SourceMachineActorRef['send']] => {
   const sourceService = useSelector(authService, getSourceActor);
