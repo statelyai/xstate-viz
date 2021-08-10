@@ -11,14 +11,7 @@ import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import { editor, Range } from 'monaco-editor';
 import React, { Suspense } from 'react';
-import {
-  ActorRefFrom,
-  assign,
-  createMachine,
-  DoneInvokeEvent,
-  send,
-  spawn,
-} from 'xstate';
+import { ActorRefFrom, assign, DoneInvokeEvent, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { useSimulationMode } from './SimulationContext';

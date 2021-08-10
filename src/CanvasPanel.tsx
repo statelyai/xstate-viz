@@ -6,7 +6,9 @@ import {
   ChakraProvider,
   HStack,
   IconButton,
+  Spinner,
   Text,
+  VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
@@ -21,6 +23,7 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { theme } from './theme';
 import { CanvasPanelHeader } from './CanvasPanelHeader';
+import { Overlay } from './Overlay';
 
 export const CanvasPanel: React.FC = () => {
   const simService = useSimulation();
@@ -30,6 +33,10 @@ export const CanvasPanel: React.FC = () => {
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
+  const isLayoutPending = useSelector(simService, (state) =>
+    state.hasTag('layoutPending'),
+  );
+  const isEmpty = useSelector(simService, (state) => state.hasTag('empty'));
   const digraph = useMemo(
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
@@ -54,22 +61,23 @@ export const CanvasPanel: React.FC = () => {
           <CanvasPanelHeader />
         </Box>
         <CanvasContainer>
-          {digraph ? (
-            <Graph digraph={digraph} />
-          ) : (
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              padding="8"
-            >
-              <Text textAlign="center">
-                No machines to display yet...
-                <br />
-                Create one!
-              </Text>
-            </Box>
-          )}
+          {digraph && <Graph digraph={digraph} />}
+          <Overlay>
+            <Text textAlign="center">
+              {isLayoutPending ? (
+                <VStack spacing="4">
+                  <Spinner size="xl" />
+                  <Text>Visualizing machine...</Text>
+                </VStack>
+              ) : isEmpty ? (
+                <>
+                  No machines to visualize yet.
+                  <br />
+                  Create one!
+                </>
+              ) : null}
+            </Text>
+          </Overlay>
         </CanvasContainer>
         <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
           <ButtonGroup size="sm" spacing={2} isAttached>

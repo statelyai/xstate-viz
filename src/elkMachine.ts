@@ -21,13 +21,17 @@ export const createElkMachine = (digraph: DirectedGraphNode) => {
     initial: 'loading',
     states: {
       loading: {
+        entry: 'layoutPending',
         invoke: {
           src: (ctx) => getElkGraph(ctx.digraph),
           onDone: {
             target: 'success',
-            actions: assign({
-              elkGraph: (_, e: DoneInvokeEvent<any>) => e.data,
-            }),
+            actions: [
+              assign({
+                elkGraph: (_, e: DoneInvokeEvent<any>) => e.data,
+              }),
+              'layoutReady',
+            ],
           },
         },
       },

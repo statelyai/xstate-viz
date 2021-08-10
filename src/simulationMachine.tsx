@@ -51,6 +51,8 @@ export const simModel = createModel(
       'SERVICE.STOP': (sessionId: string) => ({ sessionId }),
       'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
       ERROR: (message: string) => ({ message }),
+      'LAYOUT.PENDING': () => ({}),
+      'LAYOUT.READY': () => ({}),
     },
   },
 );
@@ -218,7 +220,21 @@ export const simulationMachine = simModel.createMachine(
             });
           },
         },
+        initial: 'idle',
+        states: {
+          idle: {
+            tags: 'empty',
+          },
+          pending: {
+            tags: 'layoutPending',
+            on: {
+              'LAYOUT.READY': 'ready',
+            },
+          },
+          ready: {},
+        },
         on: {
+          'LAYOUT.PENDING': '.pending',
           'MACHINES.REGISTER': {
             actions: [
               'resetVisualizationState',
