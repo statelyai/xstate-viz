@@ -13007,6 +13007,11 @@ readdirp@~3.6.0:
   dependencies:
     picomatch "^2.2.1"
 
+realms-shim@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/realms-shim/-/realms-shim-1.2.2.tgz#bdf828ee316afa4c9ea2aab364d55b8ad7eb5904"
+  integrity sha512-NOskQ7IJEnHN4Dhu462Pf0Kl8YHSPjt6V+fVvrGSCs/SfAa433CLTyJ632DFsZC2ENBQ9p6tEZ3w+1Vkycuwyg==
+
 recursive-readdir@2.2.2:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/recursive-readdir/-/recursive-readdir-2.2.2.tgz#9946fb3274e1628de6e36b2f6714953b4845094f"

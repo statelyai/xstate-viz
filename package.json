@@ -31,6 +31,7 @@
     "react-json-view": "^1.21.3",
     "react-markdown": "^6.0.2",
     "react-scripts": "4.0.3",
+    "realms-shim": "^1.2.2",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
     "xstate": "^4.23.0"
