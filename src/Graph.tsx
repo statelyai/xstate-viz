@@ -232,7 +232,6 @@ function getElkChild(
         'elk.aspectRatio': '2',
         'elk.layered.wrapping.strategy': 'MULTI_EDGE',
       }),
-      // 'elk.layered.compaction.postCompaction.strategy': 'LEFT',
     },
   };
 }
