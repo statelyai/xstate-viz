@@ -151,18 +151,15 @@ export const TransitionViz: React.FC<{
         }}
         onClick={() => {
           // TODO: only if no parameters/schema
-          const { eventType } = definition;
-          if (!isInternalEvent(eventType)) {
-            service.send({
-              type: 'SERVICE.SEND',
-              event: toSCXMLEvent(
-                {
-                  type: definition.eventType,
-                },
-                { origin: state._sessionid as string },
-              ),
-            });
-          }
+          service.send({
+            type: 'SERVICE.SEND',
+            event: toSCXMLEvent(
+              {
+                type: definition.eventType,
+              },
+              { origin: state._sessionid as string },
+            ),
+          });
         }}
       >
         <span
