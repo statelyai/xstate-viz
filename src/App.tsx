@@ -38,6 +38,7 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {
   const paletteService = useInterpret(paletteMachine);
+  // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId

@@ -14,6 +14,7 @@ import {
   ModalHeader,
   ModalOverlay,
   Text,
+  Portal,
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
 import React from 'react';
@@ -55,25 +56,27 @@ export const Login: React.FC = () => {
               width="30px"
             />
           </MenuButton>
-          <MenuList>
-            {state.context.loggedInUserData && (
+          <Portal>
+            <MenuList>
+              {state.context.loggedInUserData && (
+                <MenuItem
+                  as="a"
+                  href={registryLinks.viewUserById(
+                    state.context.loggedInUserData.id,
+                  )}
+                >
+                  View Machines
+                </MenuItem>
+              )}
               <MenuItem
-                as="a"
-                href={registryLinks.viewUserById(
-                  state.context.loggedInUserData.id,
-                )}
+                onClick={() => {
+                  authService.send('SIGN_OUT');
+                }}
               >
-                View Machines
+                Logout
               </MenuItem>
-            )}
-            <MenuItem
-              onClick={() => {
-                authService.send('SIGN_OUT');
-              }}
-            >
-              Logout
-            </MenuItem>
-          </MenuList>
+            </MenuList>
+          </Portal>
         </Menu>
       )}
 
