@@ -39,11 +39,10 @@
   "scripts": {
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",
-    "start:app": "react-scripts start",
-    "build": "graphql-codegen && react-scripts build",
+    "start:app": "craco start",
+    "build": "graphql-codegen && craco build",
     "graphql:codegen": "graphql-codegen --watch",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "test": "craco test",
     "postinstall": "patch-package && mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public",
     "cypress:open": "cypress open",
     "cypress:test": "cypress run"
@@ -66,6 +65,7 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^6.2.0",
     "@graphql-codegen/cli": "^1.21.5",
     "@graphql-codegen/near-operation-file-preset": "^1.18.1",
     "@graphql-codegen/typed-document-node": "^1.18.6",
