@@ -7,7 +7,6 @@ import {
   HStack,
   IconButton,
   Spinner,
-  Text,
   VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
@@ -63,11 +62,11 @@ export const CanvasPanel: React.FC = () => {
         <CanvasContainer>
           {digraph && <Graph digraph={digraph} />}
           <Overlay>
-            <Text textAlign="center">
+            <Box textAlign="center">
               {isLayoutPending ? (
                 <VStack spacing="4">
                   <Spinner size="xl" />
-                  <Text>Visualizing machine...</Text>
+                  <Box>Visualizing machine...</Box>
                 </VStack>
               ) : isEmpty ? (
                 <>
@@ -76,7 +75,7 @@ export const CanvasPanel: React.FC = () => {
                   Create one!
                 </>
               ) : null}
-            </Text>
+            </Box>
           </Overlay>
         </CanvasContainer>
         <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
