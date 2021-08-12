@@ -113,7 +113,6 @@ export const StateNodeViz: React.FC<{
           ['atomic', 'final'].includes(stateNode.type) || undefined
         }
         data-rect-id={stateNode.id}
-        title={`#${stateNode.id}`}
         style={{
           // position: 'absolute',
           ...(node.layout && {
