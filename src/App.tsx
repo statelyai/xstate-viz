@@ -44,10 +44,6 @@ function App() {
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const digraph = useMemo(
-    () => (machine ? toDirectedGraph(machine) : undefined),
-    [machine],
-  );
   const authService = useInterpret(authMachine);
 
   const [sourceState, sendToSourceService] = useSourceActor(authService);

@@ -1,12 +1,11 @@
 import { ChakraProvider, Link } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { StateNode } from 'xstate';
 import { ActionViz } from './ActionViz';
 import './ActionViz.scss';
 import { DirectedGraphNode } from './directedGraph';
-import { deleteRect, setRect } from './getRect';
 import './InvokeViz.scss';
 import { useSimulation } from './SimulationContext';
 import './StateNodeViz.scss';
@@ -67,7 +66,6 @@ export const StateNodeViz: React.FC<{
     state.context.serviceDataMap[state.context.currentSessionId!];
   const simState = serviceData?.state;
   const simMachine = serviceData?.machine;
-  const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {
@@ -81,15 +79,6 @@ export const StateNodeViz: React.FC<{
       return undefined;
     }
   }, [state, simState, simMachine]);
-
-  useEffect(() => {
-    if (ref.current) {
-      setRect(stateNode.id, ref.current);
-    }
-    return () => {
-      deleteRect(stateNode.id);
-    };
-  }, [stateNode]);
 
   if (!simState) {
     return null;
@@ -117,13 +106,13 @@ export const StateNodeViz: React.FC<{
       }}
     >
       <div
-        ref={ref}
         data-viz="stateNode"
         data-viz-type={stateNode.type}
         data-viz-parent-type={stateNode.parent?.type}
         data-viz-atomic={
           ['atomic', 'final'].includes(stateNode.type) || undefined
         }
+        data-rect-id={stateNode.id}
         style={{
           // position: 'absolute',
           ...(node.layout && {
@@ -132,7 +121,10 @@ export const StateNodeViz: React.FC<{
           }),
         }}
       >
-        <div data-viz="stateNode-content" data-rect={`${stateNode.id}:content`}>
+        <div
+          data-viz="stateNode-content"
+          data-rect-id={`${stateNode.id}:content`}
+        >
           <div data-viz="stateNode-header">
             {['history', 'final'].includes(stateNode.type) && (
               <div
