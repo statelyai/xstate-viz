@@ -304,6 +304,9 @@ export async function getElkGraph(
   const relativeNodeEdgeMap = getRelativeNodeEdgeMap(rootDigraphNode);
   const backlinkMap = getBackLinkMap(rootDigraphNode);
   const rootEdges = relativeNodeEdgeMap[0].get(undefined) || [];
+
+  // The root node is an invisible node; the machine node is a direct child of this node.
+  // It is wrapped so we can have self-loops, which cannot be placed in the root node.
   const elkNode: ElkNode = {
     id: 'root',
     edges: rootEdges.map((edge) => getElkEdge(edge, rectMap)),
