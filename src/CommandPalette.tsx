@@ -47,14 +47,11 @@ export const CommandPalette: React.FC<{
   const [current, send] = useActor(usePalette());
   const isOpen = current.matches('opened');
 
-  const withCloseModal = (fn?: () => void) => {
-    fn?.();
-    send('HIDE_PALETTE');
-  };
+  const close = () => send('HIDE_PALETTE');
 
   return (
     <Modal
-      onClose={withCloseModal}
+      onClose={close}
       isOpen={isOpen}
       isCentered
       motionPreset="slideInBottom"
@@ -62,11 +59,11 @@ export const CommandPalette: React.FC<{
       <ModalOverlay />
       <ModalContent minHeight={100} background="none" boxShadow="none">
         <ModalBody display="flex" justifyContent="center" alignItems="center">
-          <Menu defaultIsOpen isOpen={true}>
+          <Menu defaultIsOpen isOpen={true} closeOnSelect onClose={close}>
             <AutoFocusMenu isOpen={isOpen} />
             <MenuList paddingY={5}>
               <MenuListItem
-                onClick={() => withCloseModal(onSave)}
+                onClick={onSave}
                 command={
                   <>
                     <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
@@ -76,7 +73,7 @@ export const CommandPalette: React.FC<{
                 Saves or updates the code in Stately Registry
               </MenuListItem>
               <MenuListItem
-                onClick={() => withCloseModal(onVisualize)}
+                onClick={onVisualize}
                 command={
                   <>
                     <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
