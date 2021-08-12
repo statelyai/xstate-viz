@@ -408,10 +408,10 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   const sim = useSimulation();
   const [state, send] = useMachine(() => createElkMachine(digraph), {
     actions: {
-      layoutPending: () => {
+      notifyLayoutPending: () => {
         sim.send('LAYOUT.PENDING');
       },
-      layoutReady: () => {
+      notifyLayoutReady: () => {
         sim.send('LAYOUT.READY');
       },
     },

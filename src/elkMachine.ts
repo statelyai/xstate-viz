@@ -21,7 +21,7 @@ export const createElkMachine = (digraph: DirectedGraphNode) => {
     initial: 'loading',
     states: {
       loading: {
-        entry: 'layoutPending',
+        entry: 'notifyLayoutPending',
         invoke: {
           src: (ctx) => getElkGraph(ctx.digraph),
           onDone: {
@@ -30,7 +30,7 @@ export const createElkMachine = (digraph: DirectedGraphNode) => {
               assign({
                 elkGraph: (_, e: DoneInvokeEvent<any>) => e.data,
               }),
-              'layoutReady',
+              'notifyLayoutReady',
             ],
           },
         },
