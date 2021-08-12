@@ -1,37 +1,42 @@
 import {
   Modal,
   ModalContent,
-  List,
-  ListItem,
   Button,
   Box,
   Kbd,
   ModalOverlay,
+  useMenuContext,
+  Menu,
+  MenuList,
+  MenuItem,
+  ModalBody,
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
+import { ReactNode } from 'react-markdown';
 import { usePalette } from './PaletteContext';
 
-const CommandButton: React.FC<{ onClick(): void }> = ({
-  children,
+const RestoreMenuFocus = ({ isOpen }: { isOpen: boolean }) => {
+  const { openAndFocusFirstItem } = useMenuContext();
+  useLayoutEffect(() => {
+    if (isOpen) {
+      openAndFocusFirstItem();
+    }
+  }, [isOpen, openAndFocusFirstItem]);
+  return null;
+};
+
+const MenuListItem: React.FC<{ onClick: () => void; command: ReactNode }> = ({
   onClick,
+  command,
+  children,
 }) => (
-  <Button
-    rounded="none"
-    paddingLeft="5"
-    paddingRight="5"
-    display="inline-flex"
-    justifyContent="flex-start"
-    alignItems="center"
-    _focus={{
-      borderLeft: '5px solid var(--chakra-colors-blue-300)',
-    }}
-    isFullWidth
-    variant="unstyled"
-    onClick={onClick}
-  >
+  <MenuItem padding="5" onClick={onClick}>
     {children}
-  </Button>
+    <Box as="span" marginLeft="auto">
+      {command}
+    </Box>
+  </MenuItem>
 );
 
 export const CommandPalette: React.FC<{
@@ -39,48 +44,53 @@ export const CommandPalette: React.FC<{
   onVisualize(): void;
 }> = ({ onSave, onVisualize }) => {
   const [current, send] = useActor(usePalette());
+  const isOpen = current.matches('opened');
+
+  const withCloseModal = (fn?: () => void) => {
+    fn?.();
+    send('HIDE_PALETTE');
+  };
 
   return (
     <Modal
-      size="lg"
+      size="2xl"
       onClose={() => {
         send('HIDE_PALETTE');
       }}
-      isOpen={current.matches('opened')}
+      isOpen={isOpen}
       isCentered
       motionPreset="slideInBottom"
-      autoFocus
+      closeOnEsc
     >
       <ModalOverlay />
-      <ModalContent>
-        <List spacing="5" paddingY="5">
-          <ListItem borderRadius="0">
-            <CommandButton
-              onClick={() => {
-                onSave();
-                send('HIDE_PALETTE');
-              }}
-            >
-              Saves or updates the code in Stately Registry{' '}
-              <Box as="span" marginLeft="auto">
-                <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
-              </Box>
-            </CommandButton>
-          </ListItem>
-          <ListItem>
-            <CommandButton
-              onClick={() => {
-                onVisualize();
-                send('HIDE_PALETTE');
-              }}
-            >
-              Visualizes the current editor code
-              <Box as="span" marginLeft="auto">
-                <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
-              </Box>
-            </CommandButton>
-          </ListItem>
-        </List>
+      <ModalContent minHeight={100} background="none" boxShadow="none">
+        <ModalBody display="flex" justifyContent="center" alignItems="center">
+          <Menu isOpen={isOpen}>
+            <RestoreMenuFocus isOpen={isOpen} />
+            <MenuList paddingY={5}>
+              <MenuListItem
+                onClick={() => withCloseModal(onSave)}
+                command={
+                  <>
+                    <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
+                  </>
+                }
+              >
+                Saves or updates the code in Stately Registry
+              </MenuListItem>
+              <MenuListItem
+                onClick={() => withCloseModal(onVisualize)}
+                command={
+                  <>
+                    <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
+                  </>
+                }
+              >
+                Saves or updates the code in Stately Registry
+              </MenuListItem>
+            </MenuList>
+          </Menu>
+        </ModalBody>
       </ModalContent>
     </Modal>
   );
