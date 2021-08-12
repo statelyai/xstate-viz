@@ -32,7 +32,7 @@ const rootLayoutOptions: LayoutOptions = {
   'elk.algorithm': 'layered',
   'elk.layered.considerModelOrder': 'NODES_AND_EDGES',
   'elk.layered.wrapping.strategy': 'MULTI_EDGE',
-  'elk.layered.compaction.postCompaction.strategy': 'RIGHT',
+  'elk.layered.compaction.postCompaction.strategy': 'LEFT',
   'elk.aspectRatio': '1',
   'elk.direction': 'RIGHT',
 };
@@ -232,9 +232,8 @@ function getElkChild(
       ...(shouldWrap && {
         'elk.aspectRatio': '2',
         'elk.layered.wrapping.strategy': 'MULTI_EDGE',
-        'elk.layered.compaction.postCompaction.strategy': 'RIGHT',
+        'elk.layered.compaction.postCompaction.strategy': 'LEFT',
       }),
-      // 'elk.layered.compaction.connectedComponents': 'true',
     },
   };
 }
