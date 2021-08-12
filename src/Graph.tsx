@@ -385,6 +385,7 @@ export async function getElkGraph(
     console.log(JSON.stringify(elkJSON(rootElkNode as StateElkNode), null, 2));
   }
 
+  // unwrap from the "fake" ancestor node created in the `elkNode` structure
   const machineElkNode = rootElkNode.children![0] as StateElkNode;
 
   setLayout(machineElkNode, undefined);
