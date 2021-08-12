@@ -61,22 +61,21 @@ export const CanvasPanel: React.FC = () => {
         </Box>
         <CanvasContainer>
           {digraph && <Graph digraph={digraph} />}
-          <Overlay>
-            <Box textAlign="center">
-              {isLayoutPending ? (
+          {isLayoutPending && (
+            <Overlay>
+              <Box textAlign="center">
                 <VStack spacing="4">
                   <Spinner size="xl" />
                   <Box>Visualizing machine...</Box>
                 </VStack>
-              ) : isEmpty ? (
-                <>
-                  No machines to visualize yet.
-                  <br />
-                  Create one!
-                </>
-              ) : null}
-            </Box>
-          </Overlay>
+              </Box>
+            </Overlay>
+          )}
+          {isEmpty && (
+            <Overlay>
+              <Box textAlign="center">No machines visualized yet.</Box>
+            </Overlay>
+          )}
         </CanvasContainer>
         <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
           <ButtonGroup size="sm" spacing={2} isAttached>
