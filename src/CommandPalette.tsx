@@ -17,7 +17,7 @@ import { usePalette } from './PaletteContext';
 
 // this hack is needed at the moment because Chakra assumes that Menus are always used in combination with MenuButtons
 // because of that logic related to auto-focusing menu items partially lives in the MenuButton and, in our case, it's just not executed here
-const RestoreMenuFocus = ({ isOpen }: { isOpen: boolean }) => {
+const AutoFocusMenu = ({ isOpen }: { isOpen: boolean }) => {
   const { openAndFocusFirstItem } = useMenuContext();
   useLayoutEffect(() => {
     if (isOpen) {
@@ -63,7 +63,7 @@ export const CommandPalette: React.FC<{
       <ModalContent minHeight={100} background="none" boxShadow="none">
         <ModalBody display="flex" justifyContent="center" alignItems="center">
           <Menu defaultIsOpen isOpen={true}>
-            <RestoreMenuFocus isOpen={isOpen} />
+            <AutoFocusMenu isOpen={isOpen} />
             <MenuList paddingY={5}>
               <MenuListItem
                 onClick={() => withCloseModal(onSave)}

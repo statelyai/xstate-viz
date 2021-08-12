@@ -45,6 +45,8 @@ export const paletteMachine = paletteModel.createMachine({
       },
     },
     opened: {
+      // Chakra needs to close the Modal on press of ESC but having a Menu inside Modal breaks that
+      // TODO: Fix this in Chakra layer
       invoke: {
         src: () => (sendBack) => {
           const handler = (e: KeyboardEvent) => {
