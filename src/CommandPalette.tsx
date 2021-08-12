@@ -1,7 +1,6 @@
 import {
   Modal,
   ModalContent,
-  Button,
   Box,
   Kbd,
   ModalOverlay,
@@ -31,9 +30,9 @@ const MenuListItem: React.FC<{ onClick: () => void; command: ReactNode }> = ({
   command,
   children,
 }) => (
-  <MenuItem padding="5" onClick={onClick}>
+  <MenuItem fontWeight="700" padding="5" onClick={onClick}>
     {children}
-    <Box as="span" marginLeft="auto">
+    <Box as="span" paddingLeft="10" marginLeft="auto">
       {command}
     </Box>
   </MenuItem>
@@ -53,19 +52,15 @@ export const CommandPalette: React.FC<{
 
   return (
     <Modal
-      size="2xl"
-      onClose={() => {
-        send('HIDE_PALETTE');
-      }}
+      onClose={withCloseModal}
       isOpen={isOpen}
       isCentered
       motionPreset="slideInBottom"
-      closeOnEsc
     >
       <ModalOverlay />
       <ModalContent minHeight={100} background="none" boxShadow="none">
         <ModalBody display="flex" justifyContent="center" alignItems="center">
-          <Menu isOpen={isOpen}>
+          <Menu defaultIsOpen isOpen={true}>
             <RestoreMenuFocus isOpen={isOpen} />
             <MenuList paddingY={5}>
               <MenuListItem
@@ -82,11 +77,11 @@ export const CommandPalette: React.FC<{
                 onClick={() => withCloseModal(onVisualize)}
                 command={
                   <>
-                    <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
+                    <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
                   </>
                 }
               >
-                Saves or updates the code in Stately Registry
+                Visualizes the current editor code
               </MenuListItem>
             </MenuList>
           </Menu>

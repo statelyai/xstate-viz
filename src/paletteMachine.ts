@@ -45,6 +45,19 @@ export const paletteMachine = paletteModel.createMachine({
       },
     },
     opened: {
+      invoke: {
+        src: () => (sendBack) => {
+          const handler = (e: KeyboardEvent) => {
+            if (e.code === 'Escape') {
+              sendBack('HIDE_PALETTE');
+            }
+          };
+          window.addEventListener('keydown', handler);
+          return () => {
+            window.removeEventListener('keydown', handler);
+          };
+        },
+      },
       on: {
         HIDE_PALETTE: 'closed',
       },
