@@ -1,12 +1,3 @@
-[data-viz='transition-actions'] {
-  background-color: var(--viz-color-bg);
-  padding: 0.5rem;
-
-  &:empty {
-    display: none;
-  }
-}
-
 [data-viz='action'] {
   color: var(--viz-color-fg);
   display: flex;
@@ -29,7 +20,7 @@
 }
 
 [data-viz='action-type'] {
-  font-size: var(--chakra-fontSizes-sm);
+  font-size: var(--chakra-fontSizes-xs);
   max-width: 15ch;
   text-overflow: ellipsis;
   overflow: hidden;
