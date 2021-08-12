@@ -29,7 +29,7 @@ import { ResizableBox } from './ResizableBox';
 import { SettingsPanel } from './SettingsPanel';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { useSelectSourceActor } from './sourceMachine';
+import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
@@ -47,7 +47,7 @@ function App() {
   });
   const authService = useInterpret(authMachine);
 
-  const [sourceState, sendToSourceService] = useSelectSourceActor(authService);
+  const [sourceState, sendToSourceService] = useSourceActor(authService);
 
   useEffect(() => {
     sendToSourceService({
