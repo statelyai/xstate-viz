@@ -19,7 +19,6 @@ import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
-import { Footer } from './Footer';
 import './Graph';
 import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
@@ -164,7 +163,6 @@ function App() {
                 </ResizableBox>
                 <MachineNameChooserModal />
               </ChakraProvider>
-              <Footer />
             </Box>
           </SimulationProvider>
         </PaletteProvider>
