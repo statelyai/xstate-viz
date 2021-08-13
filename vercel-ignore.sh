@@ -6,7 +6,7 @@
 function get_remote_branch_hash () {
   # get hash of a remote branch, grab the first word (the hash)
   # and format it with rev-parse to get a short hash that is comparable with VERCEL_GIT_COMMIT_SHA
-  local result="$(git rev-parse --short `git ls-remote origin main | awk '{ print $1 }'`)"
+  local result="$(git rev-parse --short `git ls-remote https://github.com/statelyai/xstate-viz.git main | awk '{ print $1 }'`)"
   echo "$result"
 }
 
