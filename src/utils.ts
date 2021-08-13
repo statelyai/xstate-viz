@@ -112,6 +112,10 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
 export const isStringifiedFunction = (str: string): boolean =>
   /^function\s*\(/.test(str) || str.includes('=>');
 
+const testPlatform = (re: RegExp): boolean =>
+  re.test(window.navigator.platform);
+export const isMac = () => testPlatform(/^Mac/);
+
 // export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
 //   const children = getChildren(stateNode);
 
