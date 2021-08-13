@@ -6,7 +6,6 @@ import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { Point } from './pathUtils';
 import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
-import { isInternalEvent } from './utils';
 import { AnyStateMachine, StateFrom } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';
@@ -17,7 +16,6 @@ const getGuardType = (guard: Guard<any, any>) => {
 };
 
 export type DelayedTransitionMetadata =
-  | { delayType: 'NOT_DELAYED' }
   | { delayType: 'DELAYED_INVALID' }
   | { delayType: 'DELAYED_VALID'; delay: number; delayString: string };
 
@@ -26,11 +24,11 @@ const getDelayFromEventType = (
   delayOptions: AnyStateMachine['options']['delays'],
   context: AnyStateNodeDefinition['context'],
   event: any,
-): DelayedTransitionMetadata => {
+): DelayedTransitionMetadata | undefined => {
   try {
     const isDelayedEvent = eventType.startsWith('xstate.after');
 
-    if (!isDelayedEvent) return { delayType: 'NOT_DELAYED' };
+    if (!isDelayedEvent) return undefined;
 
     const DELAYED_EVENT_REGEXT = /^xstate\.after\((.*)\)#.*$/;
     // Validate the delay duration
@@ -101,32 +99,30 @@ export const TransitionViz: React.FC<{
     return null;
   }
 
+  const isDisabled =
+    delay?.delayType === 'DELAYED_INVALID' ||
+    !state.nextEvents.includes(definition.eventType);
+  const isPotential =
+    state.nextEvents.includes(edge.transition.eventType) &&
+    !!state.configuration.find((sn) => sn === edge.source);
+
   return (
     <div
       data-viz="transition"
-      data-viz-potential={
-        (state.nextEvents.includes(edge.transition.eventType) &&
-          !!state.configuration.find((sn) => sn === edge.source)) ||
-        undefined
-      }
+      data-viz-potential={isPotential || undefined}
+      data-viz-disabled={isDisabled || undefined}
+      data-is-delayed={delay ?? undefined}
       data-rect-id={edge.id}
       style={{
         position: 'absolute',
         ...(position && { left: `${position.x}px`, top: `${position.y}px` }),
+        // @ts-ignore
+        '--delay': delay?.delayType === 'DELAYED_VALID' && delay.delay,
       }}
     >
       <button
         data-viz="transition-label"
-        disabled={
-          delay?.delayType === 'DELAYED_INVALID' ||
-          !state.nextEvents.includes(definition.eventType)
-        }
-        style={
-          {
-            '--delay': delay?.delayType === 'DELAYED_VALID' && delay.delay,
-          } as React.CSSProperties
-        }
-        data-is-delayed={delay?.delayType !== 'NOT_DELAYED'}
+        disabled={isDisabled}
         onMouseEnter={() => {
           service.send({
             type: 'EVENT.PREVIEW',
@@ -151,11 +147,11 @@ export const TransitionViz: React.FC<{
           });
         }}
       >
-        <span
-          data-viz="transition-event"
-          data-is-delayed={delay?.delayType !== 'NOT_DELAYED'}
-        >
+        <span data-viz="transition-event">
           <EventTypeViz eventType={definition.eventType} delay={delay} />
+          {delay && delay.delayType === 'DELAYED_VALID' && (
+            <DelayProgress active={isPotential} duration={delay.delay} />
+          )}
         </span>
         {definition.cond && (
           <span data-viz="transition-guard">
@@ -163,13 +159,48 @@ export const TransitionViz: React.FC<{
           </span>
         )}
       </button>
-      {definition.actions.length > 0 && (
-        <div data-viz="transition-actions">
-          {definition.actions.map((action, index) => {
-            return <ActionViz key={index} action={action} kind="do" />;
-          })}
-        </div>
-      )}
+      <div data-viz="transition-content">
+        {definition.actions.length > 0 && (
+          <div data-viz="transition-actions">
+            {definition.actions.map((action, index) => {
+              return <ActionViz key={index} action={action} kind="do" />;
+            })}
+          </div>
+        )}
+      </div>
     </div>
+  );
+};
+
+const DelayProgress: React.FC<{ active: boolean; duration: number }> = ({
+  active,
+  duration,
+}) => {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      data-viz="transitionDelay"
+      data-viz-active={active || undefined}
+      style={{
+        transform: 'rotate(-90deg)',
+        display: 'inline-block',
+        width: '1rem',
+        height: '1rem',
+        overflow: 'visible',
+        // @ts-ignore
+        '--duration': duration,
+      }}
+    >
+      <circle
+        cx={50}
+        cy={50}
+        r={45}
+        strokeDasharray={1}
+        pathLength={1}
+        stroke="#fff"
+        strokeWidth={25}
+        fill="transparent"
+      />
+    </svg>
   );
 };

@@ -33,7 +33,7 @@ const rootLayoutOptions: LayoutOptions = {
   'elk.layered.considerModelOrder': 'NODES_AND_EDGES',
   'elk.layered.wrapping.strategy': 'MULTI_EDGE',
   'elk.layered.compaction.postCompaction.strategy': 'LEFT',
-  'elk.aspectRatio': '1',
+  'elk.aspectRatio': '2',
   'elk.direction': 'RIGHT',
 };
 
