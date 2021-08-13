@@ -62,24 +62,25 @@ function App() {
   });
 
   return (
-    <EditorThemeProvider>
-      <AuthProvider value={authService}>
-        <PaletteProvider value={paletteService}>
-          <SimulationProvider value={simService}>
-            <Box
-              data-testid="app"
-              data-viz-theme="dark"
-              as="main"
-              display="grid"
-              gridTemplateColumns="1fr auto"
-              gridTemplateRows="1fr auto"
-              gridTemplateAreas="'canvas panels' 'footer footer'"
-              height="100vh"
-            >
+    <ChakraProvider theme={theme}>
+      <EditorThemeProvider>
+        <AuthProvider value={authService}>
+          <PaletteProvider value={paletteService}>
+            <SimulationProvider value={simService}>
+              <Box
+                data-testid="app"
+                data-viz-theme="dark"
+                as="main"
+                display="grid"
+                gridTemplateColumns="1fr auto"
+                gridTemplateRows="1fr auto"
+                gridTemplateAreas="'canvas panels' 'footer footer'"
+                height="100vh"
+              >
               <CanvasProvider value={canvasService}>
-                <CanvasPanel />
-              </CanvasProvider>
-              <ChakraProvider theme={theme}>
+                  <CanvasPanel />
+                </CanvasProvider>
+
                 <ResizableBox gridArea="panels" minHeight={0}>
                   <Tabs
                     bg="gray.800"
@@ -158,12 +159,12 @@ function App() {
                   </Tabs>
                 </ResizableBox>
                 <MachineNameChooserModal />
-              </ChakraProvider>
-            </Box>
-          </SimulationProvider>
-        </PaletteProvider>
-      </AuthProvider>
-    </EditorThemeProvider>
+              </Box>
+            </SimulationProvider>
+          </PaletteProvider>
+        </AuthProvider>
+      </EditorThemeProvider>
+    </ChakraProvider>
   );
 }
 
