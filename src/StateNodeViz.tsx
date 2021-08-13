@@ -108,6 +108,7 @@ export const StateNodeViz: React.FC<{
       <div
         data-viz="stateNode"
         data-viz-type={stateNode.type}
+        data-viz-history={stateNode.history ?? undefined}
         data-viz-parent-type={stateNode.parent?.type}
         data-viz-atomic={
           ['atomic', 'final'].includes(stateNode.type) || undefined
@@ -130,6 +131,7 @@ export const StateNodeViz: React.FC<{
               <div
                 data-viz="stateNode-type"
                 data-viz-type={stateNode.type}
+                data-viz-history={stateNode.history ?? undefined}
               ></div>
             )}
             <StateNodeKey value={stateNode.key} />
