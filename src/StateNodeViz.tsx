@@ -1,4 +1,4 @@
-import { ChakraProvider, Link } from '@chakra-ui/react';
+import { Link } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -171,17 +171,15 @@ export const StateNodeViz: React.FC<{
             </div>
           )}
           {stateNode.meta?.description && (
-            <ChakraProvider>
-              <div data-viz="stateNode-meta">
-                <ReactMarkdown
-                  components={{
-                    a: ({ node, ...props }) => <Link {...props} />,
-                  }}
-                >
-                  {stateNode.meta.description}
-                </ReactMarkdown>
-              </div>
-            </ChakraProvider>
+            <div data-viz="stateNode-meta">
+              <ReactMarkdown
+                components={{
+                  a: ({ node, ...props }) => <Link {...props} />,
+                }}
+              >
+                {stateNode.meta.description}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
         {'states' in stateNode && (
