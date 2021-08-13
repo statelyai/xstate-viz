@@ -1,0 +1,30 @@
+[data-viz='delay'] {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+
+  > [data-viz='delay-circle'],
+  > [data-viz='delay-fill'] {
+    transition: opacity 0.3s ease;
+    stroke-width: 20;
+  }
+
+  &[data-viz-active] {
+    opacity: 1;
+    > [data-viz='delay-fill'] {
+      animation: delay-progress calc(var(--delay, 0) * 1ms) both linear;
+    }
+  }
+}
+
+[data-viz='delay-circle'] {
+  opacity: 0.4;
+}
+
+@keyframes delay-progress {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}

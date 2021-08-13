@@ -79,23 +79,3 @@
   }
   padding: 0rem 0.5rem 0.5rem;
 }
-
-[data-viz='transitionDelay'] {
-  > circle {
-    opacity: 0.5;
-    transition: opacity 0.3s ease;
-  }
-
-  &[data-viz-active] > circle {
-    opacity: 1;
-    @keyframes dash {
-      from {
-        stroke-dashoffset: 1;
-      }
-      to {
-        stroke-dashoffset: 0;
-      }
-    }
-    animation: dash calc(var(--delay, 0) * 1ms) both linear;
-  }
-}
