@@ -10,6 +10,7 @@ import { AnyStateMachine, StateFrom } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';
 import { ActionViz } from './ActionViz';
+import { DelayViz } from './DelayViz';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -150,7 +151,7 @@ export const TransitionViz: React.FC<{
         <span data-viz="transition-event">
           <EventTypeViz eventType={definition.eventType} delay={delay} />
           {delay && delay.delayType === 'DELAYED_VALID' && (
-            <DelayProgress active={isPotential} duration={delay.delay} />
+            <DelayViz active={isPotential} duration={delay.delay} />
           )}
         </span>
         {definition.cond && (
@@ -169,38 +170,5 @@ export const TransitionViz: React.FC<{
         )}
       </div>
     </div>
-  );
-};
-
-const DelayProgress: React.FC<{ active: boolean; duration: number }> = ({
-  active,
-  duration,
-}) => {
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      data-viz="transitionDelay"
-      data-viz-active={active || undefined}
-      style={{
-        transform: 'rotate(-90deg)',
-        display: 'inline-block',
-        width: '1rem',
-        height: '1rem',
-        overflow: 'visible',
-        // @ts-ignore
-        '--duration': duration,
-      }}
-    >
-      <circle
-        cx={50}
-        cy={50}
-        r={45}
-        strokeDasharray={1}
-        pathLength={1}
-        stroke="#fff"
-        strokeWidth={25}
-        fill="transparent"
-      />
-    </svg>
   );
 };
