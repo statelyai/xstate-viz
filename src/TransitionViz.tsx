@@ -63,7 +63,7 @@ const getDelayFromEventType = (
     };
   } catch (err) {
     console.log(err);
-    return { delayType: 'NOT_DELAYED' };
+    return;
   }
 };
 
