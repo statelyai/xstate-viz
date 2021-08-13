@@ -25,5 +25,5 @@ Alternatively, you can install it locally (see [installation](#installation))
 ## Installation
 
 1. Clone this GitHub repo
-1. Run `npm install` or `yarn install`
+1. Run `yarn install`
 1. Run `npm start` and visit [localhost:3000](https://localhost:3000)
