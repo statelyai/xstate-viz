@@ -7,7 +7,6 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Text,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
 import { useEffect, useMemo } from 'react';

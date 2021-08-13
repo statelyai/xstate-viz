@@ -20,6 +20,7 @@ import { createElkMachine } from './elkMachine';
 import { StateNode } from 'xstate';
 import { MachineViz } from './MachineViz';
 import { useCanvas } from './CanvasContext';
+import { useSimulation } from './SimulationContext';
 
 declare global {
   export const ELK: typeof import('elkjs/lib/main').default;
@@ -404,7 +405,17 @@ const MemoizedMachineViz = memo(MachineViz);
 export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   digraph,
 }) => {
-  const [state, send] = useMachine(() => createElkMachine(digraph));
+  const sim = useSimulation();
+  const [state, send] = useMachine(() => createElkMachine(digraph), {
+    actions: {
+      notifyLayoutPending: () => {
+        sim.send('LAYOUT.PENDING');
+      },
+      notifyLayoutReady: () => {
+        sim.send('LAYOUT.READY');
+      },
+    },
+  });
   const canvasService = useCanvas();
   const { pan, zoom } = useSelector(canvasService, (s) => s.context);
 

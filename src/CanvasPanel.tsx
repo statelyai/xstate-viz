@@ -6,7 +6,8 @@ import {
   ChakraProvider,
   HStack,
   IconButton,
-  Text,
+  Spinner,
+  VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
@@ -21,6 +22,7 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { theme } from './theme';
 import { CanvasPanelHeader } from './CanvasPanelHeader';
+import { Overlay } from './Overlay';
 
 export const CanvasPanel: React.FC = () => {
   const simService = useSimulation();
@@ -30,6 +32,10 @@ export const CanvasPanel: React.FC = () => {
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
+  const isLayoutPending = useSelector(simService, (state) =>
+    state.hasTag('layoutPending'),
+  );
+  const isEmpty = useSelector(simService, (state) => state.hasTag('empty'));
   const digraph = useMemo(
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
@@ -54,21 +60,21 @@ export const CanvasPanel: React.FC = () => {
           <CanvasPanelHeader />
         </Box>
         <CanvasContainer>
-          {digraph ? (
-            <Graph digraph={digraph} />
-          ) : (
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              padding="8"
-            >
-              <Text textAlign="center">
-                No machines to display yet...
-                <br />
-                Create one!
-              </Text>
-            </Box>
+          {digraph && <Graph digraph={digraph} />}
+          {isLayoutPending && (
+            <Overlay>
+              <Box textAlign="center">
+                <VStack spacing="4">
+                  <Spinner size="xl" />
+                  <Box>Visualizing machine...</Box>
+                </VStack>
+              </Box>
+            </Overlay>
+          )}
+          {isEmpty && (
+            <Overlay>
+              <Box textAlign="center">No machines visualized yet.</Box>
+            </Overlay>
           )}
         </CanvasContainer>
         <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
