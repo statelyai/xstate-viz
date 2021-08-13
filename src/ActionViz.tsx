@@ -5,6 +5,7 @@ import {
   AssignAction,
   CancelAction,
   ChooseAction,
+  EventObject,
   LogAction,
   RaiseAction,
   SendActionObject,
@@ -12,6 +13,15 @@ import {
   StopAction,
 } from 'xstate';
 import { isDelayedTransitionAction, isStringifiedFunction } from './utils';
+
+type AnyFunction = (...args: any[]) => any;
+
+// atm inspected machines (their configs) are sent through postMessage
+// that might, unfortunatelly, lose some information on our action objects
+// this helper type ain't deep/recursive because we don't need it, our actions define properties only on the top-level of an object
+type PotentiallyStructurallyCloned<T> = {
+  [K in keyof T]: AnyFunction extends T[K] ? T[K] | undefined : T[K];
+};
 
 export function getActionLabel(
   action: ActionObject<any, any>,
@@ -50,9 +60,9 @@ export const ActionType: React.FC<{ title?: string }> = ({
   );
 };
 
-export const RaiseActionLabel: React.FC<{ action: RaiseAction<any> }> = ({
-  action,
-}) => {
+export const RaiseActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<RaiseAction<EventObject>>;
+}> = ({ action }) => {
   return (
     <ActionType>
       <strong>raise</strong> {action.event}
@@ -60,46 +70,47 @@ export const RaiseActionLabel: React.FC<{ action: RaiseAction<any> }> = ({
   );
 };
 
-export const SendActionLabel: React.FC<{ action: SendActionObject<any, any> }> =
-  ({ action }) => {
-    if (!action.event) {
-      return (
-        <ActionType>
-          <strong>send</strong> <em>unknown</em>
-        </ActionType>
-      );
-    }
-
-    const actionLabel =
-      action.event.type === 'xstate.update' ? (
-        <strong>send update</strong>
-      ) : (
-        <>
-          <strong>send</strong> {action.event.type}
-        </>
-      );
-    const actionTo = action.to ? (
-      action.to === SpecialTargets.Parent ? (
-        <>
-          to <em>parent</em>
-        </>
-      ) : (
-        <>to {action.to}</>
-      )
-    ) : (
-      ''
-    );
-
+export const SendActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<SendActionObject<unknown, EventObject>>;
+}> = ({ action }) => {
+  if (!action.event) {
     return (
       <ActionType>
-        {actionLabel} {actionTo}
+        <strong>send</strong> <em>unknown</em>
       </ActionType>
     );
-  };
+  }
 
-export const LogActionLabel: React.FC<{ action: LogAction<any, any> }> = ({
-  action,
-}) => {
+  const actionLabel =
+    action.event.type === 'xstate.update' ? (
+      <strong>send update</strong>
+    ) : (
+      <>
+        <strong>send</strong> {action.event.type}
+      </>
+    );
+  const actionTo = action.to ? (
+    action.to === SpecialTargets.Parent ? (
+      <>
+        to <em>parent</em>
+      </>
+    ) : (
+      <>to {action.to}</>
+    )
+  ) : (
+    ''
+  );
+
+  return (
+    <ActionType>
+      {actionLabel} {actionTo}
+    </ActionType>
+  );
+};
+
+export const LogActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<LogAction<unknown, EventObject>>;
+}> = ({ action }) => {
   return (
     <ActionType>
       <strong>log</strong> {action.label}
@@ -107,9 +118,9 @@ export const LogActionLabel: React.FC<{ action: LogAction<any, any> }> = ({
   );
 };
 
-export const CancelActionLabel: React.FC<{ action: CancelAction }> = ({
-  action,
-}) => {
+export const CancelActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<CancelAction>;
+}> = ({ action }) => {
   return (
     <ActionType>
       <strong>cancel</strong> {action.sendId}
@@ -117,9 +128,9 @@ export const CancelActionLabel: React.FC<{ action: CancelAction }> = ({
   );
 };
 
-export const StopActionLabel: React.FC<{ action: StopAction<any, any> }> = ({
-  action,
-}) => {
+export const StopActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<StopAction<unknown, EventObject>>;
+}> = ({ action }) => {
   return (
     <ActionType>
       <strong>stop</strong>{' '}
@@ -132,29 +143,31 @@ export const StopActionLabel: React.FC<{ action: StopAction<any, any> }> = ({
   );
 };
 
-export const AssignActionLabel: React.FC<{ action: AssignAction<any, any> }> =
-  ({ action }) => {
-    return (
-      <ActionType>
-        <strong>assign</strong>{' '}
-        {typeof action.assignment === 'object' ? (
-          Object.keys(action.assignment).join(', ')
-        ) : (
-          <em>{action.assignment.name || 'expr'}</em>
-        )}
-      </ActionType>
-    );
-  };
+export const AssignActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<AssignAction<unknown, EventObject>>;
+}> = ({ action }) => {
+  return (
+    <ActionType>
+      <strong>assign</strong>{' '}
+      {typeof action.assignment === 'object' ? (
+        Object.keys(action.assignment).join(', ')
+      ) : (
+        <em>{action.assignment?.name || 'expr'}</em>
+      )}
+    </ActionType>
+  );
+};
 
-export const ChooseActionLabel: React.FC<{ action: ChooseAction<any, any> }> =
-  () => {
-    return (
-      <ActionType>
-        <strong>choose</strong>
-        {/* TODO: recursively add actions/guards */}
-      </ActionType>
-    );
-  };
+export const ChooseActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<ChooseAction<unknown, EventObject>>;
+}> = () => {
+  return (
+    <ActionType>
+      <strong>choose</strong>
+      {/* TODO: recursively add actions/guards */}
+    </ActionType>
+  );
+};
 
 export const ActionViz: React.FC<{
   action: ActionObject<any, any>;
