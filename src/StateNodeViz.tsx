@@ -198,7 +198,6 @@ export const StateNodeViz: React.FC<{
           </div>
         )}
       </div>
-      <div data-viz="transitions"></div>
     </div>
   );
 };
