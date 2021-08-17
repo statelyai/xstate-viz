@@ -110,6 +110,7 @@ function getElkEdge(
   const edgeRect = rectMap.get(edge.id)!;
   const targetPortId = getPortId(edge);
   const isSelfEdge = edge.source === edge.target;
+  const isInitialEdge = edge.source.parent?.initial === edge.source.key;
 
   const sources = [edge.source.id];
   const targets = isSelfEdge ? [getSelfPortId(edge.target.id)] : [targetPortId];
@@ -134,7 +135,9 @@ function getElkEdge(
     ],
     edge,
     sections: [],
-    layoutOptions: {},
+    layoutOptions: {
+      'elk.layered.priority.direction': isInitialEdge ? '1' : '0',
+    },
   };
 }
 
