@@ -108,7 +108,7 @@ export const TransitionViz: React.FC<{
     !!state.configuration.find((sn) => sn === edge.source);
 
   return (
-    <div
+    <button
       data-viz="transition"
       data-viz-potential={isPotential || undefined}
       data-viz-disabled={isDisabled || undefined}
@@ -120,34 +120,32 @@ export const TransitionViz: React.FC<{
         // @ts-ignore
         '--delay': delay?.delayType === 'DELAYED_VALID' && delay.delay,
       }}
+      disabled={isDisabled}
+      onMouseEnter={() => {
+        service.send({
+          type: 'EVENT.PREVIEW',
+          eventType: definition.eventType,
+        });
+      }}
+      onMouseLeave={() => {
+        service.send({
+          type: 'PREVIEW.CLEAR',
+        });
+      }}
+      onClick={() => {
+        // TODO: only if no parameters/schema
+        service.send({
+          type: 'SERVICE.SEND',
+          event: toSCXMLEvent(
+            {
+              type: definition.eventType,
+            },
+            { origin: state._sessionid as string },
+          ),
+        });
+      }}
     >
-      <button
-        data-viz="transition-label"
-        disabled={isDisabled}
-        onMouseEnter={() => {
-          service.send({
-            type: 'EVENT.PREVIEW',
-            eventType: definition.eventType,
-          });
-        }}
-        onMouseLeave={() => {
-          service.send({
-            type: 'PREVIEW.CLEAR',
-          });
-        }}
-        onClick={() => {
-          // TODO: only if no parameters/schema
-          service.send({
-            type: 'SERVICE.SEND',
-            event: toSCXMLEvent(
-              {
-                type: definition.eventType,
-              },
-              { origin: state._sessionid as string },
-            ),
-          });
-        }}
-      >
+      <div data-viz="transition-label">
         <span data-viz="transition-event">
           <EventTypeViz eventType={definition.eventType} delay={delay} />
           {delay && delay.delayType === 'DELAYED_VALID' && (
@@ -159,7 +157,7 @@ export const TransitionViz: React.FC<{
             {getGuardType(definition.cond)}
           </span>
         )}
-      </button>
+      </div>
       <div data-viz="transition-content">
         {definition.actions.length > 0 && (
           <div data-viz="transition-actions">
@@ -169,6 +167,6 @@ export const TransitionViz: React.FC<{
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 };
