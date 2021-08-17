@@ -6,6 +6,7 @@ import type { StateNode } from 'xstate';
 import { ActionViz } from './ActionViz';
 import './ActionViz.scss';
 import { DirectedGraphNode } from './directedGraph';
+import { InvokeViz } from './EventTypeViz';
 import './InvokeViz.scss';
 import { useSimulation } from './SimulationContext';
 import './StateNodeViz.scss';
@@ -149,12 +150,8 @@ export const StateNodeViz: React.FC<{
           </div>
           {stateNode.definition.invoke.length > 0 && (
             <div data-viz="stateNode-invocations">
-              {stateNode.definition.invoke.map((invocation) => {
-                return (
-                  <div data-viz="invoke" key={invocation.id}>
-                    <div data-viz="invoke-id">{invocation.id}</div>
-                  </div>
-                );
+              {stateNode.definition.invoke.map((invokeDef) => {
+                return <InvokeViz invoke={invokeDef} key={invokeDef.id} />;
               })}
             </div>
           )}
