@@ -19,10 +19,10 @@ import {
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
-import { CanvasPanelHeader } from './CanvasPanelHeader';
+import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
 
-export const CanvasPanel: React.FC = () => {
+export const CanvasView: React.FC = () => {
   const simService = useSimulation();
   const canvasService = useCanvas();
   const machine = useSelector(simService, (state) => {
@@ -54,7 +54,7 @@ export const CanvasPanel: React.FC = () => {
   return (
     <Box display="grid" gridTemplateRows="3rem 1fr">
       <Box bg="gray.800" zIndex={1} padding="0">
-        <CanvasPanelHeader />
+        <CanvasHeader />
       </Box>
       <CanvasContainer>
         {digraph && <Graph digraph={digraph} />}
