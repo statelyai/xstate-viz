@@ -57,8 +57,7 @@ function App() {
                 as="main"
                 display="grid"
                 gridTemplateColumns="1fr auto"
-                gridTemplateRows="1fr auto"
-                gridTemplateAreas="'canvas panels' 'footer footer'"
+                gridTemplateAreas="'canvas panels'"
                 height="100vh"
               >
                 <CanvasProvider value={canvasService}>
@@ -66,7 +65,6 @@ function App() {
                 </CanvasProvider>
                 <PanelsView />
                 <MachineNameChooserModal />
-                <Footer />
               </Box>
             </SimulationProvider>
           </PaletteProvider>
