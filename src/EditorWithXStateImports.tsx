@@ -130,8 +130,8 @@ export const EditorWithXStateImports = (
           onMount={async (editor, monaco) => {
             editorRef.current = monaco.editor;
             const theme = editorTheme.theme;
-            editorRef.current.defineTheme(theme, themes[theme]);
-            editorRef.current.setTheme(theme);
+            monaco.editor.defineTheme(theme, themes[theme]);
+            monaco.editor.setTheme(theme);
 
             monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
               customWorkerPath: `${new URL(
