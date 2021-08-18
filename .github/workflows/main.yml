@@ -20,7 +20,7 @@ jobs:
         run: yarn graphql-codegen && yarn tsc
 
       - name: Build
-        run: next build
+        run: yarn next build
         env:
           NEXT_PUBLIC_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
           NEXT_PUBLIC_SUPABASE_API_URL: ${{ secrets.SUPABASE_API_URL }}
