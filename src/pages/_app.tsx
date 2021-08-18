@@ -10,7 +10,9 @@ import '../InvokeViz.scss';
 import '../StateNodeViz.scss';
 import '../EventTypeViz.scss';
 import '../EdgeViz.scss';
+import '../DelayViz.scss';
 import Head from 'next/head';
+import { isOnClientSide } from '../isOnClientSide';
 
 if (
   process.env.NODE_ENV === 'production' &&
@@ -27,12 +29,14 @@ if (
   });
 }
 
-function MyApp({ pageProps }: AppProps) {
+const MyApp = ({ pageProps }: AppProps) => {
+  const isClientSide = isOnClientSide();
   return (
     <>
       <Head>
         <link rel="apple-touch-icon" href="/favicon@256.png" />
         <link rel="icon" href="/favicon.png" />
+        <title>XState Viz</title>
         <meta
           name="description"
           content="Visualizer for XState state machines and statecharts"
@@ -41,8 +45,8 @@ function MyApp({ pageProps }: AppProps) {
         <script src="https://unpkg.com/prettier@2.3.2/parser-typescript.js"></script>
         <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
       </Head>{' '}
-      <App {...pageProps} />
+      {isClientSide && <App {...pageProps} />}
     </>
   );
-}
+};
 export default MyApp;

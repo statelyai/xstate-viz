@@ -10,24 +10,7 @@ import {
 } from '@chakra-ui/react';
 import { useSimulation } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { vizReactJsonTheme } from './vizReactJsonTheme';
-import dynamic from 'next/dynamic';
-
-const JSONView: React.FC<{ src: object; name: string }> = ({ src, name }) => {
-  if (typeof document === 'undefined') return null;
-  return null;
-  // return (
-  //   <ReactJson
-  //     src={src}
-  //     name={name}
-  //     theme={vizReactJsonTheme}
-  //     collapsed={1}
-  //     onEdit={false}
-  //     displayDataTypes={false}
-  //     displayObjectSize={false}
-  //   />
-  // );
-};
+import { JSONView } from './JSONView';
 
 const selectState = (state: StateFrom<typeof simulationMachine>) =>
   state.context.currentSessionId

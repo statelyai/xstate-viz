@@ -25,9 +25,13 @@ import {
   SourceMachineActorRef,
   SourceMachineState,
 } from './sourceMachine';
-import EditorWithXStateImports from './EditorWithXStateImports';
 import type { AnyStateMachine } from './types';
 import { uniq } from './utils';
+import dynamic from 'next/dynamic';
+
+const EditorWithXStateImports = dynamic(
+  () => import('./EditorWithXStateImports'),
+);
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];

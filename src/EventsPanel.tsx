@@ -1,45 +1,43 @@
 import {
-  Text,
-  Box,
-  Input,
-  Table,
-  Tbody,
-  Tr,
-  Td,
-  Thead,
-  Th,
-  Button,
-  ButtonGroup,
-  IconButton,
-  Popover,
-  PopoverArrow,
-  PopoverBody,
-  PopoverContent,
-  PopoverTrigger,
-  Portal,
-  PopoverFooter,
-  FormLabel,
-  Switch,
-  PopoverHeader,
-} from '@chakra-ui/react';
-import { useActor, useMachine, useSelector } from '@xstate/react';
-import React, { useEffect, useState } from 'react';
-import { useSimulation } from './SimulationContext';
-import { format } from 'date-fns';
-import { SimEvent, simulationMachine } from './simulationMachine';
-import { toSCXMLEvent } from 'xstate/lib/utils';
-import { assign, SCXML, send, StateFrom } from 'xstate';
-import Editor from '@monaco-editor/react';
-import {
   ChevronDownIcon,
   ChevronRightIcon,
   ChevronUpIcon,
 } from '@chakra-ui/icons';
-import { createMachine } from 'xstate';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  FormLabel,
+  IconButton,
+  Input,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverFooter,
+  PopoverHeader,
+  PopoverTrigger,
+  Portal,
+  Switch,
+  Table,
+  Tbody,
+  Td,
+  Text,
+  Th,
+  Thead,
+  Tr,
+} from '@chakra-ui/react';
+import Editor from '@monaco-editor/react';
+import { useActor, useMachine, useSelector } from '@xstate/react';
+import { format } from 'date-fns';
+import React, { useEffect, useState } from 'react';
+import { assign, createMachine, SCXML, send, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { vizReactJsonTheme } from './vizReactJsonTheme';
+import { toSCXMLEvent } from 'xstate/lib/utils';
+import { JSONView } from './JSONView';
+import { useSimulation } from './SimulationContext';
+import { SimEvent, simulationMachine } from './simulationMachine';
 import { isInternalEvent, isNullEvent } from './utils';
-import dynamic from 'next/dynamic';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -308,9 +306,7 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
       {show ? (
         <Tr>
           <Td colSpan={3}>
-            {/* {typeof document !== 'undefined' && (
-              <ReactJson src={event.data} theme={vizReactJsonTheme} />
-            )} */}
+            <JSONView src={event.data} />
           </Td>
         </Tr>
       ) : null}

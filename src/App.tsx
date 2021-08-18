@@ -54,7 +54,7 @@ function App() {
     });
   }, [machine?.id, sendToSourceService]);
 
-  const sourceID = sourceState.context.sourceID;
+  const sourceID = sourceState.context.sourceID
 
   const canvasService = useInterpretCanvas({
     sourceID,
@@ -76,7 +76,7 @@ function App() {
                 gridTemplateAreas="'canvas panels' 'footer footer'"
                 height="100vh"
               >
-              <CanvasProvider value={canvasService}>
+                <CanvasProvider value={canvasService}>
                   <CanvasPanel />
                 </CanvasProvider>
 

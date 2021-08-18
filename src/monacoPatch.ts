@@ -13,7 +13,7 @@ const MONACO_LOCATION =
     ? // this makes debugging in development easier
       // (with non-minified version of the Monaco)
       // and ensures Cypress caches the result on disk
-      `/monaco-editor/dev/vs`
+      `/viz/monaco-editor/dev/vs`
     : // use the version that @monaco-editor/loader defaults to
       `https://unpkg.com/monaco-editor@0.25.2/min/vs`;
 
