@@ -136,6 +136,8 @@ function getElkEdge(
     edge,
     sections: [],
     layoutOptions: {
+      // Ensure that all edges originating from initial states point RIGHT
+      // (give them direction priority) so that the initial states can end up on the top left
       'elk.layered.priority.direction': isInitialEdge ? '1' : '0',
     },
   };
