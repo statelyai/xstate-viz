@@ -7,7 +7,7 @@ declare module 'realms-shim' {
     evaluate<T = unknown>(code: string, endowments: any): T;
   }
 
-  declare const exportObj: {
+  const exportObj: {
     makeRootRealm(): Realm;
   };
 
@@ -16,7 +16,6 @@ declare module 'realms-shim' {
 
 declare namespace NodeJS {
   interface ProcessEnv {
-    NODE_ENV: 'development' | 'test' | 'production';
     NEXT_PUBLIC_SUPABASE_API_URL: string;
     NEXT_PUBLIC_SUPABASE_ANON_API_KEY: string;
     NEXT_PUBLIC_GRAPHQL_API_URL: string;
