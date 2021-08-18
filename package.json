@@ -1,5 +1,5 @@
 {
-  "name": "@xstate/viz",
+  "name": "xstate-viz-app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

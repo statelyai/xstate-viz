@@ -1,0 +1,143 @@
+name: Version/Release
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  changesets:
+    name: Create versioning PR or Start Release Pipeline
+    runs-on: ubuntu-latest
+
+    if: github.repository == 'statelyai/xstate-viz'
+
+    outputs:
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js 12.x
+        uses: actions/setup-node@v2.2.0
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Create Release Pull Request
+        id: changesets
+        uses: changesets/action@has-changesets-output
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-temp-release-branch:
+    name: Create temporary release branch
+    runs-on: ubuntu-latest
+    needs: changesets
+
+    if: needs.changesets.outputs.hasChangesets === 'false'
+
+    outputs:
+      release-branch: ${{ steps.release-branch-check.outputs.branch }}
+      version: ${{ steps.latest-version.outputs.result }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Get latest version
+        id: latest-version
+        uses: actions/github-script@v4
+        with:
+          script: require('./package.json').version
+
+      - name: Check if ${{ steps.latest-version.outputs.result }} branch is already created
+        id: release-branch-check
+        run: |
+          branch=release-temp-${{ steps.latest-version.outputs.result }}
+
+          if [ "$(git ls-remote https://github.com/${{ github.repository }}.git $branch)" == "" ]; then
+            echo "$branch doesn't exist on the remote"
+            echo "::set-output name=branch::$branch"
+          else
+            echo "$branch already exists on the remote"
+          fi;
+
+  staging-deploy-trigger:
+    name: Push release to staging
+    runs-on: ubuntu-latest
+    needs: create-temp-release-branch
+    environment: Staging Trigger
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.create-temp-release-branch.outputs.release-branch }}
+
+      - name: Setup git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release commit
+        run: |
+          git commit -m 'Release ${{ needs.create-temp-release-branch.outputs.version }} to staging' --allow-empty
+
+      - name: Force push the release to staging
+        run: |
+          git push origin HEAD:staging --force
+
+  production-deploy-trigger:
+    name: Push release to main
+    runs-on: ubuntu-latest
+    needs: create-temp-release-branch
+    environment: Production Trigger
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.create-temp-release-branch.outputs.release-branch }}
+
+      - name: Setup git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create release commit
+        run: |
+          git commit -m 'Release ${{ needs.create-temp-release-branch.outputs.version }} to main' --allow-empty
+
+      - name: Force push the release to main
+        run: |
+          git push origin HEAD:main --force
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [create-temp-release-branch, production-deploy-trigger]
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ needs.create-temp-release-branch.outputs.release-branch }}
+
+      - name: Publish a tag
+        run: |
+          git tag v${{ needs.create-temp-release-branch.outputs.version }}
+          git push origin v${{ needs.create-temp-release-branch.outputs.version }}
+
+      - name: Publish a GitHub release
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const { publishRelease } = require(`./scripts/publish-github-release.js`)
+
+            await publishRelease(github, { repo: context.repo })
+
+      - name: Remove the temporary release branch
+        run: |
+          git push origin --delete ${{ needs.create-temp-release-branch.outputs.release-branch }}
