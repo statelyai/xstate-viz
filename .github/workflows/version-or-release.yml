@@ -7,7 +7,7 @@ on:
 
 jobs:
   changesets:
-    name: Create versioning PR or Start Release Pipeline
+    name: Create Versioning PR or Start Release Pipeline
     runs-on: ubuntu-latest
 
     if: github.repository == 'statelyai/xstate-viz'
