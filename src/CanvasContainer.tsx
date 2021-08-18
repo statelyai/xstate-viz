@@ -156,9 +156,33 @@ export const CanvasContainer: React.FC = ({ children }) => {
     }
   }, [state, canvasService]);
 
+  /**
+   * Observes the canvas's size and reports it to the canvasService
+   */
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+
+      if (!entry) return;
+
+      canvasService.send({
+        type: 'CANVAS_RECT_CHANGED',
+        height: entry.contentRect.height,
+        width: entry.contentRect.width,
+        offsetX: entry.contentRect.left,
+        offsetY: entry.contentRect.top,
+      });
+    });
+
+    resizeObserver.observe(canvasRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [canvasService]);
+
   return (
     <div
-      data-panel="viz"
       ref={canvasRef}
       style={{
         cursor: getCursorByState(state),
@@ -167,9 +191,21 @@ export const CanvasContainer: React.FC = ({ children }) => {
       onWheel={(e) => {
         if (e.ctrlKey || e.metaKey) {
           if (e.deltaY > 0) {
-            canvasService.send(canvasModel.events['ZOOM.OUT'](ZoomFactor.slow));
+            canvasService.send(
+              canvasModel.events['ZOOM.OUT'](
+                e.clientX,
+                e.clientY,
+                ZoomFactor.slow,
+              ),
+            );
           } else if (e.deltaY < 0) {
-            canvasService.send(canvasModel.events['ZOOM.IN'](ZoomFactor.slow));
+            canvasService.send(
+              canvasModel.events['ZOOM.IN'](
+                e.clientX,
+                e.clientY,
+                ZoomFactor.slow,
+              ),
+            );
           }
         } else {
           canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));

@@ -1,3 +1,15 @@
+declare module 'realms-shim' {
+  class Realm {
+    evaluate<T = unknown>(code: string, endowments: any): T;
+  }
+
+  declare const exportObj: {
+    makeRootRealm(): Realm;
+  };
+
+  export default exportObj;
+}
+
 declare namespace NodeJS {
   interface ProcessEnv {
     NODE_ENV: 'development' | 'test' | 'production';

@@ -82,6 +82,10 @@ export class DirectedGraphNode {
       return new DirectedGraphEdge(edgeConfig);
     });
   }
+
+  public get level(): number {
+    return (this.parent?.level ?? -1) + 1;
+  }
 }
 
 export class DirectedGraphEdge {

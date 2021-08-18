@@ -7,7 +7,6 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Text,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
 import { useEffect, useMemo } from 'react';
@@ -37,16 +36,13 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {
   const paletteService = useInterpret(paletteMachine);
+  // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const digraph = useMemo(
-    () => (machine ? toDirectedGraph(machine) : undefined),
-    [machine],
-  );
   const authService = useInterpret(authMachine);
 
   const [sourceState, sendToSourceService] = useSourceActor(authService);
@@ -65,39 +61,30 @@ function App() {
   });
 
   return (
-    <EditorThemeProvider>
-      <AuthProvider value={authService}>
-        <PaletteProvider value={paletteService}>
-          <SimulationProvider value={simService}>
-            <Box
-              data-testid="app"
-              data-viz-theme="dark"
-              as="main"
-              display="grid"
-              gridTemplateColumns="1fr auto"
-              gridTemplateRows="1fr auto"
-              gridTemplateAreas="'canvas panels' 'footer footer'"
-              height="100vh"
-            >
-              {digraph ? (
-                <CanvasProvider value={canvasService}>
-                  <CanvasPanel digraph={digraph} />
+    <ChakraProvider theme={theme}>
+      <EditorThemeProvider>
+        <AuthProvider value={authService}>
+          <PaletteProvider value={paletteService}>
+            <SimulationProvider value={simService}>
+              <Box
+                data-testid="app"
+                data-viz-theme="dark"
+                as="main"
+                display="grid"
+                gridTemplateColumns="1fr auto"
+                gridTemplateRows="1fr auto"
+                gridTemplateAreas="'canvas panels' 'footer footer'"
+                height="100vh"
+              >
+              <CanvasProvider value={canvasService}>
+                  <CanvasPanel />
                 </CanvasProvider>
-              ) : (
-                <Box display="flex" justifyContent="center" alignItems="center">
-                  <Text textAlign="center">
-                    No machines to display yet...
-                    <br />
-                    Create one!
-                  </Text>
-                </Box>
-              )}
-              <ChakraProvider theme={theme}>
+
                 <ResizableBox gridArea="panels" minHeight={0}>
                   <Tabs
                     bg="gray.800"
                     display="grid"
-                    gridTemplateRows="auto 1fr"
+                    gridTemplateRows="3rem 1fr"
                     height="100%"
                   >
                     <TabList>
@@ -112,7 +99,7 @@ function App() {
                     </TabList>
 
                     <TabPanels minHeight={0}>
-                      <TabPanel padding={0} height="100%">
+                      <TabPanel height="100%" padding={0}>
                         {sourceState.matches({
                           with_source: 'loading_content',
                         }) && (
@@ -155,28 +142,28 @@ function App() {
                           />
                         )}
                       </TabPanel>
-                      <TabPanel height="100%">
+                      <TabPanel height="100%" overflowY="auto">
                         <StatePanel />
                       </TabPanel>
-                      <TabPanel overflow="hidden" height="100%">
+                      <TabPanel height="100%" overflow="hidden">
                         <EventsPanel />
                       </TabPanel>
-                      <TabPanel height="100%">
+                      <TabPanel height="100%" overflowY="auto">
                         <ActorsPanel />
                       </TabPanel>
-                      <TabPanel height="100%">
+                      <TabPanel height="100%" overflowY="auto">
                         <SettingsPanel />
                       </TabPanel>
                     </TabPanels>
                   </Tabs>
                 </ResizableBox>
                 <MachineNameChooserModal />
-              </ChakraProvider>
-            </Box>
-          </SimulationProvider>
-        </PaletteProvider>
-      </AuthProvider>
-    </EditorThemeProvider>
+              </Box>
+            </SimulationProvider>
+          </PaletteProvider>
+        </AuthProvider>
+      </EditorThemeProvider>
+    </ChakraProvider>
   );
 }
 

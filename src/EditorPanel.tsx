@@ -10,7 +10,8 @@ import {
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
+import type { editor, Range } from 'monaco-editor';
+import { ActorRefFrom, assign, DoneInvokeEvent, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { CommandPalette } from './CommandPalette';
@@ -55,29 +56,52 @@ function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   return text;
 }
 
+class SyntaxError extends Error {
+  range: Range;
+  constructor(message: string, range: Range) {
+    super(message);
+    this.range = range;
+  }
+
+  get title() {
+    return `SyntaxError at Line:${this.range.startLineNumber} Col:${this.range.endColumn}`;
+  }
+
+  toString() {
+    return this.message;
+  }
+}
+
 const editorPanelModel = createModel(
   {
     code: '',
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
-    editorRef: null as Monaco | null,
+    monacoRef: null as Monaco | null,
+    standaloneEditorRef: null as editor.IStandaloneCodeEditor | null,
     sourceRef: null as SourceMachineActorRef,
     mainFile: 'main.ts',
     machines: null as AnyStateMachine[] | null,
+    deltaDecorations: [] as string[],
   },
   {
     events: {
       COMPILE: () => ({}),
-      EDITOR_READY: (editorRef: Monaco) => ({ editorRef }),
+      EDITOR_READY: (
+        monacoRef: Monaco,
+        standaloneEditorRef: editor.IStandaloneCodeEditor,
+      ) => ({ monacoRef, standaloneEditorRef }),
       UPDATE_MACHINE_PRESSED: () => ({}),
-      EDITOR_ENCOUNTERED_ERROR: (message: string) => ({ message }),
+      EDITOR_ENCOUNTERED_ERROR: (message: string, title?: string) => ({
+        message,
+        title,
+      }),
       EDITOR_CHANGED_VALUE: (code: string) => ({ code }),
     },
   },
 );
 
-const editorPanelMachine = createMachine<typeof editorPanelModel>(
+const editorPanelMachine = editorPanelModel.createMachine(
   {
-    context: editorPanelModel.initialContext,
     entry: [assign({ notifRef: () => spawn(notifMachine) })],
     initial: 'booting',
     states: {
@@ -92,13 +116,15 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
                   cond: 'isGist',
                   target: 'fixing_gist_imports',
                   actions: editorPanelModel.assign({
-                    editorRef: (_, e) => e.editorRef,
+                    monacoRef: (_, e) => e.monacoRef,
+                    standaloneEditorRef: (_, e) => e.standaloneEditorRef,
                   }),
                 },
                 {
                   target: 'done',
                   actions: editorPanelModel.assign({
-                    editorRef: (_, e) => e.editorRef,
+                    monacoRef: (_, e) => e.monacoRef,
+                    standaloneEditorRef: (_, e) => e.standaloneEditorRef,
                   }),
                 },
               ],
@@ -107,7 +133,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
           fixing_gist_imports: {
             invoke: {
               src: async (ctx) => {
-                const monaco = ctx.editorRef!;
+                const monaco = ctx.monacoRef!;
                 const uri = monaco.Uri.parse(ctx.mainFile);
                 const getWorker =
                   await monaco.languages.typescript.getTypeScriptWorker();
@@ -126,6 +152,9 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
                 }
               },
               onDone: 'done',
+              onError: {
+                actions: ['broadcastError'],
+              },
             },
           },
           done: {
@@ -138,9 +167,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
               getShouldImmediateUpdate(ctx.sourceRef.getSnapshot()!),
             target: 'compiling',
           },
-          {
-            target: 'active',
-          },
+          { target: 'active' },
         ],
       },
       active: {},
@@ -152,18 +179,40 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
       compiling: {
         tags: ['visualizing'],
         invoke: {
-          src: (ctx) => {
-            const uri = ctx.editorRef!.Uri.parse(ctx.mainFile);
-            const compiledJSPromise = ctx
-              .editorRef!.languages.typescript.getTypeScriptWorker()
-              .then((worker) => worker(uri))
-              .then((client) => client.getEmitOutput(uri.toString()))
-              .then((result) => result.outputFiles[0].text) as Promise<string>;
+          src: async (ctx) => {
+            const monaco = ctx.monacoRef!;
+            const uri = monaco.Uri.parse(ctx.mainFile);
+            const tsWoker = await monaco.languages.typescript
+              .getTypeScriptWorker()
+              .then((worker) => worker(uri));
 
-            return compiledJSPromise.then((js) => {
-              const machines = parseMachines(js);
-              return machines;
-            });
+            const syntaxErrors = await tsWoker.getSyntacticDiagnostics(
+              uri.toString(),
+            );
+
+            if (syntaxErrors.length > 0) {
+              const model = ctx.monacoRef?.editor.getModel(uri);
+              // Only report one error at a time
+              const error = syntaxErrors[0];
+
+              const start = model?.getPositionAt(error.start!);
+              const end = model?.getPositionAt(error.start! + error.length!);
+              const errorRange = new ctx.monacoRef!.Range(
+                start?.lineNumber!,
+                0, // beginning of the line where error occured
+                end?.lineNumber!,
+                end?.column!,
+              );
+              return Promise.reject(
+                new SyntaxError(error.messageText.toString(), errorRange),
+              );
+            }
+
+            const compiledSource = await tsWoker
+              .getEmitOutput(uri.toString())
+              .then((result) => result.outputFiles[0].text);
+
+            return parseMachines(compiledSource);
           },
           onDone: {
             target: 'updating',
@@ -173,16 +222,21 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
               }),
             ],
           },
-          onError: {
-            target: 'active',
-            actions: [
-              (_, e) => console.error(e.data),
-              send((_, e) => ({
-                type: 'EDITOR_ENCOUNTERED_ERROR',
-                message: e.data.message,
-              })),
-            ],
-          },
+          onError: [
+            {
+              cond: 'isSyntaxError',
+              target: 'active',
+              actions: [
+                'addDecorations',
+                'scrollToLineWithError',
+                'broadcastError',
+              ],
+            },
+            {
+              target: 'active',
+              actions: ['broadcastError'],
+            },
+          ],
         },
       },
     },
@@ -191,6 +245,7 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
         actions: [
           editorPanelModel.assign({ code: (_, e) => e.code }),
           'onChangedCodeValue',
+          'clearDecorations',
         ],
       },
       EDITOR_ENCOUNTERED_ERROR: {
@@ -215,6 +270,51 @@ const editorPanelMachine = createMachine<typeof editorPanelModel>(
     guards: {
       isGist: (ctx) =>
         ctx.sourceRef.getSnapshot()!.context.sourceProvider === 'gist',
+      isSyntaxError: (_, e: any) => e.data instanceof SyntaxError,
+    },
+    actions: {
+      broadcastError: send((_, e: any) => ({
+        type: 'EDITOR_ENCOUNTERED_ERROR',
+        title: e.data.title,
+        message: e.data.message,
+      })),
+      addDecorations: assign({
+        deltaDecorations: (ctx, e) => {
+          const {
+            data: { range },
+          } = e as DoneInvokeEvent<{ message: string; range: Range }>;
+          if (ctx.standaloneEditorRef) {
+            // TODO: this Monaco API performs a side effect of clearing previous deltaDecorations while creating new decorations
+            // Since XState reserves the right to assume assign actions are pure, think of a way to split the effect from assignment
+            const newDecorations = ctx.standaloneEditorRef.deltaDecorations(
+              ctx.deltaDecorations,
+              [
+                {
+                  range,
+                  options: {
+                    isWholeLine: true,
+                    glyphMarginClassName: 'editor__glyph-margin',
+                    className: 'editor__error-content',
+                  },
+                },
+              ],
+            );
+            return newDecorations;
+          }
+          return ctx.deltaDecorations;
+        },
+      }),
+      clearDecorations: assign({
+        deltaDecorations: (ctx) =>
+          ctx.standaloneEditorRef!.deltaDecorations(ctx.deltaDecorations, []),
+      }),
+      scrollToLineWithError: (ctx, e) => {
+        const {
+          data: { range },
+        } = e as DoneInvokeEvent<{ message: string; range: Range }>;
+        const editor = ctx.standaloneEditorRef;
+        editor?.revealLineInCenterIfOutsideViewport(range.startLineNumber);
+      },
     },
   },
 );
@@ -326,8 +426,12 @@ export const EditorPanel: React.FC<{
           <>
             <EditorWithXStateImports
               defaultValue={defaultValue}
-              onMount={(_, monaco) => {
-                send({ type: 'EDITOR_READY', editorRef: monaco });
+              onMount={(standaloneEditor, monaco) => {
+                send({
+                  type: 'EDITOR_READY',
+                  monacoRef: monaco,
+                  standaloneEditorRef: standaloneEditor,
+                });
               }}
               onChange={(code) => {
                 send({ type: 'EDITOR_CHANGED_VALUE', code });
@@ -341,7 +445,7 @@ export const EditorPanel: React.FC<{
                 onSave();
               }}
             />
-            <HStack padding="2" justifyContent="space-between">
+            <HStack padding="2" w="full" justifyContent="space-between">
               <HStack>
                 <Tooltip
                   bg="black"
@@ -360,6 +464,7 @@ export const EditorPanel: React.FC<{
                         type: 'COMPILE',
                       });
                     }}
+                    variant="secondary"
                   >
                     Visualize
                   </Button>
@@ -383,6 +488,7 @@ export const EditorPanel: React.FC<{
                         width="16px"
                       />
                     }
+                    variant="outline"
                   >
                     {persistMeta.text}
                   </Button>
@@ -397,6 +503,7 @@ export const EditorPanel: React.FC<{
                     leftIcon={
                       <ForkIcon fill="gray.200" height="16px" width="16px" />
                     }
+                    variant="outline"
                   >
                     Fork
                   </Button>
@@ -406,11 +513,20 @@ export const EditorPanel: React.FC<{
                 <Button
                   leftIcon={<AddIcon fill="gray.200" />}
                   onClick={onCreateNew}
+                  variant="outline"
                 >
-                  New
+                  Fork
                 </Button>
               )}
             </HStack>
+            {sourceOwnershipStatus !== 'no-source' && (
+              <Button
+                leftIcon={<AddIcon fill="gray.200" />}
+                onClick={onCreateNew}
+              >
+                New
+              </Button>
+            )}
           </>
         )}
         {simulationMode === 'inspecting' && (

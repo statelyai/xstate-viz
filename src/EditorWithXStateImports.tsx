@@ -120,6 +120,7 @@ export const EditorWithXStateImports = (
           options={{
             minimap: { enabled: false },
             tabSize: 2,
+            glyphMargin: true,
           }}
           loading={<SpinnerWithText text="Preparing the editor" />}
           onChange={(text) => {
