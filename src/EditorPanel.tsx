@@ -9,8 +9,9 @@ import {
 } from '@chakra-ui/react';
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
+import { editor, Range } from 'monaco-editor';
+import dynamic from 'next/dynamic';
 import React from 'react';
-import type { editor, Range } from 'monaco-editor';
 import { ActorRefFrom, assign, DoneInvokeEvent, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
@@ -27,11 +28,6 @@ import {
 } from './sourceMachine';
 import type { AnyStateMachine } from './types';
 import { uniq } from './utils';
-import dynamic from 'next/dynamic';
-
-const EditorWithXStateImports = dynamic(
-  () => import('./EditorWithXStateImports'),
-);
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -75,6 +71,10 @@ class SyntaxError extends Error {
     return this.message;
   }
 }
+
+const EditorWithXStateImports = dynamic(
+  () => import('./EditorWithXStateImports'),
+);
 
 const editorPanelModel = createModel(
   {
@@ -142,6 +142,7 @@ const editorPanelMachine = editorPanelModel.createMachine(
                 const getWorker =
                   await monaco.languages.typescript.getTypeScriptWorker();
                 const tsWorker = await getWorker(uri);
+
                 const usedXStateGistIdentifiers: string[] = await (
                   tsWorker as any
                 ).queryXStateGistIdentifiers(uri.toString());
@@ -519,18 +520,10 @@ export const EditorPanel: React.FC<{
                   onClick={onCreateNew}
                   variant="outline"
                 >
-                  Fork
+                  New
                 </Button>
               )}
             </HStack>
-            {sourceOwnershipStatus !== 'no-source' && (
-              <Button
-                leftIcon={<AddIcon fill="gray.200" />}
-                onClick={onCreateNew}
-              >
-                New
-              </Button>
-            )}
           </>
         )}
         {simulationMode === 'inspecting' && (

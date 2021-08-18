@@ -24,7 +24,7 @@ describe('Gists', () => {
       },
     });
     cy.intercept('https://api.github.com/gist-id.blob', dummyFile);
-    cy.visit('/?gist=gist-id');
+    cy.visit('/viz?gist=gist-id');
   };
 
   it('Should allow you to load a source file from a gist', () => {

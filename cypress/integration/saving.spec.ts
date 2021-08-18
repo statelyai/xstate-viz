@@ -14,7 +14,7 @@ describe('Saving', () => {
       },
     });
 
-    cy.visit('/');
+    cy.visit('/viz');
 
     cy.getMonacoEditor().type(`{enter}{enter} // New Code Changes`);
 
@@ -52,7 +52,7 @@ describe('Saving', () => {
       },
     });
 
-    cy.visit('/?id=source-file-id');
+    cy.visit('/viz?id=source-file-id');
 
     cy.getMonacoEditor().type(`{enter}{enter} // New Code Changes`);
 

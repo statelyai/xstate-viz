@@ -19,7 +19,7 @@ createMachine({
       }),
     );
 
-    cy.visit('/');
+    cy.visit('/viz');
 
     cy.getCanvas().findByRole('button', { name: 'MY_EVENT' }).click();
     cy.getCanvas().findByRole('button', { name: 'OTHER_EVENT' }).click();
@@ -50,7 +50,7 @@ createMachine({
       }),
     );
 
-    cy.visit('/');
+    cy.visit('/viz');
 
     cy.getCanvas().findByRole('button', { name: 'MY_EVENT' }).click();
 
@@ -84,7 +84,7 @@ createMachine({
       }),
     );
 
-    cy.visit('/');
+    cy.visit('/viz');
 
     cy.getCanvas().findByRole('button', { name: 'MY_EVENT' }).click();
 
