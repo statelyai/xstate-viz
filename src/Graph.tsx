@@ -181,17 +181,23 @@ function getDeepestNodeLevel(node: DirectedGraphNode): number {
   );
 }
 
+interface ElkRunContext {
+  previousError?: Error;
+  relativeNodeEdgeMap: RelativeNodeEdgeMap;
+  backLinkMap: DigraphBackLinkMap;
+  rectMap: DOMRectMap;
+}
+
 function getElkChild(
   node: DirectedGraphNode,
-  rMap: RelativeNodeEdgeMap,
-  backLinkMap: DigraphBackLinkMap,
-  rectMap: DOMRectMap,
+  runContext: ElkRunContext,
 ): StateElkNode {
+  const { relativeNodeEdgeMap, backLinkMap, rectMap } = runContext;
   const nodeRect = rectMap.get(node.id)!;
   const contentRect = rectMap.get(`${node.id}:content`)!;
 
   // Edges whose source is this node
-  const edges = rMap[0].get(node.data) || [];
+  const edges = relativeNodeEdgeMap[0].get(node.data) || [];
   // Edges whose target is this node
   const backEdges = Array.from(backLinkMap.get(node.data) ?? []);
 
@@ -199,6 +205,11 @@ function getElkChild(
 
   // Nodes should only wrap if they have non-atomic child nodes
   const shouldWrap = getDeepestNodeLevel(node) > node.level + 1;
+
+  // Compaction should apply if there was no previous error, since errors can occur
+  // sometimes with compaction:
+  // https://github.com/kieler/elkjs/issues/98
+  const shouldCompact = shouldWrap && !runContext.previousError;
 
   return {
     id: node.id,
@@ -209,7 +220,7 @@ function getElkChild(
         }
       : undefined),
     node,
-    children: getElkChildren(node, rMap, backLinkMap, rectMap),
+    children: getElkChildren(node, runContext),
     absolutePosition: { x: 0, y: 0 },
     edges: edges.map((edge) => {
       return getElkEdge(edge, rectMap);
@@ -243,19 +254,19 @@ function getElkChild(
       ...(shouldWrap && {
         'elk.aspectRatio': '2',
         'elk.layered.wrapping.strategy': 'MULTI_EDGE',
-        'elk.layered.compaction.postCompaction.strategy': 'LEFT',
+        ...(shouldCompact && {
+          'elk.layered.compaction.postCompaction.strategy': 'LEFT',
+        }),
       }),
     },
   };
 }
 function getElkChildren(
   node: DirectedGraphNode,
-  rMap: RelativeNodeEdgeMap,
-  backLinkMap: DigraphBackLinkMap,
-  rectMap: DOMRectMap,
+  runContext: ElkRunContext,
 ): ElkNode[] {
   return node.children.map((childNode) => {
-    return getElkChild(childNode, rMap, backLinkMap, rectMap);
+    return getElkChild(childNode, runContext);
   });
 }
 
@@ -313,21 +324,41 @@ export async function getElkGraph(
 ): Promise<ElkNode> {
   const rectMap = getRectMap();
   const relativeNodeEdgeMap = getRelativeNodeEdgeMap(rootDigraphNode);
-  const backlinkMap = getBackLinkMap(rootDigraphNode);
+  const backLinkMap = getBackLinkMap(rootDigraphNode);
   const rootEdges = relativeNodeEdgeMap[0].get(undefined) || [];
+  const initialRunContext: ElkRunContext = {
+    relativeNodeEdgeMap,
+    backLinkMap,
+    rectMap,
+  };
 
   // The root node is an invisible node; the machine node is a direct child of this node.
   // It is wrapped so we can have self-loops, which cannot be placed in the root node.
-  const elkNode: ElkNode = {
+  const getRootElkNodeData = (runContext: ElkRunContext): ElkNode => ({
     id: 'root',
     edges: rootEdges.map((edge) => getElkEdge(edge, rectMap)),
-    children: [
-      getElkChild(rootDigraphNode, relativeNodeEdgeMap, backlinkMap, rectMap),
-    ],
+    children: [getElkChild(rootDigraphNode, runContext)],
     layoutOptions: rootLayoutOptions,
-  };
+  });
 
-  const rootElkNode = await elk.layout(elkNode);
+  let rootElkNode: ElkNode | undefined = undefined;
+  let attempts = 0;
+
+  // Make multiple attempts to layout ELK node.
+  // Depending on the error, certain heuristics may be applied to mitigate the error on the next attempt.
+  // These heuristics read the `initialRunContext.previousError` to determine what layout options to change.
+  while (attempts <= 2 && !rootElkNode) {
+    attempts++;
+    try {
+      rootElkNode = await elk.layout(getRootElkNodeData(initialRunContext));
+    } catch (err) {
+      initialRunContext.previousError = err as Error;
+    }
+  }
+
+  if (!rootElkNode) {
+    throw new Error('Unable to layout ELK node.');
+  }
 
   const stateNodeToElkNodeMap = new Map<StateNode, StateElkNode>();
 
