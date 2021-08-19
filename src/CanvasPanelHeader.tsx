@@ -31,7 +31,7 @@ export const CanvasPanelHeader: React.FC = () => {
   return (
     <HStack zIndex={1} justifyContent="space-between" height="3rem">
       <Link
-        href="https://stately.ai"
+        href="/"
         title="Stately.ai"
         display="block"
         height="100%"

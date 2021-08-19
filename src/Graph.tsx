@@ -6,6 +6,7 @@ import {
 } from './directedGraph';
 import { useMachine, useSelector } from '@xstate/react';
 import type {
+  ELK,
   ElkEdgeSection,
   ElkExtendedEdge,
   ElkNode,
@@ -26,7 +27,11 @@ declare global {
   export const ELK: typeof import('elkjs/lib/main').default;
 }
 
-const elk = new ELK();
+let elk: ELK;
+
+if (typeof ELK !== 'undefined') {
+  elk = new ELK();
+}
 
 const rootLayoutOptions: LayoutOptions = {
   'elk.hierarchyHandling': 'INCLUDE_CHILDREN',

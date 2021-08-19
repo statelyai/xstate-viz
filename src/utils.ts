@@ -134,7 +134,7 @@ export const gQuery = <Data, Variables>(
   variables: Variables,
   accessToken?: string,
 ): Promise<{ data?: Data }> =>
-  fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
+  fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

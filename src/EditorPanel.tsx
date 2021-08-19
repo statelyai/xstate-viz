@@ -10,23 +10,24 @@ import {
 import type { Monaco } from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import { editor, Range } from 'monaco-editor';
-import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import React from 'react';
 import { ActorRefFrom, assign, DoneInvokeEvent, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
-import { useSimulationMode } from './SimulationContext';
 import { CommandPalette } from './CommandPalette';
 import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
+import { useSimulationMode } from './SimulationContext';
 import {
   getEditorDefaultValue,
   getShouldImmediateUpdate,
-  SourceMachineState,
   SourceMachineActorRef,
+  SourceMachineState,
 } from './sourceMachine';
-import { uniq } from './utils';
 import type { AnyStateMachine } from './types';
+import { uniq } from './utils';
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -71,7 +72,7 @@ class SyntaxError extends Error {
   }
 }
 
-const EditorWithXStateImports = React.lazy(
+const EditorWithXStateImports = dynamic(
   () => import('./EditorWithXStateImports'),
 );
 
@@ -426,107 +427,105 @@ export const EditorPanel: React.FC<{
         />
       )}
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
-        <Suspense fallback={null}>
-          {simulationMode === 'visualizing' && (
-            <>
-              <EditorWithXStateImports
-                defaultValue={defaultValue}
-                onMount={(standaloneEditor, monaco) => {
-                  send({
-                    type: 'EDITOR_READY',
-                    monacoRef: monaco,
-                    standaloneEditorRef: standaloneEditor,
-                  });
-                }}
-                onChange={(code) => {
-                  send({ type: 'EDITOR_CHANGED_VALUE', code });
-                }}
-                onFormat={() => {
-                  send({
-                    type: 'COMPILE',
-                  });
-                }}
-                onSave={() => {
-                  onSave();
-                }}
-              />
-              <HStack padding="2" w="full" justifyContent="space-between">
-                <HStack>
-                  <Tooltip
-                    bg="black"
-                    color="white"
-                    label="Ctrl/CMD + Enter"
-                    closeDelay={500}
-                  >
-                    <Button
-                      disabled={isVisualizing}
-                      isLoading={isVisualizing}
-                      leftIcon={
-                        <MagicIcon fill="gray.200" height="16px" width="16px" />
-                      }
-                      onClick={() => {
-                        send({
-                          type: 'COMPILE',
-                        });
-                      }}
-                      variant="secondary"
-                    >
-                      Visualize
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    bg="black"
-                    color="white"
-                    label="Ctrl/CMD + S"
-                    closeDelay={500}
-                  >
-                    <Button
-                      isLoading={sourceState.hasTag('persisting')}
-                      disabled={sourceState.hasTag('persisting')}
-                      onClick={() => {
-                        onSave();
-                      }}
-                      leftIcon={
-                        <persistMeta.Icon
-                          fill="gray.200"
-                          height="16px"
-                          width="16px"
-                        />
-                      }
-                      variant="outline"
-                    >
-                      {persistMeta.text}
-                    </Button>
-                  </Tooltip>
-                  {sourceOwnershipStatus === 'user-owns-source' && (
-                    <Button
-                      disabled={sourceState.hasTag('forking')}
-                      isLoading={sourceState.hasTag('forking')}
-                      onClick={() => {
-                        onFork();
-                      }}
-                      leftIcon={
-                        <ForkIcon fill="gray.200" height="16px" width="16px" />
-                      }
-                      variant="outline"
-                    >
-                      Fork
-                    </Button>
-                  )}
-                </HStack>
-                {sourceOwnershipStatus !== 'no-source' && (
+        {simulationMode === 'visualizing' && (
+          <>
+            <EditorWithXStateImports
+              defaultValue={defaultValue}
+              onMount={(standaloneEditor, monaco) => {
+                send({
+                  type: 'EDITOR_READY',
+                  monacoRef: monaco,
+                  standaloneEditorRef: standaloneEditor,
+                });
+              }}
+              onChange={(code) => {
+                send({ type: 'EDITOR_CHANGED_VALUE', code });
+              }}
+              onFormat={() => {
+                send({
+                  type: 'COMPILE',
+                });
+              }}
+              onSave={() => {
+                onSave();
+              }}
+            />
+            <HStack padding="2" w="full" justifyContent="space-between">
+              <HStack>
+                <Tooltip
+                  bg="black"
+                  color="white"
+                  label="Ctrl/CMD + Enter"
+                  closeDelay={500}
+                >
                   <Button
-                    leftIcon={<AddIcon fill="gray.200" />}
-                    onClick={onCreateNew}
+                    disabled={isVisualizing}
+                    isLoading={isVisualizing}
+                    leftIcon={
+                      <MagicIcon fill="gray.200" height="16px" width="16px" />
+                    }
+                    onClick={() => {
+                      send({
+                        type: 'COMPILE',
+                      });
+                    }}
+                    variant="secondary"
+                  >
+                    Visualize
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  bg="black"
+                  color="white"
+                  label="Ctrl/CMD + S"
+                  closeDelay={500}
+                >
+                  <Button
+                    isLoading={sourceState.hasTag('persisting')}
+                    disabled={sourceState.hasTag('persisting')}
+                    onClick={() => {
+                      onSave();
+                    }}
+                    leftIcon={
+                      <persistMeta.Icon
+                        fill="gray.200"
+                        height="16px"
+                        width="16px"
+                      />
+                    }
                     variant="outline"
                   >
-                    New
+                    {persistMeta.text}
+                  </Button>
+                </Tooltip>
+                {sourceOwnershipStatus === 'user-owns-source' && (
+                  <Button
+                    disabled={sourceState.hasTag('forking')}
+                    isLoading={sourceState.hasTag('forking')}
+                    onClick={() => {
+                      onFork();
+                    }}
+                    leftIcon={
+                      <ForkIcon fill="gray.200" height="16px" width="16px" />
+                    }
+                    variant="outline"
+                  >
+                    Fork
                   </Button>
                 )}
               </HStack>
-            </>
-          )}
-        </Suspense>
+              {sourceOwnershipStatus !== 'no-source' && (
+                <Button
+                  leftIcon={<AddIcon fill="gray.200" />}
+                  onClick={onCreateNew}
+                  variant="outline"
+                >
+                  New
+                </Button>
+              )}
+            </HStack>
+          </>
+        )}
         {simulationMode === 'inspecting' && (
           <Box padding="4">
             <Text as="strong">Inspection mode</Text>
