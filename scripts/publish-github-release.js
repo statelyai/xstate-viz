@@ -6,7 +6,7 @@ const path = require('path');
  * @param {{ repo: { owner: string; repo: string } }} params
  * @return {Promise<void>}
  */
-async function publishRelease(octokit, params) {
+async function publishRelease(octokit, { repo }) {
   const changelog = await fs.readFile(
     path.join(__dirname, '..', 'CHANGELOG.md'),
     'utf-8',
@@ -28,7 +28,7 @@ async function publishRelease(octokit, params) {
     name: tagName,
     tag_name: tagName,
     body: content,
-    ...params,
+    ...repo,
   });
 }
 
