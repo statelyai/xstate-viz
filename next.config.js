@@ -29,11 +29,6 @@ module.exports = {
         destination: `${landingPagePublicUrl}`,
         basePath: false,
       },
-      {
-        source: `/:path`,
-        destination: `${landingPagePublicUrl}/:path`,
-        basePath: false,
-      },
     ];
   },
 };
