@@ -30,17 +30,19 @@ function isUnnamed(id: string): boolean {
 }
 
 export function InvokeViz({ invoke }: { invoke: InvokeDefinition<any, any> }) {
+  const unnamed = isUnnamed(invoke.id);
   const invokeSrc =
     typeof invoke.src === 'string' ? invoke.src : invoke.src.type;
 
+  const id = unnamed ? 'anonymous' : invoke.id;
+
   return (
-    <div data-viz="invoke" data-viz-unnamed={isUnnamed(invoke.id) || undefined}>
-      <div data-viz="invoke-src">{invokeSrc}</div>
-      <div data-viz="invoke-id">
-        {/* <ActorRefViz actorRefId={invoke.id}>
-          {formatInvocationId(invoke.id)}
-        </ActorRefViz> */}
-      </div>
+    <div
+      data-viz="action"
+      data-viz-action="invoke"
+      title={`${id} (${invokeSrc})`}
+    >
+      <div data-viz="action-type">{unnamed ? <em>{id}</em> : id}</div>
     </div>
   );
 }

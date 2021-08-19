@@ -1,16 +1,9 @@
-[data-viz='transitions'] {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
 [data-viz='transition'] {
   --viz-transition-color: gray;
   display: block;
   border-radius: 1rem;
   background-color: var(--viz-transition-color);
+  appearance: none;
 
   &[data-viz-potential] {
     --viz-transition-color: var(--viz-color-active);
