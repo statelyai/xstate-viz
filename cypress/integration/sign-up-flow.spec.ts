@@ -18,7 +18,7 @@ describe('Sign up funnel', () => {
           },
         });
 
-        cy.visit('/viz?id=source-file-id');
+        cy.visit('/viz/source-file-id');
 
         cy.findByRole('button', {
           name: /fork/i,
@@ -46,7 +46,7 @@ describe('Sign up funnel', () => {
           },
         });
 
-        cy.visit('/viz?id=source-file-id');
+        cy.visit('/viz/source-file-id');
 
         // Need to wait for the canvas to load
         cy.getCanvas();

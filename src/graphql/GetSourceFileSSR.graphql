@@ -1,0 +1,10 @@
+query GetSourceFileSSR($id: String!) {
+  getSourceFile(id: $id) {
+    id
+    ownerId
+    text
+    likesCount
+    name
+    description
+  }
+}

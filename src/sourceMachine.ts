@@ -15,7 +15,6 @@ import {
   StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { authMachine } from './authMachine';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
 import {
@@ -36,6 +35,9 @@ import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 import { SourceProvider } from './types';
 import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
+import { AuthMachine } from './authMachine';
+import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { isOnClientSide } from './isOnClientSide';
 
 export const sourceModel = createModel(
   {
@@ -91,16 +93,25 @@ class NotFoundError extends Error {
   }
 }
 
-export const makeSourceMachine = (auth: SupabaseAuthClient) => {
+export const makeSourceMachine = (
+  auth: SupabaseAuthClient,
+  data: GetSourceFileSsrQuery['getSourceFile'] | undefined,
+  redirectToNewUrlFromLegacyUrl: () => void,
+) => {
   const isLoggedIn = () => {
     return Boolean(auth.session());
   };
 
   return createMachine<typeof sourceModel>(
     {
-      initial: 'checking_url',
+      initial: 'checking_if_on_legacy_url',
       preserveActionOrder: true,
-      context: sourceModel.initialContext,
+      context: {
+        ...sourceModel.initialContext,
+        sourceRawContent: data?.text || null,
+        sourceID: data?.id || null,
+        sourceProvider: data ? 'registry' : null,
+      },
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
         LOGGED_IN_USER_ID_UPDATED: {
@@ -123,6 +134,47 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         },
       },
       states: {
+        checking_if_on_legacy_url: {
+          onDone: 'checking_initial_data',
+          meta: {
+            description: `This state checks if you're on /id?=<id>, and redirects to you /<id>`,
+          },
+          initial: 'checking_if_id_on_query_params',
+          states: {
+            checking_if_id_on_query_params: {
+              always: [
+                {
+                  cond: () => {
+                    if (!isOnClientSide()) return false;
+                    const queries = new URLSearchParams(window.location.search);
+
+                    console.log(queries);
+
+                    return Boolean(queries.get('id') && !data);
+                  },
+                  target: 'redirecting',
+                },
+                {
+                  target: 'check_complete',
+                },
+              ],
+            },
+            redirecting: {
+              entry: 'redirectToNewUrlFromLegacyUrl',
+            },
+            check_complete: {
+              type: 'final',
+            },
+          },
+        },
+        checking_initial_data: {
+          always: [
+            { target: 'with_source', cond: (ctx) => Boolean(ctx.sourceID) },
+            {
+              target: 'checking_url',
+            },
+          ],
+        },
         checking_url: {
           entry: 'parseQueries',
           always: [
@@ -446,6 +498,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
     },
     {
       actions: {
+        redirectToNewUrlFromLegacyUrl,
         clearLocalStorageEntryForCurrentSource: (ctx) => {
           localCache.removeSourceRawContent(ctx.sourceID);
         },
@@ -603,11 +656,11 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   );
 };
 
-export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
+export const getSourceActor = (state: StateFrom<AuthMachine>) =>
   state.context.sourceRef!;
 
 export const useSourceActor = (
-  authService: ActorRefFrom<typeof authMachine>,
+  authService: ActorRefFrom<AuthMachine>,
 ): [SourceMachineState, SourceMachineActorRef['send']] => {
   const sourceService = useSelector(authService, getSourceActor);
 

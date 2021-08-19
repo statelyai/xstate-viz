@@ -1,4 +1,5 @@
 import { SettingsIcon } from '@chakra-ui/icons';
+import { useRouter } from 'next/router';
 import {
   Box,
   ChakraProvider,
@@ -9,18 +10,21 @@ import {
   Tabs,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
-import { authMachine } from './authMachine';
+import { createAuthMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
 import './Graph';
+import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { isOnClientSide } from './isOnClientSide';
 import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
+import { NoSSR } from './NoSSR';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
 import { ResizableBox } from './ResizableBox';
@@ -34,7 +38,11 @@ import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
-function App() {
+export interface AppProps {
+  sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+}
+
+function App(props: AppProps) {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -43,7 +51,33 @@ function App() {
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const authService = useInterpret(authMachine);
+
+  const router = useRouter();
+
+  const navigateToNewUrlFromLegacyUrl = useCallback(() => {
+    const id = new URLSearchParams(window.location.search).get('id');
+    /**
+     * Apologies for this line of code. The reason this is here
+     * is that XState + React Fast Refresh causes an error:
+     *
+     * Error: Unable to send event to child 'ctx => ctx.sourceRef'
+     * from service 'auth'.
+     *
+     * router.replace causes this in development, but not in prod
+     *
+     * So, we use window.location.href in development (with the /viz
+     * prefix which Next won't automatically) and router.replace in prod
+     */
+    if (process.env.NODE_ENV === 'development') {
+      window.location.href = `/viz/${id}`;
+    } else {
+      router.replace(`/${id}`);
+    }
+  }, []);
+
+  const authService = useInterpret(
+    createAuthMachine(props.sourceFile, navigateToNewUrlFromLegacyUrl),
+  );
 
   const [sourceState, sendToSourceService] = useSourceActor(authService);
 
@@ -54,11 +88,13 @@ function App() {
     });
   }, [machine?.id, sendToSourceService]);
 
-  const sourceID = sourceState.context.sourceID
+  const sourceID = sourceState.context.sourceID;
 
   const canvasService = useInterpretCanvas({
     sourceID,
   });
+
+  if (!isOnClientSide()) return null;
 
   return (
     <ChakraProvider theme={theme}>

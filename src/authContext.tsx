@@ -1,9 +1,9 @@
 import { InterpreterFrom } from 'xstate';
-import { authMachine } from './authMachine';
+import { AuthMachine } from './authMachine';
 import { createInterpreterContext } from './utils';
 
 const [AuthProvider, useAuth, createAuthSelector] =
-  createInterpreterContext<InterpreterFrom<typeof authMachine>>('Auth');
+  createInterpreterContext<InterpreterFrom<AuthMachine>>('Auth');
 
 export { AuthProvider, useAuth };
 
