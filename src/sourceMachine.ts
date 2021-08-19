@@ -501,6 +501,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           };
         }),
         parseQueries: assign((ctx) => {
+          if (typeof window === 'undefined') return {};
           const queries = new URLSearchParams(window.location.search);
           if (queries.get('gist')) {
             return {

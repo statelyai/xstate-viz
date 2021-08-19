@@ -1,6 +1,5 @@
 import React from 'react';
 import type { InvokeDefinition } from 'xstate/lib/types';
-import './EventTypeViz.scss';
 import type { DelayedTransitionMetadata } from './TransitionViz';
 
 export function toDelayString(delay: string | number): string {

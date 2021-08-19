@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactJson from 'react-json-view';
 import { useSelector } from '@xstate/react';
 import { StateFrom } from 'xstate';
 import {
@@ -11,19 +10,7 @@ import {
 } from '@chakra-ui/react';
 import { useSimulation } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { vizReactJsonTheme } from './vizReactJsonTheme';
-
-const JSONView: React.FC<{ src: object; name: string }> = ({ src, name }) => (
-  <ReactJson
-    src={src}
-    name={name}
-    theme={vizReactJsonTheme}
-    collapsed={1}
-    onEdit={false}
-    displayDataTypes={false}
-    displayObjectSize={false}
-  />
-);
+import { JSONView } from './JSONView';
 
 const selectState = (state: StateFrom<typeof simulationMachine>) =>
   state.context.currentSessionId

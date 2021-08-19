@@ -19,7 +19,7 @@ createMachine({
       }),
     );
 
-    cy.visit('/');
+    cy.visit('/viz');
 
     cy.getCanvas().findByRole('button', { name: 'MY_EVENT' }).click();
     cy.getCanvas()

@@ -4,12 +4,9 @@ import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { StateNode } from 'xstate';
 import { ActionViz } from './ActionViz';
-import './ActionViz.scss';
 import { DirectedGraphNode } from './directedGraph';
 import { InvokeViz } from './EventTypeViz';
-import './InvokeViz.scss';
 import { useSimulation } from './SimulationContext';
-import './StateNodeViz.scss';
 
 interface BaseStateNodeDef {
   key: string;

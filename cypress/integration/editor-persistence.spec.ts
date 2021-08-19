@@ -11,7 +11,7 @@ describe('Editor persistence', () => {
   describe('When you have unsaved changes', () => {
     it('Should show the changes when you re-enter the page', () => {
       setup();
-      cy.visit('/');
+      cy.visit('/viz');
 
       cy.getMonacoEditor().type(`{enter}{enter}// Code changes`);
       /**
@@ -47,7 +47,7 @@ describe('Editor persistence', () => {
           text: `// Changes from the registry!`,
         },
       });
-      cy.visit('/?id=source-file-id');
+      cy.visit('/viz?id=source-file-id');
 
       cy.contains('// Old machine');
     });
@@ -79,7 +79,7 @@ describe('Editor persistence', () => {
         },
       });
 
-      cy.visit('/?id=source-file-id');
+      cy.visit('/viz?id=source-file-id');
 
       cy.contains('Changes from the registry!');
     });

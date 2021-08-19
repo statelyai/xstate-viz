@@ -4,7 +4,6 @@ import type { AnyStateNodeDefinition, Guard } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { Point } from './pathUtils';
-import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
 import { AnyStateMachine, StateFrom } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
