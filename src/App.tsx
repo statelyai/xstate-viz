@@ -9,7 +9,8 @@ import {
   Tabs,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { isElement } from 'react-dom/test-utils';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
@@ -17,6 +18,7 @@ import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
 import { EditorPanel } from './EditorPanel';
+import { EmbedContext, EmbedProvider, useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
 import './Graph';
 import { Login } from './Login';
@@ -32,9 +34,12 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
+import { EmbedPanel } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
+import { Visibility } from './Visibility';
 
-function App() {
+const App: React.FC = () => {
+  const embed = useEmbed();
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -54,11 +59,13 @@ function App() {
     });
   }, [machine?.id, sendToSourceService]);
 
-  const sourceID = sourceState.context.sourceID
+  const sourceID = sourceState.context.sourceID;
 
   const canvasService = useInterpretCanvas({
     sourceID,
   });
+
+  console.log(embed);
 
   return (
     <ChakraProvider theme={theme}>
@@ -76,11 +83,19 @@ function App() {
                 gridTemplateAreas="'canvas panels' 'footer footer'"
                 height="100vh"
               >
-                <CanvasProvider value={canvasService}>
-                  <CanvasPanel />
-                </CanvasProvider>
+                <Visibility
+                  isHidden={embed.isEmbedded && embed.mode === 'panels'}
+                >
+                  <CanvasProvider value={canvasService}>
+                    <CanvasPanel />
+                  </CanvasProvider>
+                </Visibility>
 
-                <ResizableBox gridArea="panels" minHeight={0}>
+                <ResizableBox
+                  gridArea="panels"
+                  minHeight={0}
+                  hidden={embed.isEmbedded && embed.mode === 'viz'}
+                >
                   <Tabs
                     bg="gray.800"
                     display="grid"
@@ -88,11 +103,23 @@ function App() {
                     height="100%"
                   >
                     <TabList>
-                      <Tab>Code</Tab>
-                      <Tab>State</Tab>
-                      <Tab>Events</Tab>
-                      <Tab>Actors</Tab>
-                      <Tab marginLeft="auto" marginRight="2">
+                      <Tab isSelected={embed.panel === EmbedPanel.Code}>
+                        Code
+                      </Tab>
+                      <Tab isSelected={embed.panel === EmbedPanel.State}>
+                        State
+                      </Tab>
+                      <Tab isSelected={embed.panel === EmbedPanel.Events}>
+                        Events
+                      </Tab>
+                      <Tab isSelected={embed.panel === EmbedPanel.Actors}>
+                        Actors
+                      </Tab>
+                      <Tab
+                        isSelected={embed.panel === EmbedPanel.Settings}
+                        marginLeft="auto"
+                        marginRight="2"
+                      >
                         <SettingsIcon />
                       </Tab>
                       <Login />
@@ -165,6 +192,6 @@ function App() {
       </EditorThemeProvider>
     </ChakraProvider>
   );
-}
+};
 
 export default App;

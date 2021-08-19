@@ -13,6 +13,9 @@ import '../EdgeViz.scss';
 import '../DelayViz.scss';
 import Head from 'next/head';
 import { isOnClientSide } from '../isOnClientSide';
+import { EmbedProvider } from '../embedContext';
+import { parseQuery } from '../utils';
+import { useRouter } from 'next/router';
 
 if (
   process.env.NODE_ENV === 'production' &&
@@ -29,8 +32,10 @@ if (
   });
 }
 
-const MyApp = ({ pageProps }: AppProps) => {
+const MyApp = ({ pageProps, Component }: AppProps) => {
   const isClientSide = isOnClientSide();
+  const router = useRouter();
+  const embed = parseQuery(router.query);
   return (
     <>
       <Head>
@@ -45,7 +50,12 @@ const MyApp = ({ pageProps }: AppProps) => {
         <script src="https://unpkg.com/prettier@2.3.2/parser-typescript.js"></script>
         <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
       </Head>
-      {isClientSide && <App {...pageProps} />}
+      {/* {isClientSide && <App {...pageProps} />} */}
+      <EmbedProvider
+        value={{ ...embed, isEmbedded: router.asPath.includes('/embed') }}
+      >
+        <Component />
+      </EmbedProvider>
     </>
   );
 };

@@ -10,9 +10,10 @@ import {
   StateNode,
   TransitionDefinition,
 } from 'xstate';
-import { AnyState, AnyStateMachine } from './types';
+import { AnyState, AnyStateMachine, EmbedMode, EmbedPanel } from './types';
 import { print } from 'graphql';
 import { useSelector } from '@xstate/react';
+import { NextRouter } from 'next/router';
 
 export function isNullEvent(eventName: string) {
   return eventName === ActionTypes.NullEvent;
@@ -28,17 +29,18 @@ export function isInternalEvent(eventName: string) {
 }
 
 export function createInterpreterContext<
-  TInterpreter extends Interpreter<any, any, any>,
+  TInterpreter extends Interpreter<any, any, any>
 >(displayName: string) {
-  const [Provider, useContext] =
-    createRequiredContext<TInterpreter>(displayName);
+  const [Provider, useContext] = createRequiredContext<TInterpreter>(
+    displayName,
+  );
 
-  const createUseSelector =
-    <Data>(selector: (state: TInterpreter['state']) => Data) =>
-    () => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      return useSelector(useContext(), selector);
-    };
+  const createUseSelector = <Data>(
+    selector: (state: TInterpreter['state']) => Data,
+  ) => () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useSelector(useContext(), selector);
+  };
 
   return [Provider, useContext, createUseSelector] as const;
 }
@@ -63,7 +65,7 @@ export function createRequiredContext<T>(displayName: string) {
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string,
+  TEventType extends TEvent['type'] = string
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;
@@ -190,3 +192,32 @@ export function isDelayedTransitionAction(
       return false;
   }
 }
+
+/**
+ * /?mode=viz|full|panels default:viz
+ * /?mode=panels&panel=code|state|events|actors default:code
+ */
+export const parseQuery = (
+  query: NextRouter['query'],
+): { mode: EmbedMode; panel: EmbedPanel } => {
+  let mode = EmbedMode.Viz,
+    panel = EmbedPanel.Code;
+
+  if (query.mode) {
+    const parsedMode = Array.isArray(query.mode) ? query.mode[0] : query.mode;
+    if (Object.values(EmbedMode).includes(parsedMode as EmbedMode)) {
+      mode = parsedMode as EmbedMode;
+    }
+  }
+
+  if (query.panel) {
+    const parsedPanel = Array.isArray(query.panel)
+      ? query.panel[0]
+      : query.panel;
+    if (Object.values(EmbedPanel).includes(parsedPanel as EmbedPanel)) {
+      panel = parsedPanel as EmbedPanel;
+    }
+  }
+
+  return { mode, panel };
+};

@@ -16,6 +16,7 @@ import { ActorRefFrom, assign, DoneInvokeEvent, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { CommandPalette } from './CommandPalette';
+import { useEmbed } from './embedContext';
 import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
@@ -139,13 +140,12 @@ const editorPanelMachine = editorPanelModel.createMachine(
               src: async (ctx) => {
                 const monaco = ctx.monacoRef!;
                 const uri = monaco.Uri.parse(ctx.mainFile);
-                const getWorker =
-                  await monaco.languages.typescript.getTypeScriptWorker();
+                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
                 const tsWorker = await getWorker(uri);
 
-                const usedXStateGistIdentifiers: string[] = await (
-                  tsWorker as any
-                ).queryXStateGistIdentifiers(uri.toString());
+                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
+                  uri.toString(),
+                );
 
                 if (usedXStateGistIdentifiers.length > 0) {
                   const fixupImportsText = buildGistFixupImportsText(
@@ -375,6 +375,7 @@ export const EditorPanel: React.FC<{
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
 }> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
+  const { isEmbedded } = useEmbed();
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
@@ -450,7 +451,12 @@ export const EditorPanel: React.FC<{
                 onSave();
               }}
             />
-            <HStack padding="2" w="full" justifyContent="space-between">
+            <HStack
+              padding="2"
+              w="full"
+              justifyContent="space-between"
+              hidden={isEmbedded}
+            >
               <HStack>
                 <Tooltip
                   bg="black"

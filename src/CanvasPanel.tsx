@@ -21,8 +21,10 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { CanvasPanelHeader } from './CanvasPanelHeader';
 import { Overlay } from './Overlay';
+import { useEmbed } from './embedContext';
 
 export const CanvasPanel: React.FC = () => {
+  const embed = useEmbed();
   const simService = useSimulation();
   const canvasService = useCanvas();
   const machine = useSelector(simService, (state) => {
@@ -53,7 +55,7 @@ export const CanvasPanel: React.FC = () => {
 
   return (
     <Box display="grid" gridTemplateRows="3rem 1fr">
-      <Box bg="gray.800" zIndex={1} padding="0">
+      <Box bg="gray.800" zIndex={1} padding="0" hidden={embed.isEmbedded}>
         <CanvasPanelHeader />
       </Box>
       <CanvasContainer>
@@ -74,7 +76,14 @@ export const CanvasPanel: React.FC = () => {
           </Overlay>
         )}
       </CanvasContainer>
-      <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
+      <HStack
+        position="absolute"
+        bottom={0}
+        left={0}
+        padding="2"
+        zIndex={1}
+        hidden={embed.isEmbedded}
+      >
         <ButtonGroup size="sm" spacing={2} isAttached>
           <IconButton
             aria-label="Zoom out"

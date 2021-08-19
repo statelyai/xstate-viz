@@ -1,0 +1,18 @@
+import { Box } from '@chakra-ui/react';
+import React from 'react';
+
+export const Visibility: React.FC<
+  {
+    isHidden: any;
+  } & React.ComponentProps<typeof Box>
+> = ({ isHidden, children, ...props }) => {
+  return (
+    <Box
+      hidden={isHidden}
+      // {...(isHidden && { style: hiddenCSS })}
+      {...(!isHidden && { ...props })}
+    >
+      {children}
+    </Box>
+  );
+};

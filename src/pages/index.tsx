@@ -1,3 +1,5 @@
+import App from '../App';
+
 /**
  * This is a shim for now. Our app currently doesn't use
  * next routing - we're just loading the entire app in _app.tsx
@@ -6,7 +8,7 @@
  * rendering to grab OG images.
  */
 const HomePage = () => {
-  return null;
+  return <App />;
 };
 
 export default HomePage;

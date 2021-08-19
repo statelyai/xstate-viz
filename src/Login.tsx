@@ -27,13 +27,15 @@ export const Login: React.FC = () => {
   const session = state.context!.client.auth.session();
 
   return (
-    <Box zIndex="1" height="42" display="flex">
+    <Box zIndex="1" display="flex" alignItems="center" width="60px">
       {!state.hasTag('authorized') && (
         <Button
           className="btn-login"
           zIndex="1"
-          colorScheme="blue"
+          // colorScheme=""
+          variant="link"
           rounded="false"
+          isFullWidth
           onClick={() => {
             authService.send('CHOOSE_PROVIDER');
           }}

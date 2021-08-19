@@ -1,6 +1,7 @@
 import { useInterpret } from '@xstate/react';
 import { useEffect } from 'react';
-import { canvasMachine } from './canvasMachine';
+import { canvasMachine, canvasModel } from './canvasMachine';
+import { useEmbed } from './embedContext';
 import './Graph';
 import { localCache } from './localCache';
 
@@ -9,13 +10,20 @@ export const useInterpretCanvas = ({
 }: {
   sourceID: string | null;
 }) => {
-  const canvasService = useInterpret(canvasMachine, {
-    actions: {
-      persistPositionToLocalStorage: (context) => {
-        localCache.savePosition(sourceID, context);
+  const embed = useEmbed();
+  const canvasService = useInterpret(
+    canvasMachine.withContext({
+      ...canvasModel.initialContext,
+      isEmbedded: embed.isEmbedded,
+    }),
+    {
+      actions: {
+        persistPositionToLocalStorage: (context) => {
+          localCache.savePosition(sourceID, context);
+        },
       },
     },
-  });
+  );
 
   useEffect(() => {
     canvasService.send({

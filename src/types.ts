@@ -46,3 +46,18 @@ export type SimulationMode = 'inspecting' | 'visualizing';
 export type EditorThemeDefinition = editor.IStandaloneThemeData & {
   name: string;
 };
+
+// export type EmbedMode = 'viz' | 'panel' | 'full';
+// export type EmbedPanel = 'code' | 'state' | 'events' | 'actors';
+export enum EmbedMode {
+  Viz = 'viz',
+  Panels = 'panels',
+  Full = 'full',
+}
+export enum EmbedPanel {
+  Code = 'code',
+  State = 'state',
+  Events = 'events',
+  Actors = 'actors',
+  Settings = 'settings',
+}
