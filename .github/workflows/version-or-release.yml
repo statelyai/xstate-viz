@@ -66,6 +66,7 @@ jobs:
           fi;
 
       - name: Create ${{ steps.release-branch-check.outputs.branch }} branch
+        if: steps.release-branch-check.outputs.branch
         run: |
           git push origin HEAD:${{ steps.release-branch-check.outputs.branch }}
 
@@ -73,6 +74,7 @@ jobs:
     name: Push release to staging
     runs-on: ubuntu-latest
     needs: create-temp-release-branch
+    if: needs.create-temp-release-branch.outputs.release-branch
     environment: Staging Trigger
 
     steps:
@@ -98,6 +100,7 @@ jobs:
     name: Push release to main
     runs-on: ubuntu-latest
     needs: create-temp-release-branch
+    if: needs.create-temp-release-branch.outputs.release-branch
     environment: Production Trigger
 
     steps:
