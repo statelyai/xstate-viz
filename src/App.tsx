@@ -6,7 +6,6 @@ import { authMachine } from './authMachine';
 import './base.scss';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasView } from './CanvasView';
-import { Footer } from './Footer';
 import './Graph';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
