@@ -1,5 +1,5 @@
 {
-  "name": "@xstate/viz",
+  "name": "xstate-viz-app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -45,7 +45,8 @@
     "graphql:codegen": "graphql-codegen --watch",
     "postinstall": "patch-package && mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public",
     "cypress:open": "cypress open",
-    "cypress:test": "cypress run"
+    "cypress:test": "cypress run",
+    "changeset": "changeset"
   },
   "eslintConfig": {
     "extends": [
@@ -65,6 +66,8 @@
     ]
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.4.0",
+    "@changesets/cli": "^2.16.0",
     "@graphql-codegen/cli": "^1.21.5",
     "@graphql-codegen/near-operation-file-preset": "^1.18.1",
     "@graphql-codegen/typed-document-node": "^1.18.6",
