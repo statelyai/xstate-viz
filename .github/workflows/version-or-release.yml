@@ -53,7 +53,7 @@ jobs:
           result-encoding: string
           script: return require('./package.json').version
 
-      - name: Check if ${{ steps.latest-version.outputs.result }} branch is already created
+      - name: Check if branch for ${{ steps.latest-version.outputs.result }} is already created
         id: release-branch-check
         run: |
           branch=release-temp-${{ steps.latest-version.outputs.result }}
@@ -65,9 +65,9 @@ jobs:
             echo "$branch already exists on the remote"
           fi;
 
-      - name: Create ${{ steps.latest-version.outputs.result }} branch
+      - name: Create ${{ steps.release-branch-check.outputs.branch }} branch
         run: |
-          git push origin HEAD:${{ steps.latest-version.outputs.result }}
+          git push origin HEAD:${{ steps.release-branch-check.outputs.branch }}
 
   staging-deploy-trigger:
     name: Push release to staging
