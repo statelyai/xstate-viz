@@ -429,27 +429,30 @@ export const EditorPanel: React.FC<{
       <Box height="100%" display="grid" gridTemplateRows="1fr auto">
         {simulationMode === 'visualizing' && (
           <>
-            <EditorWithXStateImports
-              defaultValue={defaultValue}
-              onMount={(standaloneEditor, monaco) => {
-                send({
-                  type: 'EDITOR_READY',
-                  monacoRef: monaco,
-                  standaloneEditorRef: standaloneEditor,
-                });
-              }}
-              onChange={(code) => {
-                send({ type: 'EDITOR_CHANGED_VALUE', code });
-              }}
-              onFormat={() => {
-                send({
-                  type: 'COMPILE',
-                });
-              }}
-              onSave={() => {
-                onSave();
-              }}
-            />
+            {/* This extra div acts as a placeholder that is supposed to stretch while EditorWithXStateImports lazy-loads (thanks to `1fr` on the grid) */}
+            <div>
+              <EditorWithXStateImports
+                defaultValue={defaultValue}
+                onMount={(standaloneEditor, monaco) => {
+                  send({
+                    type: 'EDITOR_READY',
+                    monacoRef: monaco,
+                    standaloneEditorRef: standaloneEditor,
+                  });
+                }}
+                onChange={(code) => {
+                  send({ type: 'EDITOR_CHANGED_VALUE', code });
+                }}
+                onFormat={() => {
+                  send({
+                    type: 'COMPILE',
+                  });
+                }}
+                onSave={() => {
+                  onSave();
+                }}
+              />
+            </div>
             <HStack padding="2" w="full" justifyContent="space-between">
               <HStack>
                 <Tooltip
