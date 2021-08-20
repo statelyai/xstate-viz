@@ -54,8 +54,8 @@ function App(props: AppProps) {
 
   const router = useRouter();
 
-  const navigateToNewUrlFromLegacyUrl = useCallback(() => {
-    const id = new URLSearchParams(window.location.search).get('id');
+  const redirectToNewUrlFromLegacyUrl = useCallback(() => {
+    const id = new URLSearchParams(window.location.search)?.get('id');
     /**
      * Apologies for this line of code. The reason this is here
      * is that XState + React Fast Refresh causes an error:
@@ -76,7 +76,11 @@ function App(props: AppProps) {
   }, []);
 
   const authService = useInterpret(
-    createAuthMachine(props.sourceFile, navigateToNewUrlFromLegacyUrl),
+    createAuthMachine({
+      data: props.sourceFile,
+      redirectToNewUrlFromLegacyUrl,
+      routerReplace: router.replace,
+    }),
   );
 
   const [sourceState, sendToSourceService] = useSourceActor(authService);

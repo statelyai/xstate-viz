@@ -93,13 +93,14 @@ class NotFoundError extends Error {
   }
 }
 
-export const makeSourceMachine = (
-  auth: SupabaseAuthClient,
-  data: GetSourceFileSsrQuery['getSourceFile'] | undefined,
-  redirectToNewUrlFromLegacyUrl: () => void,
-) => {
+export const makeSourceMachine = (params: {
+  auth: SupabaseAuthClient;
+  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+  redirectToNewUrlFromLegacyUrl: () => void;
+  routerReplace: (url: string) => void;
+}) => {
   const isLoggedIn = () => {
-    return Boolean(auth.session());
+    return Boolean(params.auth.session());
   };
 
   return createMachine<typeof sourceModel>(
@@ -108,9 +109,9 @@ export const makeSourceMachine = (
       preserveActionOrder: true,
       context: {
         ...sourceModel.initialContext,
-        sourceRawContent: data?.text || null,
-        sourceID: data?.id || null,
-        sourceProvider: data ? 'registry' : null,
+        sourceRawContent: params.data?.text || null,
+        sourceID: params.data?.id || null,
+        sourceProvider: params.data ? 'registry' : null,
       },
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
@@ -150,7 +151,7 @@ export const makeSourceMachine = (
 
                     console.log(queries);
 
-                    return Boolean(queries.get('id') && !data);
+                    return Boolean(queries.get('id') && !params.data);
                   },
                   target: 'redirecting',
                 },
@@ -498,7 +499,7 @@ export const makeSourceMachine = (
     },
     {
       actions: {
-        redirectToNewUrlFromLegacyUrl,
+        redirectToNewUrlFromLegacyUrl: params.redirectToNewUrlFromLegacyUrl,
         clearLocalStorageEntryForCurrentSource: (ctx) => {
           localCache.removeSourceRawContent(ctx.sourceID);
         },
@@ -533,8 +534,7 @@ export const makeSourceMachine = (
           };
         }),
         updateURLWithMachineID: (ctx) => {
-          // TODO - make this work with Next's router
-          window.location.href = `/viz/${ctx.sourceID}`;
+          params.routerReplace(`/${ctx.sourceID}`);
         },
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
@@ -580,7 +580,7 @@ export const makeSourceMachine = (
                 name: ctx.desiredMachineName || '',
                 forkFromId: ctx.sourceID,
               },
-              auth.session()?.access_token!,
+              params.auth.session()?.access_token!,
             ).then((res) => res.data?.forkSourceFile!);
           }
           return gQuery(
@@ -589,7 +589,7 @@ export const makeSourceMachine = (
               text: ctx.sourceRawContent || '',
               name: ctx.desiredMachineName || '',
             },
-            auth.session()?.access_token!,
+            params.auth.session()?.access_token!,
           ).then((res) => {
             return res.data?.createSourceFile!;
           });
@@ -602,7 +602,7 @@ export const makeSourceMachine = (
               id: ctx.sourceID,
               text: ctx.sourceRawContent,
             },
-            auth.session()?.access_token!,
+            params.auth.session()?.access_token!,
           ).then((res) => res.data);
         },
         loadSourceContent: (ctx) => async (send) => {
@@ -633,7 +633,7 @@ export const makeSourceMachine = (
                 {
                   id: ctx.sourceID,
                 },
-                auth.session()?.access_token!,
+                params.auth.session()?.access_token!,
               );
               if (!result.data?.getSourceFile) {
                 throw new NotFoundError('Source not found in Registry');

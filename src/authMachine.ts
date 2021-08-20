@@ -75,10 +75,11 @@ export type AuthMachine = ReturnType<typeof createAuthMachine>;
 
 export type AuthMachineState = StateFrom<AuthMachine>;
 
-export const createAuthMachine = (
-  data: GetSourceFileSsrQuery['getSourceFile'] | undefined,
-  redirectToNewUrlFromLegacyUrl: () => void,
-) =>
+export const createAuthMachine = (params: {
+  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+  redirectToNewUrlFromLegacyUrl: () => void;
+  routerReplace: (url: string) => void;
+}) =>
   createMachine<typeof authModel>(
     {
       id: 'auth',
@@ -118,11 +119,13 @@ export const createAuthMachine = (
               return {
                 client,
                 sourceRef: spawn(
-                  makeSourceMachine(
-                    client.auth,
-                    data,
-                    redirectToNewUrlFromLegacyUrl,
-                  ),
+                  makeSourceMachine({
+                    auth: client.auth,
+                    data: params.data,
+                    redirectToNewUrlFromLegacyUrl:
+                      params.redirectToNewUrlFromLegacyUrl,
+                    routerReplace: params.routerReplace,
+                  }),
                 ),
               };
             }),
