@@ -4,6 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
+import { isWithPlatformMetaKey } from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -189,7 +190,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
         WebkitFontSmoothing: 'auto',
       }}
       onWheel={(e) => {
-        if (e.ctrlKey || e.metaKey) {
+        if (isWithPlatformMetaKey(e)) {
           if (e.deltaY > 0) {
             canvasService.send(
               canvasModel.events['ZOOM.OUT'](
@@ -207,7 +208,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
               ),
             );
           }
-        } else {
+        } else if (!e.metaKey && !e.ctrlKey) {
           canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
         }
       }}

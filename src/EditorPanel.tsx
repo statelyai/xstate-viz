@@ -27,7 +27,7 @@ import {
   SourceMachineState,
 } from './sourceMachine';
 import type { AnyStateMachine } from './types';
-import { uniq } from './utils';
+import { getPlatformMetaKeyLabel, uniq } from './utils';
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -458,7 +458,7 @@ export const EditorPanel: React.FC<{
                 <Tooltip
                   bg="black"
                   color="white"
-                  label="Ctrl/CMD + Enter"
+                  label={`${getPlatformMetaKeyLabel()} + Enter`}
                   closeDelay={500}
                 >
                   <Button
@@ -480,7 +480,7 @@ export const EditorPanel: React.FC<{
                 <Tooltip
                   bg="black"
                   color="white"
-                  label="Ctrl/CMD + S"
+                  label={`${getPlatformMetaKeyLabel()} + S`}
                   closeDelay={500}
                 >
                   <Button
