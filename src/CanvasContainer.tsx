@@ -4,6 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
+import { isWithPlatformMetaKey } from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -181,35 +182,48 @@ export const CanvasContainer: React.FC = ({ children }) => {
     };
   }, [canvasService]);
 
+  /**
+   * Tracks Wheel Event on canvas
+   */
+  useEffect(() => {
+    const onCanvasWheel = (e: WheelEvent) => {
+      if (isWithPlatformMetaKey(e)) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+          canvasService.send(
+            canvasModel.events['ZOOM.OUT'](
+              e.clientX,
+              e.clientY,
+              ZoomFactor.slow,
+            ),
+          );
+        } else if (e.deltaY < 0) {
+          canvasService.send(
+            canvasModel.events['ZOOM.IN'](
+              e.clientX,
+              e.clientY,
+              ZoomFactor.slow,
+            ),
+          );
+        }
+      } else if (!e.metaKey && !e.ctrlKey) {
+        canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+      }
+    };
+
+    const canvasEl = canvasRef.current;
+    canvasEl.addEventListener('wheel', onCanvasWheel);
+    return () => {
+      canvasEl.removeEventListener('wheel', onCanvasWheel);
+    };
+  }, [canvasService]);
+
   return (
     <div
       ref={canvasRef}
       style={{
         cursor: getCursorByState(state),
         WebkitFontSmoothing: 'auto',
-      }}
-      onWheel={(e) => {
-        if (e.ctrlKey || e.metaKey) {
-          if (e.deltaY > 0) {
-            canvasService.send(
-              canvasModel.events['ZOOM.OUT'](
-                e.clientX,
-                e.clientY,
-                ZoomFactor.slow,
-              ),
-            );
-          } else if (e.deltaY < 0) {
-            canvasService.send(
-              canvasModel.events['ZOOM.IN'](
-                e.clientX,
-                e.clientY,
-                ZoomFactor.slow,
-              ),
-            );
-          }
-        } else {
-          canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
-        }
       }}
       onPointerDown={(e) => {
         if (state.nextEvents.includes('GRAB')) {

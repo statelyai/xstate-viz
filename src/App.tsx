@@ -1,39 +1,21 @@
-import { SettingsIcon } from '@chakra-ui/icons';
-import { useRouter } from 'next/router';
-import {
-  Box,
-  ChakraProvider,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-} from '@chakra-ui/react';
+import { Box, ChakraProvider } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
-import { useCallback, useEffect, useMemo } from 'react';
-import { ActorsPanel } from './ActorsPanel';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect } from 'react';
 import { AuthProvider } from './authContext';
 import { createAuthMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
-import { CanvasPanel } from './CanvasPanel';
-import { toDirectedGraph } from './directedGraph';
-import { EditorPanel } from './EditorPanel';
-import { EventsPanel } from './EventsPanel';
+import { CanvasView } from './CanvasView';
 import './Graph';
 import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
 import { isOnClientSide } from './isOnClientSide';
-import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
-import { NoSSR } from './NoSSR';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
-import { ResizableBox } from './ResizableBox';
-import { SettingsPanel } from './SettingsPanel';
+import { PanelsView } from './PanelsView';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
 import { useSourceActor } from './sourceMachine';
-import { SpinnerWithText } from './SpinnerWithText';
-import { StatePanel } from './StatePanel';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
@@ -112,91 +94,13 @@ function App(props: AppProps) {
                 as="main"
                 display="grid"
                 gridTemplateColumns="1fr auto"
-                gridTemplateRows="1fr auto"
-                gridTemplateAreas="'canvas panels' 'footer footer'"
+                gridTemplateAreas="'canvas panels'"
                 height="100vh"
               >
                 <CanvasProvider value={canvasService}>
-                  <CanvasPanel />
+                  <CanvasView />
                 </CanvasProvider>
-
-                <ResizableBox gridArea="panels" minHeight={0}>
-                  <Tabs
-                    bg="gray.800"
-                    display="grid"
-                    gridTemplateRows="3rem 1fr"
-                    height="100%"
-                  >
-                    <TabList>
-                      <Tab>Code</Tab>
-                      <Tab>State</Tab>
-                      <Tab>Events</Tab>
-                      <Tab>Actors</Tab>
-                      <Tab marginLeft="auto" marginRight="2">
-                        <SettingsIcon />
-                      </Tab>
-                      <Login />
-                    </TabList>
-
-                    <TabPanels minHeight={0}>
-                      <TabPanel height="100%" padding={0}>
-                        {sourceState.matches({
-                          with_source: 'loading_content',
-                        }) && (
-                          <SpinnerWithText
-                            text={`Loading source from ${sourceState.context.sourceProvider}`}
-                          />
-                        )}
-                        {!sourceState.matches({
-                          with_source: 'loading_content',
-                        }) && (
-                          <EditorPanel
-                            onChangedCodeValue={(code) => {
-                              sendToSourceService({
-                                type: 'CODE_UPDATED',
-                                code,
-                                sourceID: sourceState.context.sourceID,
-                              });
-                            }}
-                            onCreateNew={() =>
-                              sendToSourceService({
-                                type: 'CREATE_NEW',
-                              })
-                            }
-                            onSave={() => {
-                              sendToSourceService({
-                                type: 'SAVE',
-                              });
-                            }}
-                            onChange={(machines) => {
-                              simService.send({
-                                type: 'MACHINES.REGISTER',
-                                machines,
-                              });
-                            }}
-                            onFork={() => {
-                              sendToSourceService({
-                                type: 'FORK',
-                              });
-                            }}
-                          />
-                        )}
-                      </TabPanel>
-                      <TabPanel height="100%" overflowY="auto">
-                        <StatePanel />
-                      </TabPanel>
-                      <TabPanel height="100%" overflow="hidden">
-                        <EventsPanel />
-                      </TabPanel>
-                      <TabPanel height="100%" overflowY="auto">
-                        <ActorsPanel />
-                      </TabPanel>
-                      <TabPanel height="100%" overflowY="auto">
-                        <SettingsPanel />
-                      </TabPanel>
-                    </TabPanels>
-                  </Tabs>
-                </ResizableBox>
+                <PanelsView />
                 <MachineNameChooserModal />
               </Box>
             </SimulationProvider>
