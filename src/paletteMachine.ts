@@ -32,6 +32,7 @@ export const paletteMachine = paletteModel.createMachine({
               captureCommandPaletteKeybindings(e) &&
               !eventRoseFromEditor(e)
             ) {
+              e.preventDefault();
               sendBack('SHOW_PALETTE');
             }
           };
