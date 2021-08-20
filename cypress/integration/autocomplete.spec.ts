@@ -1,6 +1,6 @@
 describe('Autocomplete in the editor', () => {
   it('Should allow you to autocomplete XState imports', () => {
-    cy.visit('/');
+    cy.visit('/viz');
     cy.getMonacoEditor().type('{enter}{enter}ass');
 
     // Wait for the autocomplete to show up
@@ -12,7 +12,7 @@ describe('Autocomplete in the editor', () => {
   });
 
   it('Should allow you to autocomplete from xstate/lib/model', () => {
-    cy.visit('/');
+    cy.visit('/viz');
     cy.getMonacoEditor().type('{enter}{enter}createMod');
 
     // Wait for the autocomplete to show up

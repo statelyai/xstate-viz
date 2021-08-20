@@ -9,6 +9,26 @@ const config: ThemeConfig = {
 // 3. extend the theme
 export const theme = extendTheme({
   config,
+  styles: {
+    global: {
+      '*, *:before, *:after': {
+        position: 'relative',
+      },
+      body: {
+        overflow: 'hidden',
+        overscrollBehavior: 'none',
+        fontFamily: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif`,
+      },
+      '#root': {
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+      },
+      '.monaco-editor *': {
+        position: 'static',
+      },
+    },
+  },
   components: {
     Button: {
       variants: {

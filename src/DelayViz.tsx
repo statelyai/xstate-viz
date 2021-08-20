@@ -1,5 +1,4 @@
 import React from 'react';
-import './DelayViz.scss';
 
 export const DelayViz: React.FC<{ active: boolean; duration: number }> = ({
   active,

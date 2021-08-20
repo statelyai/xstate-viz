@@ -13,7 +13,6 @@ import { useEffect, useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
-import './base.scss';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
 import { toDirectedGraph } from './directedGraph';
@@ -55,31 +54,32 @@ function App() {
     });
   }, [machine?.id, sendToSourceService]);
 
-  const sourceID = sourceState.context.sourceID;
+  const sourceID = sourceState.context.sourceID
 
   const canvasService = useInterpretCanvas({
     sourceID,
   });
 
   return (
-    <EditorThemeProvider>
-      <AuthProvider value={authService}>
-        <PaletteProvider value={paletteService}>
-          <SimulationProvider value={simService}>
-            <Box
-              data-testid="app"
-              data-viz-theme="dark"
-              as="main"
-              display="grid"
-              gridTemplateColumns="1fr auto"
-              gridTemplateRows="1fr auto"
-              gridTemplateAreas="'canvas panels' 'footer footer'"
-              height="100vh"
-            >
-              <CanvasProvider value={canvasService}>
-                <CanvasPanel />
-              </CanvasProvider>
-              <ChakraProvider theme={theme}>
+    <ChakraProvider theme={theme}>
+      <EditorThemeProvider>
+        <AuthProvider value={authService}>
+          <PaletteProvider value={paletteService}>
+            <SimulationProvider value={simService}>
+              <Box
+                data-testid="app"
+                data-viz-theme="dark"
+                as="main"
+                display="grid"
+                gridTemplateColumns="1fr auto"
+                gridTemplateRows="1fr auto"
+                gridTemplateAreas="'canvas panels' 'footer footer'"
+                height="100vh"
+              >
+                <CanvasProvider value={canvasService}>
+                  <CanvasPanel />
+                </CanvasProvider>
+
                 <ResizableBox gridArea="panels" minHeight={0}>
                   <Tabs
                     bg="gray.800"
@@ -158,12 +158,12 @@ function App() {
                   </Tabs>
                 </ResizableBox>
                 <MachineNameChooserModal />
-              </ChakraProvider>
-            </Box>
-          </SimulationProvider>
-        </PaletteProvider>
-      </AuthProvider>
-    </EditorThemeProvider>
+              </Box>
+            </SimulationProvider>
+          </PaletteProvider>
+        </AuthProvider>
+      </EditorThemeProvider>
+    </ChakraProvider>
   );
 }
 

@@ -1,14 +1,12 @@
-import { ChakraProvider, Link } from '@chakra-ui/react';
+import { Link } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { StateNode } from 'xstate';
 import { ActionViz } from './ActionViz';
-import './ActionViz.scss';
 import { DirectedGraphNode } from './directedGraph';
-import './InvokeViz.scss';
+import { InvokeViz } from './EventTypeViz';
 import { useSimulation } from './SimulationContext';
-import './StateNodeViz.scss';
 
 interface BaseStateNodeDef {
   key: string;
@@ -108,6 +106,7 @@ export const StateNodeViz: React.FC<{
       <div
         data-viz="stateNode"
         data-viz-type={stateNode.type}
+        data-viz-history={stateNode.history ?? undefined}
         data-viz-parent-type={stateNode.parent?.type}
         data-viz-atomic={
           ['atomic', 'final'].includes(stateNode.type) || undefined
@@ -130,6 +129,7 @@ export const StateNodeViz: React.FC<{
               <div
                 data-viz="stateNode-type"
                 data-viz-type={stateNode.type}
+                data-viz-history={stateNode.history ?? undefined}
               ></div>
             )}
             <StateNodeKey value={stateNode.key} />
@@ -147,12 +147,8 @@ export const StateNodeViz: React.FC<{
           </div>
           {stateNode.definition.invoke.length > 0 && (
             <div data-viz="stateNode-invocations">
-              {stateNode.definition.invoke.map((invocation) => {
-                return (
-                  <div data-viz="invoke" key={invocation.id}>
-                    <div data-viz="invoke-id">{invocation.id}</div>
-                  </div>
-                );
+              {stateNode.definition.invoke.map((invokeDef) => {
+                return <InvokeViz invoke={invokeDef} key={invokeDef.id} />;
               })}
             </div>
           )}
@@ -171,17 +167,15 @@ export const StateNodeViz: React.FC<{
             </div>
           )}
           {stateNode.meta?.description && (
-            <ChakraProvider>
-              <div data-viz="stateNode-meta">
-                <ReactMarkdown
-                  components={{
-                    a: ({ node, ...props }) => <Link {...props} />,
-                  }}
-                >
-                  {stateNode.meta.description}
-                </ReactMarkdown>
-              </div>
-            </ChakraProvider>
+            <div data-viz="stateNode-meta">
+              <ReactMarkdown
+                components={{
+                  a: ({ node, ...props }) => <Link {...props} />,
+                }}
+              >
+                {stateNode.meta.description}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
         {'states' in stateNode && (
@@ -198,7 +192,6 @@ export const StateNodeViz: React.FC<{
           </div>
         )}
       </div>
-      <div data-viz="transitions"></div>
     </div>
   );
 };
