@@ -533,12 +533,8 @@ export const makeSourceMachine = (
           };
         }),
         updateURLWithMachineID: (ctx) => {
-          updateQueryParamsWithoutReload((queries) => {
-            queries.delete('gist');
-            if (ctx.sourceID) {
-              queries.set('id', ctx.sourceID);
-            }
-          });
+          // TODO - make this work with Next's router
+          window.location.href = `/viz/${ctx.sourceID}`;
         },
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(

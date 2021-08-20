@@ -12,56 +12,85 @@ import {
 } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
 import { Twitter } from './Icons';
+import { registryLinks } from './registryLinks';
 import { shareMachine } from './shareMachine';
 
-export const ShareButton = () => {
-  const linkText = window.location.href;
-  const twitterText = `Check out the state machine I built in the @statelyai visualizer: ${linkText}`;
-
+const useShareButton = (linkText: string) => {
   const clipboard = useClipboard(linkText);
+
   const [state, send] = useMachine(shareMachine, {
     actions: {
       copyLinkToClipboard: () => {
         clipboard.onCopy();
       },
-      openTwitterShareLink: () => {
-        window.open(
-          `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-            twitterText,
-          )}`,
-        );
-      },
     },
   });
+
+  return {
+    onClickCopy: () => send('COPY_LINK'),
+    isLoading: state.hasTag('loading'),
+    hasCopied: state.hasTag('copied'),
+  };
+};
+
+export const ShareButton = ({ sourceId }: { sourceId: string }) => {
+  const linkText = window.location.href;
+  const twitterText = `Check out the state machine I built in the @statelyai visualizer: ${linkText}`;
+
+  const urlShareButton = useShareButton(linkText);
+  const imageShareButton = useShareButton(
+    registryLinks.sourceFileOgImage(sourceId),
+  );
+
   return (
     <>
       <Menu>
-        <MenuButton
-          size="sm"
-          leftIcon={<ExternalLinkIcon />}
-          onClick={() => send('CLICK_SHARE')}
-          as={Button}
-        >
+        <MenuButton size="sm" leftIcon={<ExternalLinkIcon />} as={Button}>
           Share
         </MenuButton>
         <MenuList>
-          <MenuItem onClick={() => send('COPY_LINK')}>
+          <MenuItem onClick={urlShareButton.onClickCopy}>
             <HStack spacing="3">
-              {state.hasTag('loading') ? <Spinner size="xs" /> : <CopyIcon />}
+              {urlShareButton.isLoading ? <Spinner size="xs" /> : <CopyIcon />}
 
               <Text>
-                {state.hasTag('copied')
+                {urlShareButton.hasCopied
                   ? 'Link copied!'
-                  : state.hasTag('loading')
+                  : urlShareButton.isLoading
                   ? 'Copying...'
                   : 'Copy link'}
               </Text>
             </HStack>
           </MenuItem>
-          <MenuItem onClick={() => send('SHARE_ON_TWITTER')}>
+          <MenuItem
+            onClick={() => {
+              window.open(
+                `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                  twitterText,
+                )}`,
+              );
+            }}
+          >
             <HStack spacing="3">
               <Twitter fill="white" />
               <Text>Twitter</Text>
+            </HStack>
+          </MenuItem>
+          <MenuItem onClick={imageShareButton.onClickCopy}>
+            <HStack spacing="3">
+              {imageShareButton.isLoading ? (
+                <Spinner size="xs" />
+              ) : (
+                <CopyIcon />
+              )}
+
+              <Text>
+                {imageShareButton.hasCopied
+                  ? 'Link copied!'
+                  : imageShareButton.isLoading
+                  ? 'Copying...'
+                  : 'Copy Image URL'}
+              </Text>
             </HStack>
           </MenuItem>
         </MenuList>

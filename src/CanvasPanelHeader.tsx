@@ -59,7 +59,7 @@ export const CanvasPanelHeader: React.FC = () => {
           </Text>
           <HStack>
             <LikeButton />
-            <ShareButton />
+            <ShareButton sourceId={registryData.id} />
             <Menu closeOnSelect>
               <MenuButton>
                 <IconButton
