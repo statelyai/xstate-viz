@@ -5,4 +5,4 @@
 author: @davidkpiano
 pr: #189
 
-Clean up invoke styles
+Styles for invoked actors are now consistent with other action styles.

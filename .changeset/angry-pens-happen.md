@@ -5,4 +5,4 @@
 author: @davidkpiano
 pr: #190
 
-Make entire event clickable
+In the visualized machine, the entire event is now clickable.
