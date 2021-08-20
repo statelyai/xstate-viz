@@ -5,4 +5,5 @@ export const [EmbedProvider, useEmbed] = createRequiredContext<{
   isEmbedded: boolean;
   mode: EmbedMode;
   panel: EmbedPanel;
+  panelIndex: number;
 }>('Embed');

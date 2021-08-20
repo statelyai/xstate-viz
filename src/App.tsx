@@ -1,6 +1,7 @@
 import { SettingsIcon } from '@chakra-ui/icons';
 import {
   Box,
+  Button,
   ChakraProvider,
   Tab,
   TabList,
@@ -10,15 +11,13 @@ import {
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
 import React, { useEffect, useMemo } from 'react';
-import { isElement } from 'react-dom/test-utils';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
-import { toDirectedGraph } from './directedGraph';
 import { EditorPanel } from './EditorPanel';
-import { EmbedContext, EmbedProvider, useEmbed } from './embedContext';
+import { useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
 import './Graph';
 import { Login } from './Login';
@@ -65,8 +64,6 @@ const App: React.FC = () => {
     sourceID,
   });
 
-  console.log(embed);
-
   return (
     <ChakraProvider theme={theme}>
       <EditorThemeProvider>
@@ -101,28 +98,34 @@ const App: React.FC = () => {
                     display="grid"
                     gridTemplateRows="3rem 1fr"
                     height="100%"
+                    index={embed.panelIndex}
                   >
                     <TabList>
-                      <Tab isSelected={embed.panel === EmbedPanel.Code}>
+                      <Tab aria-selected={embed.panel === EmbedPanel.Code}>
                         Code
                       </Tab>
-                      <Tab isSelected={embed.panel === EmbedPanel.State}>
+                      <Tab
+                        isSelected={true}
+                        aria-selected={embed.panel === EmbedPanel.State}
+                      >
                         State
                       </Tab>
-                      <Tab isSelected={embed.panel === EmbedPanel.Events}>
+                      <Tab aria-selected={embed.panel === EmbedPanel.Events}>
                         Events
                       </Tab>
-                      <Tab isSelected={embed.panel === EmbedPanel.Actors}>
+                      <Tab aria-selected={embed.panel === EmbedPanel.Actors}>
                         Actors
                       </Tab>
                       <Tab
-                        isSelected={embed.panel === EmbedPanel.Settings}
+                        hidden={embed.isEmbedded}
+                        aria-selected={embed.panel === EmbedPanel.Settings}
                         marginLeft="auto"
                         marginRight="2"
                       >
                         <SettingsIcon />
                       </Tab>
-                      <Login />
+                      <Login hidden={embed.isEmbedded} />
+                      {/* {embed.isEmbedded && <Button as="link" href={`https://stately.ai/viz` + router.asPath}>Open in Stately.ai/viz</Button>} */}
                     </TabList>
 
                     <TabPanels minHeight={0}>

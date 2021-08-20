@@ -2,7 +2,6 @@ import '../monacoPatch';
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 import type { AppProps } from 'next/app';
-import App from '../App';
 import '../base.scss';
 import '../TransitionViz.scss';
 import '../ActionViz.scss';
@@ -36,6 +35,7 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
   const isClientSide = isOnClientSide();
   const router = useRouter();
   const embed = parseQuery(router.query);
+
   return (
     <>
       <Head>

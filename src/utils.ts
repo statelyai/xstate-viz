@@ -199,12 +199,13 @@ export function isDelayedTransitionAction(
  */
 export const parseQuery = (
   query: NextRouter['query'],
-): { mode: EmbedMode; panel: EmbedPanel } => {
+): { mode: EmbedMode; panel: EmbedPanel; panelIndex: number } => {
   let mode = EmbedMode.Viz,
     panel = EmbedPanel.Code;
 
   if (query.mode) {
     const parsedMode = Array.isArray(query.mode) ? query.mode[0] : query.mode;
+    console.log({ parsedMode, values: Object.values(EmbedMode) });
     if (Object.values(EmbedMode).includes(parsedMode as EmbedMode)) {
       mode = parsedMode as EmbedMode;
     }
@@ -219,5 +220,9 @@ export const parseQuery = (
     }
   }
 
-  return { mode, panel };
+  const tabs = Object.values(EmbedPanel);
+  let panelIndex = tabs.findIndex((p) => p === panel);
+  panelIndex = panelIndex >= 0 ? panelIndex : 0;
+
+  return { mode, panel, panelIndex };
 };
