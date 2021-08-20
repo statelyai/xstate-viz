@@ -135,13 +135,17 @@ export const CanvasView: React.FC = () => {
         <Menu closeOnSelect={true} placement="top-end">
           <MenuButton
             as={IconButton}
-            size="md"
+            size="sm"
             isRound
             aria-label="More info"
             marginLeft="auto"
-            variant="outline"
-            border="none"
-            icon={<QuestionOutlineIcon />}
+            variant="secondary"
+            icon={
+              <QuestionOutlineIcon
+                boxSize={6}
+                css={{ '& circle': { display: 'none' } }}
+              />
+            }
           />
           <Portal>
             <MenuList fontSize="sm" padding="0">
