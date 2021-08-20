@@ -426,7 +426,7 @@ export const EditorPanel: React.FC<{
           }}
         />
       )}
-      <Box height="100%" display="grid" gridTemplateRows="1fr auto">
+      <Box height="100%" display="grid" gridTemplateRows="1fr 4rem">
         {simulationMode === 'visualizing' && (
           <>
             {/* This extra div acts as a placeholder that is supposed to stretch while EditorWithXStateImports lazy-loads (thanks to `1fr` on the grid) */}
