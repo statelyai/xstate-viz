@@ -107,6 +107,7 @@ const ResizeHandle: React.FC<{
 
 export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
   children,
+  hidden,
   ...props
 }) => {
   const { isEmbedded } = useEmbed();
@@ -120,6 +121,7 @@ export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
         width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`,
         ...props,
       })}
+      hidden={hidden}
     >
       {children}
       {!isEmbedded && (
