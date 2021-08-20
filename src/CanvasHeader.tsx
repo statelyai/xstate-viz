@@ -1,7 +1,6 @@
 import { HamburgerIcon, EditIcon } from '@chakra-ui/icons';
 import {
   Avatar,
-  Box,
   HStack,
   IconButton,
   Link,
@@ -20,7 +19,7 @@ import { registryLinks } from './registryLinks';
 import { ShareButton } from './ShareButton';
 import { useSourceActor } from './sourceMachine';
 
-export const CanvasPanelHeader: React.FC = () => {
+export const CanvasHeader: React.FC = () => {
   const authService = useAuth();
 
   const [sourceState] = useSourceActor(authService);
@@ -31,7 +30,7 @@ export const CanvasPanelHeader: React.FC = () => {
   return (
     <HStack zIndex={1} justifyContent="space-between" height="3rem">
       <Link
-        href="https://stately.ai"
+        href="/"
         title="Stately.ai"
         display="block"
         height="100%"

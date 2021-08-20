@@ -135,9 +135,8 @@ export const EditorWithXStateImports = (
 
             monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
               customWorkerPath: `${new URL(
-                process.env.PUBLIC_URL,
                 window.location.origin,
-              )}/ts-worker.js`,
+              )}viz/ts-worker.js`,
             });
 
             monaco.languages.typescript.typescriptDefaults.setCompilerOptions({

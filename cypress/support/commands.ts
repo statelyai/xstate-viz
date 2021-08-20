@@ -67,7 +67,7 @@ const visitInspector = () => {
     const inspector = inspect({
       iframe: () =>
         window.parent.document.querySelector<HTMLIFrameElement>('.aut-iframe'),
-      url: `${Cypress.config('baseUrl')!}?inspect`,
+      url: `${Cypress.config('baseUrl')!}/viz?inspect`,
     })!;
     state('@@viz/inspector', inspector);
   });

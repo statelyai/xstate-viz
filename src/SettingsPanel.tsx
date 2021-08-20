@@ -14,6 +14,7 @@ import {
 import { ThemeName, themes } from './editor-themes';
 import { useEditorTheme } from './themeContext';
 import { useSimulationMode } from './SimulationContext';
+import { getPlatformMetaKeyLabel } from './utils';
 
 const KeyboardShortcuts = () => (
   <Box>
@@ -30,13 +31,13 @@ const KeyboardShortcuts = () => (
       <Tbody>
         <Tr>
           <Td>
-            <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
+            <Kbd>{getPlatformMetaKeyLabel()}</Kbd> + <Kbd>S</Kbd>
           </Td>
           <Td>Saves or updates the code in Stately Registry</Td>
         </Tr>
         <Tr>
           <Td>
-            <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
+            <Kbd>{getPlatformMetaKeyLabel()}</Kbd> + <Kbd>Enter</Kbd>
           </Td>
           <Td>Visualizes the current editor code</Td>
         </Tr>
@@ -44,7 +45,7 @@ const KeyboardShortcuts = () => (
           <Td>
             <VStack alignItems="flex-start">
               <span>
-                <Kbd>Ctrl/CMD</Kbd> + <Kbd>K</Kbd>
+                <Kbd>{getPlatformMetaKeyLabel()}</Kbd> + <Kbd>K</Kbd>
               </span>
               <span>
                 <Kbd>Shift</Kbd> + <Kbd>?</Kbd>

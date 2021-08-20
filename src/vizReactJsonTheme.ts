@@ -1,4 +1,4 @@
-import { ThemeObject } from 'react-json-view';
+import type { ThemeObject } from 'react-json-view';
 
 export const vizReactJsonTheme: ThemeObject = {
   base00: 'transparent',
