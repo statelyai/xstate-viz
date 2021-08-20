@@ -1,10 +1,18 @@
-import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
+import { AddIcon, MinusIcon, QuestionIcon, RepeatIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
   ButtonGroup,
-  HStack,
   IconButton,
+  Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Portal,
   Spinner,
   VStack,
 } from '@chakra-ui/react';
@@ -74,7 +82,19 @@ export const CanvasView: React.FC = () => {
           </Overlay>
         )}
       </CanvasContainer>
-      <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="flex-start"
+        position="absolute"
+        bottom={0}
+        left={0}
+        padding="2"
+        zIndex={1}
+        width="100%"
+        height="4rem"
+      >
         <ButtonGroup size="sm" spacing={2} isAttached>
           <IconButton
             aria-label="Zoom out"
@@ -110,7 +130,30 @@ export const CanvasView: React.FC = () => {
             RESET
           </Button>
         )}
-      </HStack>
+        <Menu closeOnSelect={true} placement="top-end">
+          <MenuButton
+            as={IconButton}
+            size="sm"
+            aria-label="More info"
+            variant="secondary"
+            marginLeft="auto"
+            icon={<QuestionIcon />}
+          />
+          <Portal>
+            <MenuList>
+              <MenuItem>
+                <Link
+                  href="https://stately.ai/privacy"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Privacy Policy
+                </Link>
+              </MenuItem>
+            </MenuList>
+          </Portal>
+        </Menu>
+      </Box>
     </Box>
   );
 };

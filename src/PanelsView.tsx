@@ -31,7 +31,7 @@ export const PanelsView = () => {
       <Tabs
         bg="gray.800"
         display="grid"
-        gridTemplateRows="3rem 1fr auto"
+        gridTemplateRows="3rem 1fr"
         height="100%"
       >
         <TabList>
@@ -102,27 +102,6 @@ export const PanelsView = () => {
             <SettingsPanel />
           </TabPanel>
         </TabPanels>
-        <Box
-          padding="1"
-          paddingInline="2"
-          background="gray.800"
-          display="flex"
-          flexDirection="row"
-          justifyContent="flex-end"
-          fontSize="sm"
-          css={{
-            gap: '1rem',
-          }}
-        >
-          <Text>XState v.4.23.0</Text>
-          <Link
-            href="https://stately.ai/privacy"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Privacy Policy
-          </Link>
-        </Box>
       </Tabs>
     </ResizableBox>
   );
