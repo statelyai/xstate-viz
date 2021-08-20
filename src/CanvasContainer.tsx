@@ -4,7 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
-import { isMac } from './utils';
+import { isWithPlatformMetaKey } from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -190,7 +190,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
         WebkitFontSmoothing: 'auto',
       }}
       onWheel={(e) => {
-        if (isMac() ? e.metaKey : e.ctrlKey) {
+        if (isWithPlatformMetaKey(e)) {
           if (e.deltaY > 0) {
             canvasService.send(
               canvasModel.events['ZOOM.OUT'](

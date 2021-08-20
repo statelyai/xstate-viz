@@ -1,5 +1,6 @@
 import { createModel } from 'xstate/lib/model';
 import { EDITOR_CLASSNAME } from './constants';
+import { isWithPlatformMetaKey } from './utils';
 
 const paletteModel = createModel(undefined, {
   events: {
@@ -16,7 +17,7 @@ export const paletteMachine = paletteModel.createMachine({
         src: () => (sendBack) => {
           function captureCommandPaletteKeybindings(e: KeyboardEvent) {
             const keybindings = {
-              'CtrlCMD+K': (e.metaKey || e.ctrlKey) && e.code === 'KeyK',
+              'CtrlCMD+K': isWithPlatformMetaKey(e) && e.code === 'KeyK',
               // Shift + / = ?
               'Shift+?': e.shiftKey && e.code === 'Slash',
             };

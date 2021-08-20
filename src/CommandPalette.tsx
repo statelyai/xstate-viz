@@ -14,6 +14,7 @@ import { useActor } from '@xstate/react';
 import React, { useLayoutEffect } from 'react';
 import { ReactNode } from 'react-markdown';
 import { usePalette } from './PaletteContext';
+import { getPlatformMetaKeyLabel } from './utils';
 
 // this hack is needed at the moment because Chakra assumes that Menus are always used in combination with MenuButtons
 // because of that logic related to auto-focusing menu items partially lives in the MenuButton and, in our case, it's just not executed here
@@ -66,7 +67,7 @@ export const CommandPalette: React.FC<{
                 onClick={onSave}
                 command={
                   <>
-                    <Kbd>Ctrl/CMD</Kbd> + <Kbd>S</Kbd>
+                    <Kbd>{getPlatformMetaKeyLabel()}</Kbd> + <Kbd>S</Kbd>
                   </>
                 }
               >
@@ -76,7 +77,7 @@ export const CommandPalette: React.FC<{
                 onClick={onVisualize}
                 command={
                   <>
-                    <Kbd>Ctrl/CMD</Kbd> + <Kbd>Enter</Kbd>
+                    <Kbd> {getPlatformMetaKeyLabel()}</Kbd> + <Kbd>Enter</Kbd>
                   </>
                 }
               >
