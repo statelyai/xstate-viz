@@ -9,13 +9,12 @@ import {
   Tabs,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
-import { toDirectedGraph } from './directedGraph';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
 import './Graph';
@@ -54,7 +53,7 @@ function App() {
     });
   }, [machine?.id, sendToSourceService]);
 
-  const sourceID = sourceState.context.sourceID
+  const sourceID = sourceState.context.sourceID;
 
   const canvasService = useInterpretCanvas({
     sourceID,
