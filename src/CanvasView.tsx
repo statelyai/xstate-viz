@@ -140,15 +140,22 @@ export const CanvasView: React.FC = () => {
             icon={<QuestionIcon />}
           />
           <Portal>
-            <MenuList>
-              <MenuItem>
-                <Link
-                  href="https://stately.ai/privacy"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Privacy Policy
-                </Link>
+            <MenuList fontSize="sm" padding="0">
+              <MenuItem
+                as={Link}
+                href="https://github.com/statelyai/xstate"
+                target="_blank"
+                rel="noreferrer"
+              >
+                XState version 4.23.0
+              </MenuItem>
+              <MenuItem
+                as={Link}
+                href="https://stately.ai/privacy"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Privacy Policy
               </MenuItem>
             </MenuList>
           </Portal>
