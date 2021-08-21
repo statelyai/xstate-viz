@@ -66,6 +66,7 @@ export interface ParsedEmbed {
   panel: EmbedPanel;
   panelIndex: number;
   showOriginalLink: boolean;
+  readOnly: boolean;
 }
 export interface EmbedContext extends ParsedEmbed {
   isEmbedded: boolean;

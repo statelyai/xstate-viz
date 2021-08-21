@@ -209,26 +209,40 @@ export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
     panel: EmbedPanel.Code,
     panelIndex: 0,
     showOriginalLink: true,
+    readOnly: true,
+  };
+
+  const getQueryParamValue = (qParamValue: string | string[]) => {
+    return Array.isArray(qParamValue) ? qParamValue[0] : qParamValue;
+  };
+
+  const computeBooleanQParamValue = (qParamValue: string) => {
+    // Parse to number to treat "0" as false
+    return !!+qParamValue;
   };
 
   if (query.mode) {
-    const parsedMode = Array.isArray(query.mode) ? query.mode[0] : query.mode;
+    const parsedMode = getQueryParamValue(query.mode);
     if (Object.values(EmbedMode).includes(parsedMode as EmbedMode)) {
       parsedEmbed.mode = parsedMode as EmbedMode;
     }
   }
 
   if (query.panel) {
-    const parsedPanel = Array.isArray(query.panel)
-      ? query.panel[0]
-      : query.panel;
+    const parsedPanel = getQueryParamValue(query.panel);
     if (Object.values(EmbedPanel).includes(parsedPanel as EmbedPanel)) {
       parsedEmbed.panel = parsedPanel as EmbedPanel;
     }
   }
 
   if (query.showOriginalLink != undefined) {
-    parsedEmbed.showOriginalLink = !!+query.showOriginalLink;
+    const parsedValue = getQueryParamValue(query.showOriginalLink);
+    parsedEmbed.showOriginalLink = computeBooleanQParamValue(parsedValue);
+  }
+
+  if (query.readOnly) {
+    const parsedReadOnly = getQueryParamValue(query.readOnly);
+    parsedEmbed.readOnly = computeBooleanQParamValue(parsedReadOnly);
   }
 
   const tabs = Object.values(EmbedPanel);
