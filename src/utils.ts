@@ -10,7 +10,13 @@ import {
   StateNode,
   TransitionDefinition,
 } from 'xstate';
-import { AnyState, AnyStateMachine, EmbedMode, EmbedPanel } from './types';
+import {
+  AnyState,
+  AnyStateMachine,
+  EmbedMode,
+  EmbedPanel,
+  ParsedEmbed,
+} from './types';
 import { print } from 'graphql';
 import { useSelector } from '@xstate/react';
 import { NextRouter } from 'next/router';
@@ -197,17 +203,18 @@ export function isDelayedTransitionAction(
  * /?mode=viz|full|panels default:viz
  * /?mode=panels&panel=code|state|events|actors default:code
  */
-export const parseQuery = (
-  query: NextRouter['query'],
-): { mode: EmbedMode; panel: EmbedPanel; panelIndex: number } => {
-  let mode = EmbedMode.Viz,
-    panel = EmbedPanel.Code;
+export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
+  const parsedEmbed = {
+    mode: EmbedMode.Viz,
+    panel: EmbedPanel.Code,
+    panelIndex: 0,
+    showOriginalLink: true,
+  };
 
   if (query.mode) {
     const parsedMode = Array.isArray(query.mode) ? query.mode[0] : query.mode;
-    console.log({ parsedMode, values: Object.values(EmbedMode) });
     if (Object.values(EmbedMode).includes(parsedMode as EmbedMode)) {
-      mode = parsedMode as EmbedMode;
+      parsedEmbed.mode = parsedMode as EmbedMode;
     }
   }
 
@@ -216,13 +223,27 @@ export const parseQuery = (
       ? query.panel[0]
       : query.panel;
     if (Object.values(EmbedPanel).includes(parsedPanel as EmbedPanel)) {
-      panel = parsedPanel as EmbedPanel;
+      parsedEmbed.panel = parsedPanel as EmbedPanel;
     }
   }
 
-  const tabs = Object.values(EmbedPanel);
-  let panelIndex = tabs.findIndex((p) => p === panel);
-  panelIndex = panelIndex >= 0 ? panelIndex : 0;
+  if (query.showOriginalLink != undefined) {
+    parsedEmbed.showOriginalLink = !!+query.showOriginalLink;
+  }
 
-  return { mode, panel, panelIndex };
+  const tabs = Object.values(EmbedPanel);
+  const foundPanelIndex = tabs.findIndex((p) => p === parsedEmbed.panel);
+  parsedEmbed.panelIndex = foundPanelIndex >= 0 ? foundPanelIndex : 0;
+
+  return parsedEmbed;
 };
+
+export function constructOriginalUrlFromEmbed(embedUrl: string): string {
+  const url = new URL(embedUrl);
+  url.pathname = url.pathname.replace(/\/embed/gi, '');
+  // We don't need embed related query params in the original link
+  ['mode', 'panel', 'showOriginalLink'].forEach((q) => {
+    url.searchParams.delete(q);
+  });
+  return url.toString();
+}

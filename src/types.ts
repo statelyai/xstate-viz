@@ -61,3 +61,13 @@ export enum EmbedPanel {
   Actors = 'actors',
   Settings = 'settings',
 }
+export interface ParsedEmbed {
+  mode: EmbedMode;
+  panel: EmbedPanel;
+  panelIndex: number;
+  showOriginalLink: boolean;
+}
+export interface EmbedContext extends ParsedEmbed {
+  isEmbedded: boolean;
+  embedUrl?: string;
+}

@@ -11,10 +11,7 @@ import '../EventTypeViz.scss';
 import '../EdgeViz.scss';
 import '../DelayViz.scss';
 import Head from 'next/head';
-import { isOnClientSide } from '../isOnClientSide';
-import { EmbedProvider } from '../embedContext';
-import { parseQuery } from '../utils';
-import { useRouter } from 'next/router';
+// import { isOnClientSide } from '../isOnClientSide';
 
 if (
   process.env.NODE_ENV === 'production' &&
@@ -32,7 +29,7 @@ if (
 }
 
 const MyApp = ({ pageProps, Component }: AppProps) => {
-  const isClientSide = isOnClientSide();
+  // const isClientSide = isOnClientSide();
 
   return (
     <>

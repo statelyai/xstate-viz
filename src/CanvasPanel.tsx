@@ -54,7 +54,11 @@ export const CanvasPanel: React.FC = () => {
   const simulationMode = useSimulationMode();
 
   return (
-    <Box display="grid" gridTemplateRows="3rem 1fr">
+    <Box
+      display="grid"
+      height="100%"
+      {...(!embed.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
+    >
       <Box bg="gray.800" zIndex={1} padding="0" hidden={embed.isEmbedded}>
         <CanvasPanelHeader />
       </Box>

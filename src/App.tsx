@@ -10,7 +10,7 @@ import {
   Tabs,
 } from '@chakra-ui/react';
 import { useInterpret, useSelector } from '@xstate/react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect } from 'react';
 import { ActorsPanel } from './ActorsPanel';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
@@ -19,6 +19,7 @@ import { CanvasPanel } from './CanvasPanel';
 import { EditorPanel } from './EditorPanel';
 import { EmbedProvider, useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
+import { ExternalIcon } from './ExternalIcon';
 import './Graph';
 import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
@@ -33,11 +34,11 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
-import { EmbedPanel } from './types';
+import { EmbedContext, EmbedPanel } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 import { Visibility } from './Visibility';
 
-const App: React.FC<{ embed: ReturnType<typeof useEmbed> }> = ({ embed }) => {
+const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -126,7 +127,21 @@ const App: React.FC<{ embed: ReturnType<typeof useEmbed> }> = ({ embed }) => {
                           <SettingsIcon />
                         </Tab>
                         <Login hidden={embed.isEmbedded} />
-                        {/* {embed.isEmbedded && <Button as="link" href={`https://stately.ai/viz` + router.asPath}>Open in Stately.ai/viz</Button>} */}
+                        {embed.isEmbedded && embed.showOriginalLink && (
+                          <Button
+                            height="100%"
+                            rounded="none"
+                            marginLeft="auto"
+                            colorScheme="blue"
+                            as="a"
+                            target="_blank"
+                            rel="noopener noreferer nofollow"
+                            href={embed.embedUrl}
+                            leftIcon={<ExternalIcon />}
+                          >
+                            Open in Stately.ai/viz
+                          </Button>
+                        )}
                       </TabList>
 
                       <TabPanels minHeight={0}>

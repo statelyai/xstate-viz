@@ -1,16 +1,16 @@
 import { useInterpret } from '@xstate/react';
 import { useEffect } from 'react';
 import { canvasMachine, canvasModel } from './canvasMachine';
-import { useEmbed } from './embedContext';
 import './Graph';
 import { localCache } from './localCache';
+import { EmbedContext } from './types';
 
 export const useInterpretCanvas = ({
   sourceID,
   embed,
 }: {
   sourceID: string | null;
-  embed: ReturnType<typeof useEmbed>;
+  embed: EmbedContext;
 }) => {
   const canvasService = useInterpret(
     canvasMachine.withContext({
