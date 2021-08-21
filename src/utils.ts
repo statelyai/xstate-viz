@@ -202,3 +202,6 @@ export function isDelayedTransitionAction(
       return false;
   }
 }
+
+export const isInputLikeElement = (el: HTMLElement) =>
+  el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
