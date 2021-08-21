@@ -26,7 +26,7 @@ export const PanelsView = () => {
   const [sourceState, sendToSourceService] = useSourceActor();
 
   return (
-    <ResizableBox gridArea="panels" minHeight={0}>
+    <ResizableBox gridArea="panels">
       <Tabs
         bg="gray.800"
         display="grid"
@@ -44,7 +44,7 @@ export const PanelsView = () => {
           <Login />
         </TabList>
 
-        <TabPanels minHeight={0}>
+        <TabPanels>
           <TabPanel height="100%" padding={0}>
             {sourceState.matches({
               with_source: 'loading_content',
