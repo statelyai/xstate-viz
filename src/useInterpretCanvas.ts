@@ -7,10 +7,11 @@ import { localCache } from './localCache';
 
 export const useInterpretCanvas = ({
   sourceID,
+  embed,
 }: {
   sourceID: string | null;
+  embed: ReturnType<typeof useEmbed>;
 }) => {
-  const embed = useEmbed();
   const canvasService = useInterpret(
     canvasMachine.withContext({
       ...canvasModel.initialContext,
