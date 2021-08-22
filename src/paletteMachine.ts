@@ -1,5 +1,5 @@
 import { createModel } from 'xstate/lib/model';
-import { isWithPlatformMetaKey, isInputLikeElement } from './utils';
+import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
 
 const paletteModel = createModel(undefined, {
   events: {
@@ -24,7 +24,7 @@ export const paletteMachine = paletteModel.createMachine({
           }
           const eventHandler = (e: KeyboardEvent) => {
             if (
-              !isInputLikeElement(e.target as HTMLElement) &&
+              !isTextInputLikeElement(e.target as HTMLElement) &&
               captureCommandPaletteKeybindings(e)
             ) {
               e.preventDefault();

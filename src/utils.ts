@@ -203,5 +203,19 @@ export function isDelayedTransitionAction(
   }
 }
 
-export const isInputLikeElement = (el: HTMLElement) =>
-  el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
+const isTextAcceptingInputElement = (input: HTMLInputElement) =>
+  input.type === 'email' ||
+  input.type === 'password' ||
+  input.type === 'search' ||
+  input.type === 'tel' ||
+  input.type === 'text' ||
+  input.type === 'url';
+
+export const isTextInputLikeElement = (el: HTMLElement) => {
+  return (
+    (el.tagName === 'INPUT' &&
+      isTextAcceptingInputElement(el as HTMLInputElement)) ||
+    el.tagName === 'TEXTAREA' ||
+    el.isContentEditable
+  );
+};

@@ -4,7 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
-import { isWithPlatformMetaKey, isInputLikeElement } from './utils';
+import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -114,8 +114,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
         invokeDetectLock: () => (sendBack) => {
           function keydownListener(e: KeyboardEvent) {
             const target = e.target as HTMLElement;
-            // Need this to still be able to use Spacebar in editable elements
-            if (isInputLikeElement(target) || target.tagName === 'BUTTON') {
+            if (isTextInputLikeElement(target)) {
               return;
             }
 
