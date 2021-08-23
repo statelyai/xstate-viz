@@ -1,6 +1,7 @@
 import { assign, createMachine, Receiver, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
+import { StateElkNode } from './graphUtils';
 import { localCache } from './localCache';
 
 export enum ZoomFactor {
@@ -20,6 +21,7 @@ const initialPosition = {
     width: 0,
     height: 0,
   },
+  elkGraph: undefined as StateElkNode | undefined,
 };
 
 export type Pan = {
@@ -58,6 +60,8 @@ export const canvasModel = createModel(initialPosition, {
       width,
       height,
     }),
+    'elkGraph.UPDATE': (elkGraph: StateElkNode) => ({ elkGraph }),
+    ZOOM_TO_FIT: () => ({}),
   },
 });
 
@@ -176,6 +180,25 @@ export const canvasMachine = createMachine<typeof canvasModel>({
         if (!position) return {};
 
         return position;
+      }),
+    },
+    'elkGraph.UPDATE': {
+      actions: canvasModel.assign({
+        elkGraph: (_, e) => e.elkGraph,
+      }),
+    },
+    ZOOM_TO_FIT: {
+      actions: canvasModel.assign({
+        zoom: (ctx) => {
+          return Math.min(
+            ctx.canvasPanelPosition.width / ctx.elkGraph!.width!,
+            ctx.canvasPanelPosition.height / ctx.elkGraph!.height!,
+          );
+        },
+        pan: {
+          dx: 0,
+          dy: 0,
+        },
       }),
     },
   },

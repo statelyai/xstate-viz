@@ -124,15 +124,6 @@ export const isWithPlatformMetaKey = (event: {
 
 export const getPlatformMetaKeyLabel = () => (isMac() ? 'CMD' : 'Ctrl');
 
-// export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
-//   const children = getChildren(stateNode);
-
-//   return flatten([
-//     ...getEdges(stateNode),
-//     ...children.map((child) => getAllEdges(child)),
-//   ]);
-// }
-
 export const updateQueryParamsWithoutReload = (
   mutator: (queries: URLSearchParams) => void,
 ) => {

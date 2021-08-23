@@ -112,6 +112,14 @@ export const CanvasView: React.FC = () => {
             onClick={() => canvasService.send('ZOOM.IN')}
             variant="secondary"
           />
+          <Button
+            aria-label="Fit to view"
+            title="Fit to view"
+            onClick={() => canvasService.send('ZOOM_TO_FIT')}
+            variant="secondary"
+          >
+            Fit to view
+          </Button>
           <IconButton
             aria-label="Reset canvas"
             title="Reset canvas"
