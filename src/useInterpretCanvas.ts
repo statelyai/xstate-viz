@@ -1,6 +1,6 @@
 import { useInterpret } from '@xstate/react';
 import { useEffect } from 'react';
-import { canvasMachine, canvasModel } from './canvasMachine';
+import { canvasMachine } from './canvasMachine';
 import './Graph';
 import { localCache } from './localCache';
 import { EmbedContext } from './types';
@@ -12,19 +12,19 @@ export const useInterpretCanvas = ({
   sourceID: string | null;
   embed: EmbedContext;
 }) => {
-  const canvasService = useInterpret(
-    canvasMachine.withContext({
-      ...canvasModel.initialContext,
-      isEmbedded: embed.isEmbedded,
-    }),
-    {
-      actions: {
-        persistPositionToLocalStorage: (context) => {
-          localCache.savePosition(sourceID, context);
-        },
+  const canvasService = useInterpret(canvasMachine, {
+    guards: {
+      isEmbeddedMode: () => embed.isEmbedded,
+    },
+    actions: {
+      persistPositionToLocalStorage: (context) => {
+        localCache.savePosition(sourceID, context);
       },
     },
-  );
+  });
+  useEffect(() => {
+    canvasService.onTransition(console.log);
+  }, []);
 
   useEffect(() => {
     canvasService.send({

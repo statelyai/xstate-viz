@@ -17,7 +17,7 @@ import { authMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasPanel } from './CanvasPanel';
 import { EditorPanel } from './EditorPanel';
-import { EmbedProvider, useEmbed } from './embedContext';
+import { EmbedProvider } from './embedContext';
 import { EventsPanel } from './EventsPanel';
 import { ExternalIcon } from './ExternalIcon';
 import './Graph';
@@ -127,21 +127,23 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
                           <SettingsIcon />
                         </Tab>
                         <Login hidden={embed.isEmbedded} />
-                        {embed.isEmbedded && embed.showOriginalLink && (
-                          <Button
-                            height="100%"
-                            rounded="none"
-                            marginLeft="auto"
-                            colorScheme="blue"
-                            as="a"
-                            target="_blank"
-                            rel="noopener noreferer nofollow"
-                            href={embed.embedUrl}
-                            leftIcon={<ExternalIcon />}
-                          >
-                            Open in Stately.ai/viz
-                          </Button>
-                        )}
+                        {embed.isEmbedded &&
+                          embed.showOriginalLink &&
+                          embed.embedUrl && (
+                            <Button
+                              height="100%"
+                              rounded="none"
+                              marginLeft="auto"
+                              colorScheme="blue"
+                              as="a"
+                              target="_blank"
+                              rel="noopener noreferer nofollow"
+                              href={embed.embedUrl}
+                              leftIcon={<ExternalIcon />}
+                            >
+                              Open in Stately.ai/viz
+                            </Button>
+                          )}
                       </TabList>
 
                       <TabPanels minHeight={0}>
