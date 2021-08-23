@@ -65,7 +65,8 @@ jobs:
             echo "$branch already exists on the remote"
           fi;
 
-      - name: Create ${{ steps.release-branch-check.outputs.branch }} branch
+      # can't use the output from the previous step in the name here as it could have not been set
+      - name: Create release-temp-${{ steps.latest-version.outputs.result }} branch
         if: steps.release-branch-check.outputs.branch
         run: |
           git push origin HEAD:${{ steps.release-branch-check.outputs.branch }}

@@ -1,10 +1,18 @@
-import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
+import { AddIcon, MinusIcon, QuestionIcon, RepeatIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
   ButtonGroup,
-  HStack,
   IconButton,
+  Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Portal,
   Spinner,
   VStack,
 } from '@chakra-ui/react';
@@ -19,10 +27,10 @@ import {
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
-import { CanvasPanelHeader } from './CanvasPanelHeader';
+import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
 
-export const CanvasPanel: React.FC = () => {
+export const CanvasView: React.FC = () => {
   const simService = useSimulation();
   const canvasService = useCanvas();
   const machine = useSelector(simService, (state) => {
@@ -54,7 +62,7 @@ export const CanvasPanel: React.FC = () => {
   return (
     <Box display="grid" gridTemplateRows="3rem 1fr">
       <Box bg="gray.800" zIndex={1} padding="0">
-        <CanvasPanelHeader />
+        <CanvasHeader />
       </Box>
       <CanvasContainer>
         {digraph && <Graph digraph={digraph} />}
@@ -74,7 +82,19 @@ export const CanvasPanel: React.FC = () => {
           </Overlay>
         )}
       </CanvasContainer>
-      <HStack position="absolute" bottom={0} left={0} padding="2" zIndex={1}>
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="flex-start"
+        position="absolute"
+        bottom={0}
+        left={0}
+        padding="2"
+        zIndex={1}
+        width="100%"
+        height="4rem"
+      >
         <ButtonGroup size="sm" spacing={2} isAttached>
           <IconButton
             aria-label="Zoom out"
@@ -110,7 +130,37 @@ export const CanvasPanel: React.FC = () => {
             RESET
           </Button>
         )}
-      </HStack>
+        <Menu closeOnSelect={true} placement="top-end">
+          <MenuButton
+            as={IconButton}
+            size="sm"
+            aria-label="More info"
+            variant="secondary"
+            marginLeft="auto"
+            icon={<QuestionIcon />}
+          />
+          <Portal>
+            <MenuList fontSize="sm" padding="0">
+              <MenuItem
+                as={Link}
+                href="https://github.com/statelyai/xstate"
+                target="_blank"
+                rel="noreferrer"
+              >
+                XState version 4.23.0
+              </MenuItem>
+              <MenuItem
+                as={Link}
+                href="https://stately.ai/privacy"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Privacy Policy
+              </MenuItem>
+            </MenuList>
+          </Portal>
+        </Menu>
+      </Box>
     </Box>
   );
 };
