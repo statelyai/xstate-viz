@@ -16,6 +16,7 @@ const HomePage = ({ query }: { query: any }) => {
       embed={{
         ...embed,
         isEmbedded: false,
+        embedUrl: null,
       }}
     />
   );

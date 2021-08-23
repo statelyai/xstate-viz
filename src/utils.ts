@@ -235,7 +235,7 @@ export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
     }
   }
 
-  if (query.showOriginalLink != undefined) {
+  if (query.showOriginalLink) {
     const parsedValue = getQueryParamValue(query.showOriginalLink);
     parsedEmbed.showOriginalLink = computeBooleanQParamValue(parsedValue);
   }
@@ -252,12 +252,11 @@ export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
   return parsedEmbed;
 };
 
-export function constructOriginalUrlFromEmbed(embedUrl: string): string {
-  const url = new URL(embedUrl);
-  url.pathname = url.pathname.replace(/\/embed/gi, '');
+export function withoutEmbedQueryParams(query: any): string {
+  const q = new URLSearchParams(query);
   // We don't need embed related query params in the original link
-  ['mode', 'panel', 'showOriginalLink'].forEach((q) => {
-    url.searchParams.delete(q);
+  ['mode', 'panel', 'showOriginalLink'].forEach((key) => {
+    q.delete(key);
   });
-  return url.toString();
+  return '/viz?' + q.toString();
 }

@@ -70,5 +70,5 @@ export interface ParsedEmbed {
 }
 export interface EmbedContext extends ParsedEmbed {
   isEmbedded: boolean;
-  embedUrl?: string;
+  embedUrl: string | null;
 }

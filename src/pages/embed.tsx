@@ -1,21 +1,21 @@
-import { GetServerSideProps } from 'next';
+import { NextPageContext } from 'next';
 import App from '../App';
-import { constructOriginalUrlFromEmbed, parseEmbedQuery } from '../utils';
+import { withoutEmbedQueryParams, parseEmbedQuery } from '../utils';
 
-// TODO: figure out the TS typings for `ctx`
-export default function Embed({ query, url }: { query: any; url: string }) {
+export default function Embed({ query }: { query: any }) {
   const embed = parseEmbedQuery(query);
   return (
     <App
       embed={{
         ...embed,
         isEmbedded: true,
-        embedUrl: constructOriginalUrlFromEmbed(url),
+        embedUrl: withoutEmbedQueryParams(query),
       }}
     />
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  return { props: { query: ctx.query, url: ctx.req.headers.referer || '' } };
+Embed.getInitialProps = async (ctx: NextPageContext) => {
+  // console.log(ctx.req?.headers.referer, ctx.pathname, ctx.asPath,);
+  return { query: ctx.query };
 };
