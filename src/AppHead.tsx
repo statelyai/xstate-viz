@@ -2,6 +2,7 @@ import Head from 'next/head';
 
 interface AppHeadProps {
   title: string;
+  ogTitle: string;
   importElk: boolean;
   description: string;
   importPrettier: boolean;
@@ -27,7 +28,7 @@ export const AppHead = (props: AppHeadProps) => {
 
       <meta property="og:type" content="website" />
       <meta property="og:url" content={`https://stately.ai/viz`} />
-      <meta property="og:title" content={props.title} />
+      <meta property="og:title" content={props.ogTitle} />
       <meta property="og:description" content={props.description} />
       {props.ogImageUrl && (
         <meta property="og:image" content={props.ogImageUrl} />

@@ -5,7 +5,8 @@ const HomePage = () => {
   return (
     <>
       <AppHead
-        title="XState Visualiser"
+        title="XState Visualizer"
+        ogTitle="XState Visualizer"
         description="Visualizer for XState state machines and statecharts"
         importElk
         importPrettier

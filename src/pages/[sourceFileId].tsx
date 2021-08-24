@@ -19,9 +19,10 @@ const SourceFileIdPage = (props: SourceFileIdPageProps) => {
       <AppHead
         title={
           props.data?.name
-            ? `${props.data?.name} | XState Visualiser`
-            : `XState Visualiser`
+            ? `${props.data?.name} | XState Visualizer`
+            : `XState Visualizer`
         }
+        ogTitle={props.data?.name || 'XState Visualizer'}
         description={
           props.data?.name ||
           `Visualizer for XState state machines and statecharts`
