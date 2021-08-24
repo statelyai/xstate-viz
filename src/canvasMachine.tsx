@@ -27,39 +27,43 @@ export type Pan = {
   dy: number;
 };
 
-export const canvasModel = createModel(initialPosition, {
-  events: {
-    'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
-      zoomFactor,
-      x,
-      y,
-    }),
-    'ZOOM.IN': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
-      zoomFactor,
-      x,
-      y,
-    }),
-    'POSITION.RESET': () => ({}),
-    PAN: (dx: number, dy: number) => ({ dx, dy }),
-    /**
-     * Occurs when a source changed id
-     */
-    SOURCE_CHANGED: (id: string | null) => ({
-      id,
-    }),
-    CANVAS_RECT_CHANGED: (
-      offsetY: number,
-      offsetX: number,
-      width: number,
-      height: number,
-    ) => ({
-      offsetX,
-      offsetY,
-      width,
-      height,
-    }),
+export const canvasModel = createModel(
+  { ...initialPosition, isEmbedded: false },
+  {
+    events: {
+      'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+        zoomFactor,
+        x,
+        y,
+      }),
+      'ZOOM.IN': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+        zoomFactor,
+        x,
+        y,
+      }),
+      'POSITION.RESET': () => ({}),
+      PAN: (dx: number, dy: number) => ({ dx, dy }),
+      /**
+       * Occurs when a source changed id
+       */
+      SOURCE_CHANGED: (id: string | null /*isEmbedded: boolean*/) => ({
+        id,
+        // isEmbedded,
+      }),
+      CANVAS_RECT_CHANGED: (
+        offsetY: number,
+        offsetX: number,
+        width: number,
+        height: number,
+      ) => ({
+        offsetX,
+        offsetY,
+        width,
+        height,
+      }),
+    },
   },
-});
+);
 
 const DEFAULT_ZOOM_IN_FACTOR = ZoomFactor.normal;
 // exactly reversed factor so zooming in & out results in the same zoom values
@@ -101,8 +105,8 @@ const getNewZoomAndPan = (
   };
 };
 
-export const canvasMachine = createMachine<typeof canvasModel>({
-  context: canvasModel.initialContext,
+export const canvasMachine = canvasModel.createMachine({
+  // context: canvasModel.initialContext,
   on: {
     CANVAS_RECT_CHANGED: {
       actions: canvasModel.assign((ctx, e) => {
@@ -185,7 +189,7 @@ export const canvasMachine = createMachine<typeof canvasModel>({
       always: [
         {
           target: 'in_embedded_mode',
-          cond: 'isEmbeddedMode',
+          cond: (ctx) => ctx.isEmbedded,
         },
       ],
     },
@@ -197,6 +201,7 @@ export const canvasMachine = createMachine<typeof canvasModel>({
       },
     },
     throttling: {
+      entry: (ctx) => console.log('entry throttling', ctx),
       after: {
         300: 'saving',
       },

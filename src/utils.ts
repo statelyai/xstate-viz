@@ -210,6 +210,9 @@ export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
     panelIndex: 0,
     showOriginalLink: true,
     readOnly: true,
+    pan: false,
+    zoom: false,
+    controls: false,
   };
 
   const getQueryParamValue = (qParamValue: string | string[]) => {
@@ -245,6 +248,21 @@ export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
     parsedEmbed.readOnly = computeBooleanQParamValue(parsedReadOnly);
   }
 
+  if (query.pan) {
+    const parsedPan = getQueryParamValue(query.pan);
+    parsedEmbed.pan = computeBooleanQParamValue(parsedPan);
+  }
+
+  if (query.zoom) {
+    const parsedZoom = getQueryParamValue(query.zoom);
+    parsedEmbed.zoom = computeBooleanQParamValue(parsedZoom);
+  }
+
+  if (query.controls) {
+    const parsedControls = getQueryParamValue(query.controls);
+    parsedEmbed.controls = computeBooleanQParamValue(parsedControls);
+  }
+
   const tabs = Object.values(EmbedPanel);
   const foundPanelIndex = tabs.findIndex((p) => p === parsedEmbed.panel);
   parsedEmbed.panelIndex = foundPanelIndex >= 0 ? foundPanelIndex : 0;
@@ -255,7 +273,15 @@ export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
 export function withoutEmbedQueryParams(query: any): string {
   const q = new URLSearchParams(query);
   // We don't need embed related query params in the original link
-  ['mode', 'panel', 'showOriginalLink'].forEach((key) => {
+  [
+    'mode',
+    'panel',
+    'showOriginalLink',
+    'pan',
+    'zoom',
+    'control',
+    'readonly',
+  ].forEach((key) => {
     q.delete(key);
   });
   return '/viz?' + q.toString();
