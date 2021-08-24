@@ -1,12 +1,15 @@
 [data-viz='transition'] {
-  --viz-transition-color: gray;
+  --viz-transition-color: #333;
   display: block;
-  border-radius: 1rem;
+  border-radius: 0.4rem;
   background-color: var(--viz-transition-color);
   appearance: none;
 
+  color: #ccc;
+
   &[data-viz-potential] {
     --viz-transition-color: var(--viz-color-active);
+    color: white;
   }
 
   > [data-viz='transition-label'] {
@@ -25,7 +28,6 @@
   flex-shrink: 0;
   font-size: var(--viz-font-size-sm);
   font-weight: bold;
-  color: white;
   display: flex;
   flex-direction: row;
   align-items: center;
