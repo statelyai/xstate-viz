@@ -149,8 +149,6 @@ export const makeSourceMachine = (params: {
                     if (!isOnClientSide()) return false;
                     const queries = new URLSearchParams(window.location.search);
 
-                    console.log(queries);
-
                     return Boolean(queries.get('id') && !params.data);
                   },
                   target: 'redirecting',
