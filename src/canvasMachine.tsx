@@ -1,7 +1,8 @@
-import { assign, createMachine, StateFrom } from 'xstate';
+import { assign, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
+import { EmbedContext } from './types';
 
 export enum ZoomFactor {
   slow = 1.09,
@@ -22,48 +23,50 @@ const initialPosition = {
   },
 };
 
+const initialContext = {
+  ...initialPosition,
+  embed: null as EmbedContext | null,
+};
+
 export type Pan = {
   dx: number;
   dy: number;
 };
 
-export const canvasModel = createModel(
-  { ...initialPosition, isEmbedded: false },
-  {
-    events: {
-      'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
-        zoomFactor,
-        x,
-        y,
-      }),
-      'ZOOM.IN': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
-        zoomFactor,
-        x,
-        y,
-      }),
-      'POSITION.RESET': () => ({}),
-      PAN: (dx: number, dy: number) => ({ dx, dy }),
-      /**
-       * Occurs when a source changed id
-       */
-      SOURCE_CHANGED: (id: string | null /*isEmbedded: boolean*/) => ({
-        id,
-        // isEmbedded,
-      }),
-      CANVAS_RECT_CHANGED: (
-        offsetY: number,
-        offsetX: number,
-        width: number,
-        height: number,
-      ) => ({
-        offsetX,
-        offsetY,
-        width,
-        height,
-      }),
-    },
+export const canvasModel = createModel(initialContext, {
+  events: {
+    'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+      zoomFactor,
+      x,
+      y,
+    }),
+    'ZOOM.IN': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+      zoomFactor,
+      x,
+      y,
+    }),
+    'POSITION.RESET': () => ({}),
+    PAN: (dx: number, dy: number) => ({ dx, dy }),
+    /**
+     * Occurs when a source changed id
+     */
+    SOURCE_CHANGED: (id: string | null /*isEmbedded: boolean*/) => ({
+      id,
+      // isEmbedded,
+    }),
+    CANVAS_RECT_CHANGED: (
+      offsetY: number,
+      offsetX: number,
+      width: number,
+      height: number,
+    ) => ({
+      offsetX,
+      offsetY,
+      width,
+      height,
+    }),
   },
-);
+});
 
 const DEFAULT_ZOOM_IN_FACTOR = ZoomFactor.normal;
 // exactly reversed factor so zooming in & out results in the same zoom values
@@ -72,6 +75,22 @@ const calculateZoomOutFactor = (zoomInFactor: ZoomFactor = ZoomFactor.normal) =>
 const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
+
+const canZoom = (ctx: typeof initialContext) => {
+  return !ctx.embed?.isEmbedded || (ctx.embed.isEmbedded && ctx.embed.zoom);
+};
+
+const canZoomOut = (ctx: typeof initialContext) => {
+  return ctx.zoom > MAX_ZOOM_OUT_FACTOR;
+};
+
+const canZoomIn = (ctx: typeof initialContext) => {
+  return ctx.zoom < MAX_ZOOM_IN_FACTOR;
+};
+
+const canPan = (ctx: typeof initialContext) => {
+  return !ctx.embed?.isEmbedded || (ctx.embed.isEmbedded && ctx.embed.pan);
+};
 
 /**
  * Implementation copied from:
@@ -106,7 +125,6 @@ const getNewZoomAndPan = (
 };
 
 export const canvasMachine = canvasModel.createMachine({
-  // context: canvasModel.initialContext,
   on: {
     CANVAS_RECT_CHANGED: {
       actions: canvasModel.assign((ctx, e) => {
@@ -133,7 +151,7 @@ export const canvasMachine = canvasModel.createMachine({
           ctx.canvasPanelPosition,
         );
       }),
-      cond: (ctx) => ctx.zoom > MAX_ZOOM_OUT_FACTOR,
+      cond: (ctx) => canZoom(ctx) && canZoomOut(ctx),
       target: '.throttling',
       internal: false,
     },
@@ -150,7 +168,7 @@ export const canvasMachine = canvasModel.createMachine({
           ctx.canvasPanelPosition,
         );
       }),
-      cond: (ctx) => ctx.zoom < MAX_ZOOM_IN_FACTOR,
+      cond: (ctx) => canZoom(ctx) && canZoomIn(ctx),
       target: '.throttling',
       internal: false,
     },
@@ -163,6 +181,7 @@ export const canvasMachine = canvasModel.createMachine({
           };
         },
       }),
+      cond: (ctx) => canPan(ctx),
       target: '.throttling',
       internal: false,
     },
@@ -185,21 +204,7 @@ export const canvasMachine = canvasModel.createMachine({
   },
   initial: 'idle',
   states: {
-    idle: {
-      always: [
-        {
-          target: 'in_embedded_mode',
-          cond: (ctx) => ctx.isEmbedded,
-        },
-      ],
-    },
-    in_embedded_mode: {
-      on: {
-        PAN: undefined,
-        'ZOOM.IN': undefined,
-        'ZOOM.OUT': undefined,
-      },
-    },
+    idle: {},
     throttling: {
       entry: (ctx) => console.log('entry throttling', ctx),
       after: {

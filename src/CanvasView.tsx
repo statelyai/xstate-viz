@@ -102,6 +102,7 @@ export const CanvasView: React.FC = () => {
         zIndex={1}
         width="100%"
         height="4rem"
+        hidden={embed.isEmbedded && !embed.controls}
       >
         <ButtonGroup size="sm" spacing={2} isAttached>
           <IconButton
