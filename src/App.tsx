@@ -47,7 +47,7 @@ function App(props: AppProps) {
      * router.replace causes this in development, but not in prod
      *
      * So, we use window.location.href in development (with the /viz
-     * prefix which Next won't automatically) and router.replace in prod
+     * prefix which Next won't automatically add) and router.replace in prod
      */
     if (process.env.NODE_ENV === 'development') {
       window.location.href = `/viz${url}`;
