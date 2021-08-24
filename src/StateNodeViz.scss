@@ -64,6 +64,7 @@
 
 [data-viz='stateNode-content'] {
   background: var(--viz-node-color-bg);
+  padding: 1rem 2rem;
 
   &:empty {
     display: none;

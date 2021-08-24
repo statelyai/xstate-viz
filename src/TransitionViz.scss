@@ -1,15 +1,17 @@
 [data-viz='transition'] {
-  --viz-transition-color: #333;
+  --viz-transition-color: black;
   display: block;
   border-radius: 0.4rem;
   background-color: var(--viz-transition-color);
   appearance: none;
+  border: #555 2px solid;
 
   color: #ccc;
 
   &[data-viz-potential] {
     --viz-transition-color: var(--viz-color-active);
     color: white;
+    border-color: var(--viz-color-active);
   }
 
   > [data-viz='transition-label'] {
