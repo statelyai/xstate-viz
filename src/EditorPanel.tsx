@@ -28,7 +28,7 @@ import {
   SourceMachineState,
 } from './sourceMachine';
 import type { AnyStateMachine } from './types';
-import { uniq } from './utils';
+import { getPlatformMetaKeyLabel, uniq } from './utils';
 
 function buildGistFixupImportsText(usedXStateGistIdentifiers: string[]) {
   const rootNames: string[] = [];
@@ -427,30 +427,33 @@ export const EditorPanel: React.FC<{
           }}
         />
       )}
-      <Box height="100%" display="grid" gridTemplateRows="1fr auto">
+      <Box height="100%" display="grid" gridTemplateRows="1fr 4rem">
         {simulationMode === 'visualizing' && (
           <>
-            <EditorWithXStateImports
-              defaultValue={defaultValue}
-              onMount={(standaloneEditor, monaco) => {
-                send({
-                  type: 'EDITOR_READY',
-                  monacoRef: monaco,
-                  standaloneEditorRef: standaloneEditor,
-                });
-              }}
-              onChange={(code) => {
-                send({ type: 'EDITOR_CHANGED_VALUE', code });
-              }}
-              onFormat={() => {
-                send({
-                  type: 'COMPILE',
-                });
-              }}
-              onSave={() => {
-                onSave();
-              }}
-            />
+            {/* This extra div acts as a placeholder that is supposed to stretch while EditorWithXStateImports lazy-loads (thanks to `1fr` on the grid) */}
+            <div>
+              <EditorWithXStateImports
+                defaultValue={defaultValue}
+                onMount={(standaloneEditor, monaco) => {
+                  send({
+                    type: 'EDITOR_READY',
+                    monacoRef: monaco,
+                    standaloneEditorRef: standaloneEditor,
+                  });
+                }}
+                onChange={(code) => {
+                  send({ type: 'EDITOR_CHANGED_VALUE', code });
+                }}
+                onFormat={() => {
+                  send({
+                    type: 'COMPILE',
+                  });
+                }}
+                onSave={() => {
+                  onSave();
+                }}
+              />
+            </div>
             <HStack
               padding="2"
               w="full"
@@ -461,7 +464,7 @@ export const EditorPanel: React.FC<{
                 <Tooltip
                   bg="black"
                   color="white"
-                  label="Ctrl/CMD + Enter"
+                  label={`${getPlatformMetaKeyLabel()} + Enter`}
                   closeDelay={500}
                 >
                   <Button
@@ -483,7 +486,7 @@ export const EditorPanel: React.FC<{
                 <Tooltip
                   bg="black"
                   color="white"
-                  label="Ctrl/CMD + S"
+                  label={`${getPlatformMetaKeyLabel()} + S`}
                   closeDelay={500}
                 >
                   <Button

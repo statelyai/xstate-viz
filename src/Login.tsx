@@ -35,6 +35,7 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
           // colorScheme=""
           variant="link"
           rounded="false"
+          height="100%"
           isFullWidth
           onClick={() => {
             authService.send('CHOOSE_PROVIDER');

@@ -1,10 +1,20 @@
-import { AddIcon, MinusIcon, RepeatIcon } from '@chakra-ui/icons';
+import {
+  AddIcon,
+  MinusIcon,
+  RepeatIcon,
+  QuestionOutlineIcon,
+} from '@chakra-ui/icons';
 import {
   Box,
   Button,
   ButtonGroup,
-  HStack,
   IconButton,
+  Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Portal,
   Spinner,
   VStack,
 } from '@chakra-ui/react';
@@ -19,11 +29,11 @@ import {
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
-import { CanvasPanelHeader } from './CanvasPanelHeader';
+import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
 import { useEmbed } from './embedContext';
 
-export const CanvasPanel: React.FC = () => {
+export const CanvasView: React.FC = () => {
   const embed = useEmbed();
   const simService = useSimulation();
   const canvasService = useCanvas();
@@ -60,7 +70,7 @@ export const CanvasPanel: React.FC = () => {
       {...(!embed.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
     >
       <Box bg="gray.800" zIndex={1} padding="0" hidden={embed.isEmbedded}>
-        <CanvasPanelHeader />
+        <CanvasHeader />
       </Box>
       <CanvasContainer>
         {digraph && <Graph digraph={digraph} />}
@@ -80,13 +90,18 @@ export const CanvasPanel: React.FC = () => {
           </Overlay>
         )}
       </CanvasContainer>
-      <HStack
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="flex-start"
         position="absolute"
         bottom={0}
         left={0}
         padding="2"
         zIndex={1}
-        hidden={embed.isEmbedded}
+        width="100%"
+        height="4rem"
       >
         <ButtonGroup size="sm" spacing={2} isAttached>
           <IconButton
@@ -123,7 +138,43 @@ export const CanvasPanel: React.FC = () => {
             RESET
           </Button>
         )}
-      </HStack>
+        <Menu closeOnSelect={true} placement="top-end">
+          <MenuButton
+            as={IconButton}
+            size="sm"
+            isRound
+            aria-label="More info"
+            marginLeft="auto"
+            variant="secondary"
+            icon={
+              <QuestionOutlineIcon
+                boxSize={6}
+                css={{ '& circle': { display: 'none' } }}
+              />
+            }
+          />
+          <Portal>
+            <MenuList fontSize="sm" padding="0">
+              <MenuItem
+                as={Link}
+                href="https://github.com/statelyai/xstate"
+                target="_blank"
+                rel="noreferrer"
+              >
+                XState version 4.23.0
+              </MenuItem>
+              <MenuItem
+                as={Link}
+                href="https://stately.ai/privacy"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Privacy Policy
+              </MenuItem>
+            </MenuList>
+          </Portal>
+        </Menu>
+      </Box>
     </Box>
   );
 };
