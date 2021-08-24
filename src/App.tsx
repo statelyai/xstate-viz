@@ -36,8 +36,7 @@ function App(props: AppProps) {
 
   const router = useRouter();
 
-  const redirectToNewUrlFromLegacyUrl = useCallback(() => {
-    const id = new URLSearchParams(window.location.search)?.get('id');
+  const routerReplace = useCallback((url: string) => {
     /**
      * Apologies for this line of code. The reason this is here
      * is that XState + React Fast Refresh causes an error:
@@ -50,11 +49,17 @@ function App(props: AppProps) {
      * So, we use window.location.href in development (with the /viz
      * prefix which Next won't automatically) and router.replace in prod
      */
+    alert(process.env.NODE_ENV);
     if (process.env.NODE_ENV === 'development') {
-      window.location.href = `/viz/${id}`;
+      window.location.href = `/viz${url}`;
     } else {
-      router.replace(`/${id}`);
+      router.replace(`${url}`);
     }
+  }, []);
+
+  const redirectToNewUrlFromLegacyUrl = useCallback(() => {
+    const id = new URLSearchParams(window.location.search)?.get('id');
+    routerReplace(`/${id}`);
   }, []);
 
   const authService = useInterpret(
