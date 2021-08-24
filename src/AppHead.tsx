@@ -34,12 +34,6 @@ export const AppHead = (props: AppHeadProps) => {
       )}
 
       <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={`https://stately.ai/viz`} />
-      <meta property="twitter:title" content={props.title} />
-      <meta property="twitter:description" content={props.description} />
-      {props.ogImageUrl && (
-        <meta property="twitter:image" content={props.ogImageUrl} />
-      )}
     </Head>
   );
 };
