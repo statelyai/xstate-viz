@@ -11,6 +11,7 @@ import '../StateNodeViz.scss';
 import '../EventTypeViz.scss';
 import '../EdgeViz.scss';
 import '../DelayViz.scss';
+import '../SequenceDiagramViz.scss';
 import Head from 'next/head';
 import { isOnClientSide } from '../isOnClientSide';
 

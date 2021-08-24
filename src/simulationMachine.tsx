@@ -18,6 +18,8 @@ import { isOnClientSide } from './isOnClientSide';
 export interface SimEvent extends SCXML.Event<any> {
   timestamp: number;
   sessionId: string;
+  origin: string;
+  dest: string;
 }
 
 export const simModel = createModel(
@@ -273,9 +275,11 @@ export const simulationMachine = simModel.createMachine(
             events: (ctx, e) =>
               produce(ctx.events, (draft) => {
                 draft.push({
+                  origin: 'anon',
                   ...e.state._event,
                   timestamp: Date.now(),
                   sessionId: e.sessionId,
+                  dest: e.sessionId,
                 });
               }),
           }),

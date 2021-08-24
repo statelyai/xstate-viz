@@ -35,6 +35,7 @@ import { assign, createMachine, SCXML, send, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { JSONView } from './JSONView';
+import { SequenceDiagramViz } from './SequenceDiagramViz';
 import { useSimulation } from './SimulationContext';
 import { SimEvent, simulationMachine } from './simulationMachine';
 import { isInternalEvent, isNullEvent } from './utils';
@@ -172,7 +173,7 @@ export const EventsPanel: React.FC = () => {
     }),
   );
 
-  const finalEvents = deriveFinalEvents(eventsState.context);
+  const filteredEvents = deriveFinalEvents(eventsState.context);
 
   useEffect(() => {
     sendToEventsMachine({
@@ -188,6 +189,7 @@ export const EventsPanel: React.FC = () => {
       gridRowGap="2"
       height="100%"
     >
+      <SequenceDiagramViz events={filteredEvents} />
       <Box display="flex" justifyContent="flex-end" alignItems="center">
         <Input
           placeholder="Filter events"
@@ -274,7 +276,7 @@ export const EventsPanel: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {finalEvents.map((event, i) => {
+            {filteredEvents.map((event, i) => {
               return <EventRow event={event} key={i} />;
             })}
           </Tbody>
