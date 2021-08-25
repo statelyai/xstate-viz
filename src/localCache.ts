@@ -6,6 +6,11 @@ export const storage = testStorageSupport()
   ? window.localStorage
   : createStorage();
 
+interface InternalCodec<T> {
+  __decode: Codec<T>['decode'];
+  __encode: Codec<T>['encode'];
+}
+
 interface Codec<T> {
   /**
    * this tries to match **parsed** value to the expected type
@@ -22,39 +27,46 @@ function identity<T>(a: T): T {
   return a;
 }
 
-function str(): Codec<string> {
+function str(): InternalCodec<string> {
   return {
-    decode: (val: unknown) => {
+    __decode: (val: unknown) => {
       if (typeof val !== 'string') {
         throw new Error();
       }
       return val;
     },
-    encode: identity,
+    __encode: identity,
   };
 }
 
-function num(): Codec<number> {
+function num(): InternalCodec<number> {
   return {
-    decode: (val: unknown) => {
+    __decode: (val: unknown) => {
       if (typeof val !== 'number') {
         throw new Error();
       }
       return val;
     },
-    encode: identity,
+    __encode: identity,
   };
 }
 
-type UnknownShape = Record<string, Codec<any>>;
+function createCodec<T>() {
+  return (codec: InternalCodec<T>): Codec<T> => ({
+    decode: codec.__decode,
+    encode: codec.__encode,
+  });
+}
+
+type UnknownShape = Record<string, InternalCodec<any>>;
 
 type ShapeToObj<T extends UnknownShape> = {
-  [K in keyof T]: ReturnType<T[K]['decode']>;
+  [K in keyof T]: ReturnType<T[K]['__decode']>;
 };
 
-function obj<S extends UnknownShape>(shape: S): Codec<ShapeToObj<S>> {
+function obj<S extends UnknownShape>(shape: S): InternalCodec<ShapeToObj<S>> {
   return {
-    decode: (val: unknown) => {
+    __decode: (val: unknown) => {
       if (typeof val !== 'object') {
         throw new Error(`Input value is not an object.`);
       }
@@ -72,16 +84,16 @@ function obj<S extends UnknownShape>(shape: S): Codec<ShapeToObj<S>> {
             ).join(', ')}}\``,
           );
         }
-        decoded[key] = shape[key].decode((val as any)[key]);
+        decoded[key] = shape[key].__decode((val as any)[key]);
       }
 
       return decoded;
     },
-    encode: (val: ShapeToObj<S>): ShapeToObj<S> => {
+    __encode: (val: ShapeToObj<S>): ShapeToObj<S> => {
       const encoded: any = {};
 
       for (const key of Object.keys(shape)) {
-        encoded[key] = shape[key].encode(val[key]);
+        encoded[key] = shape[key].__encode(val[key]);
       }
 
       return encoded;
@@ -112,18 +124,22 @@ const makePositionCacheKey = (sourceID: string | null) =>
 const makeRawSourceCacheKey = (sourceID: string | null) =>
   `${RAW_SOURCE_CACHE_PREFIX}|${sourceID || 'no_source'}`;
 
-const cachedPositionCodec = obj({
-  zoom: num(),
-  pan: obj({
-    dx: num(),
-    dy: num(),
+const cachedPositionCodec = createCodec<CachedPosition>()(
+  obj({
+    zoom: num(),
+    pan: obj({
+      dx: num(),
+      dy: num(),
+    }),
   }),
-});
+);
 
-const rawSourceCoded = obj({
-  sourceRawContent: str(),
-  date: str(),
-});
+const rawSourceCodec = createCodec<CachedSource>()(
+  obj({
+    sourceRawContent: str(),
+    date: str(),
+  }),
+);
 
 const savePosition = (sourceID: string | null, position: CachedPosition) => {
   storage.setItem(
@@ -150,7 +166,7 @@ const saveSourceRawContent = (
   storage.setItem(
     makeRawSourceCacheKey(sourceID),
     JSON.stringify(
-      rawSourceCoded.encode({
+      rawSourceCodec.encode({
         sourceRawContent,
         date: new Date().toJSON(),
       }),
@@ -172,10 +188,10 @@ const getSourceRawContent = (
     return null;
   }
 
-  let result: ReturnType<typeof rawSourceCoded.decode>;
+  let result: CachedSource;
 
   try {
-    result = rawSourceCoded.decode(cached);
+    result = rawSourceCodec.decode(cached);
   } catch (err) {
     storage.removeItem(makeRawSourceCacheKey(sourceID));
     console.log('Could not decode cached source', err);
