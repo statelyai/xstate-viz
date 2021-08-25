@@ -6,6 +6,89 @@ export const storage = testStorageSupport()
   ? window.localStorage
   : createStorage();
 
+interface Codec<T> {
+  /**
+   * this tries to match **parsed** value to the expected type
+   */
+  decode: (val: unknown) => T;
+  /**
+   * as encoded values are coming from the app we can trust our types
+   * this is used mainly to purify the value, pick only required keys and so on
+   */
+  encode: (val: T) => T;
+}
+
+function identity<T>(a: T): T {
+  return a;
+}
+
+function str(): Codec<string> {
+  return {
+    decode: (val: unknown) => {
+      if (typeof val !== 'string') {
+        throw new Error();
+      }
+      return val;
+    },
+    encode: identity,
+  };
+}
+
+function num(): Codec<number> {
+  return {
+    decode: (val: unknown) => {
+      if (typeof val !== 'number') {
+        throw new Error();
+      }
+      return val;
+    },
+    encode: identity,
+  };
+}
+
+type UnknownShape = Record<string, Codec<any>>;
+
+type ShapeToObj<T extends UnknownShape> = {
+  [K in keyof T]: ReturnType<T[K]['decode']>;
+};
+
+function obj<S extends UnknownShape>(shape: S): Codec<ShapeToObj<S>> {
+  return {
+    decode: (val: unknown) => {
+      if (typeof val !== 'object') {
+        throw new Error(`Input value is not an object.`);
+      }
+      if (val === null) {
+        throw new Error(`Input value is \`null\`.`);
+      }
+
+      const decoded: any = {};
+
+      for (const key of Object.keys(shape)) {
+        if (!(key in val)) {
+          throw new Error(
+            `Key "${key}" is missing in the expected shape of \`{${Object.keys(
+              shape,
+            ).join(', ')}}\``,
+          );
+        }
+        decoded[key] = shape[key].decode((val as any)[key]);
+      }
+
+      return decoded;
+    },
+    encode: (val: ShapeToObj<S>): ShapeToObj<S> => {
+      const encoded: any = {};
+
+      for (const key of Object.keys(shape)) {
+        encoded[key] = shape[key].encode(val[key]);
+      }
+
+      return encoded;
+    },
+  };
+}
+
 export interface CachedPosition {
   zoom: number;
   pan: {
@@ -29,8 +112,24 @@ const makePositionCacheKey = (sourceID: string | null) =>
 const makeRawSourceCacheKey = (sourceID: string | null) =>
   `${RAW_SOURCE_CACHE_PREFIX}|${sourceID || 'no_source'}`;
 
+const cachedPositionCodec = obj({
+  zoom: num(),
+  pan: obj({
+    dx: num(),
+    dy: num(),
+  }),
+});
+
+const rawSourceCoded = obj({
+  sourceRawContent: str(),
+  date: str(),
+});
+
 const savePosition = (sourceID: string | null, position: CachedPosition) => {
-  storage.setItem(makePositionCacheKey(sourceID), JSON.stringify(position));
+  storage.setItem(
+    makePositionCacheKey(sourceID),
+    JSON.stringify(cachedPositionCodec.encode(position)),
+  );
 };
 
 const getPosition = (sourceID: string | null): CachedPosition | null => {
@@ -39,36 +138,7 @@ const getPosition = (sourceID: string | null): CachedPosition | null => {
   if (!result) return null;
 
   try {
-    return JSON.parse(result);
-  } catch (e) {}
-  return null;
-};
-
-const encodeRawSource = (sourceRawContent: string, date: Date) => {
-  return JSON.stringify({
-    sourceRawContent,
-    date,
-  });
-};
-
-const isCachedSource = (source: unknown): source is CachedSource => {
-  return (
-    typeof source === 'object' &&
-    (source as any)?.sourceRawContent &&
-    (source as any)?.date
-  );
-};
-
-const decodeRawSource = (
-  fromLocalStorage: string | null,
-): CachedSource | null => {
-  if (fromLocalStorage === null) return null;
-  try {
-    const possibleObject = JSON.parse(fromLocalStorage);
-
-    if (isCachedSource(possibleObject)) {
-      return possibleObject;
-    }
+    return cachedPositionCodec.decode(JSON.parse(result));
   } catch (e) {}
   return null;
 };
@@ -79,7 +149,12 @@ const saveSourceRawContent = (
 ) => {
   storage.setItem(
     makeRawSourceCacheKey(sourceID),
-    encodeRawSource(sourceRawContent, new Date()),
+    JSON.stringify(
+      rawSourceCoded.encode({
+        sourceRawContent,
+        date: new Date().toJSON(),
+      }),
+    ),
   );
 };
 
@@ -91,11 +166,21 @@ const getSourceRawContent = (
   sourceID: string | null,
   updatedAt: string | null,
 ): string | null => {
-  const result = decodeRawSource(
-    storage.getItem(makeRawSourceCacheKey(sourceID)),
-  );
+  const cached = storage.getItem(makeRawSourceCacheKey(sourceID));
 
-  if (!result) return null;
+  if (!cached) {
+    return null;
+  }
+
+  let result: ReturnType<typeof rawSourceCoded.decode>;
+
+  try {
+    result = rawSourceCoded.decode(cached);
+  } catch (err) {
+    storage.removeItem(makeRawSourceCacheKey(sourceID));
+    console.log('Could not decode cached source', err);
+    return null;
+  }
 
   /**
    * If there's no updatedAt date, we know the
