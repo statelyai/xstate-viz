@@ -27,13 +27,12 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
   const session = state.context!.client.auth.session();
 
   return (
-    <Box {...props} zIndex="1" display="flex" alignItems="center" width="60px">
+    <Box {...props} zIndex="1" display="flex" alignItems="center">
       {!state.hasTag('authorized') && (
         <Button
           className="btn-login"
           zIndex="1"
-          // colorScheme=""
-          variant="link"
+          colorScheme="blue"
           rounded="false"
           height="100%"
           isFullWidth

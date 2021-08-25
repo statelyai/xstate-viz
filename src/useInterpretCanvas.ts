@@ -15,34 +15,24 @@ export const useInterpretCanvas = ({
   const canvasService = useInterpret(
     canvasMachine.withContext({
       ...canvasModel.initialContext,
-      isEmbedded: embed.isEmbedded,
+      embed,
     }),
     {
-      guards: {
-        isEmbeddedMode: () => embed.isEmbedded,
-      },
       actions: {
         persistPositionToLocalStorage: (context) => {
-          localCache.savePosition(sourceID, context);
+          // TODO: This can be more elegant when we have system actor
+          if (!context.embed?.isEmbedded) {
+            localCache.savePosition(sourceID, context);
+          }
         },
       },
     },
   );
-  useEffect(() => {
-    canvasService.onTransition((state, event) => {
-      console.log({
-        state: state.value,
-        event: event.type,
-        isEmbedded: state.context.isEmbedded,
-      });
-    });
-  }, []);
 
   useEffect(() => {
     canvasService.send({
       type: 'SOURCE_CHANGED',
       id: sourceID,
-      // isEmbedded: embed.isEmbedded,
     });
   }, [sourceID, canvasService]);
 

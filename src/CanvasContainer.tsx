@@ -6,6 +6,7 @@ import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
 import { isWithPlatformMetaKey } from './utils';
 import { AnyState } from './types';
+import { useEmbed } from './embedContext';
 
 const dragModel = createModel(
   {
@@ -99,6 +100,7 @@ const getCursorByState = (state: AnyState) =>
 
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();
+  const embed = useEmbed();
   const canvasRef = useRef<HTMLDivElement>(null!);
   const [state, send] = useMachine(
     dragMachine.withConfig({
@@ -187,7 +189,17 @@ export const CanvasContainer: React.FC = ({ children }) => {
    */
   useEffect(() => {
     const onCanvasWheel = (e: WheelEvent) => {
-      if (isWithPlatformMetaKey(e)) {
+      const isWithMetaKey = isWithPlatformMetaKey(e);
+      const isEmbeddedWithoutZoom =
+        isWithMetaKey && embed.isEmbedded && !embed.zoom;
+      const isEmbeddedWithoutPan =
+        !isWithMetaKey && embed.isEmbedded && !embed.pan;
+
+      if (isEmbeddedWithoutPan || isEmbeddedWithoutZoom) {
+        return;
+      }
+
+      if (isWithMetaKey) {
         e.preventDefault();
         if (e.deltaY > 0) {
           canvasService.send(

@@ -1,4 +1,3 @@
-import { assign, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { localCache } from './localCache';
@@ -50,9 +49,8 @@ export const canvasModel = createModel(initialContext, {
     /**
      * Occurs when a source changed id
      */
-    SOURCE_CHANGED: (id: string | null /*isEmbedded: boolean*/) => ({
+    SOURCE_CHANGED: (id: string | null) => ({
       id,
-      // isEmbedded,
     }),
     CANVAS_RECT_CHANGED: (
       offsetY: number,
@@ -76,19 +74,19 @@ const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
 
-const canZoom = (ctx: typeof initialContext) => {
+export const canZoom = (ctx: typeof initialContext) => {
   return !ctx.embed?.isEmbedded || (ctx.embed.isEmbedded && ctx.embed.zoom);
 };
 
-const canZoomOut = (ctx: typeof initialContext) => {
+export const canZoomOut = (ctx: typeof initialContext) => {
   return ctx.zoom > MAX_ZOOM_OUT_FACTOR;
 };
 
-const canZoomIn = (ctx: typeof initialContext) => {
+export const canZoomIn = (ctx: typeof initialContext) => {
   return ctx.zoom < MAX_ZOOM_IN_FACTOR;
 };
 
-const canPan = (ctx: typeof initialContext) => {
+export const canPan = (ctx: typeof initialContext) => {
   return !ctx.embed?.isEmbedded || (ctx.embed.isEmbedded && ctx.embed.pan);
 };
 
@@ -193,12 +191,16 @@ export const canvasMachine = canvasModel.createMachine({
     SOURCE_CHANGED: {
       target: '.throttling',
       internal: false,
-      actions: assign((context, event) => {
-        const position = getPositionFromEvent(event);
+      actions: canvasModel.assign((context, event) => {
+        // TODO: This can be more elegant when we have system actor
+        if (!context.embed?.isEmbedded) {
+          const position = getPositionFromEvent(event);
 
-        if (!position) return {};
+          if (!position) return {};
 
-        return position;
+          return position;
+        }
+        return {};
       }),
     },
   },
@@ -206,7 +208,6 @@ export const canvasMachine = canvasModel.createMachine({
   states: {
     idle: {},
     throttling: {
-      entry: (ctx) => console.log('entry throttling', ctx),
       after: {
         300: 'saving',
       },
@@ -231,16 +232,4 @@ const getPositionFromEvent = (event: ModelEventsFrom<typeof canvasModel>) => {
 
   const position = localCache.getPosition(event.id);
   return position;
-};
-
-export const getShouldEnableZoomOutButton = (
-  state: StateFrom<typeof canvasMachine>,
-) => {
-  return state.context.zoom > MAX_ZOOM_OUT_FACTOR;
-};
-
-export const getShouldEnableZoomInButton = (
-  state: StateFrom<typeof canvasMachine>,
-) => {
-  return state.context.zoom < MAX_ZOOM_IN_FACTOR;
 };

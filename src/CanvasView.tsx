@@ -22,10 +22,7 @@ import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
-import {
-  getShouldEnableZoomInButton,
-  getShouldEnableZoomOutButton,
-} from './canvasMachine';
+import { canZoom, canZoomIn, canZoomOut } from './canvasMachine';
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
@@ -53,12 +50,12 @@ export const CanvasView: React.FC = () => {
 
   const shouldEnableZoomOutButton = useSelector(
     canvasService,
-    getShouldEnableZoomOutButton,
+    (state) => canZoom(state.context) && canZoomOut(state.context),
   );
 
   const shouldEnableZoomInButton = useSelector(
     canvasService,
-    getShouldEnableZoomInButton,
+    (state) => canZoom(state.context) && canZoomIn(state.context),
   );
 
   const simulationMode = useSimulationMode();
@@ -102,9 +99,13 @@ export const CanvasView: React.FC = () => {
         zIndex={1}
         width="100%"
         height="4rem"
-        hidden={embed.isEmbedded && !embed.controls}
       >
-        <ButtonGroup size="sm" spacing={2} isAttached>
+        <ButtonGroup
+          size="sm"
+          spacing={2}
+          isAttached
+          hidden={embed.isEmbedded && !embed.controls}
+        >
           <IconButton
             aria-label="Zoom out"
             title="Zoom out"
@@ -127,6 +128,7 @@ export const CanvasView: React.FC = () => {
             icon={<RepeatIcon />}
             onClick={() => canvasService.send('POSITION.RESET')}
             variant="secondary"
+            disabled={embed.isEmbedded && !embed.zoom && !embed.pan}
           />
         </ButtonGroup>
         {simulationMode === 'visualizing' && (
