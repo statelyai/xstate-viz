@@ -46,7 +46,7 @@ export const PanelsView = () => {
           <Tab>State</Tab>
           <Tab>Events</Tab>
           <Tab>Actors</Tab>
-          <Tab marginLeft="auto" marginRight="2">
+          <Tab marginLeft="auto" marginRight="2" hidden={embed.isEmbedded}>
             <SettingsIcon />
           </Tab>
           <Login hidden={embed.isEmbedded} />
