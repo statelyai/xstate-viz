@@ -38,16 +38,9 @@ const SourceFileIdPage = (props: SourceFileIdPageProps) => {
 
 export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
   async (req) => {
-    /**
-     * Passing a ?noSSR flag will force the server to return
-     * no props, meaning we can mock the props ourselves
-     * in Cypress
-     */
-    const preventSSR = typeof req.query.noSSR === 'string';
-
-    if (preventSSR) {
+    if (req.query.ssr) {
       return {
-        props: {} as any,
+        props: JSON.parse(req.query.ssr as string),
       };
     }
 

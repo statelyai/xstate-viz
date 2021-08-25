@@ -81,24 +81,11 @@ const visitInspector = () => {
 const visitVizWithNextPageProps = (
   data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
 ) => {
-  cy.visit(`/viz/${data.id}?noSSR`, {
-    onBeforeLoad: (win) => {
-      let nextData: any;
-
-      Object.defineProperty(win, '__NEXT_DATA__', {
-        set(o) {
-          o.props.pageProps = {
-            data,
-            id: data.id,
-          };
-          nextData = o;
-        },
-        get() {
-          return nextData;
-        },
-      });
-    },
-  });
+  cy.visit(
+    `/viz/${data.id}?ssr=${encodeURIComponent(
+      JSON.stringify({ data, id: data.id }),
+    )}`,
+  );
 };
 
 const waitOnInspector = (inspector: Inspector) =>
