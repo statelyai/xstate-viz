@@ -45,12 +45,37 @@ import { createMachine } from 'xstate';
 const exampleMachineCode = `
 import { createMachine } from 'xstate';
 
-const toggleMachine = createMachine({
-  id: 'toggle',
-  initial: 'inactive',
+const fetchMachine = createMachine({
+  id: 'fetch',
+  initial: 'idle',
+  context: {
+    retries: 0
+  },
   states: {
-    inactive: { on: { TOGGLE: 'active' } },
-    active: { on: { TOGGLE: 'inactive' } }
+    idle: {
+      on: {
+        FETCH: 'loading'
+      }
+    },
+    loading: {
+      on: {
+        RESOLVE: 'success',
+        REJECT: 'failure'
+      }
+    },
+    success: {
+      type: 'final'
+    },
+    failure: {
+      on: {
+        RETRY: {
+          target: 'loading',
+          actions: assign({
+            retries: (context, event) => context.retries + 1
+          })
+        }
+      }
+    }
   }
 });
 `.trim();
