@@ -191,7 +191,7 @@ const getSourceRawContent = (
   let result: CachedSource;
 
   try {
-    result = rawSourceCodec.decode(cached);
+    result = rawSourceCodec.decode(JSON.parse(cached));
   } catch (err) {
     storage.removeItem(makeRawSourceCacheKey(sourceID));
     console.log('Could not decode cached source', err);
