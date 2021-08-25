@@ -161,51 +161,53 @@ export const simulationMachine = simModel.createMachine(
           id: 'proxy',
           src: () => (sendBack, onReceive) => {
             const serviceMap: Map<string, AnyInterpreter> = new Map();
-            let rootMachine: AnyStateMachine;
-            let rootService: AnyInterpreter;
+            const machines = new Set<AnyStateMachine>();
+            const services = new Set<AnyInterpreter>();
 
             function locallyInterpret(machine: AnyStateMachine) {
-              rootMachine = machine;
-              // stop all existing services
-              Array.from(serviceMap.values()).forEach((runningService) => {
-                runningService.stop();
-                sendBack({
-                  type: 'SERVICE.UNREGISTER',
-                  sessionId: runningService.sessionId,
-                });
-              });
-              serviceMap.clear();
+              machines.add(machine);
 
-              rootService = interpret(machine);
-              serviceMap.set(rootService.sessionId, rootService);
+              const service = interpret(machine);
+              services.add(service);
+              serviceMap.set(service.sessionId, service);
 
               sendBack(
                 simModel.events['SERVICE.REGISTER']({
-                  sessionId: rootService.sessionId,
-                  machine: rootService.machine,
-                  state: rootService.machine.initialState,
+                  sessionId: service.sessionId,
+                  machine: service.machine,
+                  state: service.machine.initialState,
                   source: 'visualizer',
                 }),
               );
 
-              rootService.subscribe((state) => {
+              service.subscribe((state) => {
                 sendBack(
-                  simModel.events['SERVICE.STATE'](
-                    rootService.sessionId,
-                    state,
-                  ),
+                  simModel.events['SERVICE.STATE'](service.sessionId, state),
                 );
               });
-              rootService.start();
+              service.start();
+            }
+
+            function stopServices() {
+              services.forEach((service) => {
+                sendBack(
+                  simModel.events['SERVICE.UNREGISTER'](service.sessionId),
+                );
+                service.stop();
+              });
+              services.clear();
+              serviceMap.clear();
             }
 
             onReceive((event) => {
               if (event.type === 'INTERPRET') {
-                try {
-                  locallyInterpret(event.machine);
-                } catch (e) {
-                  sendBack(simModel.events.ERROR((e as Error).message));
-                }
+                event.machines.forEach((machine: AnyStateMachine) => {
+                  try {
+                    locallyInterpret(machine);
+                  } catch (e) {
+                    sendBack(simModel.events.ERROR((e as Error).message));
+                  }
+                });
               } else if (event.type === 'xstate.event') {
                 const service = serviceMap.get(event.sessionId);
                 if (service) {
@@ -217,8 +219,13 @@ export const simulationMachine = simModel.createMachine(
                   }
                 }
               } else if (event.type === 'RESET') {
-                rootService?.stop();
-                locallyInterpret(rootMachine);
+                stopServices();
+                machines.forEach((machine) => {
+                  locallyInterpret(machine);
+                });
+              } else if (event.type === 'STOP') {
+                stopServices();
+                machines.clear();
               }
             });
           },
@@ -241,10 +248,11 @@ export const simulationMachine = simModel.createMachine(
           'MACHINES.REGISTER': {
             actions: [
               'resetVisualizationState',
+              send('STOP', { to: 'proxy' }),
               send(
                 (_, e) => ({
                   type: 'INTERPRET',
-                  machine: e.machines[0],
+                  machines: e.machines,
                 }),
                 { to: 'proxy' },
               ),

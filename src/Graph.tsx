@@ -15,13 +15,13 @@ import type {
 import { useEffect, useMemo, memo } from 'react';
 import { Edges } from './Edges';
 import { Point } from './pathUtils';
-import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
 import { createElkMachine } from './elkMachine';
 import { StateNode } from 'xstate';
 import { MachineViz } from './MachineViz';
 import { useCanvas } from './CanvasContext';
 import { useSimulation } from './SimulationContext';
+import { GraphNode } from './GraphNode';
 
 declare global {
   export const ELK: typeof import('elkjs/lib/main').default;
@@ -162,14 +162,26 @@ function getElkId(id: string): string {
 
 type DOMRectMap = Map<string, DOMRect>;
 
-const getRectMap = (): DOMRectMap => {
-  const rectMap: DOMRectMap = new Map();
-  document.querySelectorAll('[data-rect-id]').forEach((el) => {
-    const rectId = (el as HTMLElement).dataset.rectId!;
-    const rect = el.getBoundingClientRect();
-    rectMap.set(rectId, rect);
+const getRectMap = (machineId: string): Promise<DOMRectMap> => {
+  return new Promise((res) => {
+    const rectMap: DOMRectMap = new Map();
+
+    // TODO: use MutationObserver
+    const i = setInterval(() => {
+      if (!document.querySelector(`[data-viz="machine"]`)) {
+        return;
+      }
+
+      document.querySelectorAll('[data-rect-id]').forEach((el) => {
+        const rectId = (el as HTMLElement).dataset.rectId!;
+        const rect = el.getBoundingClientRect();
+        rectMap.set(rectId, rect);
+      });
+
+      clearInterval(i);
+      res(rectMap);
+    }, 100);
   });
-  return rectMap;
 };
 
 function getDeepestNodeLevel(node: DirectedGraphNode): number {
@@ -270,7 +282,7 @@ function getElkChildren(
   });
 }
 
-interface StateElkNode extends ElkNode {
+export interface StateElkNode extends ElkNode {
   node: DirectedGraphNode;
   absolutePosition: Point;
   edges: StateElkEdge[];
@@ -283,7 +295,7 @@ export function isStateElkNode(node: ElkNode): node is StateElkNode {
   return 'absolutePosition' in node;
 }
 
-function elkJSON(elkNode: StateElkNode): any {
+export function elkJSON(elkNode: StateElkNode): any {
   const { id, layoutOptions, width, height, children, edges, ports } = elkNode;
 
   return {
@@ -315,14 +327,10 @@ function elkJSON(elkNode: StateElkNode): any {
   };
 }
 
-const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
-  return <StateNodeViz stateNode={elkNode.node.data} node={elkNode.node} />;
-};
-
 export async function getElkGraph(
   rootDigraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
-  const rectMap = getRectMap();
+  const rectMap = await getRectMap(rootDigraphNode.id);
   const relativeNodeEdgeMap = getRelativeNodeEdgeMap(rootDigraphNode);
   const backLinkMap = getBackLinkMap(rootDigraphNode);
   const rootEdges = relativeNodeEdgeMap[0].get(undefined) || [];
@@ -352,6 +360,7 @@ export async function getElkGraph(
     try {
       rootElkNode = await elk.layout(getRootElkNodeData(initialRunContext));
     } catch (err) {
+      console.error(err);
       initialRunContext.previousError = err as Error;
     }
   }
@@ -426,9 +435,10 @@ export async function getElkGraph(
 
   (rootElkNode.edges as StateElkEdge[])?.forEach(setEdgeLayout);
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(JSON.stringify(elkJSON(rootElkNode as StateElkNode), null, 2));
-  }
+  // Uncomment this for graph debugging:
+  // if (process.env.NODE_ENV !== 'production') {
+  //   console.log(JSON.stringify(elkJSON(rootElkNode as StateElkNode), null, 2));
+  // }
 
   // unwrap from the "fake" ancestor node created in the `elkNode` structure
   const machineElkNode = rootElkNode.children![0] as StateElkNode;

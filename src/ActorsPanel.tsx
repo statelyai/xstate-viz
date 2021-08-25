@@ -19,8 +19,9 @@ import { ArrowForwardIcon } from '@chakra-ui/icons';
 import { StateFrom } from 'xstate';
 import { simulationMachine } from './simulationMachine';
 
-const selectServices = (state: StateFrom<typeof simulationMachine>) =>
-  state.context.serviceDataMap;
+const selectServices = (state: StateFrom<typeof simulationMachine>) => {
+  return state.context.serviceDataMap;
+};
 
 const ActorDetails: React.FC<{ state: any; title: string }> = ({
   state,
@@ -88,21 +89,25 @@ export const ActorsPanel: React.FC = () => {
             flexDirection="row"
             alignItems="center"
             padding={2}
-            borderBottom="1px solid"
-            borderBottomColor="gray.500"
             marginTop="0"
             opacity={currentSessionId === sessionId ? 1 : 0.5}
+            onClick={() => {
+              simActor.send({ type: 'SERVICE.FOCUS', sessionId });
+            }}
+            background={
+              currentSessionId === sessionId ? 'whiteAlpha.200' : 'transparent'
+            }
+            borderRadius="md"
+            _hover={{
+              background: 'whiteAlpha.100',
+            }}
+            marginBottom="2"
+            cursor="pointer"
           >
             <ListIcon as={ArrowForwardIcon} />
             <Text flexGrow={1}>
-              <Link
-                onClick={() => {
-                  simActor.send({ type: 'SERVICE.FOCUS', sessionId });
-                }}
-              >
-                {serviceData!.machine.id ?? '(machine)'}
-              </Link>{' '}
-              ({sessionId})
+              <Link>{serviceData!.machine.id ?? '(machine)'}</Link> ({sessionId}
+              )
             </Text>
           </ListItem>
         );
