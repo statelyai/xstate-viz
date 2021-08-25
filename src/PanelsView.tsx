@@ -6,6 +6,7 @@ import {
   TabPanels,
   TabPanel,
   Button,
+  BoxProps,
 } from '@chakra-ui/react';
 import React from 'react';
 import { ActorsPanel } from './ActorsPanel';
@@ -22,7 +23,7 @@ import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 
-export const PanelsView = () => {
+export const PanelsView = (props: BoxProps) => {
   const embed = useEmbed();
   const simService = useSimulation();
   const authService = useAuth();
@@ -30,6 +31,7 @@ export const PanelsView = () => {
 
   return (
     <ResizableBox
+      {...props}
       gridArea="panels"
       minHeight={0}
       hidden={embed.isEmbedded && embed.mode === 'viz'}

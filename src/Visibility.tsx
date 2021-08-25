@@ -7,11 +7,7 @@ export const Visibility: React.FC<
   } & React.ComponentProps<typeof Box>
 > = ({ isHidden, children, ...props }) => {
   return (
-    <Box
-      hidden={isHidden}
-      // {...(isHidden && { style: hiddenCSS })}
-      {...(!isHidden && { ...props })}
-    >
+    <Box hidden={isHidden} {...(!isHidden && { ...props })}>
       {children}
     </Box>
   );

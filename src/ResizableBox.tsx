@@ -117,9 +117,9 @@ export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
     // 35rem to avoid shortcut codes breaking
     // into multiple lines
     <Box
+      {...props}
       {...(!isEmbedded && {
         width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`,
-        ...props,
       })}
       hidden={hidden}
     >
