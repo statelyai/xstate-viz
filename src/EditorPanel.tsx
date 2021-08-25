@@ -375,7 +375,7 @@ export const EditorPanel: React.FC<{
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
 }> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
-  const { isEmbedded } = useEmbed();
+  const { isEmbedded, readOnly } = useEmbed();
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
@@ -454,12 +454,7 @@ export const EditorPanel: React.FC<{
                 }}
               />
             </div>
-            <HStack
-              padding="2"
-              w="full"
-              justifyContent="space-between"
-              hidden={isEmbedded}
-            >
+            <HStack padding="2" w="full" justifyContent="space-between">
               <HStack>
                 <Tooltip
                   bg="black"
@@ -479,6 +474,7 @@ export const EditorPanel: React.FC<{
                       });
                     }}
                     variant="secondary"
+                    hidden={isEmbedded && readOnly}
                   >
                     Visualize
                   </Button>
@@ -503,6 +499,7 @@ export const EditorPanel: React.FC<{
                       />
                     }
                     variant="outline"
+                    hidden={isEmbedded}
                   >
                     {persistMeta.text}
                   </Button>
@@ -518,6 +515,7 @@ export const EditorPanel: React.FC<{
                       <ForkIcon fill="gray.200" height="16px" width="16px" />
                     }
                     variant="outline"
+                    hidden={isEmbedded}
                   >
                     Fork
                   </Button>
@@ -528,6 +526,7 @@ export const EditorPanel: React.FC<{
                   leftIcon={<AddIcon fill="gray.200" />}
                   onClick={onCreateNew}
                   variant="outline"
+                  hidden={isEmbedded}
                 >
                   New
                 </Button>
