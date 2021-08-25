@@ -2,6 +2,7 @@ import { CopyIcon, ExternalLinkIcon } from '@chakra-ui/icons';
 import {
   Button,
   HStack,
+  Link,
   Menu,
   MenuButton,
   MenuItem,
@@ -63,12 +64,14 @@ export const ShareButton = ({ sourceId }: { sourceId: string }) => {
             </HStack>
           </MenuItem>
           <MenuItem
-            onClick={() => {
-              window.open(
-                `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                  twitterText,
-                )}`,
-              );
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+              twitterText,
+            )}`}
+            as={Link}
+            target="_blank"
+            rel="noopener noreferrer"
+            _hover={{
+              textDecoration: 'none',
             }}
           >
             <HStack spacing="3">
