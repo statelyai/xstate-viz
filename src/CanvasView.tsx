@@ -90,7 +90,8 @@ export const CanvasView: React.FC = () => {
         position="absolute"
         bottom={0}
         left={0}
-        padding="3"
+        paddingX={2}
+        paddingY={3}
         zIndex={1}
         width="100%"
       >
