@@ -89,8 +89,8 @@ export const WelcomeArea = () => {
               <Stack spacing="2">
                 <Title>Here you go!</Title>
                 <Description>
-                  Here's an example of a state machine modelling a toggle. You
-                  can press 'Visualize' to see the statechart appear.
+                  Here's an example of a state machine modelling a data fetch.
+                  You can press 'Visualize' to see the statechart appear.
                 </Description>
               </Stack>
               <Link
