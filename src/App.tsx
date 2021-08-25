@@ -70,7 +70,7 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
                       <CanvasView />
                     </CanvasProvider>
                   </Visibility>
-                  <PanelsView />
+                  <PanelsView data-testid="panels-view" />
                   <MachineNameChooserModal />
                 </Box>
               </SimulationProvider>

@@ -99,6 +99,7 @@ export const CanvasView: React.FC = () => {
         zIndex={1}
         width="100%"
         height="4rem"
+        data-testid="controls"
       >
         <ButtonGroup
           size="sm"

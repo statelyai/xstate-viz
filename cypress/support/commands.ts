@@ -139,6 +139,10 @@ const getMonacoEditor = () => {
   return cy.get('.monaco-editor').first();
 };
 
+const getPanelsView = () => {
+  return cy.findByTestId('panels-view');
+};
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -173,6 +177,8 @@ declare global {
       visitInspector: typeof visitInspector;
 
       inspectMachine: typeof inspectMachine;
+
+      getPanelsView: typeof getPanelsView;
     }
   }
 }
@@ -183,3 +189,4 @@ Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
+Cypress.Commands.add('getPanelsView', getPanelsView);
