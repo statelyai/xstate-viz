@@ -100,7 +100,7 @@ export const WelcomeArea = () => {
                 target="_blank"
                 rel="noreferrer"
               >
-                New to XState? Read here...
+                New to XState? Read the docs
               </Link>
             </Stack>
           </>
