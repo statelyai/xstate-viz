@@ -121,7 +121,7 @@ export const isStringifiedFunction = (str: string): boolean =>
   /^function\s*\(/.test(str) || str.includes('=>');
 
 const testPlatform = (re: RegExp): boolean =>
-  re.test(window.navigator.platform);
+  re.test(globalThis?.navigator?.platform);
 
 export const isMac = () => testPlatform(/^Mac/);
 
@@ -291,8 +291,8 @@ export function withoutEmbedQueryParams(query: any): string {
     'showOriginalLink',
     'pan',
     'zoom',
-    'control',
-    'readonly',
+    'controls',
+    'readOnly',
   ].forEach((key) => {
     q.delete(key);
   });
