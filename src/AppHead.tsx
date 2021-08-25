@@ -1,14 +1,18 @@
 import Head from 'next/head';
 
 interface AppHeadProps {
+  /**
+   * @example
+   * XState Visualizer | My Great Machine
+   */
   title: string;
   /**
    * Og titles are expected to be more concise,
    * whereas titles in the <title> attribute
    * should be SEO-friendly
    *
-   * ogTitle: My Great Machine
-   * title: XState Visualizer | My Great Machine
+   * @example
+   * My Great Machine
    */
   ogTitle: string;
   importElk: boolean;
