@@ -23,8 +23,7 @@ import { StatePanel } from './StatePanel';
 
 export const PanelsView = () => {
   const simService = useSimulation();
-  const authService = useAuth();
-  const [sourceState, sendToSourceService] = useSourceActor(authService);
+  const [sourceState, sendToSourceService] = useSourceActor();
 
   return (
     <ResizableBox gridArea="panels" minHeight={0}>

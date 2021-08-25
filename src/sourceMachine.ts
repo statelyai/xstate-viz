@@ -36,6 +36,24 @@ import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 import { SourceProvider } from './types';
 import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
+import { useAuth } from './authContext';
+
+const initialMachineCode = `
+import { createMachine } from 'xstate';
+`.trim();
+
+const exampleMachineCode = `
+import { createMachine } from 'xstate';
+
+const toggleMachine = createMachine({
+  id: 'toggle',
+  initial: 'inactive',
+  states: {
+    inactive: { on: { TOGGLE: 'active' } },
+    active: { on: { TOGGLE: 'inactive' } }
+  }
+});
+`.trim();
 
 export const sourceModel = createModel(
   {
@@ -44,11 +62,12 @@ export const sourceModel = createModel(
     sourceRawContent: null as string | null,
     sourceRegistryData: null as null | SourceFileFragment,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
-    loggedInUserId: null! as string | null,
+    loggedInUserId: null as string | null,
     desiredMachineName: null as string | null,
   },
   {
     events: {
+      EXAMPLE_REQUESTED: () => ({}),
       SAVE: () => ({}),
       FORK: () => ({}),
       CREATE_NEW: () => ({}),
@@ -321,12 +340,27 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           initial: 'checking_if_in_local_storage',
           states: {
             checking_if_in_local_storage: {
-              always: {
-                target: 'check_complete',
-                actions: 'getLocalStorageCachedSource',
+              always: [
+                {
+                  cond: 'hasLocalStorageCachedSource',
+                  target: 'has_cached_source',
+                },
+                {
+                  target: 'no_cached_source',
+                },
+              ],
+            },
+            has_cached_source: {
+              entry: ['getLocalStorageCachedSource'],
+            },
+            no_cached_source: {
+              tags: ['canShowWelcomeMessage', 'noCachedSource'],
+              on: {
+                EXAMPLE_REQUESTED: {
+                  actions: 'assignExampleMachineToContext',
+                },
               },
             },
-            check_complete: {},
           },
         },
         creating: {
@@ -445,7 +479,22 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
       },
     },
     {
+      guards: {
+        hasLocalStorageCachedSource: (context) => {
+          const result = localCache.getSourceRawContent(
+            context.sourceID,
+            context.sourceRegistryData?.updatedAt,
+          );
+
+          return Boolean(result);
+        },
+      },
       actions: {
+        assignExampleMachineToContext: assign((context, event) => {
+          return {
+            sourceRawContent: exampleMachineCode,
+          };
+        }),
         clearLocalStorageEntryForCurrentSource: (ctx) => {
           localCache.removeSourceRawContent(ctx.sourceID);
         },
@@ -606,19 +655,17 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
 export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
   state.context.sourceRef!;
 
-export const useSourceActor = (
-  authService: ActorRefFrom<typeof authMachine>,
-): [SourceMachineState, SourceMachineActorRef['send']] => {
+export const useSourceActor = (): [
+  SourceMachineState,
+  SourceMachineActorRef['send'],
+] => {
+  const authService = useAuth();
   const sourceService = useSelector(authService, getSourceActor);
 
   return useActor(sourceService!);
 };
 
-const initialMachineCode = `
-import { createMachine } from 'xstate';
-`.trim();
-
-export const getEditorDefaultValue = (state: SourceMachineState) => {
+export const getEditorValue = (state: SourceMachineState) => {
   return state.context.sourceRawContent || initialMachineCode;
 };
 
