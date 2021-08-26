@@ -97,10 +97,10 @@ export const CanvasView: React.FC = () => {
         position="absolute"
         bottom={0}
         left={0}
-        padding="2"
+        paddingX={2}
+        paddingY={3}
         zIndex={1}
         width="100%"
-        height="4rem"
       >
         <ButtonGroup size="sm" spacing={2} isAttached>
           <IconButton
@@ -130,7 +130,7 @@ export const CanvasView: React.FC = () => {
         {simulationMode === 'visualizing' && (
           <Button
             size="sm"
-            margin={2}
+            marginLeft={2}
             onClick={() => simService.send('MACHINES.RESET')}
             variant="secondary"
           >
