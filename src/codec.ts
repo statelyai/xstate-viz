@@ -1,9 +1,9 @@
-interface InternalCodec<T> {
-  __decode: Codec<T>['decode'];
-  __encode: Codec<T>['encode'];
+interface InternalCodec<T, E = T> {
+  __decode: Codec<T, E>['decode'];
+  __encode: Codec<T, E>['encode'];
 }
 
-interface Codec<T> {
+interface Codec<T, E = T> {
   /**
    * this tries to match **parsed** value to the expected type
    */
@@ -12,24 +12,27 @@ interface Codec<T> {
    * as encoded values are coming from the app we can trust our types
    * this is used mainly to purify the value, pick only required keys and so on
    */
-  encode: (val: T) => T;
+  encode: (val: T) => E;
 }
 
 function identity<T>(a: T): T {
   return a;
 }
 
-export function createCodec<T>() {
-  return (codec: InternalCodec<T>): Codec<T> => ({
+export function createCodec<T, E = T>() {
+  return (codec: InternalCodec<T, E>): Codec<T, E> => ({
     decode: codec.__decode,
     encode: codec.__encode,
   });
 }
 
-type UnknownShape = Record<string, InternalCodec<any>>;
+type UnknownShape = Record<string, InternalCodec<any, any>>;
 
-type ShapeToObj<T extends UnknownShape> = {
+type ShapeToDecoded<T extends UnknownShape> = {
   [K in keyof T]: ReturnType<T[K]['__decode']>;
+};
+type ShapeToEncoded<T extends UnknownShape> = {
+  [K in keyof T]: ReturnType<T[K]['__encode']>;
 };
 
 export function str(): InternalCodec<string> {
@@ -56,9 +59,27 @@ export function num(): InternalCodec<number> {
   };
 }
 
+export function date(): InternalCodec<Date, string> {
+  return {
+    __decode: (val: unknown) => {
+      if (typeof val !== 'string') {
+        throw new Error('Expected date encoded as a string');
+      }
+      const date = new Date(val);
+
+      if (Number.isNaN(date.getTime())) {
+        throw new Error('Expected a valid date');
+      }
+
+      return date;
+    },
+    __encode: (val) => val.toJSON(),
+  };
+}
+
 export function obj<S extends UnknownShape>(
   shape: S,
-): InternalCodec<ShapeToObj<S>> {
+): InternalCodec<ShapeToDecoded<S>, ShapeToEncoded<S>> {
   return {
     __decode: (val: unknown) => {
       if (typeof val !== 'object') {
@@ -83,7 +104,7 @@ export function obj<S extends UnknownShape>(
 
       return decoded;
     },
-    __encode: (val: ShapeToObj<S>): ShapeToObj<S> => {
+    __encode: (val: ShapeToEncoded<S>): ShapeToEncoded<S> => {
       const encoded: any = {};
 
       for (const key of Object.keys(shape)) {

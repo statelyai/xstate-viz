@@ -17,7 +17,7 @@ export interface CachedPosition {
 
 export interface CachedSource {
   sourceRawContent: string;
-  date: string;
+  date: Date;
 }
 
 const POSITION_CACHE_PREFIX = `xstate_viz_position`;
@@ -40,10 +40,16 @@ const cachedPositionCodec = codec.createCodec<CachedPosition>()(
   }),
 );
 
-const rawSourceCodec = codec.createCodec<CachedSource>()(
+const rawSourceCodec = codec.createCodec<
+  CachedSource,
+  {
+    sourceRawContent: string;
+    date: string;
+  }
+>()(
   codec.obj({
     sourceRawContent: codec.str(),
-    date: codec.str(),
+    date: codec.date(),
   }),
 );
 
@@ -74,7 +80,7 @@ const saveSourceRawContent = (
     JSON.stringify(
       rawSourceCodec.encode({
         sourceRawContent,
-        date: new Date().toJSON(),
+        date: new Date(),
       }),
     ),
   );
@@ -113,7 +119,7 @@ const getSourceRawContent = (
   }
 
   const isLocalStorageFresherThanTheAPI = isAfter(
-    new Date(result.date),
+    result.date,
     new Date(updatedAt),
   );
 
