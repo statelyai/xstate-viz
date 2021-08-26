@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StateNodeViz } from './StateNodeViz';
 import { DirectedGraphNode } from './directedGraph';
-import { getAllEdges } from './Graph';
+import { getAllEdges } from './graphUtils';
 import { TransitionViz } from './TransitionViz';
 
 export const MachineViz: React.FC<{ digraph: DirectedGraphNode }> = ({

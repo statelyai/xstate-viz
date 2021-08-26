@@ -34,8 +34,8 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
+import { CompressIcon } from './Icons';
 import { useSourceActor } from './sourceMachine';
-import { Bolt, Lightbulb } from './Icons';
 import { WelcomeArea } from './WelcomeArea';
 
 export const CanvasView: React.FC = () => {
@@ -117,6 +117,13 @@ export const CanvasView: React.FC = () => {
             icon={<AddIcon />}
             disabled={!shouldEnableZoomInButton}
             onClick={() => canvasService.send('ZOOM.IN')}
+            variant="secondary"
+          />
+          <IconButton
+            aria-label="Fit to view"
+            title="Fit to view"
+            icon={<CompressIcon />}
+            onClick={() => canvasService.send('FIT_TO_VIEW')}
             variant="secondary"
           />
           <IconButton
