@@ -151,6 +151,14 @@ export const CanvasView: React.FC = () => {
             <MenuList fontSize="sm" padding="0">
               <MenuItem
                 as={Link}
+                href="https://github.com/statelyai/xstate-viz/issues/new?template=bug_report.md"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Report an issue
+              </MenuItem>
+              <MenuItem
+                as={Link}
                 href="https://github.com/statelyai/xstate"
                 target="_blank"
                 rel="noreferrer"
