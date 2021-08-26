@@ -255,7 +255,7 @@ function getElkChild(
 function getElkChildren(
   node: DirectedGraphNode,
   runContext: ElkRunContext,
-): ElkNode[] {
+): StateElkNode[] {
   return node.children.map((childNode) => {
     return getElkChild(childNode, runContext);
   });
@@ -265,6 +265,7 @@ export interface StateElkNode extends ElkNode {
   node: DirectedGraphNode;
   absolutePosition: Point;
   edges: StateElkEdge[];
+  children: StateElkNode[];
 }
 
 export interface StateElkEdge extends ElkExtendedEdge {
@@ -423,5 +424,5 @@ export async function getElkGraph(
 
   setLayout(machineElkNode, undefined);
 
-  return machineElkNode;
+  return rootElkNode;
 }

@@ -60,7 +60,12 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
         }}
       >
         <MemoizedEdges digraph={digraph} />
-        <MemoizedGraphNode elkNode={state.context.elkGraph!} />
+        <MemoizedGraphNode
+          elkNode={
+            // Get the machine node, not the root node
+            state.context.elkGraph!.children![0]!
+          }
+        />
         {allEdges.map((edge, i) => {
           return (
             <MemoizedTransitionViz
