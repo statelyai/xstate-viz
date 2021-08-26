@@ -1,9 +1,8 @@
 import {
   AddIcon,
   MinusIcon,
-  QuestionIcon,
   RepeatIcon,
-  ViewIcon,
+  QuestionOutlineIcon,
 } from '@chakra-ui/icons';
 import {
   Box,
@@ -16,9 +15,6 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   Portal,
   Spinner,
   Stack,
@@ -145,10 +141,16 @@ export const CanvasView: React.FC = () => {
           <MenuButton
             as={IconButton}
             size="sm"
+            isRound
             aria-label="More info"
-            variant="secondary"
             marginLeft="auto"
-            icon={<QuestionIcon />}
+            variant="secondary"
+            icon={
+              <QuestionOutlineIcon
+                boxSize={6}
+                css={{ '& circle': { display: 'none' } }}
+              />
+            }
           />
           <Portal>
             <MenuList fontSize="sm" padding="0">
