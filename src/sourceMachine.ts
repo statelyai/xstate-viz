@@ -43,7 +43,7 @@ import { createMachine } from 'xstate';
 `.trim();
 
 const exampleMachineCode = `
-import { createMachine } from 'xstate';
+import { createMachine, assign } from 'xstate';
 
 const fetchMachine = createMachine({
   id: 'fetch',
