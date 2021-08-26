@@ -202,6 +202,11 @@ export const CanvasContainer: React.FC = ({ children }) => {
   useEffect(() => {
     const onCanvasWheel = (e: WheelEvent) => {
       const isWithMetaKey = isWithPlatformMetaKey(e);
+
+      if (isWithMetaKey) {
+        e.preventDefault();
+      }
+
       const isEmbeddedWithoutZoom =
         isWithMetaKey && embed.isEmbedded && !embed.zoom;
       const isEmbeddedWithoutPan =
@@ -212,7 +217,6 @@ export const CanvasContainer: React.FC = ({ children }) => {
       }
 
       if (isWithMetaKey) {
-        e.preventDefault();
         if (e.deltaY > 0) {
           canvasService.send(
             canvasModel.events['ZOOM.OUT'](

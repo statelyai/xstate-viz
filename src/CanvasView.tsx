@@ -66,7 +66,13 @@ export const CanvasView: React.FC = () => {
       height="100%"
       {...(!embed.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
     >
-      <Box bg="gray.800" zIndex={1} padding="0" hidden={embed.isEmbedded}>
+      <Box
+        data-testid="canvas-header"
+        bg="gray.800"
+        zIndex={1}
+        padding="0"
+        hidden={embed.isEmbedded}
+      >
         <CanvasHeader />
       </Box>
       <CanvasContainer>
@@ -106,6 +112,7 @@ export const CanvasView: React.FC = () => {
           spacing={2}
           isAttached
           hidden={embed.isEmbedded && !embed.controls}
+          data-testid="group"
         >
           <IconButton
             aria-label="Zoom out"

@@ -16,9 +16,21 @@ import { simulationMachine } from './simulationMachine';
 import { useSourceActor } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
-import { EmbedContext } from './types';
+import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 import { Visibility } from './Visibility';
+
+const getGridArea = (embed: EmbedContext) => {
+  if (embed.isEmbedded && embed.mode === EmbedMode.Viz) {
+    return 'canvas';
+  }
+
+  if (embed.isEmbedded && embed.mode === EmbedMode.Panels) {
+    return 'panels';
+  }
+
+  return 'canvas panels';
+};
 
 const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
   const paletteService = useInterpret(paletteMachine);
@@ -60,7 +72,7 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
                   as="main"
                   display="grid"
                   gridTemplateColumns="1fr auto"
-                  gridTemplateAreas="'canvas panels'"
+                  gridTemplateAreas={`"${getGridArea(embed)}"`}
                   height="100vh"
                 >
                   <Visibility
