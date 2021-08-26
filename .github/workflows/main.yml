@@ -3,6 +3,25 @@ name: CI/CD
 on: [push]
 
 jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2.2.0
+
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: Codegen GraphQL
+        run: yarn graphql-codegen
+
+      - name: Run Jest
+        run: yarn jest --ci
+
   cypress-tests:
     runs-on: ubuntu-latest
 
