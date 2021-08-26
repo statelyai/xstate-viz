@@ -36,7 +36,7 @@ interface EditorWithXStateImportsProps {
   onMount?: OnMount;
   onSave?: () => void;
   onFormat?: () => void;
-  defaultValue?: string;
+  value: string;
 }
 
 // based on the logic here: https://github.com/microsoft/TypeScript-Website/blob/103f80e7490ad75c34917b11e3ebe7ab9e8fc418/packages/sandbox/src/index.ts
@@ -114,7 +114,7 @@ export const EditorWithXStateImports = (
           `} js-monaco-editor`}
           defaultPath="main.ts"
           defaultLanguage="typescript"
-          defaultValue={props.defaultValue}
+          value={props.value}
           options={{
             minimap: { enabled: false },
             tabSize: 2,

@@ -3,6 +3,7 @@ const registryPublicUrl =
   `https://dev.stately.ai/registry`;
 const landingPagePublicUrl = `https://landing-page-prod.stately.ai`;
 
+/** @type import('next').NextConfig */
 module.exports = {
   eslint: {
     ignoreDuringBuilds: true,

@@ -1,5 +1,5 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-import { useInterpret, useSelector } from '@xstate/react';
+import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect } from 'react';
 import { AuthProvider } from './authContext';
@@ -15,7 +15,7 @@ import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { useSourceActor } from './sourceMachine';
+import { getSourceActor } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
@@ -69,7 +69,8 @@ function App(props: AppProps) {
     }),
   );
 
-  const [sourceState, sendToSourceService] = useSourceActor(authService);
+  const sourceService = useSelector(authService, getSourceActor);
+  const [sourceState, sendToSourceService] = useActor(sourceService!);
 
   useEffect(() => {
     sendToSourceService({

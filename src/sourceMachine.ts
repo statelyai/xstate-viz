@@ -1,5 +1,6 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
 import { useActor, useSelector } from '@xstate/react';
+import { AuthMachine } from './authMachine';
 import {
   ActorRefFrom,
   assign,
@@ -35,9 +36,55 @@ import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 import { SourceProvider } from './types';
 import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
-import { AuthMachine } from './authMachine';
 import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
 import { isOnClientSide } from './isOnClientSide';
+import { useAuth } from './authContext';
+
+const initialMachineCode = `
+import { createMachine } from 'xstate';
+`.trim();
+
+const exampleMachineCode = `
+import { createMachine, assign } from 'xstate';
+
+interface Context {
+  retries: number;
+}
+
+const fetchMachine = createMachine<Context>({
+  id: 'fetch',
+  initial: 'idle',
+  context: {
+    retries: 0
+  },
+  states: {
+    idle: {
+      on: {
+        FETCH: 'loading'
+      }
+    },
+    loading: {
+      on: {
+        RESOLVE: 'success',
+        REJECT: 'failure'
+      }
+    },
+    success: {
+      type: 'final'
+    },
+    failure: {
+      on: {
+        RETRY: {
+          target: 'loading',
+          actions: assign({
+            retries: (context, event) => context.retries + 1
+          })
+        }
+      }
+    }
+  }
+});
+`.trim();
 
 export const sourceModel = createModel(
   {
@@ -46,11 +93,12 @@ export const sourceModel = createModel(
     sourceRawContent: null as string | null,
     sourceRegistryData: null as null | SourceFileFragment,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
-    loggedInUserId: null! as string | null,
+    loggedInUserId: null as string | null,
     desiredMachineName: null as string | null,
   },
   {
     events: {
+      EXAMPLE_REQUESTED: () => ({}),
       SAVE: () => ({}),
       FORK: () => ({}),
       CREATE_NEW: () => ({}),
@@ -372,12 +420,27 @@ export const makeSourceMachine = (params: {
           initial: 'checking_if_in_local_storage',
           states: {
             checking_if_in_local_storage: {
-              always: {
-                target: 'check_complete',
-                actions: 'getLocalStorageCachedSource',
+              always: [
+                {
+                  cond: 'hasLocalStorageCachedSource',
+                  target: 'has_cached_source',
+                },
+                {
+                  target: 'no_cached_source',
+                },
+              ],
+            },
+            has_cached_source: {
+              entry: ['getLocalStorageCachedSource'],
+            },
+            no_cached_source: {
+              tags: ['canShowWelcomeMessage', 'noCachedSource'],
+              on: {
+                EXAMPLE_REQUESTED: {
+                  actions: 'assignExampleMachineToContext',
+                },
               },
             },
-            check_complete: {},
           },
         },
         creating: {
@@ -496,8 +559,23 @@ export const makeSourceMachine = (params: {
       },
     },
     {
+      guards: {
+        hasLocalStorageCachedSource: (context) => {
+          const result = localCache.getSourceRawContent(
+            context.sourceID,
+            context.sourceRegistryData?.updatedAt,
+          );
+
+          return Boolean(result);
+        },
+      },
       actions: {
         redirectToNewUrlFromLegacyUrl: params.redirectToNewUrlFromLegacyUrl,
+        assignExampleMachineToContext: assign((context, event) => {
+          return {
+            sourceRawContent: exampleMachineCode,
+          };
+        }),
         clearLocalStorageEntryForCurrentSource: (ctx) => {
           localCache.removeSourceRawContent(ctx.sourceID);
         },
@@ -653,19 +731,14 @@ export const makeSourceMachine = (params: {
 export const getSourceActor = (state: StateFrom<AuthMachine>) =>
   state.context.sourceRef!;
 
-export const useSourceActor = (
-  authService: ActorRefFrom<AuthMachine>,
-): [SourceMachineState, SourceMachineActorRef['send']] => {
+export const useSourceActor = () => {
+  const authService = useAuth();
   const sourceService = useSelector(authService, getSourceActor);
 
   return useActor(sourceService!);
 };
 
-const initialMachineCode = `
-import { createMachine } from 'xstate';
-`.trim();
-
-export const getEditorDefaultValue = (state: SourceMachineState) => {
+export const getEditorValue = (state: SourceMachineState) => {
   return state.context.sourceRawContent || initialMachineCode;
 };
 
