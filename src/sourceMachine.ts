@@ -45,7 +45,11 @@ import { createMachine } from 'xstate';
 const exampleMachineCode = `
 import { createMachine, assign } from 'xstate';
 
-const fetchMachine = createMachine({
+interface Context {
+  retries: number;
+}
+
+const fetchMachine = createMachine<Context>({
   id: 'fetch',
   initial: 'idle',
   context: {
