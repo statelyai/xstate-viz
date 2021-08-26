@@ -12,6 +12,7 @@ import {
   useClipboard,
 } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
+import { featureFlags } from './featureFlags';
 import { Twitter } from './Icons';
 import { registryLinks } from './registryLinks';
 import { shareMachine } from './shareMachine';
@@ -79,23 +80,25 @@ export const ShareButton = ({ sourceId }: { sourceId: string }) => {
               <Text>Twitter</Text>
             </HStack>
           </MenuItem>
-          <MenuItem onClick={imageShareButton.onClickCopy}>
-            <HStack spacing="3">
-              {imageShareButton.isLoading ? (
-                <Spinner size="xs" />
-              ) : (
-                <CopyIcon />
-              )}
+          {featureFlags['Show OG Images'] && (
+            <MenuItem onClick={imageShareButton.onClickCopy}>
+              <HStack spacing="3">
+                {imageShareButton.isLoading ? (
+                  <Spinner size="xs" />
+                ) : (
+                  <CopyIcon />
+                )}
 
-              <Text>
-                {imageShareButton.hasCopied
-                  ? 'Link copied!'
-                  : imageShareButton.isLoading
-                  ? 'Copying...'
-                  : 'Copy Image URL'}
-              </Text>
-            </HStack>
-          </MenuItem>
+                <Text>
+                  {imageShareButton.hasCopied
+                    ? 'Link copied!'
+                    : imageShareButton.isLoading
+                    ? 'Copying...'
+                    : 'Copy Image URL'}
+                </Text>
+              </HStack>
+            </MenuItem>
+          )}
         </MenuList>
       </Menu>
     </>

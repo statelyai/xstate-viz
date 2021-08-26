@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import { featureFlags } from './featureFlags';
 
 interface AppHeadProps {
   /**
@@ -42,7 +43,7 @@ export const AppHead = (props: AppHeadProps) => {
       <meta property="og:url" content={`https://stately.ai/viz`} />
       <meta property="og:title" content={props.ogTitle} />
       <meta property="og:description" content={props.description} />
-      {props.ogImageUrl && (
+      {props.ogImageUrl && featureFlags['Show OG Images'] && (
         <meta property="og:image" content={props.ogImageUrl} />
       )}
 
