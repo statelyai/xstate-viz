@@ -193,6 +193,7 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           return Math.min(
             ctx.canvasPanelPosition.width / ctx.elkGraph!.width!,
             ctx.canvasPanelPosition.height / ctx.elkGraph!.height!,
+            1, // Ensure the machine doesn't become too big
           );
         },
         pan: {

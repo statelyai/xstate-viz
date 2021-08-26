@@ -31,6 +31,7 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
+import { CompressIcon } from './Icons';
 
 export const CanvasView: React.FC = () => {
   const simService = useSimulation();
@@ -114,14 +115,13 @@ export const CanvasView: React.FC = () => {
             onClick={() => canvasService.send('ZOOM.IN')}
             variant="secondary"
           />
-          <Button
+          <IconButton
             aria-label="Fit to view"
             title="Fit to view"
+            icon={<CompressIcon />}
             onClick={() => canvasService.send('ZOOM_TO_FIT')}
             variant="secondary"
-          >
-            Fit to view
-          </Button>
+          />
           <IconButton
             aria-label="Reset canvas"
             title="Reset canvas"
