@@ -1,15 +1,8 @@
-import {
-  AddIcon,
-  MinusIcon,
-  QuestionIcon,
-  RepeatIcon,
-  ViewIcon,
-} from '@chakra-ui/icons';
+import { AddIcon, MinusIcon, QuestionIcon, RepeatIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
   ButtonGroup,
-  HStack,
   IconButton,
   Link,
   Menu,
@@ -21,8 +14,6 @@ import {
   PopoverTrigger,
   Portal,
   Spinner,
-  Stack,
-  Text,
   VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
@@ -38,14 +29,10 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
-import { useSourceActor } from './sourceMachine';
-import { Bolt, Lightbulb } from './Icons';
-import { WelcomeArea } from './WelcomeArea';
 
 export const CanvasView: React.FC = () => {
   const simService = useSimulation();
   const canvasService = useCanvas();
-  const [sourceState] = useSourceActor();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -72,8 +59,6 @@ export const CanvasView: React.FC = () => {
 
   const simulationMode = useSimulationMode();
 
-  const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
-
   return (
     <Box display="grid" gridTemplateRows="3rem 1fr">
       <Box bg="gray.800" zIndex={1} padding="0">
@@ -91,7 +76,11 @@ export const CanvasView: React.FC = () => {
             </Box>
           </Overlay>
         )}
-        {isEmpty && canShowWelcomeMessage && <WelcomeArea />}
+        {isEmpty && (
+          <Overlay>
+            <Box textAlign="center">No machines visualized yet.</Box>
+          </Overlay>
+        )}
       </CanvasContainer>
       <Box
         display="flex"

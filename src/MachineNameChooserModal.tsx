@@ -15,7 +15,8 @@ import { useAuth } from './authContext';
 import { useSourceActor } from './sourceMachine';
 
 export const MachineNameChooserModal = () => {
-  const [sourceState, send] = useSourceActor();
+  const authService = useAuth();
+  const [sourceState, send] = useSourceActor(authService);
 
   return (
     <Modal
