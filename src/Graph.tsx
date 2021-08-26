@@ -12,7 +12,7 @@ import type {
   ElkNode,
   LayoutOptions,
 } from 'elkjs/lib/main';
-import { useEffect, useMemo, memo } from 'react';
+import { useEffect, useLayoutEffect, useMemo, memo } from 'react';
 import { Edges } from './Edges';
 import { Point } from './pathUtils';
 import { TransitionViz } from './TransitionViz';
@@ -162,26 +162,14 @@ function getElkId(id: string): string {
 
 type DOMRectMap = Map<string, DOMRect>;
 
-const getRectMap = (machineId: string): Promise<DOMRectMap> => {
-  return new Promise((res) => {
-    const rectMap: DOMRectMap = new Map();
-
-    // TODO: use MutationObserver
-    const i = setInterval(() => {
-      if (!document.querySelector(`[data-viz="machine"]`)) {
-        return;
-      }
-
-      document.querySelectorAll('[data-rect-id]').forEach((el) => {
-        const rectId = (el as HTMLElement).dataset.rectId!;
-        const rect = el.getBoundingClientRect();
-        rectMap.set(rectId, rect);
-      });
-
-      clearInterval(i);
-      res(rectMap);
-    }, 100);
+const getRectMap = (): DOMRectMap => {
+  const rectMap: DOMRectMap = new Map();
+  document.querySelectorAll('[data-rect-id]').forEach((el) => {
+    const rectId = (el as HTMLElement).dataset.rectId!;
+    const rect = el.getBoundingClientRect();
+    rectMap.set(rectId, rect);
   });
+  return rectMap;
 };
 
 function getDeepestNodeLevel(node: DirectedGraphNode): number {
@@ -330,7 +318,7 @@ export function elkJSON(elkNode: StateElkNode): any {
 export async function getElkGraph(
   rootDigraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
-  const rectMap = await getRectMap(rootDigraphNode.id);
+  const rectMap = getRectMap(rootDigraphNode.id);
   const relativeNodeEdgeMap = getRelativeNodeEdgeMap(rootDigraphNode);
   const backLinkMap = getBackLinkMap(rootDigraphNode);
   const rootEdges = relativeNodeEdgeMap[0].get(undefined) || [];
@@ -470,9 +458,15 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   const canvasService = useCanvas();
   const { pan, zoom } = useSelector(canvasService, (s) => s.context);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
   }, [digraph, send]);
+
+  useEffect(() => {
+    if (state.matches({ loading: 'waiting_for_layout' })) {
+      send({ type: 'LAYOUT_READY' });
+    }
+  }, [state]);
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
 
