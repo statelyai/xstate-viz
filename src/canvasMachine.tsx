@@ -9,61 +9,62 @@ export enum ZoomFactor {
   normal = 1.15,
 }
 
-const initialPosition = {
-  zoom: 1,
-  pan: {
-    dx: 0,
-    dy: 0,
-  },
-  canvasPanelPosition: {
-    offsetY: 50,
-    offsetX: 0,
-    width: 0,
-    height: 0,
-  },
-  elkGraph: undefined as StateElkNode | undefined,
-};
-
 export type Pan = {
   dx: number;
   dy: number;
 };
 
-export const canvasModel = createModel(initialPosition, {
-  events: {
-    'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
-      zoomFactor,
-      x,
-      y,
-    }),
-    'ZOOM.IN': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
-      zoomFactor,
-      x,
-      y,
-    }),
-    'POSITION.RESET': () => ({}),
-    PAN: (dx: number, dy: number) => ({ dx, dy }),
-    /**
-     * Occurs when a source changed id
-     */
-    SOURCE_CHANGED: (id: string | null) => ({
-      id,
-    }),
-    CANVAS_RECT_CHANGED: (
-      offsetY: number,
-      offsetX: number,
-      width: number,
-      height: number,
-    ) => ({
-      offsetX,
-      offsetY,
-      width,
-      height,
-    }),
-    'elkGraph.UPDATE': (elkGraph: StateElkNode) => ({ elkGraph }),
-    ZOOM_TO_FIT: () => ({}),
+export const canvasModel = createModel(
+  {
+    zoom: 1,
+    pan: {
+      dx: 0,
+      dy: 0,
+    },
+    canvasPanelPosition: {
+      offsetY: 50,
+      offsetX: 0,
+      width: 0,
+      height: 0,
+    },
+    elkGraph: undefined as StateElkNode | undefined,
   },
-});
+  {
+    events: {
+      'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+        zoomFactor,
+        x,
+        y,
+      }),
+      'ZOOM.IN': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
+        zoomFactor,
+        x,
+        y,
+      }),
+      'POSITION.RESET': () => ({}),
+      PAN: (dx: number, dy: number) => ({ dx, dy }),
+      /**
+       * Occurs when a source changed id
+       */
+      SOURCE_CHANGED: (id: string | null) => ({
+        id,
+      }),
+      CANVAS_RECT_CHANGED: (
+        offsetY: number,
+        offsetX: number,
+        width: number,
+        height: number,
+      ) => ({
+        offsetX,
+        offsetY,
+        width,
+        height,
+      }),
+      'elkGraph.UPDATE': (elkGraph: StateElkNode) => ({ elkGraph }),
+      FIT_TO_VIEW: () => ({}),
+    },
+  },
+);
 
 const DEFAULT_ZOOM_IN_FACTOR = ZoomFactor.normal;
 // exactly reversed factor so zooming in & out results in the same zoom values
@@ -105,8 +106,7 @@ const getNewZoomAndPan = (
   };
 };
 
-export const canvasMachine = createMachine<typeof canvasModel>({
-  context: canvasModel.initialContext,
+export const canvasMachine = canvasModel.createMachine({
   on: {
     CANVAS_RECT_CHANGED: {
       actions: canvasModel.assign((ctx, e) => {
@@ -167,7 +167,10 @@ export const canvasMachine = createMachine<typeof canvasModel>({
       internal: false,
     },
     'POSITION.RESET': {
-      actions: canvasModel.assign(initialPosition),
+      actions: canvasModel.assign({
+        zoom: canvasModel.initialContext.zoom,
+        pan: canvasModel.initialContext.pan,
+      }),
       target: '.throttling',
       internal: false,
     },
@@ -187,20 +190,30 @@ export const canvasMachine = createMachine<typeof canvasModel>({
         elkGraph: (_, e) => e.elkGraph,
       }),
     },
-    ZOOM_TO_FIT: {
-      actions: canvasModel.assign({
-        zoom: (ctx) => {
-          return Math.min(
-            ctx.canvasPanelPosition.width / ctx.elkGraph!.width!,
-            ctx.canvasPanelPosition.height / ctx.elkGraph!.height!,
-            1, // Ensure the machine doesn't become too big
-          );
-        },
-        pan: {
-          dx: 0,
-          dy: 0,
-        },
-      }),
+    FIT_TO_VIEW: {
+      actions: [
+        canvasModel.assign({
+          zoom: (ctx) => {
+            return (
+              Math.min(
+                ctx.canvasPanelPosition.width / ctx.elkGraph!.width!,
+                ctx.canvasPanelPosition.height / ctx.elkGraph!.height!,
+                MAX_ZOOM_IN_FACTOR,
+              ) * 0.9 // Ensure machine does not touch sides
+            );
+          },
+        }),
+        canvasModel.assign({
+          pan: (ctx) => ({
+            dx:
+              ctx.canvasPanelPosition.width / 2 -
+              (ctx.elkGraph!.width! * ctx.zoom) / 2,
+            dy:
+              ctx.canvasPanelPosition.height / 2 -
+              (ctx.elkGraph!.height! * ctx.zoom) / 2,
+          }),
+        }),
+      ],
     },
   },
   initial: 'idle',

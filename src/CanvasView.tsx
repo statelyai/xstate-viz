@@ -119,7 +119,7 @@ export const CanvasView: React.FC = () => {
             aria-label="Fit to view"
             title="Fit to view"
             icon={<CompressIcon />}
-            onClick={() => canvasService.send('ZOOM_TO_FIT')}
+            onClick={() => canvasService.send('FIT_TO_VIEW')}
             variant="secondary"
           />
           <IconButton
