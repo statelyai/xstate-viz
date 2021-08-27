@@ -60,13 +60,12 @@ export const CanvasHeader: React.FC = () => {
             <LikeButton />
             <ShareButton />
             <Menu closeOnSelect>
-              <MenuButton>
-                <IconButton
-                  aria-label="Menu"
-                  icon={<HamburgerIcon />}
-                  size="sm"
-                ></IconButton>
-              </MenuButton>
+              <MenuButton
+                as={IconButton}
+                aria-label="Menu"
+                icon={<HamburgerIcon />}
+                size="sm"
+              />
               <MenuList>
                 {userOwnsSource && sourceState.context.sourceID && (
                   <MenuItem
