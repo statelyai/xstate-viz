@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   ButtonGroup,
+  HStack,
   IconButton,
   Link,
   Menu,
@@ -16,6 +17,8 @@ import {
   MenuList,
   Portal,
   Spinner,
+  Stack,
+  Text,
   VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
@@ -31,10 +34,14 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
+import { CompressIcon } from './Icons';
+import { useSourceActor } from './sourceMachine';
+import { WelcomeArea } from './WelcomeArea';
 
 export const CanvasView: React.FC = () => {
   const simService = useSimulation();
   const canvasService = useCanvas();
+  const [sourceState] = useSourceActor();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -61,6 +68,8 @@ export const CanvasView: React.FC = () => {
 
   const simulationMode = useSimulationMode();
 
+  const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
+
   return (
     <Box display="grid" gridTemplateRows="3rem 1fr">
       <Box bg="gray.800" zIndex={1} padding="0">
@@ -78,11 +87,7 @@ export const CanvasView: React.FC = () => {
             </Box>
           </Overlay>
         )}
-        {isEmpty && (
-          <Overlay>
-            <Box textAlign="center">No machines visualized yet.</Box>
-          </Overlay>
-        )}
+        {isEmpty && canShowWelcomeMessage && <WelcomeArea />}
       </CanvasContainer>
       <Box
         display="flex"
@@ -92,10 +97,10 @@ export const CanvasView: React.FC = () => {
         position="absolute"
         bottom={0}
         left={0}
-        padding="2"
+        paddingX={2}
+        paddingY={3}
         zIndex={1}
         width="100%"
-        height="4rem"
       >
         <ButtonGroup size="sm" spacing={2} isAttached>
           <IconButton
@@ -115,6 +120,13 @@ export const CanvasView: React.FC = () => {
             variant="secondary"
           />
           <IconButton
+            aria-label="Fit to view"
+            title="Fit to view"
+            icon={<CompressIcon />}
+            onClick={() => canvasService.send('FIT_TO_VIEW')}
+            variant="secondary"
+          />
+          <IconButton
             aria-label="Reset canvas"
             title="Reset canvas"
             icon={<RepeatIcon />}
@@ -125,7 +137,7 @@ export const CanvasView: React.FC = () => {
         {simulationMode === 'visualizing' && (
           <Button
             size="sm"
-            margin={2}
+            marginLeft={2}
             onClick={() => simService.send('MACHINES.RESET')}
             variant="secondary"
           >

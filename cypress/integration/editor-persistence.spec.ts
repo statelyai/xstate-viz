@@ -47,7 +47,9 @@ describe('Editor persistence', () => {
           text: `// Changes from the registry!`,
         },
       });
-      cy.visit('/viz?id=source-file-id');
+      cy.visitVizWithNextPageProps({
+        id: 'source-file-id',
+      });
 
       cy.contains('// Old machine');
     });
@@ -79,7 +81,9 @@ describe('Editor persistence', () => {
         },
       });
 
-      cy.visit('/viz?id=source-file-id');
+      cy.visitVizWithNextPageProps({
+        id: 'source-file-id',
+      });
 
       cy.contains('Changes from the registry!');
     });

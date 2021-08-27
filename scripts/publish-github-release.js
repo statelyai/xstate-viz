@@ -16,7 +16,9 @@ async function publishRelease(octokit, { repo }) {
 
   // we leverage statefulness of `g` regex here for the second `exec` to start of the `lastIndex` from the first match
   const start = versionHeader.exec(changelog).index;
-  const end = versionHeader.exec(changelog)?.index || changelog.length;
+  // can't use optional chaining for now because GitHub Actions run on node12, see https://github.com/actions/github-script/pull/182#issuecomment-903966153
+  const endExecResult = versionHeader.exec(changelog);
+  const end = endExecResult ? endExecResult.index : changelog.length;
 
   const latestChangelogEntry = changelog.slice(start, end);
   const [match, version] = latestChangelogEntry.match(/## (.+)\s*$/m);
