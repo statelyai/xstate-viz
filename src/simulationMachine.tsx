@@ -167,7 +167,7 @@ export const simulationMachine = simModel.createMachine(
             function locallyInterpret(machine: AnyStateMachine) {
               machines.add(machine);
 
-              const service = interpret(machine);
+              const service = interpret(machine, { devTools: true });
               services.add(service);
               serviceMap.set(service.sessionId, service);
 
