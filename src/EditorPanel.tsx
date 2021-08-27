@@ -430,7 +430,7 @@ export const EditorPanel: React.FC<{
         {simulationMode === 'visualizing' && (
           <>
             {/* This extra div acts as a placeholder that is supposed to stretch while EditorWithXStateImports lazy-loads (thanks to `1fr` on the grid) */}
-            <div>
+            <div style={{ minHeight: 0 }}>
               <EditorWithXStateImports
                 value={value}
                 onMount={(standaloneEditor, monaco) => {

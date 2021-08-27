@@ -13,8 +13,6 @@ export const theme = extendTheme({
     global: {
       '*, *:before, *:after': {
         position: 'relative',
-        minHeight: 0,
-        minWidth: 0,
       },
       body: {
         overflow: 'hidden',
@@ -28,8 +26,6 @@ export const theme = extendTheme({
       },
       '.monaco-editor *': {
         position: 'static',
-        minHeight: 'initial',
-        minWidth: 'initial',
       },
     },
   },
