@@ -22,7 +22,7 @@ import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import { useSimulationMode } from './SimulationContext';
 import {
-  getEditorDefaultValue,
+  getEditorValue,
   getShouldImmediateUpdate,
   SourceMachineActorRef,
   SourceMachineState,
@@ -393,13 +393,13 @@ export const EditorPanel: React.FC<{
     sourceOwnershipStatus,
   );
 
-  const defaultValue = getEditorDefaultValue(sourceState);
+  const value = getEditorValue(sourceState);
 
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
       ...editorPanelModel.initialContext,
-      code: defaultValue,
+      code: value,
       sourceRef: sourceService,
     }),
     {
@@ -430,7 +430,7 @@ export const EditorPanel: React.FC<{
       <Box
         height="100%"
         display="grid"
-        gridTemplateRows="1fr 4rem"
+        gridTemplateRows="1fr auto"
         data-testid="editor"
       >
         {simulationMode === 'visualizing' && (
@@ -438,7 +438,7 @@ export const EditorPanel: React.FC<{
             {/* This extra div acts as a placeholder that is supposed to stretch while EditorWithXStateImports lazy-loads (thanks to `1fr` on the grid) */}
             <div>
               <EditorWithXStateImports
-                defaultValue={defaultValue}
+                value={value}
                 onMount={(standaloneEditor, monaco) => {
                   send({
                     type: 'EDITOR_READY',

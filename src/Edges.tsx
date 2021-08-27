@@ -1,6 +1,6 @@
 import React from 'react';
 import { EdgeViz } from './EdgeViz';
-import { getAllEdges } from './Graph';
+import { getAllEdges } from './graphUtils';
 import { DirectedGraphNode } from './directedGraph';
 import { InitialEdgeViz } from './InitialEdgeViz';
 

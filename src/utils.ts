@@ -132,15 +132,6 @@ export const isWithPlatformMetaKey = (event: {
 
 export const getPlatformMetaKeyLabel = () => (isMac() ? 'CMD' : 'Ctrl');
 
-// export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
-//   const children = getChildren(stateNode);
-
-//   return flatten([
-//     ...getEdges(stateNode),
-//     ...children.map((child) => getAllEdges(child)),
-//   ]);
-// }
-
 export const updateQueryParamsWithoutReload = (
   mutator: (queries: URLSearchParams) => void,
 ) => {
@@ -298,3 +289,19 @@ export function withoutEmbedQueryParams(query: any): string {
   });
   return '/viz?' + q.toString();
 }
+const isTextAcceptingInputElement = (input: HTMLInputElement) =>
+  input.type === 'email' ||
+  input.type === 'password' ||
+  input.type === 'search' ||
+  input.type === 'tel' ||
+  input.type === 'text' ||
+  input.type === 'url';
+
+export const isTextInputLikeElement = (el: HTMLElement) => {
+  return (
+    (el.tagName === 'INPUT' &&
+      isTextAcceptingInputElement(el as HTMLInputElement)) ||
+    el.tagName === 'TEXTAREA' ||
+    el.isContentEditable
+  );
+};

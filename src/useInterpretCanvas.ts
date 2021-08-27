@@ -21,8 +21,9 @@ export const useInterpretCanvas = ({
       actions: {
         persistPositionToLocalStorage: (context) => {
           // TODO: This can be more elegant when we have system actor
-          if (!context.embed?.isEmbedded) {
-            localCache.savePosition(sourceID, context);
+          const { zoom, pan, embed } = context;
+          if (!embed?.isEmbedded) {
+            localCache.savePosition(sourceID, { zoom, pan });
           }
         },
       },

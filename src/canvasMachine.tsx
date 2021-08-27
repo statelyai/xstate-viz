@@ -1,5 +1,6 @@
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
+import { StateElkNode } from './graphUtils';
 import { localCache } from './localCache';
 import { EmbedContext } from './types';
 
@@ -24,6 +25,7 @@ const initialPosition = {
 
 const initialContext = {
   ...initialPosition,
+  elkGraph: undefined as StateElkNode | undefined,
   embed: null as EmbedContext | null,
 };
 
@@ -63,6 +65,8 @@ export const canvasModel = createModel(initialContext, {
       width,
       height,
     }),
+    'elkGraph.UPDATE': (elkGraph: StateElkNode) => ({ elkGraph }),
+    FIT_TO_VIEW: () => ({}),
   },
 });
 
@@ -184,7 +188,10 @@ export const canvasMachine = canvasModel.createMachine({
       internal: false,
     },
     'POSITION.RESET': {
-      actions: canvasModel.assign(initialPosition),
+      actions: canvasModel.assign({
+        zoom: canvasModel.initialContext.zoom,
+        pan: canvasModel.initialContext.pan,
+      }),
       target: '.throttling',
       internal: false,
     },
@@ -202,6 +209,36 @@ export const canvasMachine = canvasModel.createMachine({
         }
         return {};
       }),
+    },
+    'elkGraph.UPDATE': {
+      actions: canvasModel.assign({
+        elkGraph: (_, e) => e.elkGraph,
+      }),
+    },
+    FIT_TO_VIEW: {
+      actions: [
+        canvasModel.assign({
+          zoom: (ctx) => {
+            return (
+              Math.min(
+                ctx.canvasPanelPosition.width / ctx.elkGraph!.width!,
+                ctx.canvasPanelPosition.height / ctx.elkGraph!.height!,
+                MAX_ZOOM_IN_FACTOR,
+              ) * 0.9 // Ensure machine does not touch sides
+            );
+          },
+        }),
+        canvasModel.assign({
+          pan: (ctx) => ({
+            dx:
+              ctx.canvasPanelPosition.width / 2 -
+              (ctx.elkGraph!.width! * ctx.zoom) / 2,
+            dy:
+              ctx.canvasPanelPosition.height / 2 -
+              (ctx.elkGraph!.height! * ctx.zoom) / 2,
+          }),
+        }),
+      ],
     },
   },
   initial: 'idle',

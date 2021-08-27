@@ -14,7 +14,7 @@ export const LikeButton = () => {
   const authService = useAuth();
   const supabaseClient = useSelector(authService, getSupabaseClient);
 
-  const [sourceState] = useSourceActor(authService);
+  const [sourceState] = useSourceActor();
 
   const [state, send] = useMachine(likesMachine, {
     guards: {

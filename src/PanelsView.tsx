@@ -26,8 +26,7 @@ import { StatePanel } from './StatePanel';
 export const PanelsView = (props: BoxProps) => {
   const embed = useEmbed();
   const simService = useSimulation();
-  const authService = useAuth();
-  const [sourceState, sendToSourceService] = useSourceActor(authService);
+  const [sourceState, sendToSourceService] = useSourceActor();
 
   return (
     <ResizableBox

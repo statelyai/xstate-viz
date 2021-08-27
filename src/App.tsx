@@ -1,6 +1,6 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-import { useInterpret, useSelector } from '@xstate/react';
 import React, { useEffect } from 'react';
+import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { AuthProvider } from './authContext';
 import { authMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
@@ -13,7 +13,7 @@ import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { useSourceActor } from './sourceMachine';
+import { getSourceActor } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { EmbedContext, EmbedMode } from './types';
@@ -43,7 +43,8 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
   });
   const authService = useInterpret(authMachine);
 
-  const [sourceState, sendToSourceService] = useSourceActor(authService);
+  const sourceService = useSelector(authService, getSourceActor);
+  const [sourceState, sendToSourceService] = useActor(sourceService!);
 
   useEffect(() => {
     sendToSourceService({
