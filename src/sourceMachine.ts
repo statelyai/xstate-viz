@@ -1,5 +1,6 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
 import { useActor, useSelector } from '@xstate/react';
+import { AuthMachine } from './authMachine';
 import {
   ActorRefFrom,
   assign,
@@ -15,7 +16,6 @@ import {
   StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { authMachine } from './authMachine';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
 import {
@@ -36,6 +36,8 @@ import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 import { SourceProvider } from './types';
 import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
+import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { isOnClientSide } from './isOnClientSide';
 import { useAuth } from './authContext';
 
 const initialMachineCode = `
@@ -139,16 +141,26 @@ class NotFoundError extends Error {
   }
 }
 
-export const makeSourceMachine = (auth: SupabaseAuthClient) => {
+export const makeSourceMachine = (params: {
+  auth: SupabaseAuthClient;
+  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+  redirectToNewUrlFromLegacyUrl: () => void;
+  routerReplace: (url: string) => void;
+}) => {
   const isLoggedIn = () => {
-    return Boolean(auth.session());
+    return Boolean(params.auth.session());
   };
 
   return createMachine<typeof sourceModel>(
     {
-      initial: 'checking_url',
+      initial: 'checking_if_on_legacy_url',
       preserveActionOrder: true,
-      context: sourceModel.initialContext,
+      context: {
+        ...sourceModel.initialContext,
+        sourceRawContent: params.data?.text || null,
+        sourceID: params.data?.id || null,
+        sourceProvider: params.data ? 'registry' : null,
+      },
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
         LOGGED_IN_USER_ID_UPDATED: {
@@ -171,6 +183,45 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         },
       },
       states: {
+        checking_if_on_legacy_url: {
+          onDone: 'checking_initial_data',
+          meta: {
+            description: `This state checks if you're on /id?=<id>, and redirects to you /<id>`,
+          },
+          initial: 'checking_if_id_on_query_params',
+          states: {
+            checking_if_id_on_query_params: {
+              always: [
+                {
+                  cond: () => {
+                    if (!isOnClientSide()) return false;
+                    const queries = new URLSearchParams(window.location.search);
+
+                    return Boolean(queries.get('id') && !params.data);
+                  },
+                  target: 'redirecting',
+                },
+                {
+                  target: 'check_complete',
+                },
+              ],
+            },
+            redirecting: {
+              entry: 'redirectToNewUrlFromLegacyUrl',
+            },
+            check_complete: {
+              type: 'final',
+            },
+          },
+        },
+        checking_initial_data: {
+          always: [
+            { target: 'with_source', cond: (ctx) => Boolean(ctx.sourceID) },
+            {
+              target: 'checking_url',
+            },
+          ],
+        },
         checking_url: {
           entry: 'parseQueries',
           always: [
@@ -519,6 +570,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         },
       },
       actions: {
+        redirectToNewUrlFromLegacyUrl: params.redirectToNewUrlFromLegacyUrl,
         assignExampleMachineToContext: assign((context, event) => {
           return {
             sourceRawContent: exampleMachineCode,
@@ -558,12 +610,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           };
         }),
         updateURLWithMachineID: (ctx) => {
-          updateQueryParamsWithoutReload((queries) => {
-            queries.delete('gist');
-            if (ctx.sourceID) {
-              queries.set('id', ctx.sourceID);
-            }
-          });
+          params.routerReplace(`/${ctx.sourceID}`);
         },
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
@@ -609,7 +656,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 name: ctx.desiredMachineName || '',
                 forkFromId: ctx.sourceID,
               },
-              auth.session()?.access_token!,
+              params.auth.session()?.access_token!,
             ).then((res) => res.data?.forkSourceFile!);
           }
           return gQuery(
@@ -618,7 +665,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               text: ctx.sourceRawContent || '',
               name: ctx.desiredMachineName || '',
             },
-            auth.session()?.access_token!,
+            params.auth.session()?.access_token!,
           ).then((res) => {
             return res.data?.createSourceFile!;
           });
@@ -631,7 +678,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               id: ctx.sourceID,
               text: ctx.sourceRawContent,
             },
-            auth.session()?.access_token!,
+            params.auth.session()?.access_token!,
           ).then((res) => res.data);
         },
         loadSourceContent: (ctx) => async (send) => {
@@ -662,7 +709,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 {
                   id: ctx.sourceID,
                 },
-                auth.session()?.access_token!,
+                params.auth.session()?.access_token!,
               );
               if (!result.data?.getSourceFile) {
                 throw new NotFoundError('Source not found in Registry');
@@ -681,13 +728,10 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   );
 };
 
-export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
+export const getSourceActor = (state: StateFrom<AuthMachine>) =>
   state.context.sourceRef!;
 
-export const useSourceActor = (): [
-  SourceMachineState,
-  SourceMachineActorRef['send'],
-] => {
+export const useSourceActor = () => {
   const authService = useAuth();
   const sourceService = useSelector(authService, getSourceActor);
 

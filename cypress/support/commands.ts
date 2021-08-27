@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 
+import { GetSourceFileSsrQuery } from '../../src/graphql/GetSourceFileSSR.generated';
 import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
@@ -71,6 +72,20 @@ const visitInspector = () => {
     })!;
     state('@@viz/inspector', inspector);
   });
+};
+
+/**
+ * Allows you to visit the /viz/:id page and mock
+ * its SSR return
+ */
+const visitVizWithNextPageProps = (
+  data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
+) => {
+  cy.visit(
+    `/viz/${data.id}?ssr=${encodeURIComponent(
+      JSON.stringify({ data, id: data.id }),
+    )}`,
+  );
 };
 
 const waitOnInspector = (inspector: Inspector) =>
@@ -173,6 +188,8 @@ declare global {
       visitInspector: typeof visitInspector;
 
       inspectMachine: typeof inspectMachine;
+
+      visitVizWithNextPageProps: typeof visitVizWithNextPageProps;
     }
   }
 }
@@ -183,3 +200,4 @@ Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
+Cypress.Commands.add('visitVizWithNextPageProps', visitVizWithNextPageProps);

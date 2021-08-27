@@ -4,9 +4,7 @@ const model = createModel(
   {},
   {
     events: {
-      CLICK_SHARE: () => ({}),
       COPY_LINK: () => ({}),
-      SHARE_ON_TWITTER: () => ({}),
     },
   },
 );
@@ -16,9 +14,6 @@ export const shareMachine = model.createMachine({
   on: {
     COPY_LINK: {
       target: '.pending',
-    },
-    SHARE_ON_TWITTER: {
-      actions: 'openTwitterShareLink',
     },
   },
   initial: 'notCopied',
