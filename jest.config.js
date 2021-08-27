@@ -6,7 +6,6 @@ module.exports = {
     '!**/*.d.ts',
     '!**/node_modules/**',
   ],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // it's adjusted default pattern because we need to ignore Cypress tests
   // https://jestjs.io/docs/configuration#testmatch-arraystring
   testMatch: ['<rootDir>/src/**/?(*.)+(spec|test).[jt]s?(x)'],
