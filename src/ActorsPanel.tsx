@@ -16,7 +16,7 @@ import {
   Link,
 } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
-import { StateFrom } from 'xstate';
+import { InterpreterStatus, StateFrom } from 'xstate';
 import { simulationMachine } from './simulationMachine';
 
 const selectServices = (state: StateFrom<typeof simulationMachine>) => {
@@ -105,7 +105,14 @@ export const ActorsPanel: React.FC = () => {
             cursor="pointer"
           >
             <ListIcon as={ArrowForwardIcon} />
-            <Text flexGrow={1}>
+            <Text
+              flexGrow={1}
+              textDecoration={
+                serviceData?.status === InterpreterStatus.Stopped
+                  ? 'line-through'
+                  : undefined
+              }
+            >
               {serviceData?.parent && services[serviceData!.parent] && (
                 <span>
                   {services[serviceData!.parent]!.machine.id} (
