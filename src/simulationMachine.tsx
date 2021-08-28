@@ -48,7 +48,7 @@ export const simModel = createModel(
         sessionId,
         state,
       }),
-      'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
+      'SERVICES.UNREGISTER_ALL': () => ({}),
       'SERVICE.STOP': (sessionId: string) => ({ sessionId }),
       'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
       ERROR: (message: string) => ({ message }),
@@ -76,6 +76,7 @@ export const simulationMachine = simModel.createMachine(
               sessionId: service.sessionId,
               machine: service.machine,
               state: service.state || service.initialState,
+              parent: service.parent?.sessionId,
               source: 'in-app',
             }),
           );
@@ -127,12 +128,12 @@ export const simulationMachine = simModel.createMachine(
               switch (event.type) {
                 case 'service.register':
                   let state = event.machine.resolveState(event.state);
-
                   sendBack(
                     simModel.events['SERVICE.REGISTER']({
                       sessionId: event.sessionId,
                       machine: event.machine,
                       state,
+                      parent: event.parent,
                       source: 'inspector',
                     }),
                   );
@@ -162,13 +163,13 @@ export const simulationMachine = simModel.createMachine(
           src: () => (sendBack, onReceive) => {
             const serviceMap: Map<string, AnyInterpreter> = new Map();
             const machines = new Set<AnyStateMachine>();
-            const services = new Set<AnyInterpreter>();
+            const rootServices = new Set<AnyInterpreter>();
 
             function locallyInterpret(machine: AnyStateMachine) {
               machines.add(machine);
 
               const service = interpret(machine, { devTools: true });
-              services.add(service);
+              rootServices.add(service);
               serviceMap.set(service.sessionId, service);
 
               sendBack(
@@ -176,6 +177,7 @@ export const simulationMachine = simModel.createMachine(
                   sessionId: service.sessionId,
                   machine: service.machine,
                   state: service.machine.initialState,
+                  parent: service.parent?.sessionId,
                   source: 'visualizer',
                 }),
               );
@@ -188,14 +190,12 @@ export const simulationMachine = simModel.createMachine(
               service.start();
             }
 
-            function stopServices() {
-              services.forEach((service) => {
-                sendBack(
-                  simModel.events['SERVICE.UNREGISTER'](service.sessionId),
-                );
+            function stopRootServices() {
+              rootServices.forEach((service) => {
+                sendBack(simModel.events['SERVICES.UNREGISTER_ALL']());
                 service.stop();
               });
-              services.clear();
+              rootServices.clear();
               serviceMap.clear();
             }
 
@@ -219,12 +219,12 @@ export const simulationMachine = simModel.createMachine(
                   }
                 }
               } else if (event.type === 'RESET') {
-                stopServices();
+                stopRootServices();
                 machines.forEach((machine) => {
                   locallyInterpret(machine);
                 });
               } else if (event.type === 'STOP') {
-                stopServices();
+                stopRootServices();
                 machines.clear();
               }
             });
@@ -273,8 +273,13 @@ export const simulationMachine = simModel.createMachine(
           simModel.assign({
             serviceDataMap: (ctx, e) =>
               produce(ctx.serviceDataMap, (draft) => {
-                const service = ctx.serviceDataMap[e.sessionId]!;
-                draft[e.sessionId]!.state = service?.machine.resolveState(
+                const service = draft[e.sessionId];
+
+                if (!service) {
+                  return;
+                }
+
+                draft[e.sessionId]!.state = service.machine.resolveState(
                   e.state,
                 );
               }),
@@ -331,27 +336,22 @@ export const simulationMachine = simModel.createMachine(
           },
         }),
       },
-      'SERVICE.UNREGISTER': {
+      'SERVICES.UNREGISTER_ALL': {
         actions: simModel.assign({
-          serviceDataMap: (ctx, e) => {
-            return produce(ctx.serviceDataMap, (draft) => {
-              delete draft[e.sessionId];
-            });
-          },
-          currentSessionId: (ctx, e) => {
-            if (ctx.currentSessionId === e.sessionId) {
-              return null;
-            }
-
-            return ctx.currentSessionId;
-          },
+          serviceDataMap: {},
+          currentSessionId: null,
         }),
       },
       'SERVICE.STOP': {
         actions: simModel.assign({
           serviceDataMap: (ctx, e) =>
             produce(ctx.serviceDataMap, (draft) => {
-              draft[e.sessionId]!.status = InterpreterStatus.Stopped;
+              const serviceData = draft[e.sessionId];
+              if (!serviceData) {
+                return;
+              }
+
+              serviceData.status = InterpreterStatus.Stopped;
             }),
         }),
       },

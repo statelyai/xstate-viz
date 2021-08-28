@@ -106,8 +106,14 @@ export const ActorsPanel: React.FC = () => {
           >
             <ListIcon as={ArrowForwardIcon} />
             <Text flexGrow={1}>
-              <Link>{serviceData!.machine.id ?? '(machine)'}</Link> ({sessionId}
-              )
+              {serviceData?.parent && services[serviceData!.parent] && (
+                <span>
+                  {services[serviceData!.parent]!.machine.id} (
+                  {serviceData!.parent}) →{' '}
+                </span>
+              )}
+              <strong>{serviceData!.machine.id ?? '(machine)'}</strong> (
+              {sessionId})
             </Text>
           </ListItem>
         );
