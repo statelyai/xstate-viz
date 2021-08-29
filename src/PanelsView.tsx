@@ -1,8 +1,8 @@
 import { SettingsIcon } from '@chakra-ui/icons';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@chakra-ui/react';
-import { useActor } from '@xstate/react';
+import { useSelector } from '@xstate/react';
 import { ActorsPanel } from './ActorsPanel';
-import { appService } from './App';
+import { useAppService } from './appContext';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
 import { ResizableBox } from './ResizableBox';
@@ -13,10 +13,12 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 
 export const PanelsView = () => {
-  const [state, send] = useActor(appService);
+  const appService = useAppService();
   const simService = useSimulation();
   const [sourceState, sendToSourceService] = useSourceActor();
-  const isCollapsed = state.matches({ panels: 'collapsed' });
+  const isCollapsed = useSelector(appService, (state) =>
+    state.matches({ panels: 'collapsed' }),
+  );
 
   return (
     <ResizableBox
