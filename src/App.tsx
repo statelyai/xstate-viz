@@ -2,7 +2,6 @@ import { Box, ChakraProvider } from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect } from 'react';
-import { interpret } from 'xstate';
 import { AppProvider } from './appContext';
 import { appMachine } from './appMachine';
 import { AuthProvider } from './authContext';
@@ -32,7 +31,7 @@ function App(props: AppProps) {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
-  const appService = interpret(appMachine);
+  const appService = useInterpret(appMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
