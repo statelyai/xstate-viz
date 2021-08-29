@@ -3,6 +3,8 @@ import {
   MinusIcon,
   RepeatIcon,
   QuestionOutlineIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
 } from '@chakra-ui/icons';
 import {
   Box,
@@ -32,11 +34,11 @@ import {
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
-import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
 import { CompressIcon } from './Icons';
 import { useSourceActor } from './sourceMachine';
 import { WelcomeArea } from './WelcomeArea';
+import { appService } from './App';
 
 export const CanvasView: React.FC = () => {
   const simService = useSimulation();
@@ -55,26 +57,22 @@ export const CanvasView: React.FC = () => {
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
-
   const shouldEnableZoomOutButton = useSelector(
     canvasService,
     getShouldEnableZoomOutButton,
   );
-
   const shouldEnableZoomInButton = useSelector(
     canvasService,
     getShouldEnableZoomInButton,
   );
-
   const simulationMode = useSimulationMode();
-
   const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
+  const isCollapsed = useSelector(appService, (state) =>
+    state.matches({ panels: 'collapsed' }),
+  );
 
   return (
-    <Box display="grid" gridTemplateRows="3rem 1fr">
-      <Box bg="gray.800" zIndex={1} padding="0">
-        <CanvasHeader />
-      </Box>
+    <Box display="grid">
       <CanvasContainer>
         {digraph && <Graph digraph={digraph} />}
         {isLayoutPending && (
@@ -144,42 +142,50 @@ export const CanvasView: React.FC = () => {
             RESET
           </Button>
         )}
-        <Menu closeOnSelect={true} placement="top-end">
-          <MenuButton
-            as={IconButton}
-            size="sm"
-            isRound
-            aria-label="More info"
-            marginLeft="auto"
-            variant="secondary"
-            icon={
-              <QuestionOutlineIcon
-                boxSize={6}
-                css={{ '& circle': { display: 'none' } }}
-              />
-            }
-          />
-          <Portal>
-            <MenuList fontSize="sm" padding="0">
-              <MenuItem
-                as={Link}
-                href="https://github.com/statelyai/xstate"
-                target="_blank"
-                rel="noreferrer"
-              >
-                XState version 4.23.0
-              </MenuItem>
-              <MenuItem
-                as={Link}
-                href="https://stately.ai/privacy"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Privacy Policy
-              </MenuItem>
-            </MenuList>
-          </Portal>
-        </Menu>
+        <ButtonGroup size="sm" spacing={2} marginLeft="auto">
+          <Menu closeOnSelect={true} placement="top-end">
+            <MenuButton
+              as={IconButton}
+              size="sm"
+              isRound
+              aria-label="More info"
+              variant="secondary"
+              icon={
+                <QuestionOutlineIcon
+                  boxSize={6}
+                  css={{ '& circle': { display: 'none' } }}
+                />
+              }
+            />
+            <Portal>
+              <MenuList fontSize="sm" padding="0">
+                <MenuItem
+                  as={Link}
+                  href="https://github.com/statelyai/xstate"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  XState version 4.23.0
+                </MenuItem>
+                <MenuItem
+                  as={Link}
+                  href="https://stately.ai/privacy"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Privacy Policy
+                </MenuItem>
+              </MenuList>
+            </Portal>
+          </Menu>
+          <IconButton
+            aria-label="Collapse panels"
+            title="Collapse panels"
+            icon={isCollapsed ? <ArrowLeftIcon /> : <ArrowRightIcon />}
+            variant="ghost"
+            onClick={() => appService.send('PANELS.TOGGLE')}
+          ></IconButton>
+        </ButtonGroup>
       </Box>
     </Box>
   );

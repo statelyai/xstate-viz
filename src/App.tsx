@@ -2,12 +2,15 @@ import { Box, ChakraProvider } from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect } from 'react';
+import { interpret } from 'xstate';
+import { appMachine } from './appMachine';
 import { AuthProvider } from './authContext';
 import { createAuthMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasView } from './CanvasView';
 import './Graph';
 import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { HeaderView } from './HeaderView';
 import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
@@ -23,6 +26,8 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 export interface AppProps {
   sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
 }
+
+export const appService = interpret(appMachine).start();
 
 function App(props: AppProps) {
   const paletteService = useInterpret(paletteMachine);
@@ -99,9 +104,11 @@ function App(props: AppProps) {
                 as="main"
                 display="grid"
                 gridTemplateColumns="1fr auto"
-                gridTemplateAreas="'canvas panels'"
+                gridTemplateRows="auto 1fr"
+                gridTemplateAreas="'header header' 'canvas panels'"
                 height="100vh"
               >
+                <HeaderView gridArea="header" />
                 <CanvasProvider value={canvasService}>
                   <CanvasView />
                 </CanvasProvider>

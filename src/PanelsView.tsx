@@ -1,19 +1,10 @@
 import { SettingsIcon } from '@chakra-ui/icons';
-import {
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
-  Box,
-  Link,
-  Text,
-} from '@chakra-ui/react';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@chakra-ui/react';
+import { useActor } from '@xstate/react';
 import { ActorsPanel } from './ActorsPanel';
-import { useAuth } from './authContext';
+import { appService } from './App';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
-import { Login } from './Login';
 import { ResizableBox } from './ResizableBox';
 import { SettingsPanel } from './SettingsPanel';
 import { useSimulation } from './SimulationContext';
@@ -22,18 +13,34 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 
 export const PanelsView = () => {
+  const [state, send] = useActor(appService);
   const simService = useSimulation();
   const [sourceState, sendToSourceService] = useSourceActor();
+  const isCollapsed = state.matches({ panels: 'collapsed' });
 
   return (
-    <ResizableBox gridArea="panels" minHeight={0}>
+    <ResizableBox
+      gridArea="panels"
+      minHeight={0}
+      position={isCollapsed ? 'absolute' : undefined}
+      transition="all .3s"
+      sx={
+        isCollapsed
+          ? {
+              right: 0,
+              bottom: 0,
+              transform: 'translateX(100%)',
+            }
+          : undefined
+      }
+    >
       <Tabs
         bg="gray.800"
         display="grid"
         gridTemplateRows="3rem 1fr"
         height="100%"
       >
-        <TabList>
+        <TabList textTransform="uppercase">
           <Tab>Code</Tab>
           <Tab>State</Tab>
           <Tab>Events</Tab>
@@ -41,7 +48,6 @@ export const PanelsView = () => {
           <Tab marginLeft="auto" marginRight="2">
             <SettingsIcon />
           </Tab>
-          <Login />
         </TabList>
 
         <TabPanels minHeight={0}>

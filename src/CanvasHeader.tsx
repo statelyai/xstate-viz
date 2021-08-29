@@ -21,10 +21,10 @@ import { useSourceActor } from './sourceMachine';
 
 export const CanvasHeader: React.FC = () => {
   const [sourceState] = useSourceActor();
-
   const loggedInUserData = useLoggedInUserData();
   const registryData = sourceState.context.sourceRegistryData;
   const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
+
   return (
     <HStack zIndex={1} justifyContent="space-between" height="3rem">
       <Link
