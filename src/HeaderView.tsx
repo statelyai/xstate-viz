@@ -41,7 +41,7 @@ export const HeaderView: React.FC<BoxProps> = (props) => {
             opacity: 0.8,
           }}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           marginRight="auto"
         >
           <Logo
