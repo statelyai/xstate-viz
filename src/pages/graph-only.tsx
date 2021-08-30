@@ -22,6 +22,7 @@ const GraphOnly = () => {
   const digraph = useMemo(
     () =>
       toDirectedGraph(
+        // Dummy machine to test
         createMachine({
           after: {
             500: {
