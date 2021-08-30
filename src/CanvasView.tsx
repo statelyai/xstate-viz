@@ -170,7 +170,7 @@ export const CanvasView: React.FC = () => {
                   as={Link}
                   href="https://stately.ai/privacy"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   Privacy Policy
                 </MenuItem>
