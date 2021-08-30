@@ -47,7 +47,7 @@ export const PanelsView = () => {
           <Tab>Events</Tab>
           <Tab>Actors</Tab>
           <Tab marginLeft="auto" marginRight="2">
-            <SettingsIcon />
+            <SettingsIcon aria-label="Settings" />
           </Tab>
         </TabList>
 
