@@ -162,7 +162,7 @@ export const CanvasView: React.FC = () => {
                   as={Link}
                   href="https://github.com/statelyai/xstate"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   XState version 4.23.0
                 </MenuItem>
@@ -170,7 +170,7 @@ export const CanvasView: React.FC = () => {
                   as={Link}
                   href="https://stately.ai/privacy"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   Privacy Policy
                 </MenuItem>
