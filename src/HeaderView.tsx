@@ -30,7 +30,7 @@ export const HeaderView: React.FC<BoxProps> = (props) => {
   const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
 
   return (
-    <Box {...props} background="gray.800">
+    <Box {...props} background="gray.800" data-viz="header">
       <HStack zIndex={1} justifyContent="space-between" height="3rem">
         <Link
           href="/"

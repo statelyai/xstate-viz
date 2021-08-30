@@ -10,6 +10,8 @@ import '../InvokeViz.scss';
 import '../monacoPatch';
 import '../StateNodeViz.scss';
 import '../TransitionViz.scss';
+import '../PanelsViz.scss';
+import '../App.scss';
 
 if (
   process.env.NODE_ENV === 'production' &&

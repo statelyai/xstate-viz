@@ -20,21 +20,7 @@ export const PanelsView = () => {
   const isCollapsed = (state as any).matches({ panels: 'collapsed' });
 
   return (
-    <ResizableBox
-      gridArea="panels"
-      minHeight={0}
-      position={isCollapsed ? 'absolute' : undefined}
-      transition="all .3s"
-      sx={
-        isCollapsed
-          ? {
-              right: 0,
-              bottom: 0,
-              transform: 'translateX(100%)',
-            }
-          : undefined
-      }
-    >
+    <ResizableBox gridArea="panels" data-viz="panels" minHeight={0}>
       <Tabs
         bg="gray.800"
         display="grid"

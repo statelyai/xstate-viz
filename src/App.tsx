@@ -2,7 +2,7 @@ import { Box, ChakraProvider } from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect } from 'react';
-import { AppProvider } from './AppContext';
+import { AppProvider, selectAppMode } from './AppContext';
 import { appMachine } from './appMachine';
 import { AuthProvider } from './authContext';
 import { createAuthMachine } from './authMachine';
@@ -89,6 +89,8 @@ function App(props: AppProps) {
     sourceID,
   });
 
+  const appMode = useSelector(appService, selectAppMode);
+
   if (!isOnClientSide()) return null;
 
   return (
@@ -100,12 +102,10 @@ function App(props: AppProps) {
               <AppProvider value={appService}>
                 <Box
                   data-testid="app"
+                  data-viz="app"
                   data-viz-theme="dark"
+                  data-viz-mode={appMode}
                   as="main"
-                  display="grid"
-                  gridTemplateColumns="1fr auto"
-                  gridTemplateRows="auto 1fr"
-                  gridTemplateAreas="'header header' 'canvas panels'"
                   height="100vh"
                 >
                   <HeaderView gridArea="header" />

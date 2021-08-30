@@ -1,0 +1,25 @@
+[data-viz='app'] {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  grid-template-areas:
+    'header panels'
+    'canvas panels';
+
+  &[data-viz-mode='viz'] {
+    [data-viz='header'] {
+      grid-column: 1 / -1;
+    }
+
+    [data-viz='canvas'] {
+      grid-column: 1 / -1;
+      grid-row: header-end / canvas-end;
+    }
+
+    [data-viz='panels'] {
+      transform: translateX(100%);
+      visibility: hidden;
+    }
+  }
+}

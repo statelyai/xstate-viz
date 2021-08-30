@@ -8,6 +8,7 @@ import {
 } from '@chakra-ui/icons';
 import {
   Box,
+  BoxProps,
   Button,
   ButtonGroup,
   IconButton,
@@ -38,7 +39,7 @@ import { WelcomeArea } from './WelcomeArea';
 
 import { useAppService } from './AppContext';
 
-export const CanvasView: React.FC = () => {
+export const CanvasView: React.FC<BoxProps> = (props) => {
   const simService = useSimulation();
   const canvasService = useCanvas();
   const [sourceState] = useSourceActor();
@@ -71,7 +72,7 @@ export const CanvasView: React.FC = () => {
   );
 
   return (
-    <Box display="grid">
+    <Box data-viz="canvas" display="grid" {...props}>
       <CanvasContainer>
         {digraph && <Graph digraph={digraph} />}
         {isLayoutPending && (
