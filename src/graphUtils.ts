@@ -55,6 +55,8 @@ export function getAllEdges(digraph: DirectedGraphNode): DirectedGraphEdge[] {
  * Returns the node that contains the `source` and `target` of the edges, which may be
  * the `source` or `target` itself.
  *
+ * See https://www.eclipse.org/elk/documentation/tooldevelopers/graphdatastructure/coordinatesystem.html
+ *
  * @param edge
  * @returns containing node
  */
