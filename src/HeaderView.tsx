@@ -80,7 +80,7 @@ export const HeaderView: React.FC<BoxProps> = (props) => {
                       )}
                     >
                       <HStack spacing="3">
-                        <EditIcon />
+                        <EditIcon aria-hidden />
                         <Text>Edit</Text>
                       </HStack>
                     </MenuItem>
