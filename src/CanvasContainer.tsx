@@ -4,7 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
-import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
+import { isMac, isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -204,7 +204,11 @@ export const CanvasContainer: React.FC = ({ children }) => {
           );
         }
       } else if (!e.metaKey && !e.ctrlKey) {
-        canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+        if (isMac() || !e.shiftKey) {
+          canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+        } else {
+          canvasService.send(canvasModel.events.PAN(e.deltaY, 0));
+        }
       }
     };
 
