@@ -51,6 +51,40 @@ export function getAllEdges(digraph: DirectedGraphNode): DirectedGraphEdge[] {
   return edges;
 }
 
+/**
+ * Returns the node that contains the `source` and `target` of the edges, which may be
+ * the `source` or `target` itself.
+ *
+ * @param edge
+ * @returns containing node
+ */
+function getContainingNode(edge: DirectedGraphEdge): StateNode | undefined {
+  const { source: sourceNode, target: targetNode } = edge;
+  if (sourceNode === targetNode) {
+    return sourceNode.parent;
+  }
+
+  const set = new Set([sourceNode]);
+
+  let marker = sourceNode.parent;
+
+  while (marker) {
+    set.add(marker);
+    marker = marker.parent;
+  }
+
+  marker = targetNode;
+
+  while (marker) {
+    if (set.has(marker)) {
+      return marker;
+    }
+    marker = marker.parent;
+  }
+
+  return sourceNode.machine; // root
+}
+
 function getRelativeNodeEdgeMap(
   digraph: DirectedGraphNode,
 ): RelativeNodeEdgeMap {
@@ -59,44 +93,15 @@ function getRelativeNodeEdgeMap(
   const map: RelativeNodeEdgeMap[0] = new Map();
   const edgeMap: RelativeNodeEdgeMap[1] = new Map();
 
-  const getLCA = (
-    sourceNode: StateNode,
-    targetNode: StateNode,
-  ): StateNode | undefined => {
-    if (sourceNode === targetNode) {
-      return sourceNode.parent;
-    }
-
-    const set = new Set([sourceNode]);
-
-    let marker = sourceNode.parent;
-
-    while (marker) {
-      set.add(marker);
-      marker = marker.parent;
-    }
-
-    marker = targetNode;
-
-    while (marker) {
-      if (set.has(marker)) {
-        return marker;
-      }
-      marker = marker.parent;
-    }
-
-    return sourceNode.machine; // root
-  };
-
   edges.forEach((edge) => {
-    const lca = getLCA(edge.source, edge.target);
+    const containingNode = getContainingNode(edge);
 
-    if (!map.has(lca)) {
-      map.set(lca, []);
+    if (!map.has(containingNode)) {
+      map.set(containingNode, []);
     }
 
-    map.get(lca)!.push(edge);
-    edgeMap.set(edge.id, lca);
+    map.get(containingNode)!.push(edge);
+    edgeMap.set(edge.id, containingNode);
   });
 
   return [map, edgeMap];
@@ -355,26 +360,27 @@ export async function getElkGraph(
   const stateNodeToElkNodeMap = new Map<StateNode, StateElkNode>();
 
   const setEdgeLayout = (edge: StateElkEdge) => {
-    const lca = relativeNodeEdgeMap[1].get(edge.id);
-    const elkLca = lca && stateNodeToElkNodeMap.get(lca)!;
+    const containingNode = relativeNodeEdgeMap[1].get(edge.id);
+    const elkContainingNode =
+      containingNode && stateNodeToElkNodeMap.get(containingNode)!;
 
-    const translatedSections: ElkEdgeSection[] = elkLca
+    const translatedSections: ElkEdgeSection[] = elkContainingNode
       ? edge.sections.map((section) => {
           return {
             ...section,
             startPoint: {
-              x: section.startPoint.x + elkLca.absolutePosition.x,
-              y: section.startPoint.y + elkLca.absolutePosition.y,
+              x: section.startPoint.x + elkContainingNode.absolutePosition.x,
+              y: section.startPoint.y + elkContainingNode.absolutePosition.y,
             },
             endPoint: {
-              x: section.endPoint.x + elkLca.absolutePosition.x,
-              y: section.endPoint.y + elkLca.absolutePosition.y,
+              x: section.endPoint.x + elkContainingNode.absolutePosition.x,
+              y: section.endPoint.y + elkContainingNode.absolutePosition.y,
             },
             bendPoints:
               section.bendPoints?.map((bendPoint) => {
                 return {
-                  x: bendPoint.x + elkLca.absolutePosition.x,
-                  y: bendPoint.y + elkLca.absolutePosition.y,
+                  x: bendPoint.x + elkContainingNode.absolutePosition.x,
+                  y: bendPoint.y + elkContainingNode.absolutePosition.y,
                 };
               }) ?? [],
           };
@@ -383,9 +389,9 @@ export async function getElkGraph(
 
     edge.edge.sections = translatedSections;
     edge.edge.label.x =
-      (edge.labels?.[0].x || 0) + (elkLca?.absolutePosition.x || 0);
+      (edge.labels?.[0].x || 0) + (elkContainingNode?.absolutePosition.x || 0);
     edge.edge.label.y =
-      (edge.labels?.[0].y || 0) + (elkLca?.absolutePosition.y || 0);
+      (edge.labels?.[0].y || 0) + (elkContainingNode?.absolutePosition.y || 0);
   };
 
   const setLayout = (
