@@ -59,30 +59,33 @@ function getRelativeNodeEdgeMap(
   const map: RelativeNodeEdgeMap[0] = new Map();
   const edgeMap: RelativeNodeEdgeMap[1] = new Map();
 
-  const getLCA = (a: StateNode, b: StateNode): StateNode | undefined => {
-    if (a === b) {
-      return a.parent;
+  const getLCA = (
+    sourceNode: StateNode,
+    targetNode: StateNode,
+  ): StateNode | undefined => {
+    if (sourceNode === targetNode) {
+      return sourceNode.parent;
     }
 
-    const set = new Set();
+    const set = new Set([sourceNode]);
 
-    let m = a.parent;
+    let marker = sourceNode.parent;
 
-    while (m) {
-      set.add(m);
-      m = m.parent;
+    while (marker) {
+      set.add(marker);
+      marker = marker.parent;
     }
 
-    m = b;
+    marker = targetNode;
 
-    while (m) {
-      if (set.has(m)) {
-        return m;
+    while (marker) {
+      if (set.has(marker)) {
+        return marker;
       }
-      m = m.parent;
+      marker = marker.parent;
     }
 
-    return a.machine; // root
+    return sourceNode.machine; // root
   };
 
   edges.forEach((edge) => {
