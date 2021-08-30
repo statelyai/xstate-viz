@@ -2,7 +2,7 @@ import { Box, ChakraProvider } from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect } from 'react';
-import { interpret } from 'xstate';
+import { AppProvider } from './AppContext';
 import { appMachine } from './appMachine';
 import { AuthProvider } from './authContext';
 import { createAuthMachine } from './authMachine';
@@ -27,12 +27,11 @@ export interface AppProps {
   sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
 }
 
-export const appService = interpret(appMachine).start();
-
 function App(props: AppProps) {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
+  const appService = useInterpret(appMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -98,23 +97,25 @@ function App(props: AppProps) {
         <AuthProvider value={authService}>
           <PaletteProvider value={paletteService}>
             <SimulationProvider value={simService}>
-              <Box
-                data-testid="app"
-                data-viz-theme="dark"
-                as="main"
-                display="grid"
-                gridTemplateColumns="1fr auto"
-                gridTemplateRows="auto 1fr"
-                gridTemplateAreas="'header header' 'canvas panels'"
-                height="100vh"
-              >
-                <HeaderView gridArea="header" />
-                <CanvasProvider value={canvasService}>
-                  <CanvasView />
-                </CanvasProvider>
-                <PanelsView />
-                <MachineNameChooserModal />
-              </Box>
+              <AppProvider value={appService}>
+                <Box
+                  data-testid="app"
+                  data-viz-theme="dark"
+                  as="main"
+                  display="grid"
+                  gridTemplateColumns="1fr auto"
+                  gridTemplateRows="auto 1fr"
+                  gridTemplateAreas="'header header' 'canvas panels'"
+                  height="100vh"
+                >
+                  <HeaderView gridArea="header" />
+                  <CanvasProvider value={canvasService}>
+                    <CanvasView />
+                  </CanvasProvider>
+                  <PanelsView />
+                  <MachineNameChooserModal />
+                </Box>
+              </AppProvider>
             </SimulationProvider>
           </PaletteProvider>
         </AuthProvider>

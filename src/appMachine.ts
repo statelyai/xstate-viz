@@ -2,7 +2,7 @@ import { createMachine } from 'xstate';
 
 export const appMachine = createMachine({
   id: 'app',
-  type: 'parallel',
+  initial: 'panels',
   states: {
     panels: {
       initial: 'expanded',

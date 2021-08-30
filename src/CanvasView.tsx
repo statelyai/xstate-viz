@@ -10,7 +10,6 @@ import {
   Box,
   Button,
   ButtonGroup,
-  HStack,
   IconButton,
   Link,
   Menu,
@@ -19,8 +18,6 @@ import {
   MenuList,
   Portal,
   Spinner,
-  Stack,
-  Text,
   VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
@@ -38,7 +35,8 @@ import { Overlay } from './Overlay';
 import { CompressIcon } from './Icons';
 import { useSourceActor } from './sourceMachine';
 import { WelcomeArea } from './WelcomeArea';
-import { appService } from './App';
+
+import { useAppService } from './AppContext';
 
 export const CanvasView: React.FC = () => {
   const simService = useSimulation();
@@ -67,6 +65,7 @@ export const CanvasView: React.FC = () => {
   );
   const simulationMode = useSimulationMode();
   const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
+  const appService = useAppService();
   const isCollapsed = useSelector(appService, (state) =>
     state.matches({ panels: 'collapsed' }),
   );
