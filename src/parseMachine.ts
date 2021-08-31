@@ -15,16 +15,16 @@ const wrapCallbackToPreventThis = (callback: () => void) => () => {
 };
 
 const windowShim = {
-  setInterval: function (callback: () => void, ...args: any[]) {
+  setInterval: (callback: () => void, ...args: any[]) => {
     return setInterval(wrapCallbackToPreventThis(callback), ...args);
   },
-  setTimeout: function (callback: () => void, ...args: any[]) {
+  setTimeout: (callback: () => void, ...args: any[]) => {
     return setTimeout(wrapCallbackToPreventThis(callback), ...args);
   },
-  clearTimeout: function (...args: any[]) {
+  clearTimeout: (...args: any[]) => {
     return clearTimeout(...args);
   },
-  clearInterval: function (...args: any[]) {
+  clearInterval: (...args: any[]) => {
     return clearInterval(...args);
   },
 };
