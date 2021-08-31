@@ -116,13 +116,13 @@ const getPanDelta = (
 
 const getDeltaX = getPanDelta.bind(
   null,
-  ['d', 'D', 'ArrowRight'],
   ['a', 'A', 'ArrowLeft'],
+  ['d', 'D', 'ArrowRight'],
 );
 const getDeltaY = getPanDelta.bind(
   null,
-  ['s', 'S', 'ArrowDown'],
   ['w', 'W', 'ArrowUp'],
+  ['s', 'S', 'ArrowDown'],
 );
 
 export const CanvasContainer: React.FC = ({ children }) => {
