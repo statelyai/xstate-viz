@@ -44,4 +44,30 @@ describe('Visual', () => {
       });
     });
   });
+
+  it('show/collapsing panels button should work', () => {
+    cy.visit('/viz');
+
+    cy.findByTestId('panels').then(($panels) => {
+      expect(isInViewport($panels)).eq(true);
+    });
+
+    cy.findByRole('button', { name: 'Collapse panels' }).click();
+
+    cy.findByTestId('panels').then(($panels) => {
+      expect(isInViewport($panels)).eq(false);
+    });
+
+    cy.findByRole('button', { name: 'Show panels' }).click();
+
+    cy.findByTestId('panels').then(($panels) => {
+      expect(isInViewport($panels)).eq(false);
+    });
+
+    cy.findByRole('button', { name: 'Visualize' }).then(($button) => {
+      // For some odd reason, the panels are visible but not in the viewport?
+      // But the "Visualize" button (in the panels) is
+      expect(isInViewport($button)).eq(true);
+    });
+  });
 });

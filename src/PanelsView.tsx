@@ -17,10 +17,14 @@ export const PanelsView = () => {
   const [state, send] = useActor(appService);
   const simService = useSimulation();
   const [sourceState, sendToSourceService] = useSourceActor();
-  const isCollapsed = (state as any).matches({ panels: 'collapsed' });
 
   return (
-    <ResizableBox gridArea="panels" data-viz="panels" minHeight={0}>
+    <ResizableBox
+      gridArea="panels"
+      data-viz="panels"
+      data-testid="panels"
+      minHeight={0}
+    >
       <Tabs
         bg="gray.800"
         display="grid"
