@@ -1,5 +1,27 @@
 # XState Visualizer
 
+## 0.3.0
+
+### Minor Changes
+
+- [#215](https://github.com/statelyai/xstate-viz/pull/215) [`f030057`](https://github.com/statelyai/xstate-viz/commit/f0300575ca1e92c58cb0bcded8877d255530fe72) Thanks [@mattpocock](https://github.com/mattpocock)! - Added a welcome area for new users to help new folks understand what the viz can do.
+
+  ![image](https://user-images.githubusercontent.com/28293365/130925861-93cd9ded-4126-4856-9e56-251c2a287478.png)
+
+* [#210](https://github.com/statelyai/xstate-viz/pull/210) [`a8dbee6`](https://github.com/statelyai/xstate-viz/commit/a8dbee6b6c9aa44050d6da075ff86e7e61bbe869) Thanks [@davidkpiano](https://github.com/davidkpiano)! - You can now click the **Fit to view** button to fit your entire diagram into view:
+
+  https://user-images.githubusercontent.com/1093738/130982742-f9523cd9-ca51-4981-ae94-68ba72971577.mp4
+
+### Patch Changes
+
+- [#203](https://github.com/statelyai/xstate-viz/pull/203) [`fd35c53`](https://github.com/statelyai/xstate-viz/commit/fd35c53c0d69b3fe57573c1699966dbcf157c35d) Thanks [@Andarist](https://github.com/Andarist)! - Fixed an issue with action buttons for the editor being often left out of the screen after viewport resizes.
+
+* [#208](https://github.com/statelyai/xstate-viz/pull/208) [`a1b7379`](https://github.com/statelyai/xstate-viz/commit/a1b73790c2e09e30765d5e86f86fe40d019b0138) Thanks [@Andarist](https://github.com/Andarist)! - Fixed an issue with global keybindings being also triggered when providing input to input-like elements.
+
+- [#228](https://github.com/statelyai/xstate-viz/pull/228) [`7ca7e9a`](https://github.com/statelyai/xstate-viz/commit/7ca7e9a83a8e8e3d8ce5c43890aa39d6b09a17ce) Thanks [@davidkpiano](https://github.com/davidkpiano)! - The layout algorithm was parenting some of the edges incorrectly. This has been fixed.
+
+  ![CleanShot 2021-08-30 at 07 14 58](https://user-images.githubusercontent.com/1093738/131331546-4a780c96-c58e-498e-aeaa-f44dc5e81fb4.png)
+
 ## 0.2.0
 
 ### Minor Changes
