@@ -48,6 +48,11 @@ export const AppHead = (props: AppHeadProps) => {
       )}
 
       <meta property="twitter:card" content="summary_large_image" />
+      <script
+        defer
+        data-domain="stately.ai"
+        src="https://plausible.io/js/plausible.js"
+      />
     </Head>
   );
 };
