@@ -54,6 +54,10 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
       log: console.log,
       warn: console.warn,
     },
+    setInterval,
+    setTimeout,
+    clearTimeout,
+    clearInterval,
   });
 
   return machines;
