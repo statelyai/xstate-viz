@@ -4,7 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
-import { isMac, isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
+import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -204,7 +204,9 @@ export const CanvasContainer: React.FC = ({ children }) => {
           );
         }
       } else if (!e.metaKey && !e.ctrlKey) {
-        if (isMac() || !e.shiftKey) {
+        const isTrackPad = e.deltaMode === WheelEvent.DOM_DELTA_PIXEL;
+
+        if (isTrackPad || !e.shiftKey) {
           canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
         } else {
           canvasService.send(canvasModel.events.PAN(e.deltaY, 0));
@@ -214,6 +216,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
 
     const canvasEl = canvasRef.current;
     canvasEl.addEventListener('wheel', onCanvasWheel);
+
     return () => {
       canvasEl.removeEventListener('wheel', onCanvasWheel);
     };
