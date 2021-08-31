@@ -1,5 +1,9 @@
-const fs = require('fs/promises');
+const fs = require('fs');
 const path = require('path');
+const { promisify } = require('util');
+
+// can't use `fs/promises` for now because GitHub Actions run on node12, see https://github.com/actions/github-script/pull/182#issuecomment-903966153
+const readFile = promisify(fs.readFile);
 
 /**
  * @param {import('@octokit/rest')} octokit
@@ -7,7 +11,7 @@ const path = require('path');
  * @return {Promise<void>}
  */
 async function publishRelease(octokit, { repo }) {
-  const changelog = await fs.readFile(
+  const changelog = await readFile(
     path.join(__dirname, '..', 'CHANGELOG.md'),
     'utf-8',
   );
