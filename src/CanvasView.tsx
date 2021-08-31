@@ -179,8 +179,8 @@ export const CanvasView: React.FC<BoxProps> = (props) => {
             </Portal>
           </Menu>
           <IconButton
-            aria-label="Collapse panels"
-            title="Collapse panels"
+            aria-label={isCollapsed ? 'Show panels' : 'Collapse panels'}
+            title={isCollapsed ? 'Show panels' : 'Collapse panels'}
             icon={isCollapsed ? <ArrowLeftIcon /> : <ArrowRightIcon />}
             variant="ghost"
             onClick={() => appService.send('PANELS.TOGGLE')}
