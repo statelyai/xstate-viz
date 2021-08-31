@@ -6,19 +6,17 @@ import realmsShim from 'realms-shim';
 
 const realm = realmsShim.makeRootRealm();
 
-/**
- * Wraps a callback in a function to prevent
- * accessing 'this'
- */
-const wrapCallbackToPreventThis = (callback: () => void) => () => {
-  return callback();
-};
+const wrapCallbackToPreventThis =
+  (callback: (...args: any[]) => void) =>
+  (...args: any[]) => {
+    return callback(...args);
+  };
 
 const windowShim = {
-  setInterval: (callback: () => void, ...args: any[]) => {
+  setInterval: (callback: (...args: any[]) => void, ...args: any[]) => {
     return setInterval(wrapCallbackToPreventThis(callback), ...args);
   },
-  setTimeout: (callback: () => void, ...args: any[]) => {
+  setTimeout: (callback: (...args: any[]) => void, ...args: any[]) => {
     return setTimeout(wrapCallbackToPreventThis(callback), ...args);
   },
   clearTimeout: (...args: any[]) => {
