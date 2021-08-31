@@ -97,6 +97,34 @@ const dragMachine = dragModel.createMachine({
 const getCursorByState = (state: AnyState) =>
   (Object.values(state.meta)[0] as { cursor: CSSProperties['cursor'] }).cursor;
 
+const getPanDelta = (
+  negative: string[],
+  positive: string[],
+  key: string,
+  isShift = false,
+): number => {
+  const delta = isShift ? 50 : 5;
+
+  if (positive.includes(key)) {
+    return delta;
+  } else if (negative.includes(key)) {
+    return -delta;
+  }
+
+  return 0;
+};
+
+const getDeltaX = getPanDelta.bind(
+  null,
+  ['d', 'D', 'ArrowRight'],
+  ['a', 'A', 'ArrowLeft'],
+);
+const getDeltaY = getPanDelta.bind(
+  null,
+  ['s', 'S', 'ArrowDown'],
+  ['w', 'W', 'ArrowUp'],
+);
+
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();
   const canvasRef = useRef<HTMLDivElement>(null!);
@@ -214,6 +242,43 @@ export const CanvasContainer: React.FC = ({ children }) => {
       canvasEl.removeEventListener('wheel', onCanvasWheel);
     };
   }, [canvasService]);
+
+  /**
+   * Keyboard events.
+   */
+  useEffect(() => {
+    function keydownListener(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      if (isTextInputLikeElement(target)) {
+        return;
+      }
+
+      const dx = getDeltaX(e.key, e.shiftKey);
+      const dy = getDeltaY(e.key, e.shiftKey);
+
+      if (e.key === '+') {
+        e.preventDefault();
+        canvasService.send('ZOOM.IN');
+      } else if (e.key === '-') {
+        e.preventDefault();
+        canvasService.send('ZOOM.OUT');
+      } else if (e.key === 'r') {
+        e.preventDefault();
+        canvasService.send('POSITION.RESET');
+      } else if (e.key === 'f') {
+        e.preventDefault();
+        canvasService.send('FIT_TO_VIEW');
+      } else if (dx !== 0 || dy !== 0) {
+        e.preventDefault();
+        canvasService.send(canvasModel.events.PAN(dx, dy));
+      }
+    }
+
+    window.addEventListener('keydown', keydownListener);
+    return () => {
+      window.removeEventListener('keydown', keydownListener);
+    };
+  }, []);
 
   return (
     <div
