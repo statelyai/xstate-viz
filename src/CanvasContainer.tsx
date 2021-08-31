@@ -4,7 +4,11 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
-import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
+import {
+  isWithPlatformMetaKey,
+  isTextInputLikeElement,
+  isTabLikeElement,
+} from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -221,7 +225,8 @@ export const CanvasContainer: React.FC = ({ children }) => {
   useEffect(() => {
     function keydownListener(e: KeyboardEvent) {
       const target = e.target as HTMLElement;
-      if (isTextInputLikeElement(target)) {
+
+      if (isTextInputLikeElement(target) || isTabLikeElement(target)) {
         return;
       }
 

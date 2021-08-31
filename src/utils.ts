@@ -210,3 +210,6 @@ export const isTextInputLikeElement = (el: HTMLElement) => {
     el.isContentEditable
   );
 };
+
+export const isTabLikeElement = (el: HTMLElement) =>
+  el.getAttribute('role') === 'tab';
