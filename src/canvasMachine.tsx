@@ -14,6 +14,9 @@ export type Pan = {
   dy: number;
 };
 
+const LONG_PAN = 50;
+const SHORT_PAN = 10;
+
 export const canvasModel = createModel(
   {
     zoom: 1,
@@ -43,6 +46,10 @@ export const canvasModel = createModel(
       }),
       'POSITION.RESET': () => ({}),
       PAN: (dx: number, dy: number) => ({ dx, dy }),
+      'PAN.LEFT': (isLongPan?: boolean) => ({ isLongPan }),
+      'PAN.RIGHT': (isLongPan?: boolean) => ({ isLongPan }),
+      'PAN.UP': (isLongPan?: boolean) => ({ isLongPan }),
+      'PAN.DOWN': (isLongPan?: boolean) => ({ isLongPan }),
       /**
        * Occurs when a source changed id
        */
@@ -162,6 +169,46 @@ export const canvasMachine = canvasModel.createMachine({
             dy: ctx.pan.dy - e.dy,
           };
         },
+      }),
+      target: '.throttling',
+      internal: false,
+    },
+    'PAN.LEFT': {
+      actions: canvasModel.assign({
+        pan: (ctx, e) => ({
+          dx: ctx.pan.dx + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          dy: ctx.pan.dy,
+        }),
+      }),
+      target: '.throttling',
+      internal: false,
+    },
+    'PAN.RIGHT': {
+      actions: canvasModel.assign({
+        pan: (ctx, e) => ({
+          dx: ctx.pan.dx - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          dy: ctx.pan.dy,
+        }),
+      }),
+      target: '.throttling',
+      internal: false,
+    },
+    'PAN.UP': {
+      actions: canvasModel.assign({
+        pan: (ctx, e) => ({
+          dx: ctx.pan.dx,
+          dy: ctx.pan.dy + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+        }),
+      }),
+      target: '.throttling',
+      internal: false,
+    },
+    'PAN.DOWN': {
+      actions: canvasModel.assign({
+        pan: (ctx, e) => ({
+          dx: ctx.pan.dx,
+          dy: ctx.pan.dy - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+        }),
       }),
       target: '.throttling',
       internal: false,

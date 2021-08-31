@@ -97,34 +97,6 @@ const dragMachine = dragModel.createMachine({
 const getCursorByState = (state: AnyState) =>
   (Object.values(state.meta)[0] as { cursor: CSSProperties['cursor'] }).cursor;
 
-const getPanDelta = (
-  negative: string[],
-  positive: string[],
-  key: string,
-  isShift = false,
-): number => {
-  const delta = isShift ? 50 : 5;
-
-  if (positive.includes(key)) {
-    return delta;
-  } else if (negative.includes(key)) {
-    return -delta;
-  }
-
-  return 0;
-};
-
-const getDeltaX = getPanDelta.bind(
-  null,
-  ['a', 'A', 'ArrowLeft'],
-  ['d', 'D', 'ArrowRight'],
-);
-const getDeltaY = getPanDelta.bind(
-  null,
-  ['w', 'W', 'ArrowUp'],
-  ['s', 'S', 'ArrowDown'],
-);
-
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();
   const canvasRef = useRef<HTMLDivElement>(null!);
@@ -253,25 +225,45 @@ export const CanvasContainer: React.FC = ({ children }) => {
         return;
       }
 
-      const dx = getDeltaX(e.key, e.shiftKey);
-      const dy = getDeltaY(e.key, e.shiftKey);
-
-      if (e.key === '+') {
-        e.preventDefault();
-        canvasService.send('ZOOM.IN');
-      } else if (e.key === '-') {
-        e.preventDefault();
-        canvasService.send('ZOOM.OUT');
-      } else if (e.key === 'r') {
-        e.preventDefault();
-        canvasService.send('POSITION.RESET');
-      } else if (e.key === 'f') {
-        e.preventDefault();
-        canvasService.send('FIT_TO_VIEW');
-      } else if (dx !== 0 || dy !== 0) {
-        e.preventDefault();
-        canvasService.send(canvasModel.events.PAN(dx, dy));
+      switch (e.key) {
+        case 'w':
+        case 'W':
+        case 'ArrowUp':
+          canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
+          break;
+        case 'a':
+        case 'A':
+        case 'ArrowLeft':
+          canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
+          break;
+        case 's':
+        case 'S':
+        case 'ArrowDown':
+          canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
+          break;
+        case 'd':
+        case 'D':
+        case 'ArrowRight':
+          canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
+          break;
+        case '+':
+          canvasService.send('ZOOM.IN');
+          break;
+        case '-':
+          canvasService.send('ZOOM.OUT');
+          break;
+        case 'r':
+          canvasService.send('POSITION.RESET');
+          break;
+        case 'f':
+          canvasService.send('FIT_TO_VIEW');
+          break;
+        default:
+          // Returning here to retain other keyboard events as intended.
+          return;
       }
+
+      e.preventDefault();
     }
 
     window.addEventListener('keydown', keydownListener);
