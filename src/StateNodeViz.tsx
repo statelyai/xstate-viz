@@ -1,15 +1,12 @@
-import { ChakraProvider, Link } from '@chakra-ui/react';
+import { Link } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { StateNode } from 'xstate';
-import './ActionViz.scss';
+import { ActionViz } from './ActionViz';
 import { DirectedGraphNode } from './directedGraph';
-import { deleteRect, setRect } from './getRect';
-import './InvokeViz.scss';
+import { InvokeViz } from './EventTypeViz';
 import { useSimulation } from './SimulationContext';
-import './StateNodeViz.scss';
-import { getActionLabel } from './utils';
 
 interface BaseStateNodeDef {
   key: string;
@@ -49,7 +46,9 @@ type StateNodeDef =
 const StateNodeKey: React.FC<{ value: string }> = ({ value }) => {
   return (
     <div data-viz="stateNode-key">
-      <div data-viz="stateNode-keyText">{value}</div>
+      <div data-viz="stateNode-keyText" title={value}>
+        {value}
+      </div>
     </div>
   );
 };
@@ -65,7 +64,6 @@ export const StateNodeViz: React.FC<{
     state.context.serviceDataMap[state.context.currentSessionId!];
   const simState = serviceData?.state;
   const simMachine = serviceData?.machine;
-  const ref = useRef<HTMLDivElement>(null);
 
   const previewState = useMemo(() => {
     if (!state.context.previewEvent) {
@@ -79,15 +77,6 @@ export const StateNodeViz: React.FC<{
       return undefined;
     }
   }, [state, simState, simMachine]);
-
-  useEffect(() => {
-    if (ref.current) {
-      setRect(stateNode.id, ref.current);
-    }
-    return () => {
-      deleteRect(stateNode.id);
-    };
-  }, [stateNode]);
 
   if (!simState) {
     return null;
@@ -115,13 +104,14 @@ export const StateNodeViz: React.FC<{
       }}
     >
       <div
-        ref={ref}
         data-viz="stateNode"
         data-viz-type={stateNode.type}
+        data-viz-history={stateNode.history ?? undefined}
         data-viz-parent-type={stateNode.parent?.type}
         data-viz-atomic={
           ['atomic', 'final'].includes(stateNode.type) || undefined
         }
+        data-rect-id={stateNode.id}
         style={{
           // position: 'absolute',
           ...(node.layout && {
@@ -130,12 +120,16 @@ export const StateNodeViz: React.FC<{
           }),
         }}
       >
-        <div data-viz="stateNode-content" data-rect={`${stateNode.id}:content`}>
+        <div
+          data-viz="stateNode-content"
+          data-rect-id={`${stateNode.id}:content`}
+        >
           <div data-viz="stateNode-header">
             {['history', 'final'].includes(stateNode.type) && (
               <div
                 data-viz="stateNode-type"
                 data-viz-type={stateNode.type}
+                data-viz-history={stateNode.history ?? undefined}
               ></div>
             )}
             <StateNodeKey value={stateNode.key} />
@@ -153,49 +147,35 @@ export const StateNodeViz: React.FC<{
           </div>
           {stateNode.definition.invoke.length > 0 && (
             <div data-viz="stateNode-invocations">
-              {stateNode.definition.invoke.map((invocation) => {
-                return (
-                  <div data-viz="invoke" key={invocation.id}>
-                    <div data-viz="invoke-id">{invocation.id}</div>
-                  </div>
-                );
+              {stateNode.definition.invoke.map((invokeDef) => {
+                return <InvokeViz invoke={invokeDef} key={invokeDef.id} />;
               })}
             </div>
           )}
           {stateNode.definition.entry.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="entry">
-              {stateNode.definition.entry.map((action, idx) => {
-                return (
-                  <div data-viz="action" data-viz-action="entry" key={idx}>
-                    <div data-viz="action-type">{getActionLabel(action)}</div>
-                  </div>
-                );
+              {stateNode.definition.entry.map((action, index) => {
+                return <ActionViz key={index} action={action} kind="entry" />;
               })}
             </div>
           )}
           {stateNode.definition.exit.length > 0 && (
             <div data-viz="stateNode-actions" data-viz-actions="exit">
-              {stateNode.definition.exit.map((action, idx) => {
-                return (
-                  <div data-viz="action" data-viz-action="exit" key={idx}>
-                    <div data-viz="action-type">{getActionLabel(action)}</div>
-                  </div>
-                );
+              {stateNode.definition.exit.map((action, index) => {
+                return <ActionViz key={index} action={action} kind="exit" />;
               })}
             </div>
           )}
           {stateNode.meta?.description && (
-            <ChakraProvider>
-              <div data-viz="stateNode-meta">
-                <ReactMarkdown
-                  components={{
-                    a: ({ node, ...props }) => <Link {...props} />,
-                  }}
-                >
-                  {stateNode.meta.description}
-                </ReactMarkdown>
-              </div>
-            </ChakraProvider>
+            <div data-viz="stateNode-meta">
+              <ReactMarkdown
+                components={{
+                  a: ({ node, ...props }) => <Link {...props} />,
+                }}
+              >
+                {stateNode.meta.description}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
         {'states' in stateNode && (
@@ -212,7 +192,6 @@ export const StateNodeViz: React.FC<{
           </div>
         )}
       </div>
-      <div data-viz="transitions"></div>
     </div>
   );
 };

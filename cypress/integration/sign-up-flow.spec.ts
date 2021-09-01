@@ -1,7 +1,7 @@
 describe('Sign up funnel', () => {
   describe('When you are logged out', () => {
     it('Should ask you to sign up when you save', () => {
-      cy.visit('/');
+      cy.visit('/viz');
       cy.findByRole('button', {
         name: /save/i,
       }).click();
@@ -18,7 +18,7 @@ describe('Sign up funnel', () => {
           },
         });
 
-        cy.visit('/?id=source-file-id');
+        cy.visitVizWithNextPageProps({ id: 'source-file-id' });
 
         cy.findByRole('button', {
           name: /fork/i,
@@ -46,7 +46,7 @@ describe('Sign up funnel', () => {
           },
         });
 
-        cy.visit('/?id=source-file-id');
+        cy.visitVizWithNextPageProps({ id: 'source-file-id' });
 
         // Need to wait for the canvas to load
         cy.getCanvas();

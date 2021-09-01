@@ -1,56 +1,76 @@
-import { SettingsIcon } from '@chakra-ui/icons';
-import {
-  Box,
-  ChakraProvider,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  Text,
-} from '@chakra-ui/react';
-import { useInterpret, useSelector } from '@xstate/react';
-import { useEffect, useMemo } from 'react';
-import { ActorsPanel } from './ActorsPanel';
+import { Box, ChakraProvider } from '@chakra-ui/react';
+import { useActor, useInterpret, useSelector } from '@xstate/react';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect } from 'react';
 import { AuthProvider } from './authContext';
-import { authMachine } from './authMachine';
-import './base.scss';
+import { createAuthMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
-import { CanvasPanel } from './CanvasPanel';
-import { toDirectedGraph } from './directedGraph';
-import { EditorPanel } from './EditorPanel';
-import { EventsPanel } from './EventsPanel';
+import { CanvasView } from './CanvasView';
 import './Graph';
-import { Login } from './Login';
+import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
-import { ResizableBox } from './ResizableBox';
-import { SettingsPanel } from './SettingsPanel';
+import { PanelsView } from './PanelsView';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { useSourceActor } from './sourceMachine';
-import { SpinnerWithText } from './SpinnerWithText';
-import { StatePanel } from './StatePanel';
+import { getSourceActor } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
-function App() {
+export interface AppProps {
+  sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+}
+
+function App(props: AppProps) {
   const paletteService = useInterpret(paletteMachine);
+  // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const digraph = useMemo(
-    () => (machine ? toDirectedGraph(machine) : undefined),
-    [machine],
-  );
-  const authService = useInterpret(authMachine);
 
-  const [sourceState, sendToSourceService] = useSourceActor(authService);
+  const router = useRouter();
+
+  const routerReplace = useCallback((url: string) => {
+    /**
+     * Apologies for this line of code. The reason this is here
+     * is that XState + React Fast Refresh causes an error:
+     *
+     * Error: Unable to send event to child 'ctx => ctx.sourceRef'
+     * from service 'auth'.
+     *
+     * router.replace causes this in development, but not in prod
+     *
+     * So, we use window.location.href in development (with the /viz
+     * prefix which Next won't automatically add) and router.replace in prod
+     */
+    if (process.env.NODE_ENV === 'development') {
+      window.location.href = `/viz${url}`;
+    } else {
+      router.replace(`${url}`);
+    }
+  }, []);
+
+  const redirectToNewUrlFromLegacyUrl = useCallback(() => {
+    const id = new URLSearchParams(window.location.search)?.get('id');
+    routerReplace(`/${id}`);
+  }, []);
+
+  const authService = useInterpret(
+    createAuthMachine({
+      data: props.sourceFile,
+      redirectToNewUrlFromLegacyUrl,
+      routerReplace: router.replace,
+    }),
+  );
+
+  const sourceService = useSelector(authService, getSourceActor);
+  const [sourceState, sendToSourceService] = useActor(sourceService!);
 
   useEffect(() => {
     sendToSourceService({
@@ -65,119 +85,34 @@ function App() {
     sourceID,
   });
 
-  return (
-    <EditorThemeProvider>
-      <AuthProvider value={authService}>
-        <PaletteProvider value={paletteService}>
-          <SimulationProvider value={simService}>
-            <Box
-              data-testid="app"
-              data-viz-theme="dark"
-              as="main"
-              display="grid"
-              gridTemplateColumns="1fr auto"
-              gridTemplateRows="1fr auto"
-              gridTemplateAreas="'canvas panels' 'footer footer'"
-              height="100vh"
-            >
-              {digraph ? (
-                <CanvasProvider value={canvasService}>
-                  <CanvasPanel digraph={digraph} />
-                </CanvasProvider>
-              ) : (
-                <Box display="flex" justifyContent="center" alignItems="center">
-                  <Text textAlign="center">
-                    No machines to display yet...
-                    <br />
-                    Create one!
-                  </Text>
-                </Box>
-              )}
-              <ChakraProvider theme={theme}>
-                <ResizableBox gridArea="panels" minHeight={0}>
-                  <Tabs
-                    bg="gray.800"
-                    display="grid"
-                    gridTemplateRows="auto 1fr"
-                    height="100%"
-                  >
-                    <TabList>
-                      <Tab>Code</Tab>
-                      <Tab>State</Tab>
-                      <Tab>Events</Tab>
-                      <Tab>Actors</Tab>
-                      <Tab marginLeft="auto" marginRight="2">
-                        <SettingsIcon />
-                      </Tab>
-                      <Login />
-                    </TabList>
+  if (!isOnClientSide()) return null;
 
-                    <TabPanels minHeight={0}>
-                      <TabPanel padding={0} height="100%">
-                        {sourceState.matches({
-                          with_source: 'loading_content',
-                        }) && (
-                          <SpinnerWithText
-                            text={`Loading source from ${sourceState.context.sourceProvider}`}
-                          />
-                        )}
-                        {!sourceState.matches({
-                          with_source: 'loading_content',
-                        }) && (
-                          <EditorPanel
-                            onChangedCodeValue={(code) => {
-                              sendToSourceService({
-                                type: 'CODE_UPDATED',
-                                code,
-                                sourceID: sourceState.context.sourceID,
-                              });
-                            }}
-                            onCreateNew={() =>
-                              sendToSourceService({
-                                type: 'CREATE_NEW',
-                              })
-                            }
-                            onSave={() => {
-                              sendToSourceService({
-                                type: 'SAVE',
-                              });
-                            }}
-                            onChange={(machines) => {
-                              simService.send({
-                                type: 'MACHINES.REGISTER',
-                                machines,
-                              });
-                            }}
-                            onFork={() => {
-                              sendToSourceService({
-                                type: 'FORK',
-                              });
-                            }}
-                          />
-                        )}
-                      </TabPanel>
-                      <TabPanel height="100%">
-                        <StatePanel />
-                      </TabPanel>
-                      <TabPanel overflow="hidden" height="100%">
-                        <EventsPanel />
-                      </TabPanel>
-                      <TabPanel height="100%">
-                        <ActorsPanel />
-                      </TabPanel>
-                      <TabPanel height="100%">
-                        <SettingsPanel />
-                      </TabPanel>
-                    </TabPanels>
-                  </Tabs>
-                </ResizableBox>
+  return (
+    <ChakraProvider theme={theme}>
+      <EditorThemeProvider>
+        <AuthProvider value={authService}>
+          <PaletteProvider value={paletteService}>
+            <SimulationProvider value={simService}>
+              <Box
+                data-testid="app"
+                data-viz-theme="dark"
+                as="main"
+                display="grid"
+                gridTemplateColumns="1fr auto"
+                gridTemplateAreas="'canvas panels'"
+                height="100vh"
+              >
+                <CanvasProvider value={canvasService}>
+                  <CanvasView />
+                </CanvasProvider>
+                <PanelsView />
                 <MachineNameChooserModal />
-              </ChakraProvider>
-            </Box>
-          </SimulationProvider>
-        </PaletteProvider>
-      </AuthProvider>
-    </EditorThemeProvider>
+              </Box>
+            </SimulationProvider>
+          </PaletteProvider>
+        </AuthProvider>
+      </EditorThemeProvider>
+    </ChakraProvider>
   );
 }
 

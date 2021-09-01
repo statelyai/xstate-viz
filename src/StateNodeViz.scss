@@ -17,7 +17,7 @@
 [data-viz='stateNode'] {
   color: var(--viz-color-fg);
   align-self: start;
-  opacity: calc(0.5 * (1 - var(--viz-node-active)) + var(--viz-node-active));
+  opacity: calc(0.7 * (1 - var(--viz-node-active)) + var(--viz-node-active));
   font-size: 1em;
   border-radius: var(--viz-radius);
   overflow: hidden;
@@ -36,14 +36,6 @@
     border-radius: inherit;
     z-index: 1;
     pointer-events: none;
-  }
-
-  &[data-viz-type='history'] {
-    --viz-stateNode-type: 'H';
-  }
-
-  &[data-viz-type='final'] {
-    --viz-stateNode-type: 'F';
   }
 
   &[data-viz-parent-type='parallel'] {
@@ -93,8 +85,10 @@
 }
 
 [data-viz='stateNode-type'] {
-  height: 2rem;
-  width: 2rem;
+  height: 1.5rem;
+  width: 1.5rem;
+  margin: 0.5rem;
+  margin-right: 0;
   border-radius: var(--viz-radius);
   background: var(--viz-color-transparent);
   display: flex;
@@ -106,6 +100,32 @@
     display: block;
     font-weight: bold;
   }
+
+  &[data-viz-type='final'] {
+    border: 2px solid var(--viz-color-transparent);
+    background: transparent;
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      transform: scale(0.7);
+      background: var(--viz-color-transparent);
+    }
+  }
+
+  &[data-viz-type='history'] {
+    --viz-stateNode-type: 'H';
+
+    &[data-viz-history='deep'] {
+      --viz-stateNode-type: 'H٭';
+      font-size: 80%;
+    }
+  }
 }
 
 [data-viz='stateNode-key'] {
@@ -114,7 +134,7 @@
 }
 
 [data-viz='stateNode-keyText'] {
-  max-width: 15ch;
+  max-width: 20ch;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -37,8 +37,8 @@ export interface ServiceData {
   sessionId: string;
   machine: AnyStateMachine;
   state: AnyState;
-  status?: AnyInterpreter['status'];
-  source?: 'inspector' | 'visualizer';
+  status: AnyInterpreter['status'];
+  source: 'inspector' | 'visualizer' | 'in-app';
 }
 
 export type SimulationMode = 'inspecting' | 'visualizing';

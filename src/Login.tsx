@@ -14,6 +14,7 @@ import {
   ModalHeader,
   ModalOverlay,
   Text,
+  Portal,
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
 import React from 'react';
@@ -26,13 +27,14 @@ export const Login: React.FC = () => {
   const [state] = useActor(authService);
 
   return (
-    <Box zIndex="1" height="42" display="flex">
+    <Box zIndex="1" display="flex">
       {!state.hasTag('authorized') && (
         <Button
           className="btn-login"
           zIndex="1"
           colorScheme="blue"
           rounded="false"
+          height="100%"
           onClick={() => {
             authService.send('CHOOSE_PROVIDER');
           }}
@@ -52,21 +54,25 @@ export const Login: React.FC = () => {
               width="30px"
             />
           </MenuButton>
-          <MenuList>
-            <MenuItem
-              as="a"
-              href={registryLinks.viewUserById(loggedInUserData.id)}
-            >
-              View Machines
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                authService.send('SIGN_OUT');
-              }}
-            >
-              Logout
-            </MenuItem>
-          </MenuList>
+          <Portal>
+            <MenuList>
+              {loggedInUserData && (
+                <MenuItem
+                  as="a"
+                  href={registryLinks.viewUserById(loggedInUserData.id)}
+                >
+                  View Machines
+                </MenuItem>
+              )}
+              <MenuItem
+                onClick={() => {
+                  authService.send('SIGN_OUT');
+                }}
+              >
+                Logout
+              </MenuItem>
+            </MenuList>
+          </Portal>
         </Menu>
       )}
 

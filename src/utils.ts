@@ -4,7 +4,9 @@ import {
   ActionObject,
   ActionTypes,
   AnyEventObject,
+  CancelAction,
   Interpreter,
+  SendAction,
   StateNode,
   TransitionDefinition,
 } from 'xstate';
@@ -12,17 +14,18 @@ import { AnyState, AnyStateMachine } from './types';
 import { print } from 'graphql';
 import { useSelector } from '@xstate/react';
 
-export const isNullEvent = (eventName: string) =>
-  eventName === ActionTypes.NullEvent;
+export function isNullEvent(eventName: string) {
+  return eventName === ActionTypes.NullEvent;
+}
 
-export const isInternalEvent = (eventName: string) => {
+export function isInternalEvent(eventName: string) {
   const allInternalEventsButNullEvent = Object.values(ActionTypes).filter(
     (prefix) => !isNullEvent(prefix),
   );
   return allInternalEventsButNullEvent.some((prefix) =>
     eventName.startsWith(prefix),
   );
-};
+}
 
 export function createInterpreterContext<
   TInterpreter extends Interpreter<any, any, any>,
@@ -106,33 +109,20 @@ export function getEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
   return edges;
 }
 
-const isStringifiedFunction = (str: string): boolean =>
+export const isStringifiedFunction = (str: string): boolean =>
   /^function\s*\(/.test(str) || str.includes('=>');
 
-export const getActionLabel = (action: ActionObject<any, any>) => {
-  if (typeof action.exec === 'function') {
-    return isStringifiedFunction(action.type) ? 'anonymous' : action.type;
-  }
-  if (action.type !== 'xstate.assign') {
-    return action.type;
-  }
-  switch (typeof action.assignment) {
-    case 'object':
-      const keys = Object.keys(action.assignment).join();
-      return `assign ${keys}`;
-    default:
-      return 'assign';
-  }
-};
+const testPlatform = (re: RegExp): boolean =>
+  re.test(window.navigator.platform);
 
-// export function getAllEdges(stateNode: StateNode): Array<Edge<any, any, any>> {
-//   const children = getChildren(stateNode);
+export const isMac = () => testPlatform(/^Mac/);
 
-//   return flatten([
-//     ...getEdges(stateNode),
-//     ...children.map((child) => getAllEdges(child)),
-//   ]);
-// }
+export const isWithPlatformMetaKey = (event: {
+  metaKey: boolean;
+  ctrlKey: boolean;
+}) => (isMac() ? event.metaKey : event.ctrlKey);
+
+export const getPlatformMetaKeyLabel = () => (isMac() ? 'CMD' : 'Ctrl');
 
 export const updateQueryParamsWithoutReload = (
   mutator: (queries: URLSearchParams) => void,
@@ -147,7 +137,7 @@ export const gQuery = <Data, Variables>(
   variables: Variables,
   accessToken?: string,
 ): Promise<{ data?: Data }> =>
-  fetch(process.env.REACT_APP_GRAPHQL_API_URL, {
+  fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -181,3 +171,42 @@ export function willChange(
 export function uniq<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
 }
+
+export function isDelayedTransitionAction(
+  action: ActionObject<any, any>,
+): boolean {
+  switch (action.type) {
+    case ActionTypes.Send: {
+      const sendAction = action as SendAction<
+        unknown,
+        AnyEventObject,
+        AnyEventObject
+      >;
+      return (
+        typeof sendAction.event === 'object' &&
+        sendAction.event.type.startsWith('xstate.after')
+      );
+    }
+    case ActionTypes.Cancel:
+      return `${(action as CancelAction).sendId}`.startsWith('xstate.after');
+    default:
+      return false;
+  }
+}
+
+const isTextAcceptingInputElement = (input: HTMLInputElement) =>
+  input.type === 'email' ||
+  input.type === 'password' ||
+  input.type === 'search' ||
+  input.type === 'tel' ||
+  input.type === 'text' ||
+  input.type === 'url';
+
+export const isTextInputLikeElement = (el: HTMLElement) => {
+  return (
+    (el.tagName === 'INPUT' &&
+      isTextAcceptingInputElement(el as HTMLInputElement)) ||
+    el.tagName === 'TEXTAREA' ||
+    el.isContentEditable
+  );
+};

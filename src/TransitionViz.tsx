@@ -1,35 +1,34 @@
 import { useSelector } from '@xstate/react';
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { AnyStateNodeDefinition, Guard } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
-import { deleteRect, setRect } from './getRect';
 import { Point } from './pathUtils';
-import './TransitionViz.scss';
 import { useSimulation } from './SimulationContext';
-import { getActionLabel, isInternalEvent } from './utils';
 import { AnyStateMachine, StateFrom } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';
+import { ActionViz } from './ActionViz';
+import { DelayViz } from './DelayViz';
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
 };
 
 export type DelayedTransitionMetadata =
-  | { delayType: 'NOT_DELAYED' }
   | { delayType: 'DELAYED_INVALID' }
   | { delayType: 'DELAYED_VALID'; delay: number; delayString: string };
+
 const getDelayFromEventType = (
   eventType: string,
   delayOptions: AnyStateMachine['options']['delays'],
   context: AnyStateNodeDefinition['context'],
   event: any,
-): DelayedTransitionMetadata => {
+): DelayedTransitionMetadata | undefined => {
   try {
     const isDelayedEvent = eventType.startsWith('xstate.after');
 
-    if (!isDelayedEvent) return { delayType: 'NOT_DELAYED' };
+    if (!isDelayedEvent) return undefined;
 
     const DELAYED_EVENT_REGEXT = /^xstate\.after\((.*)\)#.*$/;
     // Validate the delay duration
@@ -63,7 +62,7 @@ const getDelayFromEventType = (
     };
   } catch (err) {
     console.log(err);
-    return { delayType: 'NOT_DELAYED' };
+    return;
   }
 };
 
@@ -96,96 +95,77 @@ export const TransitionViz: React.FC<{
     [definition.eventType, delayOptions, state],
   );
 
-  const ref = useRef<any>(null);
-  useEffect(() => {
-    if (ref.current) {
-      setRect(edge.id, ref.current);
-    }
-    return () => {
-      deleteRect(edge.id);
-    };
-  }, [edge.id]);
-
   if (!state) {
     return null;
   }
 
+  const isDisabled =
+    delay?.delayType === 'DELAYED_INVALID' ||
+    !state.nextEvents.includes(definition.eventType);
+  const isPotential =
+    state.nextEvents.includes(edge.transition.eventType) &&
+    !!state.configuration.find((sn) => sn === edge.source);
+
   return (
-    <div
+    <button
       data-viz="transition"
-      data-viz-potential={
-        (state.nextEvents.includes(edge.transition.eventType) &&
-          !!state.configuration.find((sn) => sn === edge.source)) ||
-        undefined
-      }
+      data-viz-potential={isPotential || undefined}
+      data-viz-disabled={isDisabled || undefined}
+      data-is-delayed={delay ?? undefined}
+      data-rect-id={edge.id}
       style={{
         position: 'absolute',
         ...(position && { left: `${position.x}px`, top: `${position.y}px` }),
+        // @ts-ignore
+        '--delay': delay?.delayType === 'DELAYED_VALID' && delay.delay,
       }}
-      ref={ref}
+      disabled={isDisabled}
+      onMouseEnter={() => {
+        service.send({
+          type: 'EVENT.PREVIEW',
+          eventType: definition.eventType,
+        });
+      }}
+      onMouseLeave={() => {
+        service.send({
+          type: 'PREVIEW.CLEAR',
+        });
+      }}
+      onClick={() => {
+        // TODO: only if no parameters/schema
+        service.send({
+          type: 'SERVICE.SEND',
+          event: toSCXMLEvent(
+            {
+              type: definition.eventType,
+            },
+            { origin: state._sessionid as string },
+          ),
+        });
+      }}
     >
-      <button
-        data-viz="transition-label"
-        disabled={
-          delay?.delayType === 'DELAYED_INVALID' ||
-          !state.nextEvents.includes(definition.eventType)
-        }
-        style={
-          {
-            '--delay': delay?.delayType === 'DELAYED_VALID' && delay.delay,
-          } as React.CSSProperties
-        }
-        data-is-delayed={delay?.delayType !== 'NOT_DELAYED'}
-        onMouseEnter={() => {
-          service.send({
-            type: 'EVENT.PREVIEW',
-            eventType: definition.eventType,
-          });
-        }}
-        onMouseLeave={() => {
-          service.send({
-            type: 'PREVIEW.CLEAR',
-          });
-        }}
-        onClick={() => {
-          // TODO: only if no parameters/schema
-          const { eventType } = definition;
-          if (!isInternalEvent(eventType)) {
-            service.send({
-              type: 'SERVICE.SEND',
-              event: toSCXMLEvent(
-                {
-                  type: definition.eventType,
-                },
-                { origin: state._sessionid as string },
-              ),
-            });
-          }
-        }}
-      >
-        <span
-          data-viz="transition-event"
-          data-is-delayed={delay?.delayType !== 'NOT_DELAYED'}
-        >
+      <div data-viz="transition-label">
+        <span data-viz="transition-event">
           <EventTypeViz eventType={definition.eventType} delay={delay} />
+          {delay && delay.delayType === 'DELAYED_VALID' && (
+            <DelayViz active={isPotential} duration={delay.delay} />
+          )}
         </span>
         {definition.cond && (
           <span data-viz="transition-guard">
             {getGuardType(definition.cond)}
           </span>
         )}
-      </button>
-      {definition.actions.length > 0 && (
-        <div data-viz="transition-actions">
-          {definition.actions.map((action, index) => {
-            return (
-              <div data-viz="action" data-viz-action="do" key={index}>
-                <span data-viz="action-text">{getActionLabel(action)}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+      </div>
+      <div data-viz="transition-content">
+        {definition.actions.length > 0 && (
+          <div data-viz="transition-actions">
+            {definition.actions.map((action, index) => {
+              return <ActionViz key={index} action={action} kind="do" />;
+            })}
+          </div>
+        )}
+      </div>
+    </button>
   );
 };

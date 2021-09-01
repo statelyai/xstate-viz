@@ -22,7 +22,7 @@ describe('Forking', () => {
         },
       });
 
-      cy.visit('/?id=source-file-id');
+      cy.visitVizWithNextPageProps({ id: 'source-file-id' });
 
       cy.getMonacoEditor().type(`{enter}{enter} // New Code Changes`);
 
@@ -34,9 +34,9 @@ describe('Forking', () => {
 
       cy.findByRole('button', { name: /Submit/ }).click();
 
-      cy.url().should('contain', 'source-file-id-2');
-
       cy.contains(/New file saved successfully/i);
+
+      cy.url().should('contain', 'source-file-id-2');
     });
   });
 
@@ -63,7 +63,7 @@ describe('Forking', () => {
         },
       });
 
-      cy.visit('/?id=source-file-id');
+      cy.visitVizWithNextPageProps({ id: 'source-file-id' });
 
       cy.getMonacoEditor().type(`{enter}{enter} // New Code Changes`);
 
@@ -75,9 +75,9 @@ describe('Forking', () => {
 
       cy.findByRole('button', { name: /Submit/ }).click();
 
-      cy.url().should('contain', 'source-file-id-2');
-
       cy.contains(/New file saved successfully/i);
+
+      cy.url().should('contain', 'source-file-id-2');
     });
   });
 });

@@ -1,6 +1,5 @@
 import { useInterpret } from '@xstate/react';
 import { useEffect } from 'react';
-import './base.scss';
 import { canvasMachine } from './canvasMachine';
 import './Graph';
 import { localCache } from './localCache';
@@ -13,7 +12,8 @@ export const useInterpretCanvas = ({
   const canvasService = useInterpret(canvasMachine, {
     actions: {
       persistPositionToLocalStorage: (context) => {
-        localCache.savePosition(sourceID, context);
+        const { zoom, pan } = context;
+        localCache.savePosition(sourceID, { zoom, pan });
       },
     },
   });

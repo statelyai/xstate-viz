@@ -4,6 +4,7 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
+import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
 import { AnyState } from './types';
 
 const dragModel = createModel(
@@ -112,17 +113,13 @@ export const CanvasContainer: React.FC = ({ children }) => {
       services: {
         invokeDetectLock: () => (sendBack) => {
           function keydownListener(e: KeyboardEvent) {
-            // Need this to still be able to use Spacebar in editable elements
-            if (
-              ['TEXTAREA', 'INPUT', 'BUTTON'].includes(
-                document.activeElement?.nodeName!,
-              ) ||
-              document.activeElement?.hasAttribute('contenteditable')
-            ) {
+            const target = e.target as HTMLElement;
+            if (isTextInputLikeElement(target)) {
               return;
             }
 
             if (e.code === 'Space') {
+              e.preventDefault();
               sendBack('LOCK');
             }
           }
@@ -135,6 +132,7 @@ export const CanvasContainer: React.FC = ({ children }) => {
         invokeDetectRelease: () => (sendBack) => {
           function keyupListener(e: KeyboardEvent) {
             if (e.code === 'Space') {
+              e.preventDefault();
               sendBack('RELEASE');
             }
           }
@@ -156,24 +154,73 @@ export const CanvasContainer: React.FC = ({ children }) => {
     }
   }, [state, canvasService]);
 
+  /**
+   * Observes the canvas's size and reports it to the canvasService
+   */
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+
+      if (!entry) return;
+
+      canvasService.send({
+        type: 'CANVAS_RECT_CHANGED',
+        height: entry.contentRect.height,
+        width: entry.contentRect.width,
+        offsetX: entry.contentRect.left,
+        offsetY: entry.contentRect.top,
+      });
+    });
+
+    resizeObserver.observe(canvasRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [canvasService]);
+
+  /**
+   * Tracks Wheel Event on canvas
+   */
+  useEffect(() => {
+    const onCanvasWheel = (e: WheelEvent) => {
+      if (isWithPlatformMetaKey(e)) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+          canvasService.send(
+            canvasModel.events['ZOOM.OUT'](
+              e.clientX,
+              e.clientY,
+              ZoomFactor.slow,
+            ),
+          );
+        } else if (e.deltaY < 0) {
+          canvasService.send(
+            canvasModel.events['ZOOM.IN'](
+              e.clientX,
+              e.clientY,
+              ZoomFactor.slow,
+            ),
+          );
+        }
+      } else if (!e.metaKey && !e.ctrlKey) {
+        canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+      }
+    };
+
+    const canvasEl = canvasRef.current;
+    canvasEl.addEventListener('wheel', onCanvasWheel);
+    return () => {
+      canvasEl.removeEventListener('wheel', onCanvasWheel);
+    };
+  }, [canvasService]);
+
   return (
     <div
-      data-panel="viz"
       ref={canvasRef}
       style={{
         cursor: getCursorByState(state),
         WebkitFontSmoothing: 'auto',
-      }}
-      onWheel={(e) => {
-        if (e.ctrlKey || e.metaKey) {
-          if (e.deltaY > 0) {
-            canvasService.send(canvasModel.events['ZOOM.OUT'](ZoomFactor.slow));
-          } else if (e.deltaY < 0) {
-            canvasService.send(canvasModel.events['ZOOM.IN'](ZoomFactor.slow));
-          }
-        } else {
-          canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
-        }
       }}
       onPointerDown={(e) => {
         if (state.nextEvents.includes('GRAB')) {

@@ -1,6 +1,6 @@
 {
-  "name": "@xstate/viz",
-  "version": "0.1.0",
+  "name": "xstate-viz-app",
+  "version": "0.3.0",
   "private": true,
   "dependencies": {
     "@chakra-ui/icons": "^1.0.13",
@@ -12,9 +12,6 @@
     "@sentry/react": "^6.10.0",
     "@sentry/tracing": "^6.10.0",
     "@supabase/supabase-js": "^1.15.1",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
     "@xstate/graph": "^1.3.0",
     "@xstate/inspect": "^0.4.1",
     "@xstate/react": "^1.5.1",
@@ -25,32 +22,31 @@
     "lz-string": "^1.4.4",
     "memory-web-storage": "^1.0.0",
     "monaco-editor": "^0.25.2",
-    "prettier": "^2.3.2",
+    "next": "^11.1.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-json-view": "^1.21.3",
     "react-markdown": "^6.0.2",
-    "react-scripts": "4.0.3",
+    "realms-shim": "^1.2.2",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
     "xstate": "^4.23.0"
   },
   "scripts": {
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",
-    "start:app": "react-scripts start",
-    "build": "graphql-codegen && react-scripts build",
+    "start:app": "next",
+    "build": "graphql-codegen && next build",
+    "serve": "next start",
     "graphql:codegen": "graphql-codegen --watch",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "postinstall": "mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public",
+    "postinstall": "patch-package && mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public",
     "cypress:open": "cypress open",
-    "cypress:test": "cypress run"
+    "cypress:test": "cypress run",
+    "jest": "jest",
+    "changeset": "changeset"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ]
   },
   "browserslist": {
@@ -66,23 +62,30 @@
     ]
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.4.0",
+    "@changesets/cli": "^2.16.0",
     "@graphql-codegen/cli": "^1.21.5",
     "@graphql-codegen/near-operation-file-preset": "^1.18.1",
     "@graphql-codegen/typed-document-node": "^1.18.6",
     "@graphql-codegen/typescript": "^1.22.1",
     "@graphql-codegen/typescript-operations": "^1.18.0",
     "@testing-library/cypress": "^8.0.0",
+    "@types/jest": "^27.0.1",
     "@types/lz-string": "^1.3.34",
+    "@types/prettier": "^2.3.2",
     "@types/react": "^17.0.6",
     "@types/react-dom": "^17.0.5",
+    "babel-jest": "^27.0.6",
     "concurrently": "^6.2.0",
     "cypress": "^8.0.0",
     "cypress-localstorage-commands": "^1.5.0",
     "cypress-real-events": "^1.5.0",
     "graphql": "^15.5.0",
+    "identity-obj-proxy": "3.0.0",
+    "jest": "^27.0.6",
+    "patch-package": "^6.4.7",
+    "prettier": "^2.3.2",
     "sass": "^1.33.0",
-    "serve": "^12.0.0",
-    "source-map-explorer": "^2.5.2",
     "typescript": "^4.3.5"
   }
 }

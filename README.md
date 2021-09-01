@@ -1,23 +1,29 @@
 # XState Visualizer
 
-The source code for quickly creating visualizations of state machines and statecharts made in XState.
+Visualize [XState](https://xstate.js.org) state machines and statecharts in real-time.
 
-## Available Scripts
+[🔗 Use the Visualizer](https://stately.ai/viz).
 
-### npm start
+## Usage
 
-Runs the app in the development mode.
-Open http://localhost:3000 to view it in the browser.
+[Visit stately.ai/viz to use the Visualizer](https://stately.ai/viz).
 
-The page will reload if you make edits.
-You will also see any lint errors in the console.
+Alternatively, you can install it locally (see installation)
 
-### npm run build
+## Features
 
-Builds a static copy of your site to the `build/` folder.
-Your app is ready to be deployed!
+- Create XState machines in JavaScript or TypeScript right in the visualizer
+- Simulate machines visually by clicking on events
+- Pan and zoom into the visualized machine
+- View current machine state
+- View list of events sent to the simulated machine
+- Access quick features via the command palette: <kbd>cmd</kbd>/<kbd>ctrl</kbd> + <kbd>k</kbd>
+- Inspect machines by setting `url: 'https://stately.ai/viz?inspect'` in `@xstate/inspect`
+- Save your machines in the [Stately Registry](https://stately.ai/registry)
+- _And many more upcoming features_
 
-### npm test
+## Installation
 
-Launches the application test runner.
-Run with the `--watch` flag (`npm test -- --watch`) to run in interactive watch mode.
+1. Clone this GitHub repo
+1. Run `yarn install`
+1. Run `npm start` and visit [localhost:3000](https://localhost:3000)
