@@ -7,7 +7,7 @@ describe('Saving', () => {
       },
       createSourceFile: {
         id: 'source-file-id',
-        name: 'Source File',
+        name: 'My awesome source file',
         owner: {
           id: 'id',
         },
@@ -20,13 +20,15 @@ describe('Saving', () => {
 
     cy.findByRole('button', { name: /Save/ }).click();
 
-    cy.findByLabelText(/Choose a name/i).type('Source File');
+    cy.findByLabelText(/Choose a name/i).type('My awesome source file');
 
     cy.findByRole('button', { name: /Submit/ }).click();
 
     cy.contains(/New file saved successfully/i);
 
     cy.url().should('contain', 'source-file-id');
+
+    cy.contains('My awesome source file');
   });
 
   it('Should allow you to save an existing file', () => {
