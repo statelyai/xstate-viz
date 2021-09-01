@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
 import { featureFlags } from './featureFlags';
-import { Twitter } from './Icons';
+import { TwitterIcon } from './Icons';
 import { registryLinks } from './registryLinks';
 import { shareMachine } from './shareMachine';
 
@@ -76,7 +76,7 @@ export const ShareButton = ({ sourceId }: { sourceId: string }) => {
             }}
           >
             <HStack spacing="3">
-              <Twitter fill="white" />
+              <TwitterIcon fill="white" />
               <Text>Twitter</Text>
             </HStack>
           </MenuItem>
