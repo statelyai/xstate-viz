@@ -141,7 +141,7 @@ class NotFoundError extends Error {
 
 export const makeSourceMachine = (params: {
   auth: SupabaseAuthClient;
-  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+  sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
   router: NextRouter;
 }) => {
   const isLoggedIn = () => {
@@ -154,9 +154,9 @@ export const makeSourceMachine = (params: {
       preserveActionOrder: true,
       context: {
         ...sourceModel.initialContext,
-        sourceRawContent: params.data?.text || null,
-        sourceID: params.data?.id || null,
-        sourceProvider: params.data ? 'registry' : null,
+        sourceRawContent: params.sourceFile?.text || null,
+        sourceID: params.sourceFile?.id || null,
+        sourceProvider: params.sourceFile ? 'registry' : null,
       },
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
@@ -194,7 +194,7 @@ export const makeSourceMachine = (params: {
                     if (!isOnClientSide()) return false;
                     const queries = new URLSearchParams(window.location.search);
 
-                    return Boolean(queries.get('id') && !params.data);
+                    return Boolean(queries.get('id') && !params.sourceFile);
                   },
                   target: 'redirecting',
                 },

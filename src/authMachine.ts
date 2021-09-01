@@ -77,7 +77,7 @@ export type AuthMachine = ReturnType<typeof createAuthMachine>;
 export type AuthMachineState = StateFrom<AuthMachine>;
 
 export const createAuthMachine = (params: {
-  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+  sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
   router: NextRouter;
 }) =>
   createMachine<typeof authModel>(
@@ -121,7 +121,7 @@ export const createAuthMachine = (params: {
                 sourceRef: spawn(
                   makeSourceMachine({
                     auth: client.auth,
-                    data: params.data,
+                    sourceFile: params.sourceFile,
                     router: params.router,
                   }),
                 ),

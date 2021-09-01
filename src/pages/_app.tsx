@@ -35,7 +35,7 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
 
   const authService = useInterpret(
     createAuthMachine({
-      data: pageProps.data,
+      sourceFile: pageProps.sourceFile,
       router,
     }),
   );

@@ -6,17 +6,36 @@ import {
   GetSourceFileSsrQuery,
 } from '../graphql/GetSourceFileSSR.generated';
 import { registryLinks } from '../registryLinks';
+import { AppHeadProps } from '../AppHead';
+
+type SourceFile = NonNullable<GetSourceFileSsrQuery['getSourceFile']>;
 
 interface SourceFileIdPageProps {
-  data: GetSourceFileSsrQuery['getSourceFile'];
-  id: string;
+  headProps: AppHeadProps;
+  sourceFile: SourceFile;
 }
+
+const getHeadProps = (sourceFile: SourceFile): AppHeadProps => {
+  return {
+    title: sourceFile.name
+      ? `${sourceFile.name} | XState Visualizer`
+      : `XState Visualizer`,
+    ogTitle: sourceFile.name || 'XState Visualizer',
+    description:
+      sourceFile.name || `Visualizer for XState state machines and statecharts`,
+    ogImageUrl: registryLinks.sourceFileOgImage(sourceFile.id),
+  };
+};
 
 export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
   async (req) => {
     if (req.query.ssr) {
+      const sourceFile = JSON.parse(req.query.ssr as string).data;
       return {
-        props: JSON.parse(req.query.ssr as string),
+        props: {
+          sourceFile,
+          headProps: getHeadProps(sourceFile),
+        },
       };
     }
 
@@ -35,18 +54,8 @@ export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
 
     return {
       props: {
-        headProps: {
-          title: sourceFile.name
-            ? `${sourceFile.name} | XState Visualizer`
-            : `XState Visualizer`,
-          ogTitle: sourceFile.name || 'XState Visualizer',
-          description:
-            sourceFile.name ||
-            `Visualizer for XState state machines and statecharts`,
-          importElk: true,
-          importPrettier: true,
-          ogImageUrl: registryLinks.sourceFileOgImage(sourceFileId),
-        },
+        sourceFile,
+        headProps: getHeadProps(sourceFile),
       },
     };
   };

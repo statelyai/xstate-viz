@@ -10,8 +10,6 @@ export const getStaticProps: GetStaticProps<{ headProps: AppHeadProps }> =
           title: 'XState Visualizer',
           ogTitle: 'XState Visualizer',
           description: 'Visualizer for XState state machines and statecharts',
-          importElk: true,
-          importPrettier: true,
           // TODO - get an OG image for the home page
           ogImageUrl: null,
         },
