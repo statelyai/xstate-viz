@@ -2,25 +2,182 @@ import React, { CSSProperties, useEffect, useRef } from 'react';
 import { canvasModel, ZoomFactor } from './canvasMachine';
 import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
+import {
+  assign,
+  actions,
+  send,
+  sendParent,
+  ContextFrom,
+  SpecialTargets,
+} from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
 import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
 import { AnyState } from './types';
 
+interface DragSession {
+  pointerId: number;
+  point: Point;
+}
+
+interface PointDelta {
+  x: number;
+  y: number;
+}
+
+const dragSessionModel = createModel(
+  {
+    session: null as DragSession | null,
+    ref: null as React.MutableRefObject<HTMLElement> | null,
+  },
+  {
+    events: {
+      DRAG_SESSION_STARTED: ({ pointerId, point }: DragSession) => ({
+        pointerId,
+        point,
+      }),
+      DRAG_SESSION_STOPPED: () => ({}),
+      DRAG_POINT_MOVED: ({ point }: Pick<DragSession, 'point'>) => ({ point }),
+    },
+  },
+);
+
+const dragSessionTracker = dragSessionModel.createMachine(
+  {
+    preserveActionOrder: true,
+    initial: 'idle',
+    states: {
+      idle: {
+        invoke: {
+          id: 'dragSessionStartedListener',
+          src:
+            ({ ref }) =>
+            (sendBack) => {
+              const node = ref!.current!;
+              const listener = (ev: PointerEvent) => {
+                const isLeftButton = ev.button === 0;
+                if (isLeftButton) {
+                  sendBack(
+                    dragSessionModel.events.DRAG_SESSION_STARTED({
+                      pointerId: ev.pointerId,
+                      point: {
+                        x: ev.pageX,
+                        y: ev.pageY,
+                      },
+                    }),
+                  );
+                }
+              };
+              node.addEventListener('pointerdown', listener);
+              return () => node.removeEventListener('pointerdown', listener);
+            },
+        },
+        on: {
+          DRAG_SESSION_STARTED: {
+            target: 'active',
+            actions: actions.forwardTo(SpecialTargets.Parent),
+          },
+        },
+      },
+      active: {
+        entry: ['capturePointer', 'setSessionData'],
+        exit: ['clearSessionData'],
+        invoke: {
+          id: 'dragSessionListeners',
+          src:
+            ({ ref, session }) =>
+            (sendBack) => {
+              const node = ref!.current!;
+
+              const moveListener = (ev: PointerEvent) => {
+                if (ev.pointerId !== session!.pointerId) {
+                  return;
+                }
+                sendBack(
+                  dragSessionModel.events.DRAG_POINT_MOVED({
+                    point: { x: ev.pageX, y: ev.pageY },
+                  }),
+                );
+              };
+              const stopListener = (ev: PointerEvent) => {
+                if (ev.pointerId !== session!.pointerId) {
+                  return;
+                }
+                sendBack(dragSessionModel.events.DRAG_SESSION_STOPPED());
+              };
+              node.addEventListener('pointermove', moveListener);
+              node.addEventListener('pointerup', stopListener);
+              node.addEventListener('pointercancel', stopListener);
+
+              return () => {
+                node.removeEventListener('pointermove', moveListener);
+                node.removeEventListener('pointerup', stopListener);
+                node.removeEventListener('pointercancel', stopListener);
+              };
+            },
+        },
+        on: {
+          DRAG_POINT_MOVED: {
+            actions: ['sendPointDelta', 'updatePoint'],
+          },
+          DRAG_SESSION_STOPPED: {
+            target: 'idle',
+            actions: actions.forwardTo(SpecialTargets.Parent),
+          },
+        },
+      },
+    },
+  },
+  {
+    actions: {
+      capturePointer: ({ ref }, ev: any) =>
+        ref!.current!.setPointerCapture(ev!.pointerId),
+      setSessionData: assign({
+        session: (ctx, ev: any) => ({
+          pointerId: ev.pointerId,
+          point: ev.point,
+        }),
+      }),
+      clearSessionData: assign({
+        session: null,
+      }) as any,
+      updatePoint: assign({
+        session: (ctx, ev: any) => ({
+          ...ctx.session!,
+          point: ev.point,
+        }),
+      }),
+      sendPointDelta: sendParent(
+        (
+          ctx: ContextFrom<typeof dragSessionModel>,
+          ev: ReturnType<typeof dragSessionModel.events.DRAG_POINT_MOVED>,
+        ) => ({
+          type: 'POINTER_MOVED_BY',
+          delta: {
+            x: ctx.session!.point.x - ev.point.x,
+            y: ctx.session!.point.y - ev.point.y,
+          },
+        }),
+      ) as any,
+    },
+  },
+);
+
 const dragModel = createModel(
   {
-    startPoint: { x: 0, y: 0 },
-    dragPoint: { x: 0, y: 0 },
-    dx: 0,
-    dy: 0,
+    ref: null as React.MutableRefObject<HTMLElement> | null,
   },
   {
     events: {
       LOCK: () => ({}),
       RELEASE: () => ({}),
-      GRAB: (point: Point) => ({ point }),
-      DRAG: (point: Point) => ({ point }),
-      UNGRAB: () => ({}),
+      DRAG_SESSION_STARTED: ({ point }: { point: Point }) => ({
+        point,
+      }),
+      DRAG_SESSION_STOPPED: () => ({}),
+      POINTER_MOVED_BY: ({ delta }: { delta: PointDelta }) => ({
+        delta,
+      }),
     },
   },
 );
@@ -44,50 +201,57 @@ const dragMachine = dragModel.createMachine({
       entry: ['disableTextSelection'],
       exit: ['enableTextSelection'],
       on: { RELEASE: 'released' },
-      invoke: {
-        src: 'invokeDetectRelease',
-      },
+      invoke: [
+        {
+          src: 'invokeDetectRelease',
+        },
+        {
+          src: (ctx) =>
+            dragSessionTracker.withContext({
+              ...dragSessionModel.initialContext,
+              ref: ctx.ref,
+            }),
+        },
+      ],
       states: {
         idle: {
           meta: {
             cursor: 'grab',
           },
           on: {
-            GRAB: {
-              target: 'grabbed',
-              actions: dragModel.assign({
-                startPoint: (_, e) => e.point,
-                dragPoint: (_, e) => e.point,
-              }),
+            DRAG_SESSION_STARTED: 'active',
+          },
+        },
+        active: {
+          initial: 'grabbed',
+          on: {
+            DRAG_SESSION_STOPPED: '.done',
+          },
+          states: {
+            grabbed: {
+              meta: {
+                cursor: 'grabbing',
+              },
+              on: {
+                POINTER_MOVED_BY: {
+                  target: 'dragging',
+                  actions: 'sendPanChange',
+                },
+              },
+            },
+            dragging: {
+              meta: {
+                cursor: 'grabbing',
+              },
+              on: {
+                POINTER_MOVED_BY: { actions: 'sendPanChange' },
+              },
+            },
+            done: {
+              type: 'final',
             },
           },
-        },
-        grabbed: {
-          meta: {
-            cursor: 'grabbing',
-          },
-          on: {
-            DRAG: 'dragging',
-            UNGRAB: 'idle',
-          },
-        },
-        dragging: {
-          tags: ['dragging'],
-          meta: {
-            cursor: 'grabbing',
-          },
-          entry: [
-            dragModel.assign({
-              dragPoint: (_, e: ReturnType<typeof dragModel.events.DRAG>) =>
-                e.point,
-              dx: (ctx, e) => ctx.dragPoint.x - e.point.x,
-              dy: (ctx, e) => ctx.dragPoint.y - e.point.y,
-            }) as any,
-          ],
-          on: {
-            DRAG: { target: 'dragging', internal: false },
-            UNGRAB: 'idle',
-          },
+          onDone: 'idle',
         },
       },
     },
@@ -100,59 +264,64 @@ const getCursorByState = (state: AnyState) =>
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();
   const canvasRef = useRef<HTMLDivElement>(null!);
-  const [state, send] = useMachine(
-    dragMachine.withConfig({
-      actions: {
-        disableTextSelection: () => {
-          canvasRef.current.style.userSelect = 'none';
+  const [state] = useMachine(
+    dragMachine.withConfig(
+      {
+        actions: {
+          disableTextSelection: () => {
+            canvasRef.current.style.userSelect = 'none';
+          },
+          enableTextSelection: () => {
+            canvasRef.current.style.userSelect = 'unset';
+          },
+          sendPanChange: send(
+            (ctx, ev: any) => {
+              return canvasModel.events.PAN(ev.delta.x, ev.delta.y);
+            },
+            { to: canvasService as any },
+          ),
         },
-        enableTextSelection: () => {
-          canvasRef.current.style.userSelect = 'unset';
+        services: {
+          invokeDetectLock: () => (sendBack) => {
+            function keydownListener(e: KeyboardEvent) {
+              const target = e.target as HTMLElement;
+
+              if (isTextInputLikeElement(target)) {
+                return;
+              }
+
+              if (e.code === 'Space') {
+                e.preventDefault();
+                sendBack('LOCK');
+              }
+            }
+
+            window.addEventListener('keydown', keydownListener);
+            return () => {
+              window.removeEventListener('keydown', keydownListener);
+            };
+          },
+          invokeDetectRelease: () => (sendBack) => {
+            function keyupListener(e: KeyboardEvent) {
+              if (e.code === 'Space') {
+                e.preventDefault();
+                sendBack('RELEASE');
+              }
+            }
+
+            window.addEventListener('keyup', keyupListener);
+            return () => {
+              window.removeEventListener('keyup', keyupListener);
+            };
+          },
         },
       },
-      services: {
-        invokeDetectLock: () => (sendBack) => {
-          function keydownListener(e: KeyboardEvent) {
-            const target = e.target as HTMLElement;
-            if (isTextInputLikeElement(target)) {
-              return;
-            }
-
-            if (e.code === 'Space') {
-              e.preventDefault();
-              sendBack('LOCK');
-            }
-          }
-
-          window.addEventListener('keydown', keydownListener);
-          return () => {
-            window.removeEventListener('keydown', keydownListener);
-          };
-        },
-        invokeDetectRelease: () => (sendBack) => {
-          function keyupListener(e: KeyboardEvent) {
-            if (e.code === 'Space') {
-              e.preventDefault();
-              sendBack('RELEASE');
-            }
-          }
-
-          window.addEventListener('keyup', keyupListener);
-          return () => {
-            window.removeEventListener('keyup', keyupListener);
-          };
-        },
+      {
+        ...dragModel.initialContext,
+        ref: canvasRef,
       },
-    }),
+    ),
   );
-
-  useEffect(() => {
-    if (state.hasTag('dragging')) {
-      canvasService.send(
-        canvasModel.events.PAN(state.context.dx, state.context.dy),
-      );
-    }
-  }, [state, canvasService]);
 
   /**
    * Observes the canvas's size and reports it to the canvasService
@@ -221,22 +390,6 @@ export const CanvasContainer: React.FC = ({ children }) => {
       style={{
         cursor: getCursorByState(state),
         WebkitFontSmoothing: 'auto',
-      }}
-      onPointerDown={(e) => {
-        if (state.nextEvents.includes('GRAB')) {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          send({ type: 'GRAB', point: { x: e.pageX, y: e.pageY } });
-        }
-      }}
-      onPointerMove={(e) => {
-        if (state.nextEvents.includes('DRAG')) {
-          send({ type: 'DRAG', point: { x: e.pageX, y: e.pageY } });
-        }
-      }}
-      onPointerUp={() => {
-        if (state.nextEvents.includes('UNGRAB')) {
-          send('UNGRAB');
-        }
       }}
     >
       {children}
