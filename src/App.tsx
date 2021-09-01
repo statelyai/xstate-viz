@@ -1,12 +1,15 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
+import { useRouter } from 'next/router';
 import { AuthProvider } from './authContext';
-import { authMachine } from './authMachine';
+import { createAuthMachine } from './authMachine';
 import { CanvasProvider } from './CanvasContext';
 import { EmbedProvider } from './embedContext';
 import { CanvasView } from './CanvasView';
 import './Graph';
+import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
@@ -32,7 +35,12 @@ const getGridArea = (embed: EmbedContext) => {
   return 'canvas panels';
 };
 
-const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
+export interface AppProps {
+  sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+  embed: EmbedContext;
+}
+
+function App(props: AppProps) {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -41,7 +49,41 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const authService = useInterpret(authMachine);
+
+  const router = useRouter();
+
+  const routerReplace = useCallback((url: string) => {
+    /**
+     * Apologies for this line of code. The reason this is here
+     * is that XState + React Fast Refresh causes an error:
+     *
+     * Error: Unable to send event to child 'ctx => ctx.sourceRef'
+     * from service 'auth'.
+     *
+     * router.replace causes this in development, but not in prod
+     *
+     * So, we use window.location.href in development (with the /viz
+     * prefix which Next won't automatically add) and router.replace in prod
+     */
+    if (process.env.NODE_ENV === 'development') {
+      window.location.href = `/viz${url}`;
+    } else {
+      router.replace(`${url}`);
+    }
+  }, []);
+
+  const redirectToNewUrlFromLegacyUrl = useCallback(() => {
+    const id = new URLSearchParams(window.location.search)?.get('id');
+    routerReplace(`/${id}`);
+  }, []);
+
+  const authService = useInterpret(
+    createAuthMachine({
+      data: props.sourceFile,
+      redirectToNewUrlFromLegacyUrl,
+      routerReplace: router.replace,
+    }),
+  );
 
   const sourceService = useSelector(authService, getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
@@ -57,11 +99,13 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
 
   const canvasService = useInterpretCanvas({
     sourceID,
-    embed,
+    embed: props.embed,
   });
 
+  if (!isOnClientSide()) return null;
+
   return (
-    <EmbedProvider value={embed}>
+    <EmbedProvider value={props.embed}>
       <ChakraProvider theme={theme}>
         <EditorThemeProvider>
           <AuthProvider value={authService}>
@@ -73,11 +117,13 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
                   as="main"
                   display="grid"
                   gridTemplateColumns="1fr auto"
-                  gridTemplateAreas={`"${getGridArea(embed)}"`}
+                  gridTemplateAreas={`"${getGridArea(props.embed)}"`}
                   height="100vh"
                 >
                   <Visibility
-                    isHidden={embed.isEmbedded && embed.mode === 'panels'}
+                    isHidden={
+                      props.embed.isEmbedded && props.embed.mode === 'panels'
+                    }
                   >
                     <CanvasProvider value={canvasService}>
                       <CanvasView />
@@ -93,6 +139,6 @@ const App: React.FC<{ embed: EmbedContext }> = ({ embed }) => {
       </ChakraProvider>
     </EmbedProvider>
   );
-};
+}
 
 export default App;

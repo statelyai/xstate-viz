@@ -10,11 +10,11 @@ import {
 } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
-import { AnyInterpreter, createMachine, Interpreter, sendParent } from 'xstate';
+import { createMachine } from 'xstate';
 import { useAuth } from './authContext';
 import { Bolt, Lightbulb } from './Icons';
 import { Overlay } from './Overlay';
-import { getSourceActor, sourceModel, useSourceActor } from './sourceMachine';
+import { getSourceActor } from './sourceMachine';
 
 const Title: React.FC = ({ children }) => (
   <Text fontSize="3xl" fontWeight="semibold" letterSpacing="tighter">

@@ -1,5 +1,6 @@
 const registryPublicUrl =
-  process.env.REGISTRY_PUBLIC_URL || `https://dev.stately.ai/registry`;
+  process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL ||
+  `https://dev.stately.ai/registry`;
 const landingPagePublicUrl = `https://landing-page-prod.stately.ai`;
 
 /** @type import('next').NextConfig */

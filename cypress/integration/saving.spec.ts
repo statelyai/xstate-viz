@@ -24,9 +24,9 @@ describe('Saving', () => {
 
     cy.findByRole('button', { name: /Submit/ }).click();
 
-    cy.url().should('contain', 'source-file-id');
-
     cy.contains(/New file saved successfully/i);
+
+    cy.url().should('contain', 'source-file-id');
   });
 
   it('Should allow you to save an existing file', () => {
@@ -52,7 +52,7 @@ describe('Saving', () => {
       },
     });
 
-    cy.visit('/viz?id=source-file-id');
+    cy.visitVizWithNextPageProps({ id: 'source-file-id' });
 
     cy.getMonacoEditor().type(`{enter}{enter} // New Code Changes`);
 

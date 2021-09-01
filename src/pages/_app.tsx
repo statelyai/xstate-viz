@@ -1,15 +1,16 @@
-import '../monacoPatch';
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 import type { AppProps } from 'next/app';
-import '../base.scss';
 import '../TransitionViz.scss';
 import '../ActionViz.scss';
-import '../InvokeViz.scss';
-import '../StateNodeViz.scss';
-import '../EventTypeViz.scss';
-import '../EdgeViz.scss';
+import '../base.scss';
 import '../DelayViz.scss';
+import '../EdgeViz.scss';
+import '../EventTypeViz.scss';
+import '../InvokeViz.scss';
+import '../monacoPatch';
+import '../StateNodeViz.scss';
+
 import Head from 'next/head';
 // import { isOnClientSide } from '../isOnClientSide';
 

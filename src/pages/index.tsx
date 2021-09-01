@@ -1,6 +1,7 @@
 import { GetServerSideProps } from 'next';
 import App from '../App';
 import { parseEmbedQuery } from '../utils';
+import { AppHead } from '../AppHead';
 
 /**
  * This is a shim for now. Our app currently doesn't use
@@ -12,13 +13,25 @@ import { parseEmbedQuery } from '../utils';
 const HomePage = ({ query }: { query: any }) => {
   const embed = parseEmbedQuery(query);
   return (
-    <App
-      embed={{
-        ...embed,
-        isEmbedded: false,
-        embedUrl: null,
-      }}
-    />
+    <>
+      <AppHead
+        title="XState Visualizer"
+        ogTitle="XState Visualizer"
+        description="Visualizer for XState state machines and statecharts"
+        importElk
+        importPrettier
+        // TODO - get an OG image for the home page
+        ogImageUrl={undefined}
+      />
+      <App
+        sourceFile={undefined}
+        embed={{
+          ...embed,
+          isEmbedded: false,
+          embedUrl: null,
+        }}
+      />
+    </>
   );
 };
 

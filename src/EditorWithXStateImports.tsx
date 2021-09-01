@@ -1,4 +1,3 @@
-import { ClassNames } from '@emotion/react';
 import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useEffect, useRef } from 'react';
@@ -107,97 +106,86 @@ export const EditorWithXStateImports = (
   }, [editorTheme.theme]);
 
   return (
-    <ClassNames>
-      {({ css }) => (
-        <Editor
-          wrapperClassName={`${css`
-            min-height: 0;
-            min-width: 0;
-          `} js-monaco-editor`}
-          defaultPath="main.ts"
-          defaultLanguage="typescript"
-          value={props.value}
-          options={{
-            minimap: { enabled: false },
-            tabSize: 2,
-            glyphMargin: true,
-            readOnly: isEmbedded && readOnly,
-          }}
-          loading={<SpinnerWithText text="Preparing the editor" />}
-          onChange={(text) => {
-            if (typeof text === 'string') {
-              props.onChange?.(text);
-            }
-          }}
-          theme="vs-dark"
-          onMount={async (editor, monaco) => {
-            editorRef.current = monaco.editor;
-            const theme = editorTheme.theme;
-            monaco.editor.defineTheme(theme, themes[theme]);
-            monaco.editor.setTheme(theme);
+    <Editor
+      defaultPath="main.ts"
+      defaultLanguage="typescript"
+      value={props.value}
+      options={{
+        minimap: { enabled: false },
+        tabSize: 2,
+        glyphMargin: true,
+        readOnly: isEmbedded && readOnly,
+      }}
+      loading={<SpinnerWithText text="Preparing the editor" />}
+      onChange={(text) => {
+        if (typeof text === 'string') {
+          props.onChange?.(text);
+        }
+      }}
+      theme="vs-dark"
+      onMount={async (editor, monaco) => {
+        editorRef.current = monaco.editor;
+        const theme = editorTheme.theme;
+        monaco.editor.defineTheme(theme, themes[theme]);
+        monaco.editor.setTheme(theme);
 
-            monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
-              customWorkerPath: `${new URL(
-                window.location.origin,
-              )}viz/ts-worker.js`,
-            });
+        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+          customWorkerPath: `${new URL(
+            window.location.origin,
+          )}viz/ts-worker.js`,
+        });
 
-            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-              ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
-              module: monaco.languages.typescript.ModuleKind.CommonJS,
-              moduleResolution:
-                monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-              strict: true,
-            });
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
+          module: monaco.languages.typescript.ModuleKind.CommonJS,
+          moduleResolution:
+            monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+          strict: true,
+        });
 
-            // Prettier to format
-            // Ctrl/CMD + Enter to visualize
-            editor.addAction({
-              id: 'format',
-              label: 'Format',
-              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-              run: (editor) => {
-                editor.getAction('editor.action.formatDocument').run();
-              },
-            });
+        // Prettier to format
+        // Ctrl/CMD + Enter to visualize
+        editor.addAction({
+          id: 'format',
+          label: 'Format',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+          run: (editor) => {
+            editor.getAction('editor.action.formatDocument').run();
+          },
+        });
 
-            monaco.languages.registerDocumentFormattingEditProvider(
-              'typescript',
-              {
-                provideDocumentFormattingEdits: (model) => {
-                  try {
-                    return [
-                      {
-                        text: prettify(editor.getValue()),
-                        range: model.getFullModelRange(),
-                      },
-                    ];
-                  } catch (err) {
-                    console.error(err);
-                  } finally {
-                    props.onFormat?.();
-                  }
+        monaco.languages.registerDocumentFormattingEditProvider('typescript', {
+          provideDocumentFormattingEdits: (model) => {
+            try {
+              return [
+                {
+                  text: prettify(editor.getValue()),
+                  range: model.getFullModelRange(),
                 },
-              },
-            );
+              ];
+            } catch (err) {
+              console.error(err);
+            } finally {
+              props.onFormat?.();
+            }
+          },
+        });
 
-            // Ctrl/CMD + S to save/update to registry
-            editor.addAction({
-              id: 'save',
-              label: 'Save',
-              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-              run: () => {
-                props.onSave?.();
-                editor.getAction('editor.action.formatDocument').run();
-              },
-            });
+        // Ctrl/CMD + S to save/update to registry
+        editor.addAction({
+          id: 'save',
+          label: 'Save',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+          run: () => {
+            props.onSave?.();
+            editor.getAction('editor.action.formatDocument').run();
+          },
+        });
 
-            const wrappedEditor = withTypeAcquisition(editor, monaco);
-            props.onMount?.(wrappedEditor, monaco);
-          }}
-        />
-      )}
-    </ClassNames>
+        const wrappedEditor = withTypeAcquisition(editor, monaco);
+        props.onMount?.(wrappedEditor, monaco);
+      }}
+    />
   );
 };
 

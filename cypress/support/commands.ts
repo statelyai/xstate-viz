@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 
+import { GetSourceFileSsrQuery } from '../../src/graphql/GetSourceFileSSR.generated';
 import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
@@ -73,6 +74,20 @@ const visitInspector = () => {
   });
 };
 
+/**
+ * Allows you to visit the /viz/:id page and mock
+ * its SSR return
+ */
+const visitVizWithNextPageProps = (
+  data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
+) => {
+  cy.visit(
+    `/viz/${data.id}?ssr=${encodeURIComponent(
+      JSON.stringify({ data, id: data.id }),
+    )}`,
+  );
+};
+
 const waitOnInspector = (inspector: Inspector) =>
   new Promise<void>((resolve) => {
     let resolved = false;
@@ -139,10 +154,6 @@ const getMonacoEditor = () => {
   return cy.get('.monaco-editor').first();
 };
 
-const getPanelsView = () => {
-  return cy.findByTestId('panels-view');
-};
-
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -178,7 +189,7 @@ declare global {
 
       inspectMachine: typeof inspectMachine;
 
-      getPanelsView: typeof getPanelsView;
+      visitVizWithNextPageProps: typeof visitVizWithNextPageProps;
     }
   }
 }
@@ -189,4 +200,4 @@ Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
-Cypress.Commands.add('getPanelsView', getPanelsView);
+Cypress.Commands.add('visitVizWithNextPageProps', visitVizWithNextPageProps);
