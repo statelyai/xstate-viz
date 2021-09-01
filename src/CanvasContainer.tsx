@@ -204,12 +204,19 @@ export const CanvasContainer: React.FC = ({ children }) => {
           );
         }
       } else if (!e.metaKey && !e.ctrlKey) {
-        canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+        const isTrackPad = e.deltaMode === WheelEvent.DOM_DELTA_PIXEL;
+
+        if (isTrackPad || !e.shiftKey) {
+          canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
+        } else {
+          canvasService.send(canvasModel.events.PAN(e.deltaY, 0));
+        }
       }
     };
 
     const canvasEl = canvasRef.current;
     canvasEl.addEventListener('wheel', onCanvasWheel);
+
     return () => {
       canvasEl.removeEventListener('wheel', onCanvasWheel);
     };
