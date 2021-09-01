@@ -13,7 +13,7 @@ const HomePage = () => {
         // TODO - get an OG image for the home page
         ogImageUrl={undefined}
       />
-      <App sourceFile={undefined} />
+      <App />
     </>
   );
 };
