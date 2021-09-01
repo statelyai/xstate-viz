@@ -30,6 +30,7 @@ import {
 import { storage } from './localCache';
 import { gQuery } from './utils';
 import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { NextRouter } from 'next/router';
 
 const authModel = createModel(
   {
@@ -77,8 +78,7 @@ export type AuthMachineState = StateFrom<AuthMachine>;
 
 export const createAuthMachine = (params: {
   data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
-  redirectToNewUrlFromLegacyUrl: () => void;
-  routerReplace: (url: string) => void;
+  router: NextRouter;
 }) =>
   createMachine<typeof authModel>(
     {
@@ -122,9 +122,7 @@ export const createAuthMachine = (params: {
                   makeSourceMachine({
                     auth: client.auth,
                     data: params.data,
-                    redirectToNewUrlFromLegacyUrl:
-                      params.redirectToNewUrlFromLegacyUrl,
-                    routerReplace: params.routerReplace,
+                    router: params.router,
                   }),
                 ),
               };

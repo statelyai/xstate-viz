@@ -5,36 +5,12 @@ import {
   GetSourceFileSsrDocument,
   GetSourceFileSsrQuery,
 } from '../graphql/GetSourceFileSSR.generated';
-import { AppHead } from '../AppHead';
 import { registryLinks } from '../registryLinks';
 
 interface SourceFileIdPageProps {
   data: GetSourceFileSsrQuery['getSourceFile'];
   id: string;
 }
-
-const SourceFileIdPage = (props: SourceFileIdPageProps) => {
-  return (
-    <>
-      <AppHead
-        title={
-          props.data?.name
-            ? `${props.data?.name} | XState Visualizer`
-            : `XState Visualizer`
-        }
-        ogTitle={props.data?.name || 'XState Visualizer'}
-        description={
-          props.data?.name ||
-          `Visualizer for XState state machines and statecharts`
-        }
-        importElk
-        importPrettier
-        ogImageUrl={registryLinks.sourceFileOgImage(props.id)}
-      />
-      <App />
-    </>
-  );
-};
 
 export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
   async (req) => {
@@ -49,7 +25,9 @@ export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
       id: sourceFileId,
     });
 
-    if (!result.data?.getSourceFile) {
+    const sourceFile = result.data?.getSourceFile;
+
+    if (!sourceFile) {
       return {
         notFound: true,
       };
@@ -57,10 +35,23 @@ export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
 
     return {
       props: {
-        id: sourceFileId,
-        data: result.data?.getSourceFile,
+        headProps: {
+          title: sourceFile.name
+            ? `${sourceFile.name} | XState Visualizer`
+            : `XState Visualizer`,
+          ogTitle: sourceFile.name || 'XState Visualizer',
+          description:
+            sourceFile.name ||
+            `Visualizer for XState state machines and statecharts`,
+          importElk: true,
+          importPrettier: true,
+          ogImageUrl: registryLinks.sourceFileOgImage(sourceFileId),
+        },
       },
     };
   };
 
-export default SourceFileIdPage;
+// the exported component should match the exported component from the [sourceFileId].tsx
+// both routes render in the same way on the client-side and we want to avoid remounting the whole app
+// which happens if those 2 routes export different components (because root-like component gets changed)
+export default App;

@@ -1,21 +1,25 @@
+import { GetStaticProps } from 'next';
 import App from '../App';
-import { AppHead } from '../AppHead';
+import { AppHeadProps } from '../AppHead';
 
-const HomePage = () => {
-  return (
-    <>
-      <AppHead
-        title="XState Visualizer"
-        ogTitle="XState Visualizer"
-        description="Visualizer for XState state machines and statecharts"
-        importElk
-        importPrettier
-        // TODO - get an OG image for the home page
-        ogImageUrl={undefined}
-      />
-      <App />
-    </>
-  );
-};
+export const getStaticProps: GetStaticProps<{ headProps: AppHeadProps }> =
+  async () => {
+    return {
+      props: {
+        headProps: {
+          title: 'XState Visualizer',
+          ogTitle: 'XState Visualizer',
+          description: 'Visualizer for XState state machines and statecharts',
+          importElk: true,
+          importPrettier: true,
+          // TODO - get an OG image for the home page
+          ogImageUrl: null,
+        },
+      },
+    };
+  };
 
-export default HomePage;
+// the exported component should match the exported component from the index.tsx
+// both routes render in the same way on the client-side and we want to avoid remounting the whole app
+// which happens if those 2 routes export different components (because root-like component gets changed)
+export default App;

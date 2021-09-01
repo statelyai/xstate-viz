@@ -1,5 +1,6 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
 import { useActor, useSelector } from '@xstate/react';
+import { NextRouter } from 'next/router';
 import { AuthMachine } from './authMachine';
 import {
   ActorRefFrom,
@@ -18,10 +19,7 @@ import {
 import { createModel } from 'xstate/lib/model';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
-import {
-  CreateSourceFileDocument,
-  CreateSourceFileMutation,
-} from './graphql/CreateSourceFile.generated';
+import { CreateSourceFileDocument } from './graphql/CreateSourceFile.generated';
 import {
   GetSourceFileDocument,
   GetSourceFileQuery,
@@ -144,8 +142,7 @@ class NotFoundError extends Error {
 export const makeSourceMachine = (params: {
   auth: SupabaseAuthClient;
   data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
-  redirectToNewUrlFromLegacyUrl: () => void;
-  routerReplace: (url: string) => void;
+  router: NextRouter;
 }) => {
   const isLoggedIn = () => {
     return Boolean(params.auth.session());
@@ -570,7 +567,10 @@ export const makeSourceMachine = (params: {
         },
       },
       actions: {
-        redirectToNewUrlFromLegacyUrl: params.redirectToNewUrlFromLegacyUrl,
+        redirectToNewUrlFromLegacyUrl: () => {
+          const id = new URLSearchParams(window.location.search).get('id');
+          params.router.replace(`/${id}`, undefined, { shallow: true });
+        },
         assignExampleMachineToContext: assign((context, event) => {
           return {
             sourceRawContent: exampleMachineCode,
@@ -610,7 +610,9 @@ export const makeSourceMachine = (params: {
           };
         }),
         updateURLWithMachineID: (ctx) => {
-          params.routerReplace(`/${ctx.sourceID}`);
+          params.router.replace(`/${ctx.sourceID}`, undefined, {
+            shallow: true,
+          });
         },
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(

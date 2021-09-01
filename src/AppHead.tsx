@@ -1,7 +1,8 @@
+import * as React from 'react';
 import Head from 'next/head';
 import { featureFlags } from './featureFlags';
 
-interface AppHeadProps {
+export interface AppHeadProps {
   /**
    * @example
    * XState Visualizer | My Great Machine
@@ -19,10 +20,10 @@ interface AppHeadProps {
   importElk: boolean;
   description: string;
   importPrettier: boolean;
-  ogImageUrl: string | undefined;
+  ogImageUrl: string | null;
 }
 
-export const AppHead = (props: AppHeadProps) => {
+export const AppHead = React.memo(function AppHead(props: AppHeadProps) {
   return (
     <Head>
       <link rel="apple-touch-icon" href="/viz/favicon@256.png" />
@@ -55,4 +56,4 @@ export const AppHead = (props: AppHeadProps) => {
       />
     </Head>
   );
-};
+});
