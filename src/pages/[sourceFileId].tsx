@@ -31,7 +31,7 @@ const SourceFileIdPage = (props: SourceFileIdPageProps) => {
         importPrettier
         ogImageUrl={registryLinks.sourceFileOgImage(props.id)}
       />
-      <App sourceFile={props.data} />
+      <App />
     </>
   );
 };
