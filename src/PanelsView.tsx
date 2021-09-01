@@ -1,16 +1,6 @@
 import { SettingsIcon } from '@chakra-ui/icons';
-import {
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
-  Box,
-  Link,
-  Text,
-} from '@chakra-ui/react';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@chakra-ui/react';
 import { ActorsPanel } from './ActorsPanel';
-import { useAuth } from './authContext';
 import { EditorPanel } from './EditorPanel';
 import { EventsPanel } from './EventsPanel';
 import { Login } from './Login';
