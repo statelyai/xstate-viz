@@ -52,7 +52,6 @@ export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
     if (!result.data?.getSourceFile) {
       return {
         notFound: true,
-        props: {} as any,
       };
     }
 
