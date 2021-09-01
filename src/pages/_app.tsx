@@ -55,7 +55,7 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
 
   const authService = useInterpret(
     createAuthMachine({
-      data: pageProps.sourceFile,
+      data: pageProps.data,
       routerReplace,
       redirectToNewUrlFromLegacyUrl: () => {
         const id = new URLSearchParams(window.location.search)?.get('id');
