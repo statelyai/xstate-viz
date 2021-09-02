@@ -6,6 +6,27 @@ import realmsShim from 'realms-shim';
 
 const realm = realmsShim.makeRootRealm();
 
+const wrapCallbackToPreventThis =
+  (callback: (...args: any[]) => void) =>
+  (...args: any[]) => {
+    return callback(...args);
+  };
+
+const windowShim = {
+  setInterval: (callback: (...args: any[]) => void, ...args: any[]) => {
+    return setInterval(wrapCallbackToPreventThis(callback), ...args);
+  },
+  setTimeout: (callback: (...args: any[]) => void, ...args: any[]) => {
+    return setTimeout(wrapCallbackToPreventThis(callback), ...args);
+  },
+  clearTimeout: (...args: any[]) => {
+    return clearTimeout(...args);
+  },
+  clearInterval: (...args: any[]) => {
+    return clearInterval(...args);
+  },
+};
+
 export function parseMachines(sourceJs: string): Array<StateNode> {
   const machines: Array<StateNode> = [];
 
@@ -54,6 +75,7 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
       log: console.log,
       warn: console.warn,
     },
+    ...windowShim,
   });
 
   return machines;
