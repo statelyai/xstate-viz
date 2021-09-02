@@ -10,9 +10,10 @@ import {
   Kbd,
   VStack,
   Select,
+  Checkbox,
 } from '@chakra-ui/react';
 import { ThemeName, themes } from './editor-themes';
-import { useEditorTheme } from './themeContext';
+import { useEditorSettings } from './editorSettingsContext';
 import { useSimulationMode } from './SimulationContext';
 import { getPlatformMetaKeyLabel } from './utils';
 
@@ -60,21 +61,34 @@ const KeyboardShortcuts = () => (
 );
 
 export const SettingsPanel: React.FC = () => {
-  const editorTheme = useEditorTheme();
+  const editorSettings = useEditorSettings();
   const simulationMode = useSimulationMode();
   return (
     <VStack paddingY="5" spacing="7" alignItems="stretch">
       {simulationMode === 'visualizing' && <KeyboardShortcuts />}
+      {simulationMode === 'visualizing' && (
+        <Box>
+          <Heading as="h2" fontSize="l" marginBottom="5">
+            Enable Typescript
+          </Heading>
+          <Checkbox
+            checked={editorSettings.isTypescriptEnabled}
+            onChange={(e) => {
+              editorSettings.setIsTypescriptEnabled(e.target.checked);
+            }}
+          ></Checkbox>
+        </Box>
+      )}
       <Box>
         <Heading as="h2" fontSize="l" marginBottom="5">
           Editor theme
         </Heading>
         <Select
           maxWidth="fit-content"
-          defaultValue={editorTheme.theme}
+          defaultValue={editorSettings.theme}
           onChange={(e) => {
             const theme = e.target.value as ThemeName;
-            editorTheme.switchTheme(theme);
+            editorSettings.switchTheme(theme);
           }}
         >
           {Object.keys(themes).map((themeName) => (
