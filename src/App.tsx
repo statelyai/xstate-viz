@@ -1,15 +1,12 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
-import { useRouter } from 'next/router';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { AppProvider, selectAppMode } from './AppContext';
 import { appMachine } from './appMachine';
-import { AuthProvider } from './authContext';
-import { createAuthMachine } from './authMachine';
+import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasView } from './CanvasView';
 import './Graph';
-import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
 import { HeaderView } from './HeaderView';
 import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
@@ -23,11 +20,7 @@ import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
-export interface AppProps {
-  sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
-}
-
-function App(props: AppProps) {
+function App() {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -38,42 +31,7 @@ function App(props: AppProps) {
       : undefined;
   });
 
-  const router = useRouter();
-
-  const routerReplace = useCallback((url: string) => {
-    /**
-     * Apologies for this line of code. The reason this is here
-     * is that XState + React Fast Refresh causes an error:
-     *
-     * Error: Unable to send event to child 'ctx => ctx.sourceRef'
-     * from service 'auth'.
-     *
-     * router.replace causes this in development, but not in prod
-     *
-     * So, we use window.location.href in development (with the /viz
-     * prefix which Next won't automatically add) and router.replace in prod
-     */
-    if (process.env.NODE_ENV === 'development') {
-      window.location.href = `/viz${url}`;
-    } else {
-      router.replace(`${url}`);
-    }
-  }, []);
-
-  const redirectToNewUrlFromLegacyUrl = useCallback(() => {
-    const id = new URLSearchParams(window.location.search)?.get('id');
-    routerReplace(`/${id}`);
-  }, []);
-
-  const authService = useInterpret(
-    createAuthMachine({
-      data: props.sourceFile,
-      redirectToNewUrlFromLegacyUrl,
-      routerReplace: router.replace,
-    }),
-  );
-
-  const sourceService = useSelector(authService, getSourceActor);
+  const sourceService = useSelector(useAuth(), getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
 
   useEffect(() => {
@@ -96,29 +54,27 @@ function App(props: AppProps) {
   return (
     <ChakraProvider theme={theme}>
       <EditorThemeProvider>
-        <AuthProvider value={authService}>
-          <PaletteProvider value={paletteService}>
-            <SimulationProvider value={simService}>
-              <AppProvider value={appService}>
-                <Box
-                  data-testid="app"
-                  data-viz="app"
-                  data-viz-theme="dark"
-                  data-viz-mode={appMode}
-                  as="main"
-                  height="100vh"
-                >
-                  <HeaderView gridArea="header" />
-                  <CanvasProvider value={canvasService}>
-                    <CanvasView />
-                  </CanvasProvider>
-                  <PanelsView />
-                  <MachineNameChooserModal />
-                </Box>
-              </AppProvider>
-            </SimulationProvider>
-          </PaletteProvider>
-        </AuthProvider>
+        <PaletteProvider value={paletteService}>
+          <SimulationProvider value={simService}>
+            <AppProvider value={appService}>
+              <Box
+                data-testid="app"
+                data-viz="app"
+                data-viz-theme="dark"
+                data-viz-mode={appMode}
+                as="main"
+                height="100vh"
+              >
+                <HeaderView gridArea="header" />
+                <CanvasProvider value={canvasService}>
+                  <CanvasView />
+                </CanvasProvider>
+                <PanelsView />
+                <MachineNameChooserModal />
+              </Box>
+            </AppProvider>
+          </SimulationProvider>
+        </PaletteProvider>
       </EditorThemeProvider>
     </ChakraProvider>
   );
