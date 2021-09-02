@@ -49,7 +49,7 @@ export const getServerSideProps: GetServerSideProps<
 > = async (ctx) => {
   if (ctx.query.ssr) {
     return {
-      props: JSON.parse(ctx.query.ssr as string),
+      props: { ...JSON.parse(ctx.query.ssr as string), query: ctx.query },
     };
   }
 
