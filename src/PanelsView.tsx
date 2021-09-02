@@ -21,6 +21,7 @@ import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
+import { EmbedMode } from './types';
 import { calculatePanelIndexByPanelName } from './utils';
 
 export const PanelsView = (props: BoxProps) => {
@@ -37,7 +38,8 @@ export const PanelsView = (props: BoxProps) => {
       {...props}
       gridArea="panels"
       minHeight={0}
-      hidden={embed.isEmbedded && embed.mode === 'viz'}
+      disabled={embed.isEmbedded && embed.mode !== EmbedMode.Full}
+      hidden={embed.isEmbedded && embed.mode === EmbedMode.Viz}
     >
       <Tabs
         bg="gray.800"

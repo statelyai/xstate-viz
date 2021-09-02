@@ -2,7 +2,6 @@ import { Box, BoxProps } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
 import { useEffect, useState } from 'react';
 import { createModel } from 'xstate/lib/model';
-import { useEmbed } from './embedContext';
 import { Point } from './pathUtils';
 
 const dragDropModel = createModel(
@@ -105,12 +104,15 @@ const ResizeHandle: React.FC<{
   );
 };
 
-export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
+interface ResizableBoxProps extends Omit<BoxProps, 'width'> {
+  disabled?: boolean;
+}
+
+export const ResizableBox: React.FC<ResizableBoxProps> = ({
   children,
-  hidden,
+  disabled,
   ...props
 }) => {
-  const { isEmbedded } = useEmbed();
   const [widthDelta, setWidthDelta] = useState(0);
 
   return (
@@ -118,15 +120,12 @@ export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
     // into multiple lines
     <Box
       {...props}
-      {...(!isEmbedded && {
+      {...(!disabled && {
         width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`,
       })}
-      hidden={hidden}
     >
       {children}
-      {!isEmbedded && (
-        <ResizeHandle onChange={(value) => setWidthDelta(value)} />
-      )}
+      {!disabled && <ResizeHandle onChange={(value) => setWidthDelta(value)} />}
     </Box>
   );
 };
