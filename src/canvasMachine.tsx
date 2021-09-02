@@ -1,4 +1,4 @@
-import { assign, createMachine, Receiver, StateFrom } from 'xstate';
+import { assign, createMachine, Receiver, send, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { StateElkNode } from './graphUtils';
@@ -186,32 +186,39 @@ export const canvasMachine = canvasModel.createMachine({
       }),
     },
     'elkGraph.UPDATE': {
-      actions: canvasModel.assign({
-        elkGraph: (_, e) => e.elkGraph,
-      }),
+      actions: [
+        canvasModel.assign({
+          elkGraph: (_, e) => e.elkGraph,
+        }),
+        send('FIT_TO_VIEW'),
+      ],
     },
     FIT_TO_VIEW: {
       actions: [
         canvasModel.assign({
           zoom: (ctx) => {
+            if (!ctx.elkGraph) return ctx.zoom;
             return (
               Math.min(
-                ctx.canvasPanelPosition.width / ctx.elkGraph!.width!,
-                ctx.canvasPanelPosition.height / ctx.elkGraph!.height!,
+                ctx.canvasPanelPosition.width / ctx.elkGraph.width!,
+                ctx.canvasPanelPosition.height / ctx.elkGraph.height!,
                 MAX_ZOOM_IN_FACTOR,
               ) * 0.9 // Ensure machine does not touch sides
             );
           },
         }),
         canvasModel.assign({
-          pan: (ctx) => ({
-            dx:
-              ctx.canvasPanelPosition.width / 2 -
-              (ctx.elkGraph!.width! * ctx.zoom) / 2,
-            dy:
-              ctx.canvasPanelPosition.height / 2 -
-              (ctx.elkGraph!.height! * ctx.zoom) / 2,
-          }),
+          pan: (ctx) => {
+            if (!ctx.elkGraph) return ctx.pan;
+            return {
+              dx:
+                ctx.canvasPanelPosition.width / 2 -
+                (ctx.elkGraph.width! * ctx.zoom) / 2,
+              dy:
+                ctx.canvasPanelPosition.height / 2 -
+                (ctx.elkGraph.height! * ctx.zoom) / 2,
+            };
+          },
         }),
       ],
     },
