@@ -36,7 +36,7 @@ export interface AppProps {
   embed?: EmbedContext;
 }
 
-function App({ embed }: AppProps) {
+function App({ embed = { isEmbedded: false } }: AppProps) {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);

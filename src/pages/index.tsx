@@ -26,8 +26,4 @@ const HomePage = () => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  return { props: { query: ctx.query } };
-};
-
 export default HomePage;
