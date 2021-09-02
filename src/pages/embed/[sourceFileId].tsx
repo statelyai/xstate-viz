@@ -38,7 +38,6 @@ function EmbedPage(props: SourceFileIdPageProps & { query: any }) {
           isEmbedded: true,
           originalUrl: withoutEmbedQueryParams(props.query),
         }}
-        sourceFile={props.data}
       />
     </>
   );

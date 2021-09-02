@@ -70,14 +70,14 @@ export const CanvasView: React.FC = () => {
     <Box
       display="grid"
       height="100%"
-      {...(!embed.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
+      {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
     >
       <Box
         data-testid="canvas-header"
         bg="gray.800"
         zIndex={1}
         padding="0"
-        hidden={embed.isEmbedded}
+        hidden={embed?.isEmbedded}
       >
         <CanvasHeader />
       </Box>
@@ -113,7 +113,7 @@ export const CanvasView: React.FC = () => {
           size="sm"
           spacing={2}
           isAttached
-          hidden={embed.isEmbedded && !embed.controls}
+          hidden={embed?.isEmbedded && !embed.controls}
           data-testid="group"
         >
           <IconButton
@@ -145,7 +145,7 @@ export const CanvasView: React.FC = () => {
             icon={<RepeatIcon />}
             onClick={() => canvasService.send('POSITION.RESET')}
             variant="secondary"
-            disabled={embed.isEmbedded && !embed.zoom && !embed.pan}
+            disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
           />
         </ButtonGroup>
         {simulationMode === 'visualizing' && (

@@ -14,7 +14,7 @@ const dragModel = createModel(
     dragPoint: { x: 0, y: 0 },
     dx: 0,
     dy: 0,
-    embed: null as EmbedContext | null,
+    embed: undefined as EmbedContext | undefined,
   },
   {
     events: {
@@ -205,9 +205,9 @@ export const CanvasContainer: React.FC = ({ children }) => {
       }
 
       const isEmbeddedWithoutZoom =
-        isWithMetaKey && embed.isEmbedded && !embed.zoom;
+        isWithMetaKey && embed?.isEmbedded && !embed.zoom;
       const isEmbeddedWithoutPan =
-        !isWithMetaKey && embed.isEmbedded && !embed.pan;
+        !isWithMetaKey && embed?.isEmbedded && !embed.pan;
 
       if (isEmbeddedWithoutPan || isEmbeddedWithoutZoom) {
         return;

@@ -29,7 +29,7 @@ export const PanelsView = (props: BoxProps) => {
   const simService = useSimulation();
   const [sourceState, sendToSourceService] = useSourceActor();
   const activePanelIndex = useMemo(
-    () => (embed.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0),
+    () => (embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0),
     [embed],
   );
 
@@ -38,8 +38,8 @@ export const PanelsView = (props: BoxProps) => {
       {...props}
       gridArea="panels"
       minHeight={0}
-      disabled={embed.isEmbedded && embed.mode !== EmbedMode.Full}
-      hidden={embed.isEmbedded && embed.mode === EmbedMode.Viz}
+      disabled={embed?.isEmbedded && embed.mode !== EmbedMode.Full}
+      hidden={embed?.isEmbedded && embed.mode === EmbedMode.Viz}
     >
       <Tabs
         bg="gray.800"
@@ -53,11 +53,11 @@ export const PanelsView = (props: BoxProps) => {
           <Tab>State</Tab>
           <Tab>Events</Tab>
           <Tab>Actors</Tab>
-          <Tab marginLeft="auto" marginRight="2" hidden={embed.isEmbedded}>
+          <Tab marginLeft="auto" marginRight="2" hidden={embed?.isEmbedded}>
             <SettingsIcon />
           </Tab>
-          <Login hidden={embed.isEmbedded} />
-          {embed.isEmbedded && embed.showOriginalLink && embed.originalUrl && (
+          <Login hidden={embed?.isEmbedded} />
+          {embed?.isEmbedded && embed.showOriginalLink && embed.originalUrl && (
             <Button
               height="100%"
               rounded="none"
@@ -66,7 +66,7 @@ export const PanelsView = (props: BoxProps) => {
               as="a"
               target="_blank"
               rel="noopener noreferer nofollow"
-              href={embed.originalUrl}
+              href={embed?.originalUrl}
               leftIcon={<ExternalIcon />}
             >
               Open in Stately.ai/viz
@@ -127,7 +127,7 @@ export const PanelsView = (props: BoxProps) => {
           <TabPanel height="100%" overflowY="auto">
             <ActorsPanel />
           </TabPanel>
-          <TabPanel height="100%" overflowY="auto" hidden={embed.isEmbedded}>
+          <TabPanel height="100%" overflowY="auto" hidden={embed?.isEmbedded}>
             <SettingsPanel />
           </TabPanel>
         </TabPanels>

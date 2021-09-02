@@ -375,7 +375,7 @@ export const EditorPanel: React.FC<{
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
 }> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
-  const { isEmbedded, readOnly } = useEmbed();
+  const embed = useEmbed();
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
@@ -479,7 +479,7 @@ export const EditorPanel: React.FC<{
                       });
                     }}
                     variant="secondary"
-                    hidden={isEmbedded && readOnly}
+                    hidden={embed?.isEmbedded && embed.readOnly}
                   >
                     Visualize
                   </Button>
@@ -504,7 +504,7 @@ export const EditorPanel: React.FC<{
                       />
                     }
                     variant="outline"
-                    hidden={isEmbedded}
+                    hidden={embed?.isEmbedded}
                   >
                     {persistMeta.text}
                   </Button>
@@ -520,7 +520,7 @@ export const EditorPanel: React.FC<{
                       <ForkIcon fill="gray.200" height="16px" width="16px" />
                     }
                     variant="outline"
-                    hidden={isEmbedded}
+                    hidden={embed?.isEmbedded}
                   >
                     Fork
                   </Button>
@@ -531,7 +531,7 @@ export const EditorPanel: React.FC<{
                   leftIcon={<AddIcon fill="gray.200" />}
                   onClick={onCreateNew}
                   variant="outline"
-                  hidden={isEmbedded}
+                  hidden={embed?.isEmbedded}
                 >
                   New
                 </Button>

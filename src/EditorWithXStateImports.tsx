@@ -84,7 +84,7 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
-  const { readOnly, isEmbedded } = useEmbed();
+  const embed = useEmbed();
   const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
@@ -114,7 +114,7 @@ export const EditorWithXStateImports = (
         minimap: { enabled: false },
         tabSize: 2,
         glyphMargin: true,
-        readOnly: isEmbedded && readOnly,
+        readOnly: embed?.isEmbedded && embed.readOnly,
       }}
       loading={<SpinnerWithText text="Preparing the editor" />}
       onChange={(text) => {

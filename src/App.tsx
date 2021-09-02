@@ -56,7 +56,7 @@ function App({ embed }: AppProps) {
     });
   }, [machine?.id, sendToSourceService]);
 
-  const sourceID = sourceState.context.sourceID;
+  const sourceID = sourceState!.context.sourceID;
 
   const canvasService = useInterpretCanvas({
     sourceID,
