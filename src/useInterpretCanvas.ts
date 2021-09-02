@@ -10,7 +10,7 @@ export const useInterpretCanvas = ({
   embed,
 }: {
   sourceID: string | null;
-  embed: EmbedContext;
+  embed?: EmbedContext;
 }) => {
   const canvasService = useInterpret(
     canvasMachine.withContext({

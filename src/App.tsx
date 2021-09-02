@@ -1,14 +1,11 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
-import { useRouter } from 'next/router';
-import { AuthProvider } from './authContext';
-import { createAuthMachine } from './authMachine';
+import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
 import { EmbedProvider } from './embedContext';
 import { CanvasView } from './CanvasView';
 import './Graph';
-import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
 import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
@@ -23,12 +20,12 @@ import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 import { Visibility } from './Visibility';
 
-const getGridArea = (embed: EmbedContext) => {
-  if (embed.isEmbedded && embed.mode === EmbedMode.Viz) {
+const getGridArea = (embed?: EmbedContext) => {
+  if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
     return 'canvas';
   }
 
-  if (embed.isEmbedded && embed.mode === EmbedMode.Panels) {
+  if (embed?.isEmbedded && embed.mode === EmbedMode.Panels) {
     return 'panels';
   }
 
@@ -36,11 +33,10 @@ const getGridArea = (embed: EmbedContext) => {
 };
 
 export interface AppProps {
-  sourceFile: GetSourceFileSsrQuery['getSourceFile'] | undefined;
-  embed: EmbedContext;
+  embed?: EmbedContext;
 }
 
-function App(props: AppProps) {
+function App({ embed }: AppProps) {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -50,42 +46,7 @@ function App(props: AppProps) {
       : undefined;
   });
 
-  const router = useRouter();
-
-  const routerReplace = useCallback((url: string) => {
-    /**
-     * Apologies for this line of code. The reason this is here
-     * is that XState + React Fast Refresh causes an error:
-     *
-     * Error: Unable to send event to child 'ctx => ctx.sourceRef'
-     * from service 'auth'.
-     *
-     * router.replace causes this in development, but not in prod
-     *
-     * So, we use window.location.href in development (with the /viz
-     * prefix which Next won't automatically add) and router.replace in prod
-     */
-    if (process.env.NODE_ENV === 'development') {
-      window.location.href = `/viz${url}`;
-    } else {
-      router.replace(`${url}`);
-    }
-  }, []);
-
-  const redirectToNewUrlFromLegacyUrl = useCallback(() => {
-    const id = new URLSearchParams(window.location.search)?.get('id');
-    routerReplace(`/${id}`);
-  }, []);
-
-  const authService = useInterpret(
-    createAuthMachine({
-      data: props.sourceFile,
-      redirectToNewUrlFromLegacyUrl,
-      routerReplace: router.replace,
-    }),
-  );
-
-  const sourceService = useSelector(authService, getSourceActor);
+  const sourceService = useSelector(useAuth(), getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
 
   useEffect(() => {
@@ -99,43 +60,41 @@ function App(props: AppProps) {
 
   const canvasService = useInterpretCanvas({
     sourceID,
-    embed: props.embed,
+    embed,
   });
 
   // This is because we're doing loads of things on client side anyway
   if (!isOnClientSide()) return null;
 
   return (
-    <EmbedProvider value={props.embed}>
+    <EmbedProvider value={embed}>
       <ChakraProvider theme={theme}>
         <EditorThemeProvider>
-          <AuthProvider value={authService}>
-            <PaletteProvider value={paletteService}>
-              <SimulationProvider value={simService}>
-                <Box
-                  data-testid="app"
-                  data-viz-theme="dark"
-                  as="main"
-                  display="grid"
-                  gridTemplateColumns="1fr auto"
-                  gridTemplateAreas={`"${getGridArea(props.embed)}"`}
-                  height="100vh"
+          <PaletteProvider value={paletteService}>
+            <SimulationProvider value={simService}>
+              <Box
+                data-testid="app"
+                data-viz-theme="dark"
+                as="main"
+                display="grid"
+                gridTemplateColumns="1fr auto"
+                gridTemplateAreas={`"${getGridArea(embed)}"`}
+                height="100vh"
+              >
+                <Visibility
+                  isHidden={
+                    !!(embed?.isEmbedded && embed.mode === EmbedMode.Panels)
+                  }
                 >
-                  <Visibility
-                    isHidden={
-                      props.embed.isEmbedded && props.embed.mode === 'panels'
-                    }
-                  >
-                    <CanvasProvider value={canvasService}>
-                      <CanvasView />
-                    </CanvasProvider>
-                  </Visibility>
-                  <PanelsView data-testid="panels-view" />
-                  <MachineNameChooserModal />
-                </Box>
-              </SimulationProvider>
-            </PaletteProvider>
-          </AuthProvider>
+                  <CanvasProvider value={canvasService}>
+                    <CanvasView />
+                  </CanvasProvider>
+                </Visibility>
+                <PanelsView />
+                <MachineNameChooserModal />
+              </Box>
+            </SimulationProvider>
+          </PaletteProvider>
         </EditorThemeProvider>
       </ChakraProvider>
     </EmbedProvider>

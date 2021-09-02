@@ -1,7 +1,10 @@
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 import type { AppProps } from 'next/app';
-import '../TransitionViz.scss';
+import { useRouter } from 'next/router';
+import { useInterpret } from '@xstate/react';
+import { createAuthMachine } from '../authMachine';
+import { AuthProvider } from '../authContext';
 import '../ActionViz.scss';
 import '../base.scss';
 import '../DelayViz.scss';
@@ -30,25 +33,42 @@ if (
 }
 
 const MyApp = ({ pageProps, Component }: AppProps) => {
-  // const isClientSide = isOnClientSide();
+  const router = useRouter();
 
+  const routerReplace = (url: string) => {
+    /**
+     * Apologies for this line of code. The reason this is here
+     * is that XState + React Fast Refresh causes an error:
+     *
+     * Error: Unable to send event to child 'ctx => ctx.sourceRef'
+     * from service 'auth'.
+     *
+     * router.replace causes this in development, but not in prod
+     *
+     * So, we use window.location.href in development (with the /viz
+     * prefix which Next won't automatically add) and router.replace in prod
+     */
+    if (process.env.NODE_ENV === 'development') {
+      window.location.href = `/viz${url}`;
+    } else {
+      router.replace(`${url}`);
+    }
+  };
+
+  const authService = useInterpret(
+    createAuthMachine({
+      data: pageProps.data,
+      routerReplace,
+      redirectToNewUrlFromLegacyUrl: () => {
+        const id = new URLSearchParams(window.location.search)?.get('id');
+        routerReplace(`/${id}`);
+      },
+    }),
+  );
   return (
-    <>
-      <Head>
-        <link rel="apple-touch-icon" href="/favicon@256.png" />
-        <link rel="icon" href="/favicon.png" />
-        <title>XState Viz</title>
-        <meta
-          name="description"
-          content="Visualizer for XState state machines and statecharts"
-        />
-        <script src="https://unpkg.com/prettier@2.3.2/standalone.js"></script>
-        <script src="https://unpkg.com/prettier@2.3.2/parser-typescript.js"></script>
-        <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
-      </Head>
-
+    <AuthProvider value={authService}>
       <Component {...pageProps} />
-    </>
+    </AuthProvider>
   );
 };
 export default MyApp;

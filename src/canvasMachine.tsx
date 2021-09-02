@@ -26,7 +26,7 @@ const initialPosition = {
 const initialContext = {
   ...initialPosition,
   elkGraph: undefined as StateElkNode | undefined,
-  embed: null as EmbedContext | null,
+  embed: undefined as EmbedContext | undefined,
 };
 
 export type Pan = {
