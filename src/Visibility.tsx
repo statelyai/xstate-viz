@@ -3,7 +3,7 @@ import React from 'react';
 
 export const Visibility: React.FC<
   {
-    isHidden: any;
+    isHidden: boolean;
   } & React.ComponentProps<typeof Box>
 > = ({ isHidden, children, ...props }) => {
   return (

@@ -64,7 +64,6 @@ export enum EmbedPanel {
 export interface ParsedEmbed {
   mode: EmbedMode;
   panel: EmbedPanel;
-  panelIndex: number;
   showOriginalLink: boolean;
   readOnly: boolean;
   pan: boolean;
@@ -73,4 +72,4 @@ export interface ParsedEmbed {
 }
 export type EmbedContext =
   | { isEmbedded: false }
-  | ({ isEmbedded: true; embedUrl: string } & ParsedEmbed);
+  | ({ isEmbedded: true; originalUrl: string } & ParsedEmbed);

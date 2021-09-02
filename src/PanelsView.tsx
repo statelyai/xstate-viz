@@ -8,9 +8,8 @@ import {
   Button,
   BoxProps,
 } from '@chakra-ui/react';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ActorsPanel } from './ActorsPanel';
-import { useAuth } from './authContext';
 import { EditorPanel } from './EditorPanel';
 import { useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
@@ -22,11 +21,16 @@ import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
+import { calculatePanelIndexByPanelName } from './utils';
 
 export const PanelsView = (props: BoxProps) => {
   const embed = useEmbed();
   const simService = useSimulation();
   const [sourceState, sendToSourceService] = useSourceActor();
+  const activePanelIndex = useMemo(
+    () => (embed.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0),
+    [embed],
+  );
 
   return (
     <ResizableBox
@@ -40,7 +44,7 @@ export const PanelsView = (props: BoxProps) => {
         display="grid"
         gridTemplateRows="3rem 1fr"
         height="100%"
-        defaultIndex={embed.panelIndex}
+        defaultIndex={activePanelIndex}
       >
         <TabList>
           <Tab>Code</Tab>
@@ -51,7 +55,7 @@ export const PanelsView = (props: BoxProps) => {
             <SettingsIcon />
           </Tab>
           <Login hidden={embed.isEmbedded} />
-          {embed.isEmbedded && embed.showOriginalLink && embed.embedUrl && (
+          {embed.isEmbedded && embed.showOriginalLink && embed.originalUrl && (
             <Button
               height="100%"
               rounded="none"
@@ -60,7 +64,7 @@ export const PanelsView = (props: BoxProps) => {
               as="a"
               target="_blank"
               rel="noopener noreferer nofollow"
-              href={embed.embedUrl}
+              href={embed.originalUrl}
               leftIcon={<ExternalIcon />}
             >
               Open in Stately.ai/viz

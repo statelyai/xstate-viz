@@ -266,12 +266,14 @@ export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
     parsedEmbed.controls = computeBooleanQParamValue(parsedControls);
   }
 
-  const tabs = Object.values(EmbedPanel);
-  const foundPanelIndex = tabs.findIndex((p) => p === parsedEmbed.panel);
-  parsedEmbed.panelIndex = foundPanelIndex >= 0 ? foundPanelIndex : 0;
-
   return parsedEmbed;
 };
+
+export function calculatePanelIndexByPanelName(panelName: EmbedPanel) {
+  const tabs = Object.values(EmbedPanel);
+  const foundPanelIndex = tabs.findIndex((p) => p === panelName);
+  return foundPanelIndex >= 0 ? foundPanelIndex : 0;
+}
 
 export function withoutEmbedQueryParams(query: any): string {
   const q = new URLSearchParams(query);
