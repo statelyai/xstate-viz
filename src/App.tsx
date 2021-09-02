@@ -102,6 +102,7 @@ function App(props: AppProps) {
     embed: props.embed,
   });
 
+  // This is because we're doing loads of things on client side anyway
   if (!isOnClientSide()) return null;
 
   return (

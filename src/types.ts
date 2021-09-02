@@ -71,7 +71,6 @@ export interface ParsedEmbed {
   zoom: boolean;
   controls: boolean;
 }
-export interface EmbedContext extends ParsedEmbed {
-  isEmbedded: boolean;
-  embedUrl: string | null;
-}
+export type EmbedContext =
+  | { isEmbedded: false }
+  | ({ isEmbedded: true; embedUrl: string } & ParsedEmbed);

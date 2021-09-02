@@ -206,7 +206,7 @@ export function isDelayedTransitionAction(
  * /?mode=viz|full|panels default:viz
  * /?mode=panels&panel=code|state|events|actors default:code
  */
-export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
+export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
   const parsedEmbed = {
     mode: EmbedMode.Viz,
     panel: EmbedPanel.Code,
@@ -227,42 +227,42 @@ export const parseEmbedQuery = (query: NextRouter['query']): ParsedEmbed => {
     return !!+qParamValue;
   };
 
-  if (query.mode) {
-    const parsedMode = getQueryParamValue(query.mode);
+  if (query?.mode) {
+    const parsedMode = getQueryParamValue(query?.mode);
     if (Object.values(EmbedMode).includes(parsedMode as EmbedMode)) {
       parsedEmbed.mode = parsedMode as EmbedMode;
     }
   }
 
-  if (query.panel) {
-    const parsedPanel = getQueryParamValue(query.panel);
+  if (query?.panel) {
+    const parsedPanel = getQueryParamValue(query?.panel);
     if (Object.values(EmbedPanel).includes(parsedPanel as EmbedPanel)) {
       parsedEmbed.panel = parsedPanel as EmbedPanel;
     }
   }
 
-  if (query.showOriginalLink) {
-    const parsedValue = getQueryParamValue(query.showOriginalLink);
+  if (query?.showOriginalLink) {
+    const parsedValue = getQueryParamValue(query?.showOriginalLink);
     parsedEmbed.showOriginalLink = computeBooleanQParamValue(parsedValue);
   }
 
-  if (query.readOnly) {
-    const parsedReadOnly = getQueryParamValue(query.readOnly);
+  if (query?.readOnly) {
+    const parsedReadOnly = getQueryParamValue(query?.readOnly);
     parsedEmbed.readOnly = computeBooleanQParamValue(parsedReadOnly);
   }
 
-  if (query.pan) {
-    const parsedPan = getQueryParamValue(query.pan);
+  if (query?.pan) {
+    const parsedPan = getQueryParamValue(query?.pan);
     parsedEmbed.pan = computeBooleanQParamValue(parsedPan);
   }
 
-  if (query.zoom) {
-    const parsedZoom = getQueryParamValue(query.zoom);
+  if (query?.zoom) {
+    const parsedZoom = getQueryParamValue(query?.zoom);
     parsedEmbed.zoom = computeBooleanQParamValue(parsedZoom);
   }
 
-  if (query.controls) {
-    const parsedControls = getQueryParamValue(query.controls);
+  if (query?.controls) {
+    const parsedControls = getQueryParamValue(query?.controls);
     parsedEmbed.controls = computeBooleanQParamValue(parsedControls);
   }
 

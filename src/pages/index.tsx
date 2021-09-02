@@ -1,6 +1,5 @@
 import { GetServerSideProps } from 'next';
 import App from '../App';
-import { parseEmbedQuery } from '../utils';
 import { AppHead } from '../AppHead';
 
 /**
@@ -10,8 +9,7 @@ import { AppHead } from '../AppHead';
  * This will be fixed in a later PR, adding routes with server
  * rendering to grab OG images.
  */
-const HomePage = ({ query }: { query: any }) => {
-  const embed = parseEmbedQuery(query);
+const HomePage = () => {
   return (
     <>
       <AppHead
@@ -26,9 +24,7 @@ const HomePage = ({ query }: { query: any }) => {
       <App
         sourceFile={undefined}
         embed={{
-          ...embed,
           isEmbedded: false,
-          embedUrl: null,
         }}
       />
     </>
@@ -36,6 +32,7 @@ const HomePage = ({ query }: { query: any }) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  console.log(ctx);
   return { props: { query: ctx.query } };
 };
 
