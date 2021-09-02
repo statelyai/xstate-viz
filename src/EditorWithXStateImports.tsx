@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { themes } from './editor-themes';
 import { localCache } from './localCache';
 import { SpinnerWithText } from './SpinnerWithText';
-import { useEditorTheme } from './themeContext';
+import { useEditorSettings } from './editorSettingsContext';
 import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
 
 /**
@@ -83,14 +83,14 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
-  const editorTheme = useEditorTheme();
+  const editorSettings = useEditorSettings();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
 
   useEffect(() => {
     const editor = editorRef.current;
     const definedThemes = definedEditorThemes.current;
-    const theme = editorTheme.theme;
+    const theme = editorSettings.theme;
 
     if (!editor || !definedThemes) {
       return;
@@ -100,8 +100,8 @@ export const EditorWithXStateImports = (
       editor.defineTheme(theme, themes[theme]);
     }
     editor.setTheme(theme);
-    localCache.saveEditorTheme(editorTheme.theme);
-  }, [editorTheme.theme]);
+    localCache.saveEditorTheme(editorSettings.theme);
+  }, [editorSettings.theme]);
 
   return (
     <Editor
@@ -122,7 +122,8 @@ export const EditorWithXStateImports = (
       theme="vs-dark"
       onMount={async (editor, monaco) => {
         editorRef.current = monaco.editor;
-        const theme = editorTheme.theme;
+
+        const theme = editorSettings.theme;
         monaco.editor.defineTheme(theme, themes[theme]);
         monaco.editor.setTheme(theme);
 
@@ -130,6 +131,11 @@ export const EditorWithXStateImports = (
           customWorkerPath: `${new URL(
             window.location.origin,
           )}viz/ts-worker.js`,
+        });
+
+        monaco?.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+          noSemanticValidation: editorSettings.isTypescriptEnabled,
+          noSyntaxValidation: editorSettings.isTypescriptEnabled,
         });
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({

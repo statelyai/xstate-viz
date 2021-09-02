@@ -23,6 +23,7 @@ export interface CachedSource {
 const POSITION_CACHE_PREFIX = `xstate_viz_position`;
 const RAW_SOURCE_CACHE_PREFIX = `xstate_viz_raw_source`;
 const EDITOR_THEME_CACHE_KEY = `xstate_viz_editor_theme`;
+const EDITOR_SETTING_CACHE_PREFIX = `xstate_viz_editor_setting|`;
 
 const makePositionCacheKey = (sourceID: string | null) =>
   `${POSITION_CACHE_PREFIX}|${sourceID || 'no_source'}`;
@@ -146,6 +147,38 @@ const saveEditorTheme = (themeName: ThemeName) => {
   } catch (er) {}
 };
 
+const getSetting = <T extends string | boolean>(key: string): T | undefined => {
+  try {
+    const themeName = storage.getItem(`${EDITOR_SETTING_CACHE_PREFIX}|${key}`);
+    if (themeName) {
+      return JSON.parse(themeName);
+    }
+  } catch (e) {}
+};
+
+const saveSetting = <T>(key: string, value: T) => {
+  try {
+    storage.setItem(
+      `${EDITOR_SETTING_CACHE_PREFIX}|${key}`,
+      JSON.stringify(value),
+    );
+  } catch (er) {}
+};
+
+const makeSettingManager = <T extends string | boolean>(
+  key: string,
+  defaultValue: T,
+) => {
+  return {
+    get: () => {
+      return getSetting<T>(key) ?? defaultValue;
+    },
+    set: (value: T) => {
+      return saveSetting<T>(key, value);
+    },
+  };
+};
+
 export const localCache = {
   getPosition,
   savePosition,
@@ -154,4 +187,5 @@ export const localCache = {
   getEditorTheme,
   saveEditorTheme,
   removeSourceRawContent,
+  typescriptChecking: makeSettingManager('ts-check', true),
 };

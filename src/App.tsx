@@ -15,7 +15,7 @@ import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
 import { getSourceActor } from './sourceMachine';
 import { theme } from './theme';
-import { EditorThemeProvider } from './themeContext';
+import { EditorSettingsProvider } from './editorSettingsContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
 
 function App() {
@@ -48,7 +48,7 @@ function App() {
 
   return (
     <ChakraProvider theme={theme}>
-      <EditorThemeProvider>
+      <EditorSettingsProvider>
         <PaletteProvider value={paletteService}>
           <SimulationProvider value={simService}>
             <Box
@@ -68,7 +68,7 @@ function App() {
             </Box>
           </SimulationProvider>
         </PaletteProvider>
-      </EditorThemeProvider>
+      </EditorSettingsProvider>
     </ChakraProvider>
   );
 }
