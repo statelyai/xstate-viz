@@ -4,17 +4,16 @@ import {
   GetSourceFileSsrDocument,
   GetSourceFileSsrQuery,
 } from '../../graphql/GetSourceFileSSR.generated';
-import { withoutEmbedQueryParams, parseEmbedQuery, gQuery } from '../../utils';
 import { AppHead } from '../../AppHead';
 import { registryLinks } from '../../registryLinks';
+import { gQuery } from '../../utils';
 
 interface SourceFileIdPageProps {
   data: GetSourceFileSsrQuery['getSourceFile'];
   id: string;
 }
 
-function EmbedPage(props: SourceFileIdPageProps & { query: any }) {
-  const embed = parseEmbedQuery(props.query);
+function EmbedPage(props: SourceFileIdPageProps) {
   return (
     <>
       <AppHead
@@ -32,13 +31,7 @@ function EmbedPage(props: SourceFileIdPageProps & { query: any }) {
         importPrettier
         ogImageUrl={registryLinks.sourceFileOgImage(props.id)}
       />
-      <App
-        embed={{
-          ...embed,
-          isEmbedded: true,
-          originalUrl: withoutEmbedQueryParams(props.query),
-        }}
-      />
+      <App />
     </>
   );
 }
@@ -68,6 +61,7 @@ export const getServerSideProps: GetServerSideProps<
     props: {
       id: sourceFileId,
       data: result.data?.getSourceFile,
+      isEmbedded: true,
       query: ctx.query,
     },
   };

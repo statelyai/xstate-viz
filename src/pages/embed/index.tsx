@@ -1,7 +1,6 @@
 import { GetServerSideProps } from 'next';
 import App from '../../App';
 import { AppHead } from '../../AppHead';
-import { parseEmbedQuery, withoutEmbedQueryParams } from '../../utils';
 
 /**
  * This is a shim for now. Our app currently doesn't use
@@ -10,8 +9,7 @@ import { parseEmbedQuery, withoutEmbedQueryParams } from '../../utils';
  * This will be fixed in a later PR, adding routes with server
  * rendering to grab OG images.
  */
-const InspectedEmbed = ({ query }: { query: any }) => {
-  const embed = parseEmbedQuery(query);
+const InspectedEmbed = () => {
   return (
     <>
       <AppHead
@@ -23,13 +21,7 @@ const InspectedEmbed = ({ query }: { query: any }) => {
         // TODO - get an OG image for the home page
         ogImageUrl={undefined}
       />
-      <App
-        embed={{
-          ...embed,
-          isEmbedded: true,
-          originalUrl: withoutEmbedQueryParams(query),
-        }}
-      />
+      <App />
     </>
   );
 };
@@ -44,7 +36,7 @@ export const getServerSideProps: GetServerSideProps<{ query: any }> = async (
     };
   }
   return {
-    props: { query: ctx.query },
+    props: { query: ctx.query, isEmbedded: true },
   };
 };
 

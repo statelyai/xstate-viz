@@ -15,6 +15,7 @@ import '../monacoPatch';
 import '../StateNodeViz.scss';
 
 import Head from 'next/head';
+import { parseEmbedQuery, withoutEmbedQueryParams } from '../utils';
 // import { isOnClientSide } from '../isOnClientSide';
 
 if (
@@ -55,6 +56,8 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
     }
   };
 
+  const embed = parseEmbedQuery(pageProps.query);
+
   const authService = useInterpret(
     createAuthMachine({
       data: pageProps.data,
@@ -63,11 +66,19 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
         const id = new URLSearchParams(window.location.search)?.get('id');
         routerReplace(`/${id}`);
       },
+      isEmbbeded: pageProps.isEmbedded,
     }),
   );
   return (
     <AuthProvider value={authService}>
-      <Component {...pageProps} />
+      <Component
+        {...pageProps}
+        embed={{
+          ...embed,
+          isEmbedded: pageProps.isEmbedded,
+          originalUrl: withoutEmbedQueryParams(pageProps.query),
+        }}
+      />
     </AuthProvider>
   );
 };
