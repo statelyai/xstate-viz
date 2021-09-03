@@ -1,6 +1,6 @@
 import { DirectedGraphNode } from './directedGraph';
 import { useMachine, useSelector } from '@xstate/react';
-import { useEffect, useMemo, memo } from 'react';
+import React, { useEffect, useMemo, memo } from 'react';
 import { Edges } from './Edges';
 import { StateNodeViz } from './StateNodeViz';
 import { TransitionViz } from './TransitionViz';
@@ -8,7 +8,7 @@ import { createElkMachine } from './elkMachine';
 import { MachineViz } from './MachineViz';
 import { useCanvas } from './CanvasContext';
 import { useSimulation } from './SimulationContext';
-import { getAllEdges, StateElkNode } from './graphUtils';
+import { getAllEdges, getAllElkEdges, StateElkNode } from './graphUtils';
 
 const GraphNode: React.FC<{ elkNode: StateElkNode }> = ({ elkNode }) => {
   return <StateNodeViz stateNode={elkNode.node.data} node={elkNode.node} />;
@@ -49,6 +49,11 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
   }, [state.context.elkGraph]);
 
   const allEdges = useMemo(() => getAllEdges(digraph), [digraph]);
+  const allElkEdges = useMemo(
+    () =>
+      state.context.elkGraph ? getAllElkEdges(state.context.elkGraph) : [],
+    [state.context.elkGraph!],
+  );
 
   if (state.matches('success')) {
     return (
@@ -59,26 +64,34 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
           transform: `translate3d(${pan.dx}px, ${pan.dy}px, 0) scale(${zoom})`,
         }}
       >
-        <MemoizedEdges digraph={digraph} />
+        <MemoizedEdges
+          digraph={digraph}
+          rootElkNode={state.context.elkGraph!}
+        />
         <MemoizedGraphNode
           elkNode={
             // Get the machine node, not the root node
             state.context.elkGraph!.children![0]!
           }
         />
-        {allEdges.map((edge, i) => {
+        {allElkEdges.map((elkEdge, i) => {
           return (
-            <MemoizedTransitionViz
-              edge={edge}
-              key={edge.id}
-              index={i}
-              position={
-                edge.label && {
-                  x: edge.label.x,
-                  y: edge.label.y,
-                }
-              }
-            />
+            <React.Fragment key={i}>
+              {elkEdge.labels.map((label) => {
+                const { edge } = label;
+                return (
+                  <MemoizedTransitionViz
+                    edge={edge}
+                    key={edge.id}
+                    index={i}
+                    position={{
+                      x: label.x!,
+                      y: label.y!,
+                    }}
+                  />
+                );
+              })}
+            </React.Fragment>
           );
         })}
       </div>

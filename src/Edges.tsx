@@ -1,8 +1,9 @@
 import React from 'react';
 import { EdgeViz } from './EdgeViz';
-import { getAllEdges } from './graphUtils';
+import { getAllEdges, getAllElkEdges, StateElkNode } from './graphUtils';
 import { DirectedGraphNode } from './directedGraph';
 import { InitialEdgeViz } from './InitialEdgeViz';
+import { ElkEdgeViz } from './ElkEdgeViz';
 
 function getInitialDigraphNodes(
   digraph: DirectedGraphNode,
@@ -19,9 +20,11 @@ function getInitialDigraphNodes(
   return nodes;
 }
 
-export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
-  digraph,
-}) => {
+export const Edges: React.FC<{
+  digraph: DirectedGraphNode;
+  rootElkNode: StateElkNode;
+}> = ({ digraph, rootElkNode }) => {
+  const elkEdges = getAllElkEdges(rootElkNode);
   const edges = getAllEdges(digraph);
   const initialNodes = getInitialDigraphNodes(digraph);
   return (
@@ -39,8 +42,11 @@ export const Edges: React.FC<{ digraph: DirectedGraphNode }> = ({
       {initialNodes.map((initialNode) => {
         return <InitialEdgeViz node={initialNode} key={initialNode.id} />;
       })}
-      {edges.map((edge, i) => {
+      {/* {edges.map((edge, i) => {
         return <EdgeViz key={edge.id} edge={edge} order={i} />;
+      })} */}
+      {elkEdges.map((elkEdge) => {
+        return <ElkEdgeViz elkEdge={elkEdge} key={elkEdge.id} />;
       })}
     </svg>
   );

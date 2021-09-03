@@ -8,6 +8,7 @@ import type {
   ELK,
   ElkEdgeSection,
   ElkExtendedEdge,
+  ElkLabel,
   ElkNode,
   LayoutOptions,
 } from 'elkjs/lib/main';
@@ -34,10 +35,22 @@ const rootLayoutOptions: LayoutOptions = {
   'elk.direction': 'RIGHT',
 };
 
-type RelativeNodeEdgeMap = [
+type ContainingNodeEdgeMap = [
   Map<StateNode | undefined, DirectedGraphEdge[]>,
   Map<string, StateNode | undefined>,
 ];
+
+export function getAllElkEdges(stateElkNode: StateElkNode): StateElkEdge[] {
+  const edges: StateElkEdge[] = [];
+  const getEdgesRecursive = (node: StateElkNode) => {
+    edges.push(...node.edges);
+
+    node.children.forEach(getEdgesRecursive);
+  };
+  getEdgesRecursive(stateElkNode);
+
+  return edges;
+}
 
 export function getAllEdges(digraph: DirectedGraphNode): DirectedGraphEdge[] {
   const edges: DirectedGraphEdge[] = [];
@@ -87,13 +100,13 @@ function getContainingNode(edge: DirectedGraphEdge): StateNode | undefined {
   return sourceNode.machine; // root
 }
 
-function getRelativeNodeEdgeMap(
+function getContainingNodeEdgeMap(
   digraph: DirectedGraphNode,
-): RelativeNodeEdgeMap {
+): ContainingNodeEdgeMap {
   const edges = getAllEdges(digraph);
 
-  const map: RelativeNodeEdgeMap[0] = new Map();
-  const edgeMap: RelativeNodeEdgeMap[1] = new Map();
+  const map: ContainingNodeEdgeMap[0] = new Map();
+  const edgeMap: ContainingNodeEdgeMap[1] = new Map();
 
   edges.forEach((edge) => {
     const containingNode = getContainingNode(edge);
@@ -109,23 +122,93 @@ function getRelativeNodeEdgeMap(
   return [map, edgeMap];
 }
 
+function getElkEdges(
+  edges: DirectedGraphEdge[],
+  rectMap: DOMRectMap,
+): StateElkEdge[] {
+  const selfEdges: DirectedGraphEdge[] = [];
+  const otherEdges: DirectedGraphEdge[] = [];
+
+  for (const edge of edges) {
+    if (edge.source === edge.target) {
+      selfEdges.push(edge);
+    } else {
+      otherEdges.push(edge);
+    }
+  }
+
+  const elkEdges = otherEdges.map((edge) => getElkEdge(edge, rectMap));
+
+  if (selfEdges.length) {
+    elkEdges.push(getElkSelfEdge(selfEdges, rectMap));
+  }
+  return elkEdges;
+}
+
+function getElkSelfEdge(
+  selfEdges: DirectedGraphEdge[],
+  rectMap: DOMRectMap,
+): StateElkEdge {
+  const [edge] = selfEdges;
+  const isInitialEdge = edge.source.parent?.initial === edge.source.key;
+
+  // const sources = [edge.source.id];
+  // const targets = isSelfEdge ? [getSelfPortId(edge.target.id)] : [targetPortId];
+  const sources = [edge.source.id];
+  const targets = [edge.source.id];
+
+  return {
+    id: selfEdges[0].id,
+    type: 'self',
+    sources,
+    targets,
+    // labels: [],
+    labels: selfEdges.map((edge) => {
+      const edgeRect = rectMap.get(edge.id)!;
+
+      return {
+        id: 'label:' + edge.id,
+        width: edgeRect.width,
+        height: edgeRect.height,
+        text: edge.label.text || 'always',
+        layoutOptions: {
+          'edgeLabels.inline': 'false',
+          'edgeLabels.placement': 'CENTER',
+          'edgeLabels.centerLabelPlacementStrategy': 'TAIL_LAYER',
+        },
+        edge,
+      };
+    }),
+    edge: selfEdges[0], // TODO: remove
+    sections: [],
+    layoutOptions: {
+      // Ensure that all edges originating from initial states point RIGHT
+      // (give them direction priority) so that the initial states can end up on the top left
+      'elk.layered.priority.direction': isInitialEdge ? '1' : '0',
+      'elk.insideSelfLoops.yo': 'true',
+    },
+  };
+}
+
 function getElkEdge(
   edge: DirectedGraphEdge,
   rectMap: DOMRectMap,
-): ElkExtendedEdge & { edge: any } {
+): StateElkEdge {
   const edgeRect = rectMap.get(edge.id)!;
   const targetPortId = getPortId(edge);
   const isSelfEdge = edge.source === edge.target;
   const isInitialEdge = edge.source.parent?.initial === edge.source.key;
 
-  const sources = [edge.source.id];
+  const sources = isSelfEdge
+    ? [getSelfPortId(edge.target.id)]
+    : [edge.source.id];
   const targets = isSelfEdge ? [getSelfPortId(edge.target.id)] : [targetPortId];
 
   return {
     id: edge.id,
     sources,
     targets,
-
+    type: 'normal',
     labels: [
       {
         id: 'label:' + edge.id,
@@ -137,6 +220,7 @@ function getElkEdge(
           'edgeLabels.placement': 'CENTER',
           'edgeLabels.centerLabelPlacementStrategy': 'TAIL_LAYER',
         },
+        edge,
       },
     ],
     edge,
@@ -145,6 +229,7 @@ function getElkEdge(
       // Ensure that all edges originating from initial states point RIGHT
       // (give them direction priority) so that the initial states can end up on the top left
       'elk.layered.priority.direction': isInitialEdge ? '1' : '0',
+      'elk.insideSelfLoops.yo': isSelfEdge ? 'true' : 'false',
     },
   };
 }
@@ -184,7 +269,7 @@ function getDeepestNodeLevel(node: DirectedGraphNode): number {
 
 interface ElkRunContext {
   previousError?: Error;
-  relativeNodeEdgeMap: RelativeNodeEdgeMap;
+  containingNodeEdgeMap: ContainingNodeEdgeMap;
   backLinkMap: DigraphBackLinkMap;
   rectMap: DOMRectMap;
 }
@@ -193,7 +278,11 @@ function getElkChild(
   node: DirectedGraphNode,
   runContext: ElkRunContext,
 ): StateElkNode {
-  const { relativeNodeEdgeMap, backLinkMap, rectMap } = runContext;
+  const {
+    containingNodeEdgeMap: relativeNodeEdgeMap,
+    backLinkMap,
+    rectMap,
+  } = runContext;
   const nodeRect = rectMap.get(node.id)!;
   const contentRect = rectMap.get(`${node.id}:content`)!;
 
@@ -223,9 +312,10 @@ function getElkChild(
     node,
     children: getElkChildren(node, runContext),
     absolutePosition: { x: 0, y: 0 },
-    edges: edges.map((edge) => {
-      return getElkEdge(edge, rectMap);
-    }),
+    edges: getElkEdges(edges, rectMap),
+    // edges: edges.map((edge) => {
+    //   return getElkEdge(edge, rectMap);
+    // }),
     ports: backEdges
       .map((backEdge) => {
         return {
@@ -259,6 +349,9 @@ function getElkChild(
           'elk.layered.compaction.postCompaction.strategy': 'LEFT',
         }),
       }),
+      ...(hasSelfEdges && {
+        'elk.insideSelfLoops.activate': 'true',
+      }),
     },
   };
 }
@@ -279,7 +372,9 @@ export interface StateElkNode extends ElkNode {
 }
 
 export interface StateElkEdge extends ElkExtendedEdge {
+  type: 'normal' | 'self';
   edge: DirectedGraphEdge;
+  labels: Array<ElkLabel & { edge: DirectedGraphEdge }>;
 }
 
 export function isStateElkNode(node: ElkNode): node is StateElkNode {
@@ -322,11 +417,11 @@ export async function getElkGraph(
   rootDigraphNode: DirectedGraphNode,
 ): Promise<ElkNode> {
   const rectMap = getRectMap();
-  const relativeNodeEdgeMap = getRelativeNodeEdgeMap(rootDigraphNode);
+  const relativeNodeEdgeMap = getContainingNodeEdgeMap(rootDigraphNode);
   const backLinkMap = getBackLinkMap(rootDigraphNode);
   const rootEdges = relativeNodeEdgeMap[0].get(undefined) || [];
   const initialRunContext: ElkRunContext = {
-    relativeNodeEdgeMap,
+    containingNodeEdgeMap: relativeNodeEdgeMap,
     backLinkMap,
     rectMap,
   };
@@ -335,7 +430,7 @@ export async function getElkGraph(
   // It is wrapped so we can have self-loops, which cannot be placed in the root node.
   const getRootElkNodeData = (runContext: ElkRunContext): ElkNode => ({
     id: 'root',
-    edges: rootEdges.map((edge) => getElkEdge(edge, rectMap)),
+    edges: getElkEdges(rootEdges, rectMap),
     children: [getElkChild(rootDigraphNode, runContext)],
     layoutOptions: rootLayoutOptions,
   });
@@ -351,6 +446,7 @@ export async function getElkGraph(
     try {
       rootElkNode = await elk.layout(getRootElkNodeData(initialRunContext));
     } catch (err) {
+      console.error(err);
       initialRunContext.previousError = err as Error;
     }
   }
@@ -394,6 +490,11 @@ export async function getElkGraph(
       (edge.labels?.[0].x || 0) + (elkContainingNode?.absolutePosition.x || 0);
     edge.edge.label.y =
       (edge.labels?.[0].y || 0) + (elkContainingNode?.absolutePosition.y || 0);
+
+    edge.labels.forEach((label) => {
+      label.x = (label.x || 0) + (elkContainingNode?.absolutePosition.x || 0);
+      label.y = (label.y || 0) + (elkContainingNode?.absolutePosition.y || 0);
+    });
   };
 
   const setLayout = (
