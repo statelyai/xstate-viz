@@ -35,17 +35,17 @@ createMachine({
       );
     });
     it('panels should be hidden', () => {
-      cy.getPanelsView().should('be.hidden');
+      cy.getPanelsView().should('not.exist');
     });
     it('zoom and pan buttons group should be hidden', () => {
       cy.getControlButtons()
         .should('be.visible')
         .within(() => {
-          cy.findByRole('group', { hidden: true }).should('exist');
+          cy.findByRole('group').should('not.exist');
         });
     });
     it('canvas header should be hidden', () => {
-      cy.getCanvasHeader().should('be.hidden');
+      cy.getCanvasHeader().should('not.exist');
     });
     it('RESET button should be visible', () => {
       cy.getControlButtons().within(() => {
@@ -155,7 +155,7 @@ createMachine({
           id: SOURCE_ID,
         })}&mode=panels`,
       );
-      cy.contains('button', /visualize/i).should('not.be.visible');
+      cy.contains('button', /visualize/i).should('not.exist');
     });
     it('the visualize button should be shown if readOnly is disabled', () => {
       cy.visit(
@@ -172,7 +172,7 @@ createMachine({
         })}&mode=panels`,
       );
       [/new/i, /login to fork/i].forEach((text) => {
-        cy.contains('button', text).should('be.hidden');
+        cy.contains('button', text).should('not.exist');
       });
     });
   });

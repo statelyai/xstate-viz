@@ -40,6 +40,7 @@ export const PanelsView = (props: BoxProps) => {
       minHeight={0}
       disabled={embed?.isEmbedded && embed.mode !== EmbedMode.Full}
       hidden={embed?.isEmbedded && embed.mode === EmbedMode.Viz}
+      data-testid="panels-view"
     >
       <Tabs
         bg="gray.800"

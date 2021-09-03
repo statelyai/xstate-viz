@@ -461,7 +461,7 @@ export const EditorPanel: React.FC<{
             </div>
             <HStack padding="2" w="full" justifyContent="space-between">
               <HStack>
-                {embed?.isEmbedded && embed.readOnly && (
+                {!(embed?.isEmbedded && embed.readOnly) && (
                   <Tooltip
                     bg="black"
                     color="white"

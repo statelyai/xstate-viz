@@ -106,7 +106,7 @@ export const CanvasView: React.FC = () => {
         data-testid="controls"
       >
         {!(embed?.isEmbedded && !embed.controls) && (
-          <ButtonGroup size="sm" spacing={2} isAttached data-testid="group">
+          <ButtonGroup size="sm" spacing={2} isAttached>
             <IconButton
               aria-label="Zoom out"
               title="Zoom out"
