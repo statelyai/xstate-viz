@@ -5,6 +5,9 @@ import { StateElkEdge } from './graphUtils';
 export const ElkEdgeViz: React.FC<{ elkEdge: StateElkEdge }> = ({
   elkEdge,
 }) => {
+  if (elkEdge.type === 'self') {
+    return null;
+  }
   return (
     <g data-viz="elkEdge">
       {elkEdge.labels.map((label, i) => {
