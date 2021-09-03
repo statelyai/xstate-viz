@@ -53,10 +53,12 @@ export const PanelsView = (props: BoxProps) => {
           <Tab>State</Tab>
           <Tab>Events</Tab>
           <Tab>Actors</Tab>
-          <Tab marginLeft="auto" marginRight="2" hidden={embed?.isEmbedded}>
-            <SettingsIcon />
-          </Tab>
-          <Login hidden={embed?.isEmbedded} />
+          {!embed?.isEmbedded && (
+            <Tab marginLeft="auto" marginRight="2">
+              <SettingsIcon />
+            </Tab>
+          )}
+          {!embed?.isEmbedded && <Login />}
           {embed?.isEmbedded && embed.showOriginalLink && embed.originalUrl && (
             <Button
               height="100%"
@@ -127,9 +129,11 @@ export const PanelsView = (props: BoxProps) => {
           <TabPanel height="100%" overflowY="auto">
             <ActorsPanel />
           </TabPanel>
-          <TabPanel height="100%" overflowY="auto" hidden={embed?.isEmbedded}>
-            <SettingsPanel />
-          </TabPanel>
+          {!embed?.isEmbedded && (
+            <TabPanel height="100%" overflowY="auto">
+              <SettingsPanel />
+            </TabPanel>
+          )}
         </TabPanels>
       </Tabs>
     </ResizableBox>

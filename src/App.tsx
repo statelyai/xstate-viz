@@ -81,15 +81,11 @@ function App({ embed = { isEmbedded: false } }: AppProps) {
                 gridTemplateAreas={`"${getGridArea(embed)}"`}
                 height="100vh"
               >
-                <Visibility
-                  isHidden={
-                    !!(embed?.isEmbedded && embed.mode === EmbedMode.Panels)
-                  }
-                >
+                {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
                   <CanvasProvider value={canvasService}>
                     <CanvasView />
                   </CanvasProvider>
-                </Visibility>
+                )}
                 <PanelsView />
                 <MachineNameChooserModal />
               </Box>

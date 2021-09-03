@@ -461,77 +461,78 @@ export const EditorPanel: React.FC<{
             </div>
             <HStack padding="2" w="full" justifyContent="space-between">
               <HStack>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label={`${getPlatformMetaKeyLabel()} + Enter`}
-                  closeDelay={500}
-                >
-                  <Button
-                    disabled={isVisualizing}
-                    isLoading={isVisualizing}
-                    leftIcon={
-                      <MagicIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    onClick={() => {
-                      send({
-                        type: 'COMPILE',
-                      });
-                    }}
-                    variant="secondary"
-                    hidden={embed?.isEmbedded && embed.readOnly}
+                {embed?.isEmbedded && embed.readOnly && (
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label={`${getPlatformMetaKeyLabel()} + Enter`}
+                    closeDelay={500}
                   >
-                    Visualize
-                  </Button>
-                </Tooltip>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label={`${getPlatformMetaKeyLabel()} + S`}
-                  closeDelay={500}
-                >
-                  <Button
-                    isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting')}
-                    onClick={() => {
-                      onSave();
-                    }}
-                    leftIcon={
-                      <persistMeta.Icon
-                        fill="gray.200"
-                        height="16px"
-                        width="16px"
-                      />
-                    }
-                    variant="outline"
-                    hidden={embed?.isEmbedded}
-                  >
-                    {persistMeta.text}
-                  </Button>
-                </Tooltip>
-                {sourceOwnershipStatus === 'user-owns-source' && (
-                  <Button
-                    disabled={sourceState.hasTag('forking')}
-                    isLoading={sourceState.hasTag('forking')}
-                    onClick={() => {
-                      onFork();
-                    }}
-                    leftIcon={
-                      <ForkIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    variant="outline"
-                    hidden={embed?.isEmbedded}
-                  >
-                    Fork
-                  </Button>
+                    <Button
+                      disabled={isVisualizing}
+                      isLoading={isVisualizing}
+                      leftIcon={
+                        <MagicIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      onClick={() => {
+                        send({
+                          type: 'COMPILE',
+                        });
+                      }}
+                      variant="secondary"
+                    >
+                      Visualize
+                    </Button>
+                  </Tooltip>
                 )}
+                {!embed?.isEmbedded && (
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label={`${getPlatformMetaKeyLabel()} + S`}
+                    closeDelay={500}
+                  >
+                    <Button
+                      isLoading={sourceState.hasTag('persisting')}
+                      disabled={sourceState.hasTag('persisting')}
+                      onClick={() => {
+                        onSave();
+                      }}
+                      leftIcon={
+                        <persistMeta.Icon
+                          fill="gray.200"
+                          height="16px"
+                          width="16px"
+                        />
+                      }
+                      variant="outline"
+                    >
+                      {persistMeta.text}
+                    </Button>
+                  </Tooltip>
+                )}
+                {sourceOwnershipStatus === 'user-owns-source' &&
+                  !embed?.isEmbedded && (
+                    <Button
+                      disabled={sourceState.hasTag('forking')}
+                      isLoading={sourceState.hasTag('forking')}
+                      onClick={() => {
+                        onFork();
+                      }}
+                      leftIcon={
+                        <ForkIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      variant="outline"
+                    >
+                      Fork
+                    </Button>
+                  )}
               </HStack>
-              {sourceOwnershipStatus !== 'no-source' && (
+              {sourceOwnershipStatus !== 'no-source' && !embed?.isEmbedded && (
                 <Button
                   leftIcon={<AddIcon fill="gray.200" />}
                   onClick={onCreateNew}
                   variant="outline"
-                  hidden={embed?.isEmbedded}
                 >
                   New
                 </Button>

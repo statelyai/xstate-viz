@@ -72,15 +72,11 @@ export const CanvasView: React.FC = () => {
       height="100%"
       {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
     >
-      <Box
-        data-testid="canvas-header"
-        bg="gray.800"
-        zIndex={1}
-        padding="0"
-        hidden={embed?.isEmbedded}
-      >
-        <CanvasHeader />
-      </Box>
+      {!embed?.isEmbedded && (
+        <Box data-testid="canvas-header" bg="gray.800" zIndex={1} padding="0">
+          <CanvasHeader />
+        </Box>
+      )}
       <CanvasContainer>
         {digraph && <Graph digraph={digraph} />}
         {isLayoutPending && (
@@ -109,45 +105,41 @@ export const CanvasView: React.FC = () => {
         width="100%"
         data-testid="controls"
       >
-        <ButtonGroup
-          size="sm"
-          spacing={2}
-          isAttached
-          hidden={embed?.isEmbedded && !embed.controls}
-          data-testid="group"
-        >
-          <IconButton
-            aria-label="Zoom out"
-            title="Zoom out"
-            icon={<MinusIcon />}
-            disabled={!shouldEnableZoomOutButton}
-            onClick={() => canvasService.send('ZOOM.OUT')}
-            variant="secondary"
-          />
-          <IconButton
-            aria-label="Zoom in"
-            title="Zoom in"
-            icon={<AddIcon />}
-            disabled={!shouldEnableZoomInButton}
-            onClick={() => canvasService.send('ZOOM.IN')}
-            variant="secondary"
-          />
-          <IconButton
-            aria-label="Fit to view"
-            title="Fit to view"
-            icon={<CompressIcon />}
-            onClick={() => canvasService.send('FIT_TO_VIEW')}
-            variant="secondary"
-          />
-          <IconButton
-            aria-label="Reset canvas"
-            title="Reset canvas"
-            icon={<RepeatIcon />}
-            onClick={() => canvasService.send('POSITION.RESET')}
-            variant="secondary"
-            disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
-          />
-        </ButtonGroup>
+        {!(embed?.isEmbedded && !embed.controls) && (
+          <ButtonGroup size="sm" spacing={2} isAttached data-testid="group">
+            <IconButton
+              aria-label="Zoom out"
+              title="Zoom out"
+              icon={<MinusIcon />}
+              disabled={!shouldEnableZoomOutButton}
+              onClick={() => canvasService.send('ZOOM.OUT')}
+              variant="secondary"
+            />
+            <IconButton
+              aria-label="Zoom in"
+              title="Zoom in"
+              icon={<AddIcon />}
+              disabled={!shouldEnableZoomInButton}
+              onClick={() => canvasService.send('ZOOM.IN')}
+              variant="secondary"
+            />
+            <IconButton
+              aria-label="Fit to view"
+              title="Fit to view"
+              icon={<CompressIcon />}
+              onClick={() => canvasService.send('FIT_TO_VIEW')}
+              variant="secondary"
+            />
+            <IconButton
+              aria-label="Reset canvas"
+              title="Reset canvas"
+              icon={<RepeatIcon />}
+              onClick={() => canvasService.send('POSITION.RESET')}
+              variant="secondary"
+              disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
+            />
+          </ButtonGroup>
+        )}
         {simulationMode === 'visualizing' && (
           <Button
             size="sm"
