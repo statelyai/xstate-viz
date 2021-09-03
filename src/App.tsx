@@ -18,7 +18,6 @@ import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
-import { Visibility } from './Visibility';
 
 const getGridArea = (embed?: EmbedContext) => {
   if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
