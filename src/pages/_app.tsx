@@ -14,8 +14,8 @@ import '../InvokeViz.scss';
 import '../monacoPatch';
 import '../StateNodeViz.scss';
 
-import Head from 'next/head';
 import { parseEmbedQuery, withoutEmbedQueryParams } from '../utils';
+import { EmbedProvider } from '../embedContext';
 // import { isOnClientSide } from '../isOnClientSide';
 
 if (
@@ -71,15 +71,17 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
   );
   return (
     <AuthProvider value={authService}>
-      <Component
-        {...pageProps}
-        embed={{
+      <EmbedProvider
+        value={{
           ...embed,
           isEmbedded: pageProps.isEmbedded,
           originalUrl: withoutEmbedQueryParams(pageProps.query),
         }}
-      />
+      >
+        <Component {...pageProps} />
+      </EmbedProvider>
     </AuthProvider>
   );
 };
+
 export default MyApp;

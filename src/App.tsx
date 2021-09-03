@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
-import { EmbedProvider } from './embedContext';
+import { useEmbed } from './embedContext';
 import { CanvasView } from './CanvasView';
 import './Graph';
 import { isOnClientSide } from './isOnClientSide';
@@ -31,11 +31,8 @@ const getGridArea = (embed?: EmbedContext) => {
   return 'canvas panels';
 };
 
-export interface AppProps {
-  embed?: EmbedContext;
-}
-
-function App({ embed = { isEmbedded: false } }: AppProps) {
+function App() {
+  const embed = useEmbed();
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -66,33 +63,31 @@ function App({ embed = { isEmbedded: false } }: AppProps) {
   if (!isOnClientSide()) return null;
 
   return (
-    <EmbedProvider value={embed}>
-      <ChakraProvider theme={theme}>
-        <EditorThemeProvider>
-          <PaletteProvider value={paletteService}>
-            <SimulationProvider value={simService}>
-              <Box
-                data-testid="app"
-                data-viz-theme="dark"
-                as="main"
-                display="grid"
-                gridTemplateColumns="1fr auto"
-                gridTemplateAreas={`"${getGridArea(embed)}"`}
-                height="100vh"
-              >
-                {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
-                  <CanvasProvider value={canvasService}>
-                    <CanvasView />
-                  </CanvasProvider>
-                )}
-                <PanelsView />
-                <MachineNameChooserModal />
-              </Box>
-            </SimulationProvider>
-          </PaletteProvider>
-        </EditorThemeProvider>
-      </ChakraProvider>
-    </EmbedProvider>
+    <ChakraProvider theme={theme}>
+      <EditorThemeProvider>
+        <PaletteProvider value={paletteService}>
+          <SimulationProvider value={simService}>
+            <Box
+              data-testid="app"
+              data-viz-theme="dark"
+              as="main"
+              display="grid"
+              gridTemplateColumns="1fr auto"
+              gridTemplateAreas={`"${getGridArea(embed)}"`}
+              height="100vh"
+            >
+              {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
+                <CanvasProvider value={canvasService}>
+                  <CanvasView />
+                </CanvasProvider>
+              )}
+              <PanelsView />
+              <MachineNameChooserModal />
+            </Box>
+          </SimulationProvider>
+        </PaletteProvider>
+      </EditorThemeProvider>
+    </ChakraProvider>
   );
 }
 

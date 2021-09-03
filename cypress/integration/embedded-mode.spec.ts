@@ -35,7 +35,7 @@ createMachine({
       );
     });
     it('panels should be hidden', () => {
-      cy.getPanelsView().should('not.exist');
+      cy.getPanelsView().should('be.hidden');
     });
     it('zoom and pan buttons group should be hidden', () => {
       cy.getControlButtons()
