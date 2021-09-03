@@ -82,7 +82,7 @@ const visitVizWithNextPageProps = (
   data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
 ) => {
   cy.visit(
-    `/${data.id}?ssr=${encodeURIComponent(
+    `/viz/${data.id}?ssr=${encodeURIComponent(
       JSON.stringify({ data, id: data.id }),
     )}`,
   );
