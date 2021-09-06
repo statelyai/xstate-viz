@@ -39,7 +39,7 @@ import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
 import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
 import { isOnClientSide } from './isOnClientSide';
 import { useAuth } from './authContext';
-import { pure } from 'xstate/lib/actions';
+import { choose, pure } from 'xstate/lib/actions';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -303,14 +303,15 @@ export const makeSourceMachine = (params: {
                     assign({
                       sourceRawContent: (ctx, e) => e.code,
                     }),
-                    pure(() => {
-                      if (!params.isEmbedded) {
-                        return [
+                    choose([
+                      {
+                        actions: [
                           forwardTo('codeCacheMachine'),
                           forwardTo('confirmBeforeLeavingMachine'),
-                        ];
-                      }
-                    }),
+                        ],
+                        cond: () => !params.isEmbedded,
+                      },
+                    ]),
                   ],
                 },
                 LOGGED_IN_USER_ID_UPDATED: {
@@ -405,14 +406,15 @@ export const makeSourceMachine = (params: {
                 assign({
                   sourceRawContent: (ctx, e) => e.code,
                 }),
-                pure(() => {
-                  if (!params.isEmbedded) {
-                    return [
+                choose([
+                  {
+                    actions: [
                       forwardTo('codeCacheMachine'),
                       forwardTo('confirmBeforeLeavingMachine'),
-                    ];
-                  }
-                }),
+                    ],
+                    cond: () => !params.isEmbedded,
+                  },
+                ]),
               ],
             },
             SAVE: [
