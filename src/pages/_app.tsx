@@ -13,6 +13,7 @@ import '../EventTypeViz.scss';
 import '../InvokeViz.scss';
 import '../monacoPatch';
 import '../StateNodeViz.scss';
+import '../TransitionViz.scss';
 
 import { parseEmbedQuery, withoutEmbedQueryParams } from '../utils';
 import { EmbedProvider } from '../embedContext';
