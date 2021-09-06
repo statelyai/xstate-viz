@@ -142,6 +142,7 @@ class NotFoundError extends Error {
   }
 }
 
+// TODO - find a better way to handle this than dynamically changing the invoked services
 function getInvocations(isEmbedded: boolean) {
   if (!isEmbedded) {
     return [
