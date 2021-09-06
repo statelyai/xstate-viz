@@ -38,24 +38,10 @@ createMachine({
       cy.getPanelsView().should('be.hidden');
     });
     it('zoom and pan buttons group should be hidden', () => {
-      cy.getControlButtons()
-        .should('be.visible')
-        .within(() => {
-          cy.findByRole('group').should('not.exist');
-        });
+      cy.getControlButtons().should('not.exist');
     });
     it('canvas header should be hidden', () => {
       cy.getCanvasHeader().should('not.exist');
-    });
-    it('RESET button should be visible', () => {
-      cy.getControlButtons().within(() => {
-        cy.findByRole('button', { name: /reset/i }).should('be.visible');
-      });
-    });
-    it('More Info menu should be visible', () => {
-      cy.getControlButtons().within(() => {
-        cy.findByRole('button', { name: /more info/i }).should('be.visible');
-      });
     });
   });
 
