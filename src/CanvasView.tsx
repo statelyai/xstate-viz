@@ -91,21 +91,21 @@ export const CanvasView: React.FC = () => {
         )}
         {isEmpty && canShowWelcomeMessage && <WelcomeArea />}
       </CanvasContainer>
-      <Box
-        display="flex"
-        flexDirection="row"
-        alignItems="center"
-        justifyContent="flex-start"
-        position="absolute"
-        bottom={0}
-        left={0}
-        paddingX={2}
-        paddingY={3}
-        zIndex={1}
-        width="100%"
-        data-testid="controls"
-      >
-        {!(embed?.isEmbedded && !embed.controls) && (
+      {!(embed?.isEmbedded && !embed.controls) && (
+        <Box
+          display="flex"
+          flexDirection="row"
+          alignItems="center"
+          justifyContent="flex-start"
+          position="absolute"
+          bottom={0}
+          left={0}
+          paddingX={2}
+          paddingY={3}
+          zIndex={1}
+          width="100%"
+          data-testid="controls"
+        >
           <ButtonGroup size="sm" spacing={2} isAttached>
             <IconButton
               aria-label="Zoom out"
@@ -139,54 +139,54 @@ export const CanvasView: React.FC = () => {
               disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
             />
           </ButtonGroup>
-        )}
-        {simulationMode === 'visualizing' && (
-          <Button
-            size="sm"
-            marginLeft={2}
-            onClick={() => simService.send('MACHINES.RESET')}
-            variant="secondary"
-          >
-            RESET
-          </Button>
-        )}
-        <Menu closeOnSelect={true} placement="top-end">
-          <MenuButton
-            as={IconButton}
-            size="sm"
-            isRound
-            aria-label="More info"
-            marginLeft="auto"
-            variant="secondary"
-            icon={
-              <QuestionOutlineIcon
-                boxSize={6}
-                css={{ '& circle': { display: 'none' } }}
-              />
-            }
-          />
-          <Portal>
-            <MenuList fontSize="sm" padding="0">
-              <MenuItem
-                as={Link}
-                href="https://github.com/statelyai/xstate"
-                target="_blank"
-                rel="noreferrer"
-              >
-                XState version 4.23.0
-              </MenuItem>
-              <MenuItem
-                as={Link}
-                href="https://stately.ai/privacy"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Privacy Policy
-              </MenuItem>
-            </MenuList>
-          </Portal>
-        </Menu>
-      </Box>
+          {simulationMode === 'visualizing' && (
+            <Button
+              size="sm"
+              marginLeft={2}
+              onClick={() => simService.send('MACHINES.RESET')}
+              variant="secondary"
+            >
+              RESET
+            </Button>
+          )}
+          <Menu closeOnSelect={true} placement="top-end">
+            <MenuButton
+              as={IconButton}
+              size="sm"
+              isRound
+              aria-label="More info"
+              marginLeft="auto"
+              variant="secondary"
+              icon={
+                <QuestionOutlineIcon
+                  boxSize={6}
+                  css={{ '& circle': { display: 'none' } }}
+                />
+              }
+            />
+            <Portal>
+              <MenuList fontSize="sm" padding="0">
+                <MenuItem
+                  as={Link}
+                  href="https://github.com/statelyai/xstate"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  XState version 4.23.0
+                </MenuItem>
+                <MenuItem
+                  as={Link}
+                  href="https://stately.ai/privacy"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Privacy Policy
+                </MenuItem>
+              </MenuList>
+            </Portal>
+          </Menu>
+        </Box>
+      )}
     </Box>
   );
 };
