@@ -15,6 +15,8 @@ import '../monacoPatch';
 import '../StateNodeViz.scss';
 import '../TransitionViz.scss';
 
+// import { isOnClientSide } from '../isOnClientSide';
+
 if (
   process.env.NODE_ENV === 'production' &&
   process.env.NEXT_PUBLIC_SENTRY_DSN
@@ -61,6 +63,7 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
         const id = new URLSearchParams(window.location.search)?.get('id');
         routerReplace(`/${id}`);
       },
+      isEmbbeded: pageProps.isEmbedded,
     }),
   );
   return (
@@ -69,4 +72,5 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
     </AuthProvider>
   );
 };
+
 export default MyApp;

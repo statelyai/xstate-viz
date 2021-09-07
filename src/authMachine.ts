@@ -79,6 +79,7 @@ export const createAuthMachine = (params: {
   data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
   redirectToNewUrlFromLegacyUrl: () => void;
   routerReplace: (url: string) => void;
+  isEmbbeded: boolean;
 }) =>
   createMachine<typeof authModel>(
     {
@@ -125,6 +126,7 @@ export const createAuthMachine = (params: {
                     redirectToNewUrlFromLegacyUrl:
                       params.redirectToNewUrlFromLegacyUrl,
                     routerReplace: params.routerReplace,
+                    isEmbedded: params.isEmbbeded,
                   }),
                 ),
               };

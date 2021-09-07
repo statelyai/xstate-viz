@@ -2,6 +2,7 @@ import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useEffect, useRef } from 'react';
 import { themes } from './editor-themes';
+import { useEmbed } from './embedContext';
 import { localCache } from './localCache';
 import { SpinnerWithText } from './SpinnerWithText';
 import { useEditorTheme } from './themeContext';
@@ -83,6 +84,7 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
+  const embed = useEmbed();
   const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
@@ -112,6 +114,7 @@ export const EditorWithXStateImports = (
         minimap: { enabled: false },
         tabSize: 2,
         glyphMargin: true,
+        readOnly: embed?.isEmbedded && embed.readOnly,
       }}
       loading={<SpinnerWithText text="Preparing the editor" />}
       onChange={(text) => {

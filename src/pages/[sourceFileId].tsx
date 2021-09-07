@@ -37,14 +37,14 @@ const SourceFileIdPage = (props: SourceFileIdPageProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps<SourceFileIdPageProps> =
-  async (req) => {
-    if (req.query.ssr) {
+  async (ctx) => {
+    if (ctx.query.ssr) {
       return {
-        props: JSON.parse(req.query.ssr as string),
+        props: JSON.parse(ctx.query.ssr as string),
       };
     }
 
-    const sourceFileId = req.query.sourceFileId as string;
+    const sourceFileId = ctx.query.sourceFileId as string;
     const result = await gQuery(GetSourceFileSsrDocument, {
       id: sourceFileId,
     });

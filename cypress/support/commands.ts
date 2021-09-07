@@ -154,6 +154,26 @@ const getMonacoEditor = () => {
   return cy.get('.monaco-editor').first();
 };
 
+const getPanelsView = () => {
+  return cy.findByTestId('panels-view');
+};
+
+const getCanvasHeader = () => {
+  return cy.findByTestId('canvas-header');
+};
+
+const getStatePanel = () => {
+  return cy.findByTestId('state-panel');
+};
+
+const getCanvasGraph = () => {
+  return cy.findByTestId('canvas-graph');
+};
+
+const getControlButtons = () => {
+  return cy.findByTestId('controls');
+};
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -190,6 +210,16 @@ declare global {
       inspectMachine: typeof inspectMachine;
 
       visitVizWithNextPageProps: typeof visitVizWithNextPageProps;
+
+      getPanelsView: typeof getPanelsView;
+
+      getCanvasHeader: typeof getCanvasHeader;
+
+      getStatePanel: typeof getStatePanel;
+
+      getCanvasGraph: typeof getCanvasGraph;
+
+      getControlButtons: typeof getControlButtons;
     }
   }
 }
@@ -201,3 +231,8 @@ Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
 Cypress.Commands.add('visitVizWithNextPageProps', visitVizWithNextPageProps);
+Cypress.Commands.add('getPanelsView', getPanelsView);
+Cypress.Commands.add('getCanvasHeader', getCanvasHeader);
+Cypress.Commands.add('getStatePanel', getStatePanel);
+Cypress.Commands.add('getCanvasGraph', getCanvasGraph);
+Cypress.Commands.add('getControlButtons', getControlButtons);
