@@ -307,3 +307,30 @@ export const isTextInputLikeElement = (el: HTMLElement) => {
     el.isContentEditable
   );
 };
+
+export function paramsToRecord(
+  params: { name: string; value: string | boolean }[],
+): ParsedEmbed {
+  return params.reduce(
+    (result, current) => ({
+      ...result,
+      [current.name]: current.value,
+    }),
+    {} as ParsedEmbed,
+  );
+}
+
+export function makeEmbedUrl(id: string, params: ParsedEmbed) {
+  const paramsWithNumberValues = Object.entries(params).reduce(
+    (result, current) => {
+      return {
+        ...result,
+        [current[0]]:
+          typeof current[1] === 'boolean' ? +current[1] : current[1],
+      };
+    },
+    {},
+  );
+  const query = new URLSearchParams(paramsWithNumberValues as any);
+  return `/viz/embed/${id}?${query.toString()}`;
+}
