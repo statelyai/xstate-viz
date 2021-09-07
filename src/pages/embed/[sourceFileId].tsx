@@ -31,7 +31,7 @@ function EmbedPage(props: SourceFileIdPageProps) {
         importPrettier
         ogImageUrl={registryLinks.sourceFileOgImage(props.id)}
       />
-      <App />
+      <App isEmbedded />
     </>
   );
 }
@@ -41,11 +41,7 @@ export const getServerSideProps: GetServerSideProps<
 > = async (ctx) => {
   if (ctx.query.ssr) {
     return {
-      props: {
-        ...JSON.parse(ctx.query.ssr as string),
-        query: ctx.query,
-        isEmbedded: true,
-      },
+      props: JSON.parse(ctx.query.ssr as string),
     };
   }
 
@@ -65,8 +61,6 @@ export const getServerSideProps: GetServerSideProps<
     props: {
       id: sourceFileId,
       data: result.data?.getSourceFile,
-      isEmbedded: true,
-      query: ctx.query,
     },
   };
 };

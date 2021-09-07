@@ -1,9 +1,9 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
-import { useEmbed } from './embedContext';
+import { EmbedProvider, useEmbed } from './embedContext';
 import { CanvasView } from './CanvasView';
 import './Graph';
 import { isOnClientSide } from './isOnClientSide';
@@ -18,6 +18,8 @@ import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
+import { useRouter } from 'next/router';
+import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 
 const getGridArea = (embed?: EmbedContext) => {
   if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
@@ -31,8 +33,16 @@ const getGridArea = (embed?: EmbedContext) => {
   return 'canvas panels';
 };
 
-function App() {
-  const embed = useEmbed();
+function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
+  const { query } = useRouter();
+  const embed = useMemo(
+    () => ({
+      ...parseEmbedQuery(query),
+      isEmbedded,
+      originalUrl: withoutEmbedQueryParams(query),
+    }),
+    [query],
+  );
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -63,31 +73,33 @@ function App() {
   if (!isOnClientSide()) return null;
 
   return (
-    <ChakraProvider theme={theme}>
-      <EditorThemeProvider>
-        <PaletteProvider value={paletteService}>
-          <SimulationProvider value={simService}>
-            <Box
-              data-testid="app"
-              data-viz-theme="dark"
-              as="main"
-              display="grid"
-              gridTemplateColumns="1fr auto"
-              gridTemplateAreas={`"${getGridArea(embed)}"`}
-              height="100vh"
-            >
-              {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
-                <CanvasProvider value={canvasService}>
-                  <CanvasView />
-                </CanvasProvider>
-              )}
-              <PanelsView />
-              <MachineNameChooserModal />
-            </Box>
-          </SimulationProvider>
-        </PaletteProvider>
-      </EditorThemeProvider>
-    </ChakraProvider>
+    <EmbedProvider value={embed}>
+      <ChakraProvider theme={theme}>
+        <EditorThemeProvider>
+          <PaletteProvider value={paletteService}>
+            <SimulationProvider value={simService}>
+              <Box
+                data-testid="app"
+                data-viz-theme="dark"
+                as="main"
+                display="grid"
+                gridTemplateColumns="1fr auto"
+                gridTemplateAreas={`"${getGridArea(embed)}"`}
+                height="100vh"
+              >
+                {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
+                  <CanvasProvider value={canvasService}>
+                    <CanvasView />
+                  </CanvasProvider>
+                )}
+                <PanelsView />
+                <MachineNameChooserModal />
+              </Box>
+            </SimulationProvider>
+          </PaletteProvider>
+        </EditorThemeProvider>
+      </ChakraProvider>
+    </EmbedProvider>
   );
 }
 

@@ -2,14 +2,7 @@ import { GetServerSideProps } from 'next';
 import App from '../../App';
 import { AppHead } from '../../AppHead';
 
-/**
- * This is a shim for now. Our app currently doesn't use
- * next routing - we're just loading the entire app in _app.tsx
- *
- * This will be fixed in a later PR, adding routes with server
- * rendering to grab OG images.
- */
-const InspectedEmbed = () => {
+const InspectedEmbed = (pageProps: { isEmbedded: boolean }) => {
   return (
     <>
       <AppHead
@@ -21,23 +14,21 @@ const InspectedEmbed = () => {
         // TODO - get an OG image for the home page
         ogImageUrl={undefined}
       />
-      <App />
+      <App isEmbedded={pageProps.isEmbedded} />
     </>
   );
 };
 
-export const getServerSideProps: GetServerSideProps<{ query: any }> = async (
-  ctx,
-) => {
-  if (ctx.query.inspect === undefined) {
-    return {
-      notFound: true,
-      props: {},
-    };
-  }
-  return {
-    props: { query: ctx.query, isEmbedded: true },
+export const getServerSideProps: GetServerSideProps<{ isEmbedded: boolean }> =
+  async (ctx) => {
+    if (ctx.query.inspect === undefined) {
+      return {
+        notFound: true,
+        props: { isEmbedded: false },
+      };
+    }
+
+    return { props: { isEmbedded: true } };
   };
-};
 
 export default InspectedEmbed;
