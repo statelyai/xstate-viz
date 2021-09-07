@@ -1,4 +1,4 @@
-import { SettingsIcon } from '@chakra-ui/icons';
+import { SettingsIcon, ExternalLinkIcon } from '@chakra-ui/icons';
 import {
   Tabs,
   TabList,
@@ -13,7 +13,6 @@ import { ActorsPanel } from './ActorsPanel';
 import { EditorPanel } from './EditorPanel';
 import { useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
-import { ExternalIcon } from './ExternalIcon';
 import { Login } from './Login';
 import { ResizableBox } from './ResizableBox';
 import { SettingsPanel } from './SettingsPanel';
@@ -70,7 +69,7 @@ export const PanelsView = (props: BoxProps) => {
               target="_blank"
               rel="noopener noreferer nofollow"
               href={embed?.originalUrl}
-              leftIcon={<ExternalIcon />}
+              leftIcon={<ExternalLinkIcon />}
             >
               Open in Stately.ai/viz
             </Button>
