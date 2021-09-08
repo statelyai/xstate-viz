@@ -15,7 +15,7 @@ import {
   useClipboard,
 } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createModel } from 'xstate/lib/model';
 import { EmbedMode, EmbedPanel, ParsedEmbed } from './types';
 import { makeEmbedUrl, paramsToRecord } from './utils';
@@ -88,7 +88,7 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
       initial: 'ready',
       states: {
         ready: {
-          entry: ['makeEmbedUrlAndCode', send('PREVIEW')],
+          entry: ['makeEmbedUrlAndCode', 'updateEmbedCopy', send('PREVIEW')],
           on: {
             PARAMS_CHANGED: {
               actions: ['saveParams'],
@@ -122,27 +122,25 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
   },
 });
 
-const copyMachine = createMachine({
-  initial: 'idle',
-  states: {
-    idle: {
-      on: {
-        COPY: 'copied',
-      },
-    },
-    copied: {
-      entry: 'copyEmbedCode',
-      after: {
-        3500: 'idle',
-      },
-    },
-  },
-});
+const useEmbedCodeClipboard = () => {
+  const [value, setValue] = useState('');
+  const { onCopy, hasCopied } = useClipboard(value);
+
+  return {
+    copy: onCopy,
+    setCopyText: setValue,
+    isCopied: hasCopied,
+  };
+};
 
 const EmbedPreviewContent: React.FC = () => {
   const router = useRouter();
   const form = useRef<HTMLFormElement>(null!);
-  const clipboard = useClipboard('');
+  const {
+    copy: copyEmbedCode,
+    isCopied,
+    setCopyText,
+  } = useEmbedCodeClipboard();
   const [previewState, sendPreviewEvent] = useMachine(
     embedPreviewMachine.withContext({
       ...embedPreviewModel.initialContext,
@@ -161,6 +159,9 @@ const EmbedPreviewContent: React.FC = () => {
         saveParams: embedPreviewModel.assign({
           params: (_, e) => (e as any).params,
         }),
+        updateEmbedCopy: (ctx) => {
+          setCopyText(ctx.embedCode);
+        },
         makeEmbedUrlAndCode: embedPreviewModel.assign((ctx) => {
           const url = makeEmbedUrl(
             router.query.sourceFileId as string,
@@ -176,14 +177,6 @@ const EmbedPreviewContent: React.FC = () => {
       },
     },
   );
-  const [copyState, sendCopyEvent] = useMachine(copyMachine, {
-    actions: {
-      copyEmbedCode: () => {
-        clipboard.value = previewState.context.embedCode;
-        clipboard.onCopy();
-      },
-    },
-  });
 
   useEffect(() => {
     const formRef = form.current;
@@ -335,11 +328,9 @@ const EmbedPreviewContent: React.FC = () => {
               top="0"
               right="0"
               transform="translateY(-110%)"
-              onClick={() => {
-                sendCopyEvent('COPY');
-              }}
+              onClick={copyEmbedCode}
             >
-              {copyState.matches('copied') ? 'Copied' : 'Copy'}
+              {isCopied ? 'Copied' : 'Copy'}
             </Button>
             <Textarea
               minHeight="200px"
@@ -350,7 +341,6 @@ const EmbedPreviewContent: React.FC = () => {
         </VStack>
       </Box>
       <Box gridArea="preview" paddingLeft="2">
-        {JSON.stringify(previewState.value, null, 2)}
         {isPreviewLoading && (
           <Overlay>
             <Spinner size="lg" />

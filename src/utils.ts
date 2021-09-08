@@ -325,6 +325,7 @@ export function makeEmbedUrl(id: string, params: ParsedEmbed) {
     (result, current) => {
       return {
         ...result,
+        // Convert true|false to 1|0
         [current[0]]:
           typeof current[1] === 'boolean' ? +current[1] : current[1],
       };
