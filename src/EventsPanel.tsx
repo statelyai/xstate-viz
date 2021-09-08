@@ -343,9 +343,13 @@ const newEventMachine = newEventModel.createMachine({
       on: {
         '*': [
           {
-            cond: (ctx) => {
+            cond: (_, e) => {
               try {
-                const eventObject = JSON.parse(ctx.eventString);
+                const eventObject = JSON.parse(
+                  (e as ReturnType<
+                    typeof newEventModel.events['EVENT.PAYLOAD']
+                  >).value,
+                );
                 return typeof eventObject.type === 'string';
               } catch (e) {
                 return false;
