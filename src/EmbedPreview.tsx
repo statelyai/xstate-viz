@@ -63,16 +63,19 @@ const embedPreviewModel = createModel(
   {
     embedUrl: '',
     embedCode: getEmbedCodeFromUrl(''),
-    params: {} as ParsedEmbed,
+    params: {
+      mode: EmbedMode.Viz,
+      panel: EmbedPanel.Code,
+      readOnly: true,
+      showOriginalLink: true,
+      controls: false,
+      pan: false,
+      zoom: false,
+    } as ParsedEmbed,
   },
   {
     events: {
-      LOAD: () => ({}),
-      LOAD_DONE: () => ({}),
-      LOAD_FAILED: () => ({}),
       PARAMS_CHANGED: (params: ParsedEmbed) => ({ params }),
-      COPY: () => ({}),
-      READY: () => ({}),
       PREVIEW: () => ({}),
       IFRAME_LOADED: () => ({}),
       IFRAME_ERROR: () => ({}),
@@ -141,42 +144,28 @@ const EmbedPreviewContent: React.FC = () => {
     isCopied,
     setCopyText,
   } = useEmbedCodeClipboard();
-  const [previewState, sendPreviewEvent] = useMachine(
-    embedPreviewMachine.withContext({
-      ...embedPreviewModel.initialContext,
-      params: {
-        mode: EmbedMode.Viz as const,
-        panel: EmbedPanel.Code as const,
-        readOnly: true,
-        showOriginalLink: true,
-        controls: false,
-        pan: false,
-        zoom: false,
+  const [previewState, sendPreviewEvent] = useMachine(embedPreviewMachine, {
+    actions: {
+      saveParams: embedPreviewModel.assign({
+        params: (_, e) => (e as any).params,
+      }),
+      updateEmbedCopy: (ctx) => {
+        setCopyText(ctx.embedCode);
       },
-    }),
-    {
-      actions: {
-        saveParams: embedPreviewModel.assign({
-          params: (_, e) => (e as any).params,
-        }),
-        updateEmbedCopy: (ctx) => {
-          setCopyText(ctx.embedCode);
-        },
-        makeEmbedUrlAndCode: embedPreviewModel.assign((ctx) => {
-          const url = makeEmbedUrl(
-            router.query.sourceFileId as string,
-            ctx.params,
-          );
+      makeEmbedUrlAndCode: embedPreviewModel.assign((ctx) => {
+        const url = makeEmbedUrl(
+          router.query.sourceFileId as string,
+          ctx.params,
+        );
 
-          return {
-            embedUrl: url,
-            embedCode: getEmbedCodeFromUrl(url),
-            params: ctx.params,
-          };
-        }),
-      },
+        return {
+          embedUrl: url,
+          embedCode: getEmbedCodeFromUrl(url),
+          params: ctx.params,
+        };
+      }),
     },
-  );
+  });
 
   useEffect(() => {
     const formRef = form.current;
