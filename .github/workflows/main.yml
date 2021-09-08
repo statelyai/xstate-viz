@@ -19,6 +19,9 @@ jobs:
       - name: Lint
         run: yarn graphql-codegen && yarn tsc
 
+      - name: Jest tests
+        run: yarn jest --ci
+
       - name: Build
         run: yarn next build
         env:

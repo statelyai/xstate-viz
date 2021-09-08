@@ -19,5 +19,6 @@ declare namespace NodeJS {
     NEXT_PUBLIC_SENTRY_DSN?: string;
     NEXT_PUBLIC_DEPLOY_ENVIRONMENT?: string;
     NEXT_PUBLIC_USE_LOCAL_MONACO?: string;
+    NEXT_PUBLIC_REGISTRY_PUBLIC_URL: string;
   }
 }

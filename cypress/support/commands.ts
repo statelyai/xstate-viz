@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 
+import { GetSourceFileSsrQuery } from '../../src/graphql/GetSourceFileSSR.generated';
 import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
@@ -73,6 +74,20 @@ const visitInspector = () => {
   });
 };
 
+/**
+ * Allows you to visit the /viz/:id page and mock
+ * its SSR return
+ */
+const visitVizWithNextPageProps = (
+  data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
+) => {
+  cy.visit(
+    `/viz/${data.id}?ssr=${encodeURIComponent(
+      JSON.stringify({ data, id: data.id }),
+    )}`,
+  );
+};
+
 const waitOnInspector = (inspector: Inspector) =>
   new Promise<void>((resolve) => {
     let resolved = false;
@@ -139,6 +154,26 @@ const getMonacoEditor = () => {
   return cy.get('.monaco-editor').first();
 };
 
+const getPanelsView = () => {
+  return cy.findByTestId('panels-view');
+};
+
+const getCanvasHeader = () => {
+  return cy.findByTestId('canvas-header');
+};
+
+const getStatePanel = () => {
+  return cy.findByTestId('state-panel');
+};
+
+const getCanvasGraph = () => {
+  return cy.findByTestId('canvas-graph');
+};
+
+const getControlButtons = () => {
+  return cy.findByTestId('controls');
+};
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -173,6 +208,18 @@ declare global {
       visitInspector: typeof visitInspector;
 
       inspectMachine: typeof inspectMachine;
+
+      visitVizWithNextPageProps: typeof visitVizWithNextPageProps;
+
+      getPanelsView: typeof getPanelsView;
+
+      getCanvasHeader: typeof getCanvasHeader;
+
+      getStatePanel: typeof getStatePanel;
+
+      getCanvasGraph: typeof getCanvasGraph;
+
+      getControlButtons: typeof getControlButtons;
     }
   }
 }
@@ -183,3 +230,9 @@ Cypress.Commands.add('getCanvas', getCanvas);
 Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
+Cypress.Commands.add('visitVizWithNextPageProps', visitVizWithNextPageProps);
+Cypress.Commands.add('getPanelsView', getPanelsView);
+Cypress.Commands.add('getCanvasHeader', getCanvasHeader);
+Cypress.Commands.add('getStatePanel', getStatePanel);
+Cypress.Commands.add('getCanvasGraph', getCanvasGraph);
+Cypress.Commands.add('getControlButtons', getControlButtons);

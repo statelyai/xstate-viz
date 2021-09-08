@@ -104,8 +104,13 @@ const ResizeHandle: React.FC<{
   );
 };
 
-export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
+interface ResizableBoxProps extends Omit<BoxProps, 'width'> {
+  disabled?: boolean;
+}
+
+export const ResizableBox: React.FC<ResizableBoxProps> = ({
   children,
+  disabled,
   ...props
 }) => {
   const [widthDelta, setWidthDelta] = useState(0);
@@ -113,9 +118,14 @@ export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
   return (
     // 35rem to avoid shortcut codes breaking
     // into multiple lines
-    <Box width={`clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`} {...props}>
+    <Box
+      {...props}
+      {...(!disabled && {
+        width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`,
+      })}
+    >
       {children}
-      <ResizeHandle onChange={(value) => setWidthDelta(value)} />
+      {!disabled && <ResizeHandle onChange={(value) => setWidthDelta(value)} />}
     </Box>
   );
 };

@@ -1,6 +1,21 @@
 describe('Saving', () => {
   it('Should allow you to save a file for the first time', () => {
     cy.setMockAuthToken();
+
+    const sourceFileToBeCreated = {
+      id: 'source-file-id',
+      name: 'My awesome source file',
+      owner: {
+        id: 'id',
+      },
+    };
+
+    cy.intercept('source-file-id.json?sourceFileId=source-file-id', {
+      pageProps: {
+        id: sourceFileToBeCreated.id,
+        data: sourceFileToBeCreated,
+      },
+    });
     cy.interceptGraphQL({
       getLoggedInUser: {
         id: 'id',
@@ -24,9 +39,9 @@ describe('Saving', () => {
 
     cy.findByRole('button', { name: /Submit/ }).click();
 
-    cy.url().should('contain', 'source-file-id');
-
     cy.contains(/New file saved successfully/i);
+
+    cy.url().should('contain', 'source-file-id');
   });
 
   it('Should allow you to save an existing file', () => {
@@ -52,7 +67,7 @@ describe('Saving', () => {
       },
     });
 
-    cy.visit('/viz?id=source-file-id');
+    cy.visitVizWithNextPageProps({ id: 'source-file-id' });
 
     cy.getMonacoEditor().type(`{enter}{enter} // New Code Changes`);
 

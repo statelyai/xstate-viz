@@ -1,6 +1,7 @@
 import { isAfter } from 'date-fns';
 import { createStorage, testStorageSupport } from 'memory-web-storage';
 import { ThemeName, themes } from './editor-themes';
+import * as codec from './codec';
 
 export const storage = testStorageSupport()
   ? window.localStorage
@@ -29,8 +30,28 @@ const makePositionCacheKey = (sourceID: string | null) =>
 const makeRawSourceCacheKey = (sourceID: string | null) =>
   `${RAW_SOURCE_CACHE_PREFIX}|${sourceID || 'no_source'}`;
 
+const cachedPositionCodec = codec.createCodec<CachedPosition>()(
+  codec.obj({
+    zoom: codec.num(),
+    pan: codec.obj({
+      dx: codec.num(),
+      dy: codec.num(),
+    }),
+  }),
+);
+
+const rawSourceCodec = codec.createCodec<CachedSource>()(
+  codec.obj({
+    sourceRawContent: codec.str(),
+    date: codec.str(),
+  }),
+);
+
 const savePosition = (sourceID: string | null, position: CachedPosition) => {
-  storage.setItem(makePositionCacheKey(sourceID), JSON.stringify(position));
+  storage.setItem(
+    makePositionCacheKey(sourceID),
+    JSON.stringify(cachedPositionCodec.encode(position)),
+  );
 };
 
 const getPosition = (sourceID: string | null): CachedPosition | null => {
@@ -39,36 +60,7 @@ const getPosition = (sourceID: string | null): CachedPosition | null => {
   if (!result) return null;
 
   try {
-    return JSON.parse(result);
-  } catch (e) {}
-  return null;
-};
-
-const encodeRawSource = (sourceRawContent: string, date: Date) => {
-  return JSON.stringify({
-    sourceRawContent,
-    date,
-  });
-};
-
-const isCachedSource = (source: unknown): source is CachedSource => {
-  return (
-    typeof source === 'object' &&
-    (source as any)?.sourceRawContent &&
-    (source as any)?.date
-  );
-};
-
-const decodeRawSource = (
-  fromLocalStorage: string | null,
-): CachedSource | null => {
-  if (fromLocalStorage === null) return null;
-  try {
-    const possibleObject = JSON.parse(fromLocalStorage);
-
-    if (isCachedSource(possibleObject)) {
-      return possibleObject;
-    }
+    return cachedPositionCodec.decode(JSON.parse(result));
   } catch (e) {}
   return null;
 };
@@ -79,7 +71,12 @@ const saveSourceRawContent = (
 ) => {
   storage.setItem(
     makeRawSourceCacheKey(sourceID),
-    encodeRawSource(sourceRawContent, new Date()),
+    JSON.stringify(
+      rawSourceCodec.encode({
+        sourceRawContent,
+        date: new Date().toJSON(),
+      }),
+    ),
   );
 };
 
@@ -91,11 +88,21 @@ const getSourceRawContent = (
   sourceID: string | null,
   updatedAt: string | null,
 ): string | null => {
-  const result = decodeRawSource(
-    storage.getItem(makeRawSourceCacheKey(sourceID)),
-  );
+  const cached = storage.getItem(makeRawSourceCacheKey(sourceID));
 
-  if (!result) return null;
+  if (!cached) {
+    return null;
+  }
+
+  let result: CachedSource;
+
+  try {
+    result = rawSourceCodec.decode(JSON.parse(cached));
+  } catch (err) {
+    storage.removeItem(makeRawSourceCacheKey(sourceID));
+    console.log('Could not decode cached source', err);
+    return null;
+  }
 
   /**
    * If there's no updatedAt date, we know the

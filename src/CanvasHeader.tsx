@@ -1,4 +1,4 @@
-import { HamburgerIcon, EditIcon } from '@chakra-ui/icons';
+import { EditIcon, HamburgerIcon } from '@chakra-ui/icons';
 import {
   Avatar,
   HStack,
@@ -12,7 +12,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import React from 'react';
-import { useAuth, useLoggedInUserData } from './authContext';
+import { useLoggedInUserData } from './authContext';
 import { LikeButton } from './LikeButton';
 import { Logo } from './Logo';
 import { registryLinks } from './registryLinks';
@@ -20,9 +20,7 @@ import { ShareButton } from './ShareButton';
 import { useSourceActor } from './sourceMachine';
 
 export const CanvasHeader: React.FC = () => {
-  const authService = useAuth();
-
-  const [sourceState] = useSourceActor(authService);
+  const [sourceState] = useSourceActor();
 
   const loggedInUserData = useLoggedInUserData();
   const registryData = sourceState.context.sourceRegistryData;
@@ -58,15 +56,14 @@ export const CanvasHeader: React.FC = () => {
           </Text>
           <HStack>
             <LikeButton />
-            <ShareButton />
+            <ShareButton sourceId={registryData.id} />
             <Menu closeOnSelect>
-              <MenuButton>
-                <IconButton
-                  aria-label="Menu"
-                  icon={<HamburgerIcon />}
-                  size="sm"
-                ></IconButton>
-              </MenuButton>
+              <MenuButton
+                as={IconButton}
+                aria-label="Menu"
+                icon={<HamburgerIcon />}
+                size="sm"
+              />
               <MenuList>
                 {userOwnsSource && sourceState.context.sourceID && (
                   <MenuItem

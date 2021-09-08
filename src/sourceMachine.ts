@@ -1,5 +1,6 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
 import { useActor, useSelector } from '@xstate/react';
+import { AuthMachine } from './authMachine';
 import {
   ActorRefFrom,
   assign,
@@ -15,7 +16,6 @@ import {
   StateFrom,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
-import { authMachine } from './authMachine';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
 import {
@@ -36,6 +36,56 @@ import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
 import { SourceProvider } from './types';
 import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
+import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { isOnClientSide } from './isOnClientSide';
+import { useAuth } from './authContext';
+import { choose, pure } from 'xstate/lib/actions';
+
+const initialMachineCode = `
+import { createMachine } from 'xstate';
+`.trim();
+
+const exampleMachineCode = `
+import { createMachine, assign } from 'xstate';
+
+interface Context {
+  retries: number;
+}
+
+const fetchMachine = createMachine<Context>({
+  id: 'fetch',
+  initial: 'idle',
+  context: {
+    retries: 0
+  },
+  states: {
+    idle: {
+      on: {
+        FETCH: 'loading'
+      }
+    },
+    loading: {
+      on: {
+        RESOLVE: 'success',
+        REJECT: 'failure'
+      }
+    },
+    success: {
+      type: 'final'
+    },
+    failure: {
+      on: {
+        RETRY: {
+          target: 'loading',
+          actions: assign({
+            retries: (context, event) => context.retries + 1
+          })
+        }
+      }
+    }
+  }
+});
+`.trim();
 
 export const sourceModel = createModel(
   {
@@ -44,11 +94,12 @@ export const sourceModel = createModel(
     sourceRawContent: null as string | null,
     sourceRegistryData: null as null | SourceFileFragment,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
-    loggedInUserId: null! as string | null,
+    loggedInUserId: null as string | null,
     desiredMachineName: null as string | null,
   },
   {
     events: {
+      EXAMPLE_REQUESTED: () => ({}),
       SAVE: () => ({}),
       FORK: () => ({}),
       CREATE_NEW: () => ({}),
@@ -91,16 +142,43 @@ class NotFoundError extends Error {
   }
 }
 
-export const makeSourceMachine = (auth: SupabaseAuthClient) => {
+// TODO - find a better way to handle this than dynamically changing the invoked services
+function getInvocations(isEmbedded: boolean) {
+  if (!isEmbedded) {
+    return [
+      {
+        src: cacheCodeChangesMachine,
+        id: 'codeCacheMachine',
+      },
+      {
+        src: confirmBeforeLeavingMachine,
+        id: 'confirmBeforeLeavingMachine',
+      },
+    ];
+  } else [];
+}
+
+export const makeSourceMachine = (params: {
+  auth: SupabaseAuthClient;
+  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
+  redirectToNewUrlFromLegacyUrl: () => void;
+  routerReplace: (url: string) => void;
+  isEmbedded: boolean;
+}) => {
   const isLoggedIn = () => {
-    return Boolean(auth.session());
+    return Boolean(params.auth.session());
   };
 
   return createMachine<typeof sourceModel>(
     {
-      initial: 'checking_url',
+      initial: 'checking_if_on_legacy_url',
       preserveActionOrder: true,
-      context: sourceModel.initialContext,
+      context: {
+        ...sourceModel.initialContext,
+        sourceRawContent: params.data?.text || null,
+        sourceID: params.data?.id || null,
+        sourceProvider: params.data ? 'registry' : null,
+      },
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
         LOGGED_IN_USER_ID_UPDATED: {
@@ -123,6 +201,45 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
         },
       },
       states: {
+        checking_if_on_legacy_url: {
+          onDone: 'checking_initial_data',
+          meta: {
+            description: `This state checks if you're on /id?=<id>, and redirects to you /<id>`,
+          },
+          initial: 'checking_if_id_on_query_params',
+          states: {
+            checking_if_id_on_query_params: {
+              always: [
+                {
+                  cond: () => {
+                    if (!isOnClientSide()) return false;
+                    const queries = new URLSearchParams(window.location.search);
+
+                    return Boolean(queries.get('id') && !params.data);
+                  },
+                  target: 'redirecting',
+                },
+                {
+                  target: 'check_complete',
+                },
+              ],
+            },
+            redirecting: {
+              entry: 'redirectToNewUrlFromLegacyUrl',
+            },
+            check_complete: {
+              type: 'final',
+            },
+          },
+        },
+        checking_initial_data: {
+          always: [
+            { target: 'with_source', cond: (ctx) => Boolean(ctx.sourceID) },
+            {
+              target: 'checking_url',
+            },
+          ],
+        },
         checking_url: {
           entry: 'parseQueries',
           always: [
@@ -187,8 +304,15 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                     assign({
                       sourceRawContent: (ctx, e) => e.code,
                     }),
-                    forwardTo('codeCacheMachine'),
-                    forwardTo('confirmBeforeLeavingMachine'),
+                    choose([
+                      {
+                        actions: [
+                          forwardTo('codeCacheMachine'),
+                          forwardTo('confirmBeforeLeavingMachine'),
+                        ],
+                        cond: () => !params.isEmbedded,
+                      },
+                    ]),
                   ],
                 },
                 LOGGED_IN_USER_ID_UPDATED: {
@@ -200,16 +324,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                   target: '.checking_if_user_owns_source',
                 },
               },
-              invoke: [
-                {
-                  src: cacheCodeChangesMachine,
-                  id: 'codeCacheMachine',
-                },
-                {
-                  src: confirmBeforeLeavingMachine,
-                  id: 'confirmBeforeLeavingMachine',
-                },
-              ],
+              invoke: getInvocations(params.isEmbedded),
               initial: 'checking_if_user_owns_source',
               states: {
                 checking_if_user_owns_source: {
@@ -292,8 +407,15 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 assign({
                   sourceRawContent: (ctx, e) => e.code,
                 }),
-                forwardTo('codeCacheMachine'),
-                forwardTo('confirmBeforeLeavingMachine'),
+                choose([
+                  {
+                    actions: [
+                      forwardTo('codeCacheMachine'),
+                      forwardTo('confirmBeforeLeavingMachine'),
+                    ],
+                    cond: () => !params.isEmbedded,
+                  },
+                ]),
               ],
             },
             SAVE: [
@@ -308,25 +430,31 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               },
             ],
           },
-          invoke: [
-            {
-              src: cacheCodeChangesMachine,
-              id: 'codeCacheMachine',
-            },
-            {
-              src: confirmBeforeLeavingMachine,
-              id: 'confirmBeforeLeavingMachine',
-            },
-          ],
+          invoke: getInvocations(params.isEmbedded),
           initial: 'checking_if_in_local_storage',
           states: {
             checking_if_in_local_storage: {
-              always: {
-                target: 'check_complete',
-                actions: 'getLocalStorageCachedSource',
+              always: [
+                {
+                  cond: 'hasLocalStorageCachedSource',
+                  target: 'has_cached_source',
+                },
+                {
+                  target: 'no_cached_source',
+                },
+              ],
+            },
+            has_cached_source: {
+              entry: ['getLocalStorageCachedSource'],
+            },
+            no_cached_source: {
+              tags: ['canShowWelcomeMessage', 'noCachedSource'],
+              on: {
+                EXAMPLE_REQUESTED: {
+                  actions: 'assignExampleMachineToContext',
+                },
               },
             },
-            check_complete: {},
           },
         },
         creating: {
@@ -445,7 +573,23 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
       },
     },
     {
+      guards: {
+        hasLocalStorageCachedSource: (context) => {
+          const result = localCache.getSourceRawContent(
+            context.sourceID,
+            context.sourceRegistryData?.updatedAt,
+          );
+
+          return Boolean(result);
+        },
+      },
       actions: {
+        redirectToNewUrlFromLegacyUrl: params.redirectToNewUrlFromLegacyUrl,
+        assignExampleMachineToContext: assign((context, event) => {
+          return {
+            sourceRawContent: exampleMachineCode,
+          };
+        }),
         clearLocalStorageEntryForCurrentSource: (ctx) => {
           localCache.removeSourceRawContent(ctx.sourceID);
         },
@@ -480,12 +624,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
           };
         }),
         updateURLWithMachineID: (ctx) => {
-          updateQueryParamsWithoutReload((queries) => {
-            queries.delete('gist');
-            if (ctx.sourceID) {
-              queries.set('id', ctx.sourceID);
-            }
-          });
+          params.routerReplace(`/${ctx.sourceID}`);
         },
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
@@ -531,7 +670,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 name: ctx.desiredMachineName || '',
                 forkFromId: ctx.sourceID,
               },
-              auth.session()?.access_token!,
+              params.auth.session()?.access_token!,
             ).then((res) => res.data?.forkSourceFile!);
           }
           return gQuery(
@@ -540,7 +679,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               text: ctx.sourceRawContent || '',
               name: ctx.desiredMachineName || '',
             },
-            auth.session()?.access_token!,
+            params.auth.session()?.access_token!,
           ).then((res) => {
             return res.data?.createSourceFile!;
           });
@@ -553,7 +692,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
               id: ctx.sourceID,
               text: ctx.sourceRawContent,
             },
-            auth.session()?.access_token!,
+            params.auth.session()?.access_token!,
           ).then((res) => res.data);
         },
         loadSourceContent: (ctx) => async (send) => {
@@ -584,7 +723,7 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
                 {
                   id: ctx.sourceID,
                 },
-                auth.session()?.access_token!,
+                params.auth.session()?.access_token!,
               );
               if (!result.data?.getSourceFile) {
                 throw new NotFoundError('Source not found in Registry');
@@ -603,22 +742,17 @@ export const makeSourceMachine = (auth: SupabaseAuthClient) => {
   );
 };
 
-export const getSourceActor = (state: StateFrom<typeof authMachine>) =>
+export const getSourceActor = (state: StateFrom<AuthMachine>) =>
   state.context.sourceRef!;
 
-export const useSourceActor = (
-  authService: ActorRefFrom<typeof authMachine>,
-): [SourceMachineState, SourceMachineActorRef['send']] => {
+export const useSourceActor = () => {
+  const authService = useAuth();
   const sourceService = useSelector(authService, getSourceActor);
 
   return useActor(sourceService!);
 };
 
-const initialMachineCode = `
-import { createMachine } from 'xstate';
-`.trim();
-
-export const getEditorDefaultValue = (state: SourceMachineState) => {
+export const getEditorValue = (state: SourceMachineState) => {
   return state.context.sourceRawContent || initialMachineCode;
 };
 

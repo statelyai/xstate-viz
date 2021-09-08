@@ -1,7 +1,9 @@
-import { assign, createMachine, Receiver, StateFrom } from 'xstate';
+import { send } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
+import { StateElkNode } from './graphUtils';
 import { localCache } from './localCache';
+import { EmbedContext } from './types';
 
 export enum ZoomFactor {
   slow = 1.09,
@@ -22,12 +24,18 @@ const initialPosition = {
   },
 };
 
+const initialContext = {
+  ...initialPosition,
+  elkGraph: undefined as StateElkNode | undefined,
+  embed: undefined as EmbedContext | undefined,
+};
+
 export type Pan = {
   dx: number;
   dy: number;
 };
 
-export const canvasModel = createModel(initialPosition, {
+export const canvasModel = createModel(initialContext, {
   events: {
     'ZOOM.OUT': (x?: number, y?: number, zoomFactor?: ZoomFactor) => ({
       zoomFactor,
@@ -58,6 +66,8 @@ export const canvasModel = createModel(initialPosition, {
       width,
       height,
     }),
+    'elkGraph.UPDATE': (elkGraph: StateElkNode) => ({ elkGraph }),
+    FIT_TO_VIEW: () => ({}),
   },
 });
 
@@ -68,6 +78,22 @@ const calculateZoomOutFactor = (zoomInFactor: ZoomFactor = ZoomFactor.normal) =>
 const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
+
+export const canZoom = (ctx: typeof initialContext) => {
+  return !ctx.embed?.isEmbedded || (ctx.embed.isEmbedded && ctx.embed.zoom);
+};
+
+export const canZoomOut = (ctx: typeof initialContext) => {
+  return ctx.zoom > MAX_ZOOM_OUT_FACTOR;
+};
+
+export const canZoomIn = (ctx: typeof initialContext) => {
+  return ctx.zoom < MAX_ZOOM_IN_FACTOR;
+};
+
+export const canPan = (ctx: typeof initialContext) => {
+  return !ctx.embed?.isEmbedded || (ctx.embed.isEmbedded && ctx.embed.pan);
+};
 
 /**
  * Implementation copied from:
@@ -101,8 +127,7 @@ const getNewZoomAndPan = (
   };
 };
 
-export const canvasMachine = createMachine<typeof canvasModel>({
-  context: canvasModel.initialContext,
+export const canvasMachine = canvasModel.createMachine({
   on: {
     CANVAS_RECT_CHANGED: {
       actions: canvasModel.assign((ctx, e) => {
@@ -129,7 +154,7 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           ctx.canvasPanelPosition,
         );
       }),
-      cond: (ctx) => ctx.zoom > MAX_ZOOM_OUT_FACTOR,
+      cond: (ctx) => canZoom(ctx) && canZoomOut(ctx),
       target: '.throttling',
       internal: false,
     },
@@ -146,7 +171,7 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           ctx.canvasPanelPosition,
         );
       }),
-      cond: (ctx) => ctx.zoom < MAX_ZOOM_IN_FACTOR,
+      cond: (ctx) => canZoom(ctx) && canZoomIn(ctx),
       target: '.throttling',
       internal: false,
     },
@@ -159,24 +184,69 @@ export const canvasMachine = createMachine<typeof canvasModel>({
           };
         },
       }),
+      cond: (ctx) => canPan(ctx),
       target: '.throttling',
       internal: false,
     },
     'POSITION.RESET': {
-      actions: canvasModel.assign(initialPosition),
+      actions: canvasModel.assign({
+        zoom: canvasModel.initialContext.zoom,
+        pan: canvasModel.initialContext.pan,
+      }),
       target: '.throttling',
       internal: false,
     },
     SOURCE_CHANGED: {
       target: '.throttling',
       internal: false,
-      actions: assign((context, event) => {
-        const position = getPositionFromEvent(event);
+      actions: canvasModel.assign((context, event) => {
+        // TODO: This can be more elegant when we have system actor
+        if (!context.embed?.isEmbedded) {
+          const position = getPositionFromEvent(event);
 
-        if (!position) return {};
+          if (!position) return {};
 
-        return position;
+          return position;
+        }
+        return {};
       }),
+    },
+    'elkGraph.UPDATE': {
+      actions: [
+        canvasModel.assign({
+          elkGraph: (_, e) => e.elkGraph,
+        }),
+        send('FIT_TO_VIEW'),
+      ],
+    },
+    FIT_TO_VIEW: {
+      actions: [
+        canvasModel.assign({
+          zoom: (ctx) => {
+            if (!ctx.elkGraph) return ctx.zoom;
+            return (
+              Math.min(
+                ctx.canvasPanelPosition.width / ctx.elkGraph.width!,
+                ctx.canvasPanelPosition.height / ctx.elkGraph.height!,
+                MAX_ZOOM_IN_FACTOR,
+              ) * 0.9 // Ensure machine does not touch sides
+            );
+          },
+        }),
+        canvasModel.assign({
+          pan: (ctx) => {
+            if (!ctx.elkGraph) return ctx.pan;
+            return {
+              dx:
+                ctx.canvasPanelPosition.width / 2 -
+                (ctx.elkGraph.width! * ctx.zoom) / 2,
+              dy:
+                ctx.canvasPanelPosition.height / 2 -
+                (ctx.elkGraph.height! * ctx.zoom) / 2,
+            };
+          },
+        }),
+      ],
     },
   },
   initial: 'idle',
@@ -207,16 +277,4 @@ const getPositionFromEvent = (event: ModelEventsFrom<typeof canvasModel>) => {
 
   const position = localCache.getPosition(event.id);
   return position;
-};
-
-export const getShouldEnableZoomOutButton = (
-  state: StateFrom<typeof canvasMachine>,
-) => {
-  return state.context.zoom > MAX_ZOOM_OUT_FACTOR;
-};
-
-export const getShouldEnableZoomInButton = (
-  state: StateFrom<typeof canvasMachine>,
-) => {
-  return state.context.zoom < MAX_ZOOM_IN_FACTOR;
 };

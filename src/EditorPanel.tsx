@@ -16,12 +16,13 @@ import { ActorRefFrom, assign, DoneInvokeEvent, send, spawn } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { CommandPalette } from './CommandPalette';
+import { useEmbed } from './embedContext';
 import { ForkIcon, MagicIcon, SaveIcon } from './Icons';
 import { notifMachine } from './notificationMachine';
 import { parseMachines } from './parseMachine';
 import { useSimulationMode } from './SimulationContext';
 import {
-  getEditorDefaultValue,
+  getEditorValue,
   getShouldImmediateUpdate,
   SourceMachineActorRef,
   SourceMachineState,
@@ -139,13 +140,12 @@ const editorPanelMachine = editorPanelModel.createMachine(
               src: async (ctx) => {
                 const monaco = ctx.monacoRef!;
                 const uri = monaco.Uri.parse(ctx.mainFile);
-                const getWorker =
-                  await monaco.languages.typescript.getTypeScriptWorker();
+                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
                 const tsWorker = await getWorker(uri);
 
-                const usedXStateGistIdentifiers: string[] = await (
-                  tsWorker as any
-                ).queryXStateGistIdentifiers(uri.toString());
+                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
+                  uri.toString(),
+                );
 
                 if (usedXStateGistIdentifiers.length > 0) {
                   const fixupImportsText = buildGistFixupImportsText(
@@ -375,6 +375,7 @@ export const EditorPanel: React.FC<{
   onChange: (machine: AnyStateMachine[]) => void;
   onChangedCodeValue: (code: string) => void;
 }> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
+  const embed = useEmbed();
   const authService = useAuth();
   const [authState] = useActor(authService);
   const sourceService = useSelector(
@@ -392,13 +393,13 @@ export const EditorPanel: React.FC<{
     sourceOwnershipStatus,
   );
 
-  const defaultValue = getEditorDefaultValue(sourceState);
+  const value = getEditorValue(sourceState);
 
   const [current, send] = useMachine(
     // TODO: had to shut up TS by extending model.initialContext
     editorPanelMachine.withContext({
       ...editorPanelModel.initialContext,
-      code: defaultValue,
+      code: value,
       sourceRef: sourceService,
     }),
     {
@@ -426,13 +427,18 @@ export const EditorPanel: React.FC<{
           }}
         />
       )}
-      <Box height="100%" display="grid" gridTemplateRows="1fr 4rem">
+      <Box
+        height="100%"
+        display="grid"
+        gridTemplateRows="1fr auto"
+        data-testid="editor"
+      >
         {simulationMode === 'visualizing' && (
           <>
             {/* This extra div acts as a placeholder that is supposed to stretch while EditorWithXStateImports lazy-loads (thanks to `1fr` on the grid) */}
-            <div>
+            <div style={{ minHeight: 0 }}>
               <EditorWithXStateImports
-                defaultValue={defaultValue}
+                value={value}
                 onMount={(standaloneEditor, monaco) => {
                   send({
                     type: 'EDITOR_READY',
@@ -455,69 +461,74 @@ export const EditorPanel: React.FC<{
             </div>
             <HStack padding="2" w="full" justifyContent="space-between">
               <HStack>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label={`${getPlatformMetaKeyLabel()} + Enter`}
-                  closeDelay={500}
-                >
-                  <Button
-                    disabled={isVisualizing}
-                    isLoading={isVisualizing}
-                    leftIcon={
-                      <MagicIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    onClick={() => {
-                      send({
-                        type: 'COMPILE',
-                      });
-                    }}
-                    variant="secondary"
+                {!(embed?.isEmbedded && embed.readOnly) && (
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label={`${getPlatformMetaKeyLabel()} + Enter`}
+                    closeDelay={500}
                   >
-                    Visualize
-                  </Button>
-                </Tooltip>
-                <Tooltip
-                  bg="black"
-                  color="white"
-                  label={`${getPlatformMetaKeyLabel()} + S`}
-                  closeDelay={500}
-                >
-                  <Button
-                    isLoading={sourceState.hasTag('persisting')}
-                    disabled={sourceState.hasTag('persisting')}
-                    onClick={() => {
-                      onSave();
-                    }}
-                    leftIcon={
-                      <persistMeta.Icon
-                        fill="gray.200"
-                        height="16px"
-                        width="16px"
-                      />
-                    }
-                    variant="outline"
-                  >
-                    {persistMeta.text}
-                  </Button>
-                </Tooltip>
-                {sourceOwnershipStatus === 'user-owns-source' && (
-                  <Button
-                    disabled={sourceState.hasTag('forking')}
-                    isLoading={sourceState.hasTag('forking')}
-                    onClick={() => {
-                      onFork();
-                    }}
-                    leftIcon={
-                      <ForkIcon fill="gray.200" height="16px" width="16px" />
-                    }
-                    variant="outline"
-                  >
-                    Fork
-                  </Button>
+                    <Button
+                      disabled={isVisualizing}
+                      isLoading={isVisualizing}
+                      leftIcon={
+                        <MagicIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      onClick={() => {
+                        send({
+                          type: 'COMPILE',
+                        });
+                      }}
+                      variant="secondary"
+                    >
+                      Visualize
+                    </Button>
+                  </Tooltip>
                 )}
+                {!embed?.isEmbedded && (
+                  <Tooltip
+                    bg="black"
+                    color="white"
+                    label={`${getPlatformMetaKeyLabel()} + S`}
+                    closeDelay={500}
+                  >
+                    <Button
+                      isLoading={sourceState.hasTag('persisting')}
+                      disabled={sourceState.hasTag('persisting')}
+                      onClick={() => {
+                        onSave();
+                      }}
+                      leftIcon={
+                        <persistMeta.Icon
+                          fill="gray.200"
+                          height="16px"
+                          width="16px"
+                        />
+                      }
+                      variant="outline"
+                    >
+                      {persistMeta.text}
+                    </Button>
+                  </Tooltip>
+                )}
+                {sourceOwnershipStatus === 'user-owns-source' &&
+                  !embed?.isEmbedded && (
+                    <Button
+                      disabled={sourceState.hasTag('forking')}
+                      isLoading={sourceState.hasTag('forking')}
+                      onClick={() => {
+                        onFork();
+                      }}
+                      leftIcon={
+                        <ForkIcon fill="gray.200" height="16px" width="16px" />
+                      }
+                      variant="outline"
+                    >
+                      Fork
+                    </Button>
+                  )}
               </HStack>
-              {sourceOwnershipStatus !== 'no-source' && (
+              {sourceOwnershipStatus !== 'no-source' && !embed?.isEmbedded && (
                 <Button
                   leftIcon={<AddIcon fill="gray.200" />}
                   onClick={onCreateNew}

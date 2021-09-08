@@ -1,23 +1,48 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-import { useInterpret, useSelector } from '@xstate/react';
-import { useEffect } from 'react';
-import { AuthProvider } from './authContext';
-import { authMachine } from './authMachine';
+import React, { useEffect, useMemo } from 'react';
+import { useActor, useInterpret, useSelector } from '@xstate/react';
+import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
+import { EmbedProvider, useEmbed } from './embedContext';
 import { CanvasView } from './CanvasView';
 import './Graph';
+import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { useSourceActor } from './sourceMachine';
+import { getSourceActor } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
+import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
+import { useRouter } from 'next/router';
+import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 
-function App() {
+const getGridArea = (embed?: EmbedContext) => {
+  if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
+    return 'canvas';
+  }
+
+  if (embed?.isEmbedded && embed.mode === EmbedMode.Panels) {
+    return 'panels';
+  }
+
+  return 'canvas panels';
+};
+
+function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
+  const { query } = useRouter();
+  const embed = useMemo(
+    () => ({
+      ...parseEmbedQuery(query),
+      isEmbedded,
+      originalUrl: withoutEmbedQueryParams(query),
+    }),
+    [query],
+  );
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -26,9 +51,9 @@ function App() {
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const authService = useInterpret(authMachine);
 
-  const [sourceState, sendToSourceService] = useSourceActor(authService);
+  const sourceService = useSelector(useAuth(), getSourceActor);
+  const [sourceState, sendToSourceService] = useActor(sourceService!);
 
   useEffect(() => {
     sendToSourceService({
@@ -37,16 +62,20 @@ function App() {
     });
   }, [machine?.id, sendToSourceService]);
 
-  const sourceID = sourceState.context.sourceID;
+  const sourceID = sourceState!.context.sourceID;
 
   const canvasService = useInterpretCanvas({
     sourceID,
+    embed,
   });
 
+  // This is because we're doing loads of things on client side anyway
+  if (!isOnClientSide()) return null;
+
   return (
-    <ChakraProvider theme={theme}>
-      <EditorThemeProvider>
-        <AuthProvider value={authService}>
+    <EmbedProvider value={embed}>
+      <ChakraProvider theme={theme}>
+        <EditorThemeProvider>
           <PaletteProvider value={paletteService}>
             <SimulationProvider value={simService}>
               <Box
@@ -55,20 +84,22 @@ function App() {
                 as="main"
                 display="grid"
                 gridTemplateColumns="1fr auto"
-                gridTemplateAreas="'canvas panels'"
+                gridTemplateAreas={`"${getGridArea(embed)}"`}
                 height="100vh"
               >
-                <CanvasProvider value={canvasService}>
-                  <CanvasView />
-                </CanvasProvider>
+                {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
+                  <CanvasProvider value={canvasService}>
+                    <CanvasView />
+                  </CanvasProvider>
+                )}
                 <PanelsView />
                 <MachineNameChooserModal />
               </Box>
             </SimulationProvider>
           </PaletteProvider>
-        </AuthProvider>
-      </EditorThemeProvider>
-    </ChakraProvider>
+        </EditorThemeProvider>
+      </ChakraProvider>
+    </EmbedProvider>
   );
 }
 

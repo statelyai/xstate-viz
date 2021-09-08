@@ -1,28 +1,13 @@
-import { ClassNames } from '@emotion/react';
 import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useEffect, useRef } from 'react';
 import { themes } from './editor-themes';
+import { useEmbed } from './embedContext';
 import { localCache } from './localCache';
+import { prettierLoader } from './prettier';
 import { SpinnerWithText } from './SpinnerWithText';
 import { useEditorTheme } from './themeContext';
 import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
-
-/**
- * We're importing prettier via CDN - this declaration
- * allows us to use it globally
- */
-declare global {
-  export const prettier: typeof import('prettier');
-  export const prettierPlugins: (string | import('prettier').Plugin)[];
-}
-
-function prettify(code: string) {
-  return prettier.format(code, {
-    parser: 'typescript',
-    plugins: prettierPlugins,
-  });
-}
 
 /**
  * CtrlCMD + Enter => format => update chart
@@ -36,7 +21,7 @@ interface EditorWithXStateImportsProps {
   onMount?: OnMount;
   onSave?: () => void;
   onFormat?: () => void;
-  defaultValue?: string;
+  value: string;
 }
 
 // based on the logic here: https://github.com/microsoft/TypeScript-Website/blob/103f80e7490ad75c34917b11e3ebe7ab9e8fc418/packages/sandbox/src/index.ts
@@ -84,6 +69,7 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
+  const embed = useEmbed();
   const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
@@ -105,96 +91,86 @@ export const EditorWithXStateImports = (
   }, [editorTheme.theme]);
 
   return (
-    <ClassNames>
-      {({ css }) => (
-        <Editor
-          wrapperClassName={`${css`
-            min-height: 0;
-            min-width: 0;
-          `} js-monaco-editor`}
-          defaultPath="main.ts"
-          defaultLanguage="typescript"
-          defaultValue={props.defaultValue}
-          options={{
-            minimap: { enabled: false },
-            tabSize: 2,
-            glyphMargin: true,
-          }}
-          loading={<SpinnerWithText text="Preparing the editor" />}
-          onChange={(text) => {
-            if (typeof text === 'string') {
-              props.onChange?.(text);
-            }
-          }}
-          theme="vs-dark"
-          onMount={async (editor, monaco) => {
-            editorRef.current = monaco.editor;
-            const theme = editorTheme.theme;
-            monaco.editor.defineTheme(theme, themes[theme]);
-            monaco.editor.setTheme(theme);
+    <Editor
+      defaultPath="main.ts"
+      defaultLanguage="typescript"
+      value={props.value}
+      options={{
+        minimap: { enabled: false },
+        tabSize: 2,
+        glyphMargin: true,
+        readOnly: embed?.isEmbedded && embed.readOnly,
+      }}
+      loading={<SpinnerWithText text="Preparing the editor" />}
+      onChange={(text) => {
+        if (typeof text === 'string') {
+          props.onChange?.(text);
+        }
+      }}
+      theme="vs-dark"
+      onMount={async (editor, monaco) => {
+        editorRef.current = monaco.editor;
+        const theme = editorTheme.theme;
+        monaco.editor.defineTheme(theme, themes[theme]);
+        monaco.editor.setTheme(theme);
 
-            monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
-              customWorkerPath: `${new URL(
-                window.location.origin,
-              )}viz/ts-worker.js`,
-            });
+        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+          customWorkerPath: `${new URL(
+            window.location.origin,
+          )}viz/ts-worker.js`,
+        });
 
-            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-              ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
-              module: monaco.languages.typescript.ModuleKind.CommonJS,
-              moduleResolution:
-                monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-              strict: true,
-            });
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          ...monaco.languages.typescript.typescriptDefaults.getCompilerOptions(),
+          module: monaco.languages.typescript.ModuleKind.CommonJS,
+          moduleResolution:
+            monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+          strict: true,
+        });
 
-            // Prettier to format
-            // Ctrl/CMD + Enter to visualize
-            editor.addAction({
-              id: 'format',
-              label: 'Format',
-              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-              run: (editor) => {
-                editor.getAction('editor.action.formatDocument').run();
-              },
-            });
+        // Prettier to format
+        // Ctrl/CMD + Enter to visualize
+        editor.addAction({
+          id: 'format',
+          label: 'Format',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+          run: (editor) => {
+            editor.getAction('editor.action.formatDocument').run();
+          },
+        });
 
-            monaco.languages.registerDocumentFormattingEditProvider(
-              'typescript',
-              {
-                provideDocumentFormattingEdits: (model) => {
-                  try {
-                    return [
-                      {
-                        text: prettify(editor.getValue()),
-                        range: model.getFullModelRange(),
-                      },
-                    ];
-                  } catch (err) {
-                    console.error(err);
-                  } finally {
-                    props.onFormat?.();
-                  }
+        monaco.languages.registerDocumentFormattingEditProvider('typescript', {
+          provideDocumentFormattingEdits: async (model) => {
+            try {
+              return [
+                {
+                  text: await prettierLoader.format(editor.getValue()),
+                  range: model.getFullModelRange(),
                 },
-              },
-            );
+              ];
+            } catch (err) {
+              console.error(err);
+            } finally {
+              props.onFormat?.();
+            }
+          },
+        });
 
-            // Ctrl/CMD + S to save/update to registry
-            editor.addAction({
-              id: 'save',
-              label: 'Save',
-              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-              run: () => {
-                props.onSave?.();
-                editor.getAction('editor.action.formatDocument').run();
-              },
-            });
+        // Ctrl/CMD + S to save/update to registry
+        editor.addAction({
+          id: 'save',
+          label: 'Save',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+          run: () => {
+            props.onSave?.();
+            editor.getAction('editor.action.formatDocument').run();
+          },
+        });
 
-            const wrappedEditor = withTypeAcquisition(editor, monaco);
-            props.onMount?.(wrappedEditor, monaco);
-          }}
-        />
-      )}
-    </ClassNames>
+        const wrappedEditor = withTypeAcquisition(editor, monaco);
+        props.onMount?.(wrappedEditor, monaco);
+      }}
+    />
   );
 };
 
