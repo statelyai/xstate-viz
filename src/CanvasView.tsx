@@ -133,7 +133,7 @@ export const CanvasView: React.FC = () => {
           {simulationMode === 'visualizing' && (
             <Button
               size="sm"
-              margin={2}
+              marginLeft={2}
               onClick={() => simService.send('MACHINES.RESET')}
               variant="secondary"
             >
