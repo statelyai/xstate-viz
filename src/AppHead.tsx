@@ -29,12 +29,6 @@ export const AppHead = (props: AppHeadProps) => {
       <link rel="icon" href="/viz/favicon.png" />
       <title>{props.title}</title>
       <meta name="description" content={props.description} />
-      {props.importPrettier && (
-        <>
-          <script src="https://unpkg.com/prettier@2.3.2/standalone.js"></script>
-          <script src="https://unpkg.com/prettier@2.3.2/parser-typescript.js"></script>
-        </>
-      )}
       {props.importElk && (
         <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
       )}
