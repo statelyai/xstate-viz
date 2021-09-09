@@ -57,6 +57,7 @@ export type AuthMachineState = StateFrom<AuthMachine>;
 export const createAuthMachine = (params: {
   sourceRegistryData: SourceRegistryData | null;
   router: NextRouter;
+  isEmbbeded: boolean;
 }) =>
   createMachine<typeof authModel>(
     {
@@ -98,6 +99,7 @@ export const createAuthMachine = (params: {
                     auth: ctx.client.auth,
                     sourceRegistryData: params.sourceRegistryData,
                     router: params.router,
+                    isEmbedded: params.isEmbbeded,
                   }),
                 ),
               };

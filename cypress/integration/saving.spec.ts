@@ -20,7 +20,13 @@ describe('Saving', () => {
       getLoggedInUser: {
         id: 'id',
       },
-      createSourceFile: sourceFileToBeCreated,
+      createSourceFile: {
+        id: 'source-file-id',
+        name: 'Source File',
+        owner: {
+          id: 'id',
+        },
+      },
     });
 
     cy.visit('/viz');
@@ -29,15 +35,13 @@ describe('Saving', () => {
 
     cy.findByRole('button', { name: /Save/ }).click();
 
-    cy.findByLabelText(/Choose a name/i).type('My awesome source file');
+    cy.findByLabelText(/Choose a name/i).type('Source File');
 
     cy.findByRole('button', { name: /Submit/ }).click();
 
     cy.contains(/New file saved successfully/i);
 
     cy.url().should('contain', 'source-file-id');
-
-    cy.contains('My awesome source file');
   });
 
   it('Should allow you to save an existing file', () => {

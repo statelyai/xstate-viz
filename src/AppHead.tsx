@@ -20,26 +20,15 @@ export interface AppHeadProps {
   description: string;
   ogImageUrl: string | null;
   importElk?: boolean;
-  importPrettier?: boolean;
 }
 
-export const AppHead = ({
-  importElk = true,
-  importPrettier = true,
-  ...props
-}: AppHeadProps) => {
+export const AppHead = ({ importElk = true, ...props }: AppHeadProps) => {
   return (
     <Head>
       <link rel="apple-touch-icon" href="/viz/favicon@256.png" />
       <link rel="icon" href="/viz/favicon.png" />
       <title>{props.title}</title>
       <meta name="description" content={props.description} />
-      {importPrettier && (
-        <>
-          <script src="https://unpkg.com/prettier@2.3.2/standalone.js"></script>
-          <script src="https://unpkg.com/prettier@2.3.2/parser-typescript.js"></script>
-        </>
-      )}
       {importElk && (
         <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
       )}

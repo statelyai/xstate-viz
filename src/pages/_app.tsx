@@ -15,6 +15,8 @@ import '../monacoPatch';
 import '../StateNodeViz.scss';
 import '../TransitionViz.scss';
 
+// import { isOnClientSide } from '../isOnClientSide';
+
 if (
   process.env.NODE_ENV === 'production' &&
   process.env.NEXT_PUBLIC_SENTRY_DSN
@@ -37,6 +39,7 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
     createAuthMachine({
       sourceRegistryData: pageProps.sourceRegistryData,
       router,
+      isEmbbeded: pageProps.isEmbedded,
     }),
   );
 
@@ -46,4 +49,5 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
     </AuthProvider>
   );
 };
+
 export default MyApp;

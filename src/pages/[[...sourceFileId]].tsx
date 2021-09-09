@@ -4,7 +4,7 @@ import { gQuery } from '../utils';
 import { GetSourceFileDocument } from '../graphql/GetSourceFile.generated';
 import { SourceRegistryData } from '../types';
 
-interface SourceFileIdPageProps {
+export interface SourceFileIdPageProps {
   sourceRegistryData: SourceRegistryData | null;
 }
 
