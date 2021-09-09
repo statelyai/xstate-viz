@@ -2,7 +2,7 @@ import { Box, ChakraProvider } from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useEffect } from 'react';
 import { useAuth } from './authContext';
-import { AppHead, AppHeadProps } from './AppHead';
+import { AppHead } from './AppHead';
 import { CanvasProvider } from './CanvasContext';
 import { CanvasView } from './CanvasView';
 import { isOnClientSide } from './isOnClientSide';
@@ -12,12 +12,40 @@ import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { getSourceActor } from './sourceMachine';
+import { getSourceActor, useSourceRegistryData } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { useInterpretCanvas } from './useInterpretCanvas';
+import { registryLinks } from './registryLinks';
 
-function App({ headProps }: { headProps: AppHeadProps }) {
+const defaultHeadProps = {
+  title: 'XState Visualizer',
+  ogTitle: 'XState Visualizer',
+  description: 'Visualizer for XState state machines and statecharts',
+  // TODO - get an OG image for the home page
+  ogImageUrl: null,
+};
+
+const VizHead = () => {
+  const sourceRegistryData = useSourceRegistryData();
+
+  if (!sourceRegistryData) {
+    return <AppHead {...defaultHeadProps} />;
+  }
+
+  return (
+    <AppHead
+      title={[sourceRegistryData.name, defaultHeadProps.title]
+        .filter(Boolean)
+        .join(' | ')}
+      ogTitle={sourceRegistryData.name || defaultHeadProps.ogTitle}
+      description={sourceRegistryData.name || defaultHeadProps.description}
+      ogImageUrl={registryLinks.sourceFileOgImage(sourceRegistryData.id)}
+    />
+  );
+};
+
+function App() {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -43,11 +71,11 @@ function App({ headProps }: { headProps: AppHeadProps }) {
     sourceID,
   });
 
-  if (!isOnClientSide()) return <AppHead {...headProps} />;
+  if (!isOnClientSide()) return <VizHead />;
 
   return (
     <>
-      <AppHead {...headProps} />
+      <VizHead />
       <ChakraProvider theme={theme}>
         <EditorThemeProvider>
           <PaletteProvider value={paletteService}>

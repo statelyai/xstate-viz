@@ -1,70 +1,47 @@
 import App from '../App';
 import { GetServerSideProps } from 'next';
 import { gQuery } from '../utils';
-import {
-  GetSourceFileSsrDocument,
-  GetSourceFileSsrQuery,
-} from '../graphql/GetSourceFileSSR.generated';
-import { registryLinks } from '../registryLinks';
-import { AppHeadProps } from '../AppHead';
-
-type SourceFile = NonNullable<GetSourceFileSsrQuery['getSourceFile']>;
+import { GetSourceFileDocument } from '../graphql/GetSourceFile.generated';
+import { SourceRegistryData } from '../types';
 
 interface SourceFileIdPageProps {
-  headProps: AppHeadProps;
-  sourceFile?: SourceFile;
+  sourceRegistryData: SourceRegistryData | null;
 }
-
-const getHeadProps = (sourceFile: SourceFile): AppHeadProps => {
-  return {
-    title: sourceFile.name
-      ? `${sourceFile.name} | XState Visualizer`
-      : `XState Visualizer`,
-    ogTitle: sourceFile.name || 'XState Visualizer',
-    description:
-      sourceFile.name || `Visualizer for XState state machines and statecharts`,
-    ogImageUrl: registryLinks.sourceFileOgImage(sourceFile.id),
-  };
-};
 
 export const getServerSideProps: GetServerSideProps<
   SourceFileIdPageProps,
   { sourceFileId?: string[] }
-> = async (req) => {
+> = async (ctx) => {
   // dynamic pages always have `req.params` available
-  const sourceFileIdParam = req.params!.sourceFileId;
+  const sourceFileIdParam = ctx.params!.sourceFileId;
 
   if (!sourceFileIdParam) {
     return {
       props: {
-        headProps: {
-          title: 'XState Visualizer',
-          ogTitle: 'XState Visualizer',
-          description: 'Visualizer for XState state machines and statecharts',
-          // TODO - get an OG image for the home page
-          ogImageUrl: null,
-        },
+        sourceRegistryData: null,
       },
     };
   }
 
   const [sourceFileId] = sourceFileIdParam;
 
-  if (req.query.ssr) {
-    const sourceFile = JSON.parse(req.query.ssr as string).data;
+  if (ctx.query.ssr) {
+    const sourceFile = JSON.parse(ctx.query.ssr as string).data;
     return {
       props: {
-        sourceFile,
-        headProps: getHeadProps(sourceFile),
+        sourceRegistryData: {
+          ...sourceFile,
+          dataSource: 'ssr',
+        },
       },
     };
   }
 
-  const result = await gQuery(GetSourceFileSsrDocument, {
+  const sourceFileResult = await gQuery(GetSourceFileDocument, {
     id: sourceFileId,
   });
 
-  const sourceFile = result.data?.getSourceFile;
+  const sourceFile = sourceFileResult.data?.getSourceFile ?? null;
 
   if (!sourceFile) {
     return {
@@ -74,8 +51,10 @@ export const getServerSideProps: GetServerSideProps<
 
   return {
     props: {
-      sourceFile,
-      headProps: getHeadProps(sourceFile),
+      sourceRegistryData: {
+        ...sourceFile,
+        dataSource: 'ssr',
+      },
     },
   };
 };

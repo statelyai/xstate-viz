@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import { GetSourceFileSsrQuery } from '../../src/graphql/GetSourceFileSSR.generated';
+import { SourceFileFragment } from '../../src/graphql/SourceFileFragment.generated';
 import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
@@ -78,9 +78,7 @@ const visitInspector = () => {
  * Allows you to visit the /viz/:id page and mock
  * its SSR return
  */
-const visitVizWithNextPageProps = (
-  data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
-) => {
+const visitVizWithNextPageProps = (data: Partial<SourceFileFragment>) => {
   cy.visit(
     `/viz/${data.id}?ssr=${encodeURIComponent(
       JSON.stringify({ data, id: data.id }),

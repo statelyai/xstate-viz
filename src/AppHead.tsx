@@ -23,11 +23,11 @@ export interface AppHeadProps {
   importPrettier?: boolean;
 }
 
-export const AppHead = React.memo(function AppHead({
+export const AppHead = ({
   importElk = true,
   importPrettier = true,
   ...props
-}: AppHeadProps) {
+}: AppHeadProps) => {
   return (
     <Head>
       <link rel="apple-touch-icon" href="/viz/favicon@256.png" />
@@ -60,4 +60,4 @@ export const AppHead = React.memo(function AppHead({
       />
     </Head>
   );
-});
+};
