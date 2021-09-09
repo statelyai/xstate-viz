@@ -16,6 +16,7 @@ module.exports = {
     ignoreBuildErrors: true,
   },
   basePath: `/viz`,
+  productionBrowserSourceMaps: true,
   /**
    * These rewrites are never used in production - only in development
    */
