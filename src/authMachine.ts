@@ -1,4 +1,4 @@
-import { createClient, Provider } from '@supabase/supabase-js';
+import { createClient, Provider, Session } from '@supabase/supabase-js';
 import {
   ActorRefFrom,
   assign,
@@ -40,6 +40,7 @@ const authModel = createModel(
   },
   {
     events: {
+      SIGNED_IN: () => ({}),
       SIGN_IN: (provider: Provider) => ({ provider }),
       SIGN_OUT: () => ({}),
       CHOOSE_PROVIDER: () => ({}),
@@ -66,6 +67,27 @@ export const createAuthMachine = (params: {
       entry: assign({
         notifRef: () => spawn(notifMachine),
       }),
+      invoke: {
+        // this wouldn't be needed if only internal Supabase's `getSessionFromUrl` (happening after redirect) would be synchronous
+        src: (ctx) => (sendBack) => {
+          if (ctx.client.auth.session()) {
+            sendBack({ type: 'SIGNED_IN' });
+          }
+          ctx.client.auth.onAuthStateChange((state) => {
+            // we only care about SIGNED_IN because signing out is "synchronous" from our perspective anyway
+            // and is handled in response to user actions
+            if (state === 'SIGNED_IN') {
+              sendBack({ type: 'SIGNED_IN' });
+            }
+          });
+        },
+      },
+      on: {
+        SIGNED_IN: {
+          target: 'signed_in',
+          internal: true,
+        },
+      },
       states: {
         initializing: {
           entry: [
