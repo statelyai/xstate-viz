@@ -41,7 +41,7 @@ export const getServerSideProps: GetServerSideProps<
 > = async (ctx) => {
   if (ctx.query.ssr) {
     return {
-      props: JSON.parse(ctx.query.ssr as string),
+      props: { ...JSON.parse(ctx.query.ssr as string), isEmbedded: true },
     };
   }
 
@@ -61,6 +61,7 @@ export const getServerSideProps: GetServerSideProps<
     props: {
       id: sourceFileId,
       data: result.data?.getSourceFile,
+      isEmbedded: true,
     },
   };
 };

@@ -155,7 +155,9 @@ function getInvocations(isEmbedded: boolean) {
         id: 'confirmBeforeLeavingMachine',
       },
     ];
-  } else [];
+  }
+
+  return [];
 }
 
 export const makeSourceMachine = (params: {
