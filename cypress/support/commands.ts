@@ -86,6 +86,42 @@ const visitVizWithNextPageProps = (data: Partial<SourceFileFragment>) => {
   );
 };
 
+const visitEmbedWithNextPageProps = ({
+  mode,
+  panel,
+  readOnly,
+  showOriginalLink,
+  sourceFile,
+}: {
+  mode?: 'panels' | 'full';
+  panel?: 'state';
+  readOnly?: boolean;
+  showOriginalLink?: boolean;
+  sourceFile: Partial<SourceFileFragment>;
+}) => {
+  const path = sourceFile ? `/viz/embed/${sourceFile.id}` : '/viz/embed';
+  const searchParams = new URLSearchParams();
+  if (sourceFile) {
+    searchParams.set(
+      'ssr',
+      JSON.stringify({ data: sourceFile, id: sourceFile.id }),
+    );
+  }
+  if (mode) {
+    searchParams.set('mode', mode);
+  }
+  if (panel) {
+    searchParams.set('panel', panel);
+  }
+  if (typeof readOnly === 'boolean') {
+    searchParams.set('readOnly', String(Number(readOnly)));
+  }
+  if (typeof showOriginalLink === 'boolean') {
+    searchParams.set('showOriginalLink', String(Number(showOriginalLink)));
+  }
+  cy.visit(`${path}?${searchParams}`);
+};
+
 const waitOnInspector = (inspector: Inspector) =>
   new Promise<void>((resolve) => {
     let resolved = false;
@@ -209,6 +245,8 @@ declare global {
 
       visitVizWithNextPageProps: typeof visitVizWithNextPageProps;
 
+      visitEmbedWithNextPageProps: typeof visitEmbedWithNextPageProps;
+
       getPanelsView: typeof getPanelsView;
 
       getCanvasHeader: typeof getCanvasHeader;
@@ -229,6 +267,10 @@ Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
 Cypress.Commands.add('visitVizWithNextPageProps', visitVizWithNextPageProps);
+Cypress.Commands.add(
+  'visitEmbedWithNextPageProps',
+  visitEmbedWithNextPageProps,
+);
 Cypress.Commands.add('getPanelsView', getPanelsView);
 Cypress.Commands.add('getCanvasHeader', getCanvasHeader);
 Cypress.Commands.add('getStatePanel', getStatePanel);
