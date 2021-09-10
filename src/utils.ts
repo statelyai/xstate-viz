@@ -35,18 +35,17 @@ export function isInternalEvent(eventName: string) {
 }
 
 export function createInterpreterContext<
-  TInterpreter extends Interpreter<any, any, any>
+  TInterpreter extends Interpreter<any, any, any>,
 >(displayName: string) {
-  const [Provider, useContext] = createRequiredContext<TInterpreter>(
-    displayName,
-  );
+  const [Provider, useContext] =
+    createRequiredContext<TInterpreter>(displayName);
 
-  const createUseSelector = <Data>(
-    selector: (state: TInterpreter['state']) => Data,
-  ) => () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useSelector(useContext(), selector);
-  };
+  const createUseSelector =
+    <Data>(selector: (state: TInterpreter['state']) => Data) =>
+    () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      return useSelector(useContext(), selector);
+    };
 
   return [Provider, useContext, createUseSelector] as const;
 }
@@ -71,7 +70,7 @@ export function createRequiredContext<T>(displayName: string) {
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string
+  TEventType extends TEvent['type'] = string,
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;
@@ -210,7 +209,6 @@ export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
   const parsedEmbed = {
     mode: EmbedMode.Viz,
     panel: EmbedPanel.Code,
-    panelIndex: 0,
     showOriginalLink: true,
     readOnly: true,
     pan: false,

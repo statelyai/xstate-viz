@@ -7,6 +7,7 @@ import 'cypress-real-events/support';
 import { inspect, Inspector } from '@xstate/inspect';
 import { interpret, InterpreterFrom, StateMachine } from 'xstate';
 import { state } from './state';
+import { ParsedEmbed } from '../../src/types';
 import { Mutation, Query } from '../../src/graphql/schemaTypes.generated';
 
 const setMockAuthToken = () => {
@@ -91,12 +92,11 @@ const visitEmbedWithNextPageProps = ({
   panel,
   readOnly,
   showOriginalLink,
+  pan,
+  zoom,
+  controls,
   sourceFile,
-}: {
-  mode?: 'panels' | 'full';
-  panel?: 'state';
-  readOnly?: boolean;
-  showOriginalLink?: boolean;
+}: Partial<ParsedEmbed> & {
   sourceFile: Partial<SourceFileFragment>;
 }) => {
   const path = sourceFile ? `/viz/embed/${sourceFile.id}` : '/viz/embed';
@@ -118,6 +118,15 @@ const visitEmbedWithNextPageProps = ({
   }
   if (typeof showOriginalLink === 'boolean') {
     searchParams.set('showOriginalLink', String(Number(showOriginalLink)));
+  }
+  if (typeof pan === 'boolean') {
+    searchParams.set('pan', String(Number(pan)));
+  }
+  if (typeof zoom === 'boolean') {
+    searchParams.set('zoom', String(Number(zoom)));
+  }
+  if (typeof showOriginalLink === 'boolean') {
+    searchParams.set('controls', String(Number(controls)));
   }
   cy.visit(`${path}?${searchParams}`);
 };
