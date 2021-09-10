@@ -668,7 +668,6 @@ export const makeSourceMachine = (params: {
             };
           }
           if (queries.get('id')) {
-            // TODO: this has to account for the path
             return {
               sourceID: queries.get('id'),
               sourceProvider: 'registry',
