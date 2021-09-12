@@ -2,26 +2,12 @@ import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useEffect, useRef } from 'react';
 import { themes } from './editor-themes';
+import { useEmbed } from './embedContext';
 import { localCache } from './localCache';
+import { prettierLoader } from './prettier';
 import { SpinnerWithText } from './SpinnerWithText';
 import { useEditorTheme } from './themeContext';
 import { detectNewImportsToAcquireTypeFor } from './typeAcquisition';
-
-/**
- * We're importing prettier via CDN - this declaration
- * allows us to use it globally
- */
-declare global {
-  export const prettier: typeof import('prettier');
-  export const prettierPlugins: (string | import('prettier').Plugin)[];
-}
-
-function prettify(code: string) {
-  return prettier.format(code, {
-    parser: 'typescript',
-    plugins: prettierPlugins,
-  });
-}
 
 /**
  * CtrlCMD + Enter => format => update chart
@@ -83,6 +69,7 @@ const withTypeAcquisition = (
 export const EditorWithXStateImports = (
   props: EditorWithXStateImportsProps,
 ) => {
+  const embed = useEmbed();
   const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
@@ -112,6 +99,7 @@ export const EditorWithXStateImports = (
         minimap: { enabled: false },
         tabSize: 2,
         glyphMargin: true,
+        readOnly: embed?.isEmbedded && embed.readOnly,
       }}
       loading={<SpinnerWithText text="Preparing the editor" />}
       onChange={(text) => {
@@ -152,11 +140,11 @@ export const EditorWithXStateImports = (
         });
 
         monaco.languages.registerDocumentFormattingEditProvider('typescript', {
-          provideDocumentFormattingEdits: (model) => {
+          provideDocumentFormattingEdits: async (model) => {
             try {
               return [
                 {
-                  text: prettify(editor.getValue()),
+                  text: await prettierLoader.format(editor.getValue()),
                   range: model.getFullModelRange(),
                 },
               ];

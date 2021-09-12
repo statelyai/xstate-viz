@@ -5,14 +5,14 @@ import { useMachine } from '@xstate/react';
 import {
   assign,
   actions,
-  send,
   sendParent,
   ContextFrom,
   SpecialTargets,
 } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
-import { isWithPlatformMetaKey, isAcceptingSpaceNatively } from './utils';
+import { isAcceptingSpaceNatively, isWithPlatformMetaKey } from './utils';
+import { useEmbed } from './embedContext';
 import { AnyState } from './types';
 
 interface DragSession {
@@ -191,104 +191,123 @@ const dragModel = createModel(
 const dragMachine = dragModel.createMachine(
   {
     preserveActionOrder: true,
-    type: 'parallel',
+    initial: 'checking_if_disabled',
     states: {
-      mode: {
-        initial: 'lockable',
+      checking_if_disabled: {
+        always: [
+          {
+            target: 'permanently_disabled',
+            cond: 'isPanDisabled',
+          },
+          'enabled',
+        ],
+      },
+      permanently_disabled: {},
+      enabled: {
+        type: 'parallel',
         states: {
-          lockable: {
-            initial: 'released',
+          mode: {
+            initial: 'lockable',
             states: {
-              released: {
-                invoke: {
-                  src: 'invokeDetectLock',
+              lockable: {
+                initial: 'released',
+                states: {
+                  released: {
+                    invoke: {
+                      src: 'invokeDetectLock',
+                    },
+                    on: {
+                      LOCK: 'locked',
+                    },
+                  },
+                  locked: {
+                    entry: actions.raise(
+                      dragModel.events.ENABLE_PANNING(),
+                    ) as any,
+                    exit: actions.raise(
+                      dragModel.events.DISABLE_PANNING(),
+                    ) as any,
+                    on: { RELEASE: 'released' },
+                    invoke: {
+                      src: 'invokeDetectRelease',
+                    },
+                  },
                 },
                 on: {
-                  LOCK: 'locked',
+                  ENABLE_PAN_MODE: 'pan',
                 },
               },
-              locked: {
+              pan: {
                 entry: actions.raise(dragModel.events.ENABLE_PANNING()) as any,
                 exit: actions.raise(dragModel.events.DISABLE_PANNING()) as any,
-                on: { RELEASE: 'released' },
-                invoke: {
-                  src: 'invokeDetectRelease',
+                on: {
+                  DISABLE_PAN_MODE: 'lockable',
                 },
               },
             },
-            on: {
-              ENABLE_PAN_MODE: 'pan',
-            },
           },
-          pan: {
-            entry: actions.raise(dragModel.events.ENABLE_PANNING()) as any,
-            exit: actions.raise(dragModel.events.DISABLE_PANNING()) as any,
-            on: {
-              DISABLE_PAN_MODE: 'lockable',
-            },
-          },
-        },
-      },
-      panning: {
-        initial: 'disabled',
-        states: {
-          disabled: {
-            on: {
-              ENABLE_PANNING: 'enabled',
-            },
-          },
-          enabled: {
-            invoke: {
-              id: 'dragSessionTracker',
-              src: (ctx) =>
-                dragSessionTracker.withContext({
-                  ...dragSessionModel.initialContext,
-                  ref: ctx.ref,
-                }),
-            },
-            on: {
-              DISABLE_PANNING: 'disabled',
-            },
-            initial: 'idle',
+          panning: {
+            initial: 'disabled',
             states: {
-              idle: {
-                meta: {
-                  cursor: 'grab',
-                },
+              disabled: {
                 on: {
-                  DRAG_SESSION_STARTED: 'active',
+                  ENABLE_PANNING: 'enabled',
                 },
               },
-              active: {
-                initial: 'grabbed',
-                on: {
-                  DRAG_SESSION_STOPPED: '.done',
+              enabled: {
+                invoke: {
+                  id: 'dragSessionTracker',
+                  src: (ctx) =>
+                    dragSessionTracker.withContext({
+                      ...dragSessionModel.initialContext,
+                      ref: ctx.ref,
+                    }),
                 },
+                on: {
+                  DISABLE_PANNING: 'disabled',
+                },
+                initial: 'idle',
                 states: {
-                  grabbed: {
+                  idle: {
                     meta: {
-                      cursor: 'grabbing',
+                      cursor: 'grab',
                     },
                     on: {
-                      POINTER_MOVED_BY: {
-                        target: 'dragging',
-                        actions: 'sendPanChange',
+                      DRAG_SESSION_STARTED: 'active',
+                    },
+                  },
+                  active: {
+                    initial: 'grabbed',
+                    on: {
+                      DRAG_SESSION_STOPPED: '.done',
+                    },
+                    states: {
+                      grabbed: {
+                        meta: {
+                          cursor: 'grabbing',
+                        },
+                        on: {
+                          POINTER_MOVED_BY: {
+                            target: 'dragging',
+                            actions: 'sendPanChange',
+                          },
+                        },
+                      },
+                      dragging: {
+                        meta: {
+                          cursor: 'grabbing',
+                        },
+                        on: {
+                          POINTER_MOVED_BY: { actions: 'sendPanChange' },
+                        },
+                      },
+                      done: {
+                        type: 'final',
                       },
                     },
-                  },
-                  dragging: {
-                    meta: {
-                      cursor: 'grabbing',
-                    },
-                    on: {
-                      POINTER_MOVED_BY: { actions: 'sendPanChange' },
-                    },
-                  },
-                  done: {
-                    type: 'final',
+                    onDone: 'idle',
                   },
                 },
-                onDone: 'idle',
               },
             },
           },
@@ -346,6 +365,7 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
   panModeEnabled,
 }) => {
   const canvasService = useCanvas();
+  const embed = useEmbed();
   const canvasRef = useRef<HTMLDivElement>(null!);
   const [state, send] = useMachine(
     dragMachine.withConfig(
@@ -357,6 +377,9 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
             },
             { to: canvasService as any },
           ),
+        },
+        guards: {
+          isPanDisabled: () => !!embed?.isEmbedded && !embed.pan,
         },
       },
       {
@@ -404,7 +427,10 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
    */
   useEffect(() => {
     const onCanvasWheel = (e: WheelEvent) => {
-      if (isWithPlatformMetaKey(e)) {
+      const isZoomEnabled = !embed?.isEmbedded || embed.zoom;
+      const isPanEnabled = !embed?.isEmbedded || embed.pan;
+
+      if (isZoomEnabled && isWithPlatformMetaKey(e)) {
         e.preventDefault();
         if (e.deltaY > 0) {
           canvasService.send(
@@ -423,7 +449,8 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
             ),
           );
         }
-      } else if (!e.metaKey && !e.ctrlKey) {
+      } else if (isPanEnabled && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
         canvasService.send(canvasModel.events.PAN(e.deltaX, e.deltaY));
       }
     };

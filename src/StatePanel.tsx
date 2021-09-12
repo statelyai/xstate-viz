@@ -7,6 +7,7 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
+  Box,
 } from '@chakra-ui/react';
 import { useSimulation } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
@@ -21,14 +22,14 @@ const ActorState: React.FC<{ state: any }> = ({ state }) => {
   const value = state?.value;
   const context = state?.context;
   return (
-    <>
+    <Box data-testid="state-panel">
       <JSONView
         src={typeof value === 'string' ? { _: value } : value}
         name="Value"
       />
       <JSONView src={context} name="Context" />
       <JSONView src={state} name="State" />
-    </>
+    </Box>
   );
 };
 
