@@ -148,6 +148,7 @@ export const CanvasView: React.FC = () => {
             size="sm"
             marginLeft={2}
             onClick={() => setPanModeEnabled((v) => !v)}
+            aria-pressed={panModeEnabled}
             variant={panModeEnabled ? 'secondaryPressed' : 'secondary'}
             disabled={embed?.isEmbedded && !embed.pan}
           />
