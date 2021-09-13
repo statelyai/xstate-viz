@@ -19,7 +19,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createModel } from 'xstate/lib/model';
 import { EmbedMode, EmbedPanel, ParsedEmbed } from './types';
 import { makeEmbedUrl, paramsToRecord } from './utils';
-import { createMachine, send } from 'xstate';
+import { send, assign } from 'xstate';
 import { Overlay } from './Overlay';
 import { useRouter } from 'next/router';
 
@@ -144,28 +144,30 @@ const EmbedPreviewContent: React.FC = () => {
     isCopied,
     setCopyText,
   } = useEmbedCodeClipboard();
-  const [previewState, sendPreviewEvent] = useMachine(embedPreviewMachine, {
-    actions: {
-      saveParams: embedPreviewModel.assign({
-        params: (_, e) => (e as any).params,
-      }),
-      updateEmbedCopy: (ctx) => {
-        setCopyText(ctx.embedCode);
-      },
-      makeEmbedUrlAndCode: embedPreviewModel.assign((ctx) => {
-        const url = makeEmbedUrl(
-          router.query.sourceFileId as string,
-          ctx.params,
-        );
+  const [previewState, sendPreviewEvent] = useMachine(
+    embedPreviewMachine.withConfig({
+      actions: {
+        saveParams: assign({
+          params: (_, e) => (e as any).params,
+        }),
+        updateEmbedCopy: (ctx) => {
+          setCopyText(ctx.embedCode);
+        },
+        makeEmbedUrlAndCode: assign((ctx) => {
+          const url = makeEmbedUrl(
+            router.query.sourceFileId as string,
+            ctx.params,
+          );
 
-        return {
-          embedUrl: url,
-          embedCode: getEmbedCodeFromUrl(url),
-          params: ctx.params,
-        };
-      }),
-    },
-  });
+          return {
+            embedUrl: url,
+            embedCode: getEmbedCodeFromUrl(url),
+            params: ctx.params,
+          };
+        }),
+      },
+    }),
+  );
 
   useEffect(() => {
     const formRef = form.current;
