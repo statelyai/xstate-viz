@@ -1,6 +1,7 @@
 import { InterpreterFrom, StateFrom } from 'xstate';
 import { createInterpreterContext } from './utils';
 import { appMachine } from './appMachine';
+import { EmbedMode } from './types';
 
 const [AppProvider, useAppService] =
   createInterpreterContext<InterpreterFrom<typeof appMachine>>('App');
@@ -8,4 +9,4 @@ const [AppProvider, useAppService] =
 export { AppProvider, useAppService };
 
 export const selectAppMode = (state: StateFrom<typeof appMachine>) =>
-  state.matches({ panels: 'collapsed' }) ? 'viz' : 'full';
+  state.value as EmbedMode;

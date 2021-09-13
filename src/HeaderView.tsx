@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { useLoggedInUserData } from './authContext';
+import { useEmbed } from './embedContext';
 import { LikeButton } from './LikeButton';
 import { Login } from './Login';
 import { Logo } from './Logo';
@@ -24,7 +25,7 @@ import { useSourceActor } from './sourceMachine';
 
 export const HeaderView: React.FC<BoxProps> = (props) => {
   const [sourceState] = useSourceActor();
-
+  const embed = useEmbed();
   const loggedInUserData = useLoggedInUserData();
   const registryData = sourceState.context.sourceRegistryData;
   const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
@@ -107,7 +108,7 @@ export const HeaderView: React.FC<BoxProps> = (props) => {
             </HStack>
           </Stack>
         )}
-        <Login />
+        {!embed?.isEmbedded && <Login />}
       </HStack>
     </Box>
   );

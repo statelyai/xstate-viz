@@ -4,8 +4,9 @@ import { useCanvas } from './CanvasContext';
 import { useMachine } from '@xstate/react';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
+import { AnyState, EmbedContext } from './types';
+import { useEmbed } from './embedContext';
 import { isWithPlatformMetaKey, isTextInputLikeElement } from './utils';
-import { AnyState } from './types';
 
 const dragModel = createModel(
   {
@@ -13,6 +14,7 @@ const dragModel = createModel(
     dragPoint: { x: 0, y: 0 },
     dx: 0,
     dy: 0,
+    embed: undefined as EmbedContext | undefined,
   },
   {
     events: {
@@ -26,8 +28,18 @@ const dragModel = createModel(
 );
 
 const dragMachine = dragModel.createMachine({
-  initial: 'released',
+  initial: 'checking_embedded_mode',
   states: {
+    checking_embedded_mode: {
+      always: [
+        {
+          target: 'in_embedded_mode',
+          cond: (ctx) => !!ctx.embed?.isEmbedded && !ctx.embed.pan,
+        },
+        'released',
+      ],
+    },
+    in_embedded_mode: {},
     released: {
       meta: {
         cursor: 'default',
@@ -95,13 +107,15 @@ const dragMachine = dragModel.createMachine({
 });
 
 const getCursorByState = (state: AnyState) =>
-  (Object.values(state.meta)[0] as { cursor: CSSProperties['cursor'] }).cursor;
+  (Object.values(state.meta)[0] as { cursor?: CSSProperties['cursor'] })
+    ?.cursor;
 
 export const CanvasContainer: React.FC = ({ children }) => {
   const canvasService = useCanvas();
+  const embed = useEmbed();
   const canvasRef = useRef<HTMLDivElement>(null!);
   const [state, send] = useMachine(
-    dragMachine.withConfig({
+    dragMachine.withContext({ ...dragModel.initialContext, embed }).withConfig({
       actions: {
         disableTextSelection: () => {
           canvasRef.current.style.userSelect = 'none';
@@ -184,8 +198,22 @@ export const CanvasContainer: React.FC = ({ children }) => {
    */
   useEffect(() => {
     const onCanvasWheel = (e: WheelEvent) => {
-      if (isWithPlatformMetaKey(e)) {
+      const isWithMetaKey = isWithPlatformMetaKey(e);
+
+      if (isWithMetaKey) {
         e.preventDefault();
+      }
+
+      const isEmbeddedWithoutZoom =
+        isWithMetaKey && embed?.isEmbedded && !embed.zoom;
+      const isEmbeddedWithoutPan =
+        !isWithMetaKey && embed?.isEmbedded && !embed.pan;
+
+      if (isEmbeddedWithoutPan || isEmbeddedWithoutZoom) {
+        return;
+      }
+
+      if (isWithMetaKey) {
         if (e.deltaY > 0) {
           canvasService.send(
             canvasModel.events['ZOOM.OUT'](

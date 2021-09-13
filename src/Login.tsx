@@ -21,19 +21,21 @@ import React from 'react';
 import { useAuth } from './authContext';
 import { registryLinks } from './registryLinks';
 
-export const Login: React.FC = () => {
+export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
   const authService = useAuth();
   const [state] = useActor(authService);
   const session = state.context!.client.auth.session();
 
   return (
-    <Box zIndex="1" display="flex" paddingInline="2">
+    <Box {...props} zIndex="1" display="flex" alignItems="center">
       {!state.hasTag('authorized') && (
         <Button
           className="btn-login"
           zIndex="1"
-          variant="outline"
-          size="sm"
+          colorScheme="blue"
+          rounded="false"
+          height="100%"
+          isFullWidth
           onClick={() => {
             authService.send('CHOOSE_PROVIDER');
           }}

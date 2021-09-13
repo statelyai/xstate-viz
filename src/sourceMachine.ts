@@ -39,6 +39,7 @@ import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
 import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
 import { isOnClientSide } from './isOnClientSide';
 import { useAuth } from './authContext';
+import { choose, pure } from 'xstate/lib/actions';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -141,11 +142,28 @@ class NotFoundError extends Error {
   }
 }
 
+// TODO - find a better way to handle this than dynamically changing the invoked services
+function getInvocations(isEmbedded: boolean) {
+  if (!isEmbedded) {
+    return [
+      {
+        src: cacheCodeChangesMachine,
+        id: 'codeCacheMachine',
+      },
+      {
+        src: confirmBeforeLeavingMachine,
+        id: 'confirmBeforeLeavingMachine',
+      },
+    ];
+  } else [];
+}
+
 export const makeSourceMachine = (params: {
   auth: SupabaseAuthClient;
   data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
   redirectToNewUrlFromLegacyUrl: () => void;
   routerReplace: (url: string) => void;
+  isEmbedded: boolean;
 }) => {
   const isLoggedIn = () => {
     return Boolean(params.auth.session());
@@ -286,8 +304,15 @@ export const makeSourceMachine = (params: {
                     assign({
                       sourceRawContent: (ctx, e) => e.code,
                     }),
-                    forwardTo('codeCacheMachine'),
-                    forwardTo('confirmBeforeLeavingMachine'),
+                    choose([
+                      {
+                        actions: [
+                          forwardTo('codeCacheMachine'),
+                          forwardTo('confirmBeforeLeavingMachine'),
+                        ],
+                        cond: () => !params.isEmbedded,
+                      },
+                    ]),
                   ],
                 },
                 LOGGED_IN_USER_ID_UPDATED: {
@@ -299,16 +324,7 @@ export const makeSourceMachine = (params: {
                   target: '.checking_if_user_owns_source',
                 },
               },
-              invoke: [
-                {
-                  src: cacheCodeChangesMachine,
-                  id: 'codeCacheMachine',
-                },
-                {
-                  src: confirmBeforeLeavingMachine,
-                  id: 'confirmBeforeLeavingMachine',
-                },
-              ],
+              invoke: getInvocations(params.isEmbedded),
               initial: 'checking_if_user_owns_source',
               states: {
                 checking_if_user_owns_source: {
@@ -391,8 +407,15 @@ export const makeSourceMachine = (params: {
                 assign({
                   sourceRawContent: (ctx, e) => e.code,
                 }),
-                forwardTo('codeCacheMachine'),
-                forwardTo('confirmBeforeLeavingMachine'),
+                choose([
+                  {
+                    actions: [
+                      forwardTo('codeCacheMachine'),
+                      forwardTo('confirmBeforeLeavingMachine'),
+                    ],
+                    cond: () => !params.isEmbedded,
+                  },
+                ]),
               ],
             },
             SAVE: [
@@ -407,16 +430,7 @@ export const makeSourceMachine = (params: {
               },
             ],
           },
-          invoke: [
-            {
-              src: cacheCodeChangesMachine,
-              id: 'codeCacheMachine',
-            },
-            {
-              src: confirmBeforeLeavingMachine,
-              id: 'confirmBeforeLeavingMachine',
-            },
-          ],
+          invoke: getInvocations(params.isEmbedded),
           initial: 'checking_if_in_local_storage',
           states: {
             checking_if_in_local_storage: {
