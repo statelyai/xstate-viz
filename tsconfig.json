@@ -15,7 +15,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "noErrorTruncation": false
   },
   "include": ["src", "next-env.d.ts"],
   "exclude": ["node_modules", ".next"]
