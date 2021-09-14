@@ -4,7 +4,7 @@ export class DirectedGraphNode {
   public data: StateNode;
 }
 
-export function toDirectedGraph(stateNode: StateNode): DirectedGraphNode {
+export function toDirectedGraph(stateNode: StateNode): void {
   const edges: DirectedGraphEdge[] = flatten(
     stateNode.transitions.map((t, transitionIndex) => {
       const targets = t.target ? t.target : [stateNode];
