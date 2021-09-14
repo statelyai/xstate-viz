@@ -1,35 +1,5 @@
-import type { ElkExtendedEdge } from 'elkjs';
 import { StateNode, TransitionDefinition } from 'xstate';
 import { flatten } from 'xstate/lib/utils';
-import { Point } from './pathUtils';
-import { getChildren } from './utils';
-
-export type DirectedGraphLabel = {
-  text: string;
-  x: number;
-  y: number;
-};
-export type DirectedGraphPort = {
-  id: string;
-};
-export type DirectedGraphEdgeConfig = {
-  id: string;
-  source: StateNode;
-  target: StateNode;
-  label: DirectedGraphLabel;
-  transition: TransitionDefinition<any, any>;
-  sections: ElkExtendedEdge['sections'];
-};
-export type DirectedGraphNodeConfig = {
-  id: string;
-  stateNode: StateNode;
-  children: DirectedGraphNode[];
-  ports: DirectedGraphPort[];
-  /**
-   * The edges representing all transitions from this `stateNode`.
-   */
-  edges: DirectedGraphEdge[];
-};
 
 export class DirectedGraphNode {
   public id: string;
@@ -85,23 +55,6 @@ export class DirectedGraphNode {
 
   public get level(): number {
     return (this.parent?.level ?? -1) + 1;
-  }
-}
-
-export class DirectedGraphEdge {
-  public id: string;
-  public source: StateNode;
-  public target: StateNode;
-  public label: DirectedGraphLabel;
-  public transition: TransitionDefinition<any, any>;
-  public sections: ElkExtendedEdge['sections'];
-  constructor(config: DirectedGraphEdgeConfig) {
-    this.id = config.id;
-    this.source = config.source;
-    this.target = config.target;
-    this.label = config.label;
-    this.transition = config.transition;
-    this.sections = config.sections;
   }
 }
 
