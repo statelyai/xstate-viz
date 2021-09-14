@@ -55,8 +55,8 @@ const dragSessionTracker = dragSessionModel.createMachine(
             (sendBack) => {
               const node = ref!.current!;
               const listener = (ev: PointerEvent) => {
-                const isLeftButton = ev.button === 0;
-                if (isLeftButton) {
+                const isMouseLeftButton = ev.button === 0;
+                if (isMouseLeftButton) {
                   sendBack(
                     dragSessionModel.events.DRAG_SESSION_STARTED({
                       pointerId: ev.pointerId,
