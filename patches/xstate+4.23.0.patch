@@ -1,8 +1,8 @@
 diff --git a/node_modules/xstate/lib/StateNode.d.ts b/node_modules/xstate/lib/StateNode.d.ts
-index 2e5e37c..e52d833 100644
+index 2e5e37c..da7b4c0 100644
 --- a/node_modules/xstate/lib/StateNode.d.ts
 +++ b/node_modules/xstate/lib/StateNode.d.ts
-@@ -1,135 +1,11 @@
+@@ -1,135 +1,10 @@
  import { Event, StateValue, MachineOptions, EventObject, HistoryValue, StateNodeDefinition, TransitionDefinition, DelayedTransitionDefinition, ActivityDefinition, StateNodeConfig, StateSchema, StateNodesConfig, InvokeDefinition, ActionObject, Mapper, PropertyMapper, SCXML, Typestate, TransitionDefinitionMap, MachineSchema } from './types';
  import { State } from './State';
 +
@@ -91,7 +91,7 @@ index 2e5e37c..e52d833 100644
 -    /**
 -     * The root machine node.
 -     */
-     machine: StateNode<TContext, any, TEvent, TTypestate>;
+-    machine: StateNode<TContext, any, TEvent, TTypestate>;
 -    /**
 -     * The meta data associated with this state node, which will be returned in State instances.
 -     */
@@ -139,7 +139,7 @@ index 2e5e37c..e52d833 100644
      withConfig(options: Partial<MachineOptions<TContext, TEvent>>, context?: TContext): StateNode<TContext, TStateSchema, TEvent, TTypestate>;
      /**
       * Clones this state machine with custom context.
-@@ -137,52 +13,9 @@ declare class StateNode<TContext = any, TStateSchema extends StateSchema = any,
+@@ -137,144 +12,6 @@ declare class StateNode<TContext = any, TStateSchema extends StateSchema = any,
       * @param context Custom context (will override predefined context, not recursive)
       */
      withContext(context: TContext): StateNode<TContext, TStateSchema, TEvent, TTypestate>;
@@ -154,9 +154,9 @@ index 2e5e37c..e52d833 100644
 -     */
 -    get on(): TransitionDefinitionMap<TContext, TEvent>;
 -    get after(): Array<DelayedTransitionDefinition<TContext, TEvent>>;
-     /**
-      * All the transitions that can be taken from this state node.
-      */
+-    /**
+-     * All the transitions that can be taken from this state node.
+-     */
 -    get transitions(): Array<TransitionDefinition<TContext, TEvent>>;
 -    private getCandidates;
 -    /**
@@ -189,9 +189,101 @@ index 2e5e37c..e52d833 100644
 -    private _transition;
 -    private next;
 -    private nodesFromChild;
-     /**
-      * Whether the given state node "escapes" this state node. If the `stateNode` is equal to or the parent of
-      * this state node, it does not escape.
+-    /**
+-     * Whether the given state node "escapes" this state node. If the `stateNode` is equal to or the parent of
+-     * this state node, it does not escape.
+-     */
+-    private escapes;
+-    private getActions;
+-    /**
+-     * Determines the next state given the current `state` and sent `event`.
+-     *
+-     * @param state The current State instance or state value
+-     * @param event The event that was sent at the current state
+-     * @param context The current context (extended state) of the current state
+-     */
+-    transition(state: StateValue | State<TContext, TEvent, any, TTypestate> | undefined, event: Event<TEvent> | SCXML.Event<TEvent>, context?: TContext): State<TContext, TEvent, TStateSchema, TTypestate>;
+-    private resolveRaisedTransition;
+-    private resolveTransition;
+-    /**
+-     * Returns the child state node from its relative `stateKey`, or throws.
+-     */
+-    getStateNode(stateKey: string): StateNode<TContext, any, TEvent, TTypestate>;
+-    /**
+-     * Returns the state node with the given `stateId`, or throws.
+-     *
+-     * @param stateId The state ID. The prefix "#" is removed.
+-     */
+-    getStateNodeById(stateId: string): StateNode<TContext, any, TEvent, any>;
+-    /**
+-     * Returns the relative state node from the given `statePath`, or throws.
+-     *
+-     * @param statePath The string or string array relative path to the state node.
+-     */
+-    getStateNodeByPath(statePath: string | string[]): StateNode<TContext, any, TEvent, any>;
+-    /**
+-     * Resolves a partial state value with its full representation in this machine.
+-     *
+-     * @param stateValue The partial state value to resolve.
+-     */
+-    resolve(stateValue: StateValue): StateValue;
+-    private getResolvedPath;
+-    private get initialStateValue();
+-    getInitialState(stateValue: StateValue, context?: TContext): State<TContext, TEvent, TStateSchema, TTypestate>;
+-    /**
+-     * The initial State instance, which includes all actions to be executed from
+-     * entering the initial state.
+-     */
+-    get initialState(): State<TContext, TEvent, TStateSchema, TTypestate>;
+-    /**
+-     * The target state value of the history state node, if it exists. This represents the
+-     * default state value to transition to if no history value exists yet.
+-     */
+-    get target(): StateValue | undefined;
+-    /**
+-     * Returns the leaf nodes from a state path relative to this state node.
+-     *
+-     * @param relativeStateId The relative state path to retrieve the state nodes
+-     * @param history The previous state to retrieve history
+-     * @param resolve Whether state nodes should resolve to initial child state nodes
+-     */
+-    getRelativeStateNodes(relativeStateId: StateNode<TContext, any, TEvent>, historyValue?: HistoryValue, resolve?: boolean): Array<StateNode<TContext, any, TEvent>>;
+-    get initialStateNodes(): Array<StateNode<TContext, any, TEvent, any>>;
+-    /**
+-     * Retrieves state nodes from a relative path to this state node.
+-     *
+-     * @param relativePath The relative path from this state node
+-     * @param historyValue
+-     */
+-    getFromRelativePath(relativePath: string[]): Array<StateNode<TContext, any, TEvent, any>>;
+-    private historyValue;
+-    /**
+-     * Resolves to the historical value(s) of the parent state node,
+-     * represented by state nodes.
+-     *
+-     * @param historyValue
+-     */
+-    private resolveHistory;
+-    /**
+-     * All the state node IDs of this state node and its descendant state nodes.
+-     */
+-    get stateIds(): string[];
+-    /**
+-     * All the event types accepted by this state node and its descendants.
+-     */
+-    get events(): Array<TEvent['type']>;
+-    /**
+-     * All the events that have transitions directly from this state node.
+-     *
+-     * Excludes any inert events.
+-     */
+-    get ownEvents(): Array<TEvent['type']>;
+-    private resolveTarget;
+-    private formatTransition;
+-    private formatTransitions;
+ }
+ export { StateNode };
+ //# sourceMappingURL=StateNode.d.ts.map
 diff --git a/node_modules/xstate/lib/model.types.d.ts b/node_modules/xstate/lib/model.types.d.ts
 index f5016fb..cb60631 100644
 --- a/node_modules/xstate/lib/model.types.d.ts
