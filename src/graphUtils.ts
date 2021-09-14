@@ -11,9 +11,3 @@ import type {
   ElkNode,
   LayoutOptions,
 } from 'elkjs/lib/main';
-import { Point } from './pathUtils';
-import { StateNode } from 'xstate';
-
-declare global {
-  export const ELK: typeof import('elkjs/lib/main').default;
-}
