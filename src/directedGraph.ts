@@ -1,7 +1,6 @@
 import { StateNode } from 'xstate';
 
 export class DirectedGraphNode {
-  public id: string;
   public data: StateNode;
 }
 
@@ -28,14 +27,4 @@ export function toDirectedGraph(stateNode: StateNode): DirectedGraphNode {
       });
     }),
   );
-
-  const graph = new DirectedGraphNode({
-    id: stateNode.id,
-    stateNode,
-    children: getChildren(stateNode).map((sn) => toDirectedGraph(sn)),
-    edges,
-    ports: [],
-  });
-
-  return graph;
 }
