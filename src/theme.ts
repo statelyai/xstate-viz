@@ -39,6 +39,14 @@ export const theme = extendTheme({
             bg: 'gray.400',
           },
         },
+        secondaryPressed: {
+          bg: 'gray.600',
+          color: '#679ae7',
+          _hover: {
+            bg: '#679ae7',
+            color: 'white',
+          },
+        },
       },
     },
   },
