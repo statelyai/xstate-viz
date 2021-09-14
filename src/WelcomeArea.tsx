@@ -12,7 +12,7 @@ import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { createMachine } from 'xstate';
 import { useAuth } from './authContext';
-import { Bolt, Lightbulb } from './Icons';
+import { BoltIcon, LightbulbIcon } from './Icons';
 import { Overlay } from './Overlay';
 import { getSourceActor } from './sourceMachine';
 
@@ -155,7 +155,7 @@ export const WelcomeArea = () => {
                   target="_blank"
                 >
                   <HStack spacing="4">
-                    <Lightbulb color="gray.200" h="6" w="6" />
+                    <LightbulbIcon color="gray.200" h="6" w="6" />
                     <Text color="gray.100">Learn how to build machines</Text>
                   </HStack>
                 </Button>
@@ -164,7 +164,7 @@ export const WelcomeArea = () => {
                   onClick={() => send('CLICK_START_CODING')}
                 >
                   <HStack spacing="4">
-                    <Bolt color="gray.200" h="6" w="6" />
+                    <BoltIcon color="gray.200" h="6" w="6" />
                     <Text color="gray.100">Start coding right away</Text>
                   </HStack>
                 </Button>

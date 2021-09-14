@@ -29,11 +29,14 @@ import { useSimulation, useSimulationMode } from './SimulationContext';
 import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
 import { useEmbed } from './embedContext';
-import { CompressIcon } from './Icons';
+import { CompressIcon, HandIcon } from './Icons';
 import { useSourceActor } from './sourceMachine';
 import { WelcomeArea } from './WelcomeArea';
 
 export const CanvasView: React.FC = () => {
+  // TODO: refactor this so an event can be explicitly sent to a machine
+  // it isn't straightforward to do at the moment cause the target machine lives in a child component
+  const [panModeEnabled, setPanModeEnabled] = React.useState(false);
   const embed = useEmbed();
   const simService = useSimulation();
   const canvasService = useCanvas();
@@ -77,7 +80,7 @@ export const CanvasView: React.FC = () => {
           <CanvasHeader />
         </Box>
       )}
-      <CanvasContainer>
+      <CanvasContainer panModeEnabled={panModeEnabled}>
         {digraph && <Graph digraph={digraph} />}
         {isLayoutPending && (
           <Overlay>
@@ -139,6 +142,16 @@ export const CanvasView: React.FC = () => {
               disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
             />
           </ButtonGroup>
+          <IconButton
+            aria-label="Pan mode"
+            icon={<HandIcon />}
+            size="sm"
+            marginLeft={2}
+            onClick={() => setPanModeEnabled((v) => !v)}
+            aria-pressed={panModeEnabled}
+            variant={panModeEnabled ? 'secondaryPressed' : 'secondary'}
+            disabled={embed?.isEmbedded && !embed.pan}
+          />
           {simulationMode === 'visualizing' && (
             <Button
               size="sm"

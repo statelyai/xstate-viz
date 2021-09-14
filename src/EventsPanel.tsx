@@ -316,12 +316,10 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
 
 const newEventModel = createModel(
   {
-    eventType: '',
     eventString: `{\n\t"type": ""\n}`,
   },
   {
     events: {
-      'EVENT.TYPE': (value: string) => ({ value }),
       'EVENT.PAYLOAD': (value: string) => ({ value }),
       'EVENT.SEND': () => ({}),
       'EVENT.RESET': () => ({}),
@@ -381,10 +379,7 @@ const NewEvent: React.FC<{
     actions: {
       sendEvent: (ctx) => {
         try {
-          const scxmlEvent = toSCXMLEvent({
-            type: ctx.eventType,
-            ...JSON.parse(ctx.eventString),
-          });
+          const scxmlEvent = toSCXMLEvent(JSON.parse(ctx.eventString));
 
           onSend(scxmlEvent);
         } catch (e) {

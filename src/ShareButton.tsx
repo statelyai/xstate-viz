@@ -15,7 +15,7 @@ import {
 import { useMachine } from '@xstate/react';
 import { featureFlags } from './featureFlags';
 import { EmbedPreview } from './EmbedPreview';
-import { Twitter, Embed } from './Icons';
+import { TwitterIcon, EmbedIcon } from './Icons';
 import { registryLinks } from './registryLinks';
 import { shareMachine } from './shareMachine';
 
@@ -79,7 +79,7 @@ export const ShareButton = ({ sourceId }: { sourceId: string }) => {
             }}
           >
             <HStack spacing="3">
-              <Twitter fill="white" />
+              <TwitterIcon fill="white" />
               <Text>Twitter</Text>
             </HStack>
           </MenuItem>
@@ -104,7 +104,7 @@ export const ShareButton = ({ sourceId }: { sourceId: string }) => {
           )}
           <MenuItem onClick={onOpen}>
             <HStack spacing="3">
-              <Embed fill="white" />
+              <EmbedIcon fill="white" />
               <Text>Embed</Text>
             </HStack>
           </MenuItem>

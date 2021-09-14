@@ -2,10 +2,10 @@ import { Box, ChakraProvider } from '@chakra-ui/react';
 import React, { useEffect, useMemo } from 'react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import { useAuth } from './authContext';
+import { AppHead } from './AppHead';
 import { CanvasProvider } from './CanvasContext';
-import { EmbedProvider, useEmbed } from './embedContext';
+import { EmbedProvider } from './embedContext';
 import { CanvasView } from './CanvasView';
-import './Graph';
 import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
@@ -13,13 +13,41 @@ import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
 import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
-import { getSourceActor } from './sourceMachine';
+import { getSourceActor, useSourceRegistryData } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
 import { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
+import { registryLinks } from './registryLinks';
+
+const defaultHeadProps = {
+  title: 'XState Visualizer',
+  ogTitle: 'XState Visualizer',
+  description: 'Visualizer for XState state machines and statecharts',
+  // TODO - get an OG image for the home page
+  ogImageUrl: null,
+};
+
+const VizHead = () => {
+  const sourceRegistryData = useSourceRegistryData();
+
+  if (!sourceRegistryData) {
+    return <AppHead {...defaultHeadProps} />;
+  }
+
+  return (
+    <AppHead
+      title={[sourceRegistryData.name, defaultHeadProps.title]
+        .filter(Boolean)
+        .join(' | ')}
+      ogTitle={sourceRegistryData.name || defaultHeadProps.ogTitle}
+      description={sourceRegistryData.name || defaultHeadProps.description}
+      ogImageUrl={registryLinks.sourceFileOgImage(sourceRegistryData.id)}
+    />
+  );
+};
 
 const getGridArea = (embed?: EmbedContext) => {
   if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
@@ -70,36 +98,39 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
   });
 
   // This is because we're doing loads of things on client side anyway
-  if (!isOnClientSide()) return null;
+  if (!isOnClientSide()) return <VizHead />;
 
   return (
-    <EmbedProvider value={embed}>
-      <ChakraProvider theme={theme}>
-        <EditorThemeProvider>
-          <PaletteProvider value={paletteService}>
-            <SimulationProvider value={simService}>
-              <Box
-                data-testid="app"
-                data-viz-theme="dark"
-                as="main"
-                display="grid"
-                gridTemplateColumns="1fr auto"
-                gridTemplateAreas={`"${getGridArea(embed)}"`}
-                height="100vh"
-              >
-                {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
-                  <CanvasProvider value={canvasService}>
-                    <CanvasView />
-                  </CanvasProvider>
-                )}
-                <PanelsView />
-                <MachineNameChooserModal />
-              </Box>
-            </SimulationProvider>
-          </PaletteProvider>
-        </EditorThemeProvider>
-      </ChakraProvider>
-    </EmbedProvider>
+    <>
+      <VizHead />
+      <EmbedProvider value={embed}>
+        <ChakraProvider theme={theme}>
+          <EditorThemeProvider>
+            <PaletteProvider value={paletteService}>
+              <SimulationProvider value={simService}>
+                <Box
+                  data-testid="app"
+                  data-viz-theme="dark"
+                  as="main"
+                  display="grid"
+                  gridTemplateColumns="1fr auto"
+                  gridTemplateAreas={`"${getGridArea(embed)}"`}
+                  height="100vh"
+                >
+                  {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
+                    <CanvasProvider value={canvasService}>
+                      <CanvasView />
+                    </CanvasProvider>
+                  )}
+                  <PanelsView />
+                  <MachineNameChooserModal />
+                </Box>
+              </SimulationProvider>
+            </PaletteProvider>
+          </EditorThemeProvider>
+        </ChakraProvider>
+      </EmbedProvider>
+    </>
   );
 }
 

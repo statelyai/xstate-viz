@@ -11,7 +11,6 @@ import {
   ModalHeader,
   ModalOverlay,
 } from '@chakra-ui/react';
-import { useAuth } from './authContext';
 import { useSourceActor } from './sourceMachine';
 
 export const MachineNameChooserModal = () => {
