@@ -1,10 +1,3 @@
-import { Box, ChakraProvider } from '@chakra-ui/react';
-import React, { useEffect, useMemo } from 'react';
-import { useActor, useInterpret, useSelector } from '@xstate/react';
-import { useAuth } from './authContext';
-import { CanvasProvider } from './CanvasContext';
-import { EmbedProvider, useEmbed } from './embedContext';
-import { CanvasView } from './CanvasView';
 import './Graph';
 import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
