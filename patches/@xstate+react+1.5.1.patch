@@ -1,0 +1,19 @@
+diff --git a/node_modules/@xstate/react/lib/useMachine.d.ts b/node_modules/@xstate/react/lib/useMachine.d.ts
+index acea216..f02eb02 100644
+--- a/node_modules/@xstate/react/lib/useMachine.d.ts
++++ b/node_modules/@xstate/react/lib/useMachine.d.ts
+@@ -13,12 +13,6 @@ export interface UseMachineOptions<TContext, TEvent extends EventObject> {
+      */
+     state?: StateConfig<TContext, TEvent>;
+ }
+-export declare function useMachine<TContext, TEvent extends EventObject, TTypestate extends Typestate<TContext> = {
+-    value: any;
+-    context: TContext;
+-}>(getMachine: MaybeLazy<StateMachine<TContext, any, TEvent, TTypestate>>, options?: Partial<InterpreterOptions> & Partial<UseMachineOptions<TContext, TEvent>> & Partial<MachineOptions<TContext, TEvent>>): [
+-    State<TContext, TEvent, any, TTypestate>,
+-    Interpreter<TContext, any, TEvent, TTypestate>['send'],
+-    Interpreter<TContext, any, TEvent, TTypestate>
+-];
++
++export declare function useMachine<TEvent extends EventObject>(getMachine: StateMachine<any, any, TEvent, any>, options?: Partial<MachineOptions<any, TEvent>>): any;
+ //# sourceMappingURL=useMachine.d.ts.map
