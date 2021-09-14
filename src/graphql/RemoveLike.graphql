@@ -1,5 +1,0 @@
-mutation RemoveLike($sourceFileId: String!) {
-  removeLike(sourceFileId: $sourceFileId) {
-    ...SourceFile
-  }
-}
