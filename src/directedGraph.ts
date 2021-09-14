@@ -139,36 +139,3 @@ export function toDirectedGraph(stateNode: StateNode): DirectedGraphNode {
 
   return graph;
 }
-
-export function getAllNodes(
-  rootNode: DirectedGraphNode,
-): Array<DirectedGraphNode> {
-  if (!rootNode.children.length) {
-    return [rootNode];
-  }
-
-  return [rootNode].concat(rootNode.children.map(getAllNodes).flat());
-}
-
-export type DigraphBackLinkMap = Map<StateNode, Set<DirectedGraphEdge>>;
-
-export function getBackLinkMap(digraph: DirectedGraphNode): DigraphBackLinkMap {
-  const nodes = getAllNodes(digraph);
-  const backLinkMap: DigraphBackLinkMap = new Map();
-
-  const addMapping = (node: StateNode, edge: DirectedGraphEdge): void => {
-    if (!backLinkMap.get(node)) {
-      backLinkMap.set(node, new Set());
-    }
-
-    backLinkMap.get(node)!.add(edge);
-  };
-
-  nodes.forEach((node) => {
-    node.edges.forEach((edge) => {
-      addMapping(edge.target, edge);
-    });
-  });
-
-  return backLinkMap;
-}
