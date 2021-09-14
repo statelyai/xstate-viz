@@ -1,4 +1,4 @@
-import * as codec from './codec';
+import * as codec from '../codec';
 
 describe('codec', () => {
   describe('encode', () => {
