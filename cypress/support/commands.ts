@@ -174,6 +174,8 @@ const getControlButtons = () => {
   return cy.findByTestId('controls');
 };
 
+const getEmbedPreview = () => cy.findByTestId('embed-preview');
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -220,6 +222,8 @@ declare global {
       getCanvasGraph: typeof getCanvasGraph;
 
       getControlButtons: typeof getControlButtons;
+
+      getEmbedPreview: typeof getEmbedPreview;
     }
   }
 }
@@ -236,3 +240,4 @@ Cypress.Commands.add('getCanvasHeader', getCanvasHeader);
 Cypress.Commands.add('getStatePanel', getStatePanel);
 Cypress.Commands.add('getCanvasGraph', getCanvasGraph);
 Cypress.Commands.add('getControlButtons', getControlButtons);
+Cypress.Commands.add('getEmbedPreview', getEmbedPreview);
