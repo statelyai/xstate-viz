@@ -255,6 +255,8 @@ const dragMachine = dragModel.createMachine(
                 },
               },
               enabled: {
+                entry: 'disableTextSelection',
+                exit: 'enableTextSelection',
                 invoke: {
                   id: 'dragSessionTracker',
                   src: (ctx) =>
@@ -316,6 +318,16 @@ const dragMachine = dragModel.createMachine(
     },
   },
   {
+    actions: {
+      disableTextSelection: (ctx) => {
+        const node = ctx.ref!.current!;
+        node.style.userSelect = 'none';
+      },
+      enableTextSelection: (ctx) => {
+        const node = ctx.ref!.current!;
+        node.style.userSelect = 'unset';
+      },
+    },
     services: {
       invokeDetectLock: () => (sendBack) => {
         function keydownListener(e: KeyboardEvent) {
