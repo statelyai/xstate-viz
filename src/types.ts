@@ -78,3 +78,8 @@ export interface ParsedEmbed {
 export type EmbedContext =
   | { isEmbedded: false }
   | ({ isEmbedded: true; originalUrl: string } & ParsedEmbed);
+
+export interface Point {
+  x: number;
+  y: number;
+}

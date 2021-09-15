@@ -1,7 +1,6 @@
-export interface Point {
-  x: number;
-  y: number;
-}
+import { Point } from './types';
+
+export type { Point };
 
 enum Sides {
   Top = 'top',
