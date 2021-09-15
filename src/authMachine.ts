@@ -2,7 +2,6 @@ import { createClient, Provider, Session } from '@supabase/supabase-js';
 import {
   ActorRefFrom,
   assign,
-  createMachine,
   DoneInvokeEvent,
   send,
   spawn,
@@ -59,7 +58,7 @@ export const createAuthMachine = (params: {
   router: NextRouter;
   isEmbbeded: boolean;
 }) =>
-  createMachine<typeof authModel>(
+  authModel.createMachine(
     {
       preserveActionOrder: true,
       id: 'auth',

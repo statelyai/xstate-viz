@@ -6,7 +6,6 @@ import {
   ActorRefFrom,
   assign,
   ContextFrom,
-  createMachine,
   DoneInvokeEvent,
   EventFrom,
   forwardTo,
@@ -167,7 +166,7 @@ export const makeSourceMachine = (params: {
     return Boolean(params.auth.session());
   };
 
-  return createMachine<typeof sourceModel>(
+  return sourceModel.createMachine(
     {
       initial: 'checking_initial_data',
       preserveActionOrder: true,
