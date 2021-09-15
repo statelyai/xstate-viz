@@ -19,7 +19,7 @@ import { ArrowForwardIcon } from '@chakra-ui/icons';
 import { InterpreterStatus, StateFrom } from 'xstate';
 import { simulationMachine } from './simulationMachine';
 
-const selectServices = (state: StateFrom<typeof simulationMachine>) => {
+export const selectServices = (state: StateFrom<typeof simulationMachine>) => {
   return state.context.serviceDataMap;
 };
 
