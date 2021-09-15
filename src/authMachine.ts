@@ -2,7 +2,9 @@ import { createClient, Provider, Session } from '@supabase/supabase-js';
 import {
   ActorRefFrom,
   assign,
+  ContextFrom,
   DoneInvokeEvent,
+  EventFrom,
   send,
   spawn,
   StateFrom,
@@ -91,18 +93,20 @@ export const createAuthMachine = (params: {
       states: {
         initializing: {
           entry: [
-            assign((ctx) => {
-              return {
-                sourceRef: spawn(
-                  makeSourceMachine({
-                    auth: ctx.client.auth,
-                    sourceRegistryData: params.sourceRegistryData,
-                    router: params.router,
-                    isEmbedded: params.isEmbbeded,
-                  }),
-                ),
-              };
-            }),
+            assign<ContextFrom<typeof authModel>, EventFrom<typeof authModel>>(
+              (ctx) => {
+                return {
+                  sourceRef: spawn(
+                    makeSourceMachine({
+                      auth: ctx.client.auth,
+                      sourceRegistryData: params.sourceRegistryData,
+                      router: params.router,
+                      isEmbedded: params.isEmbbeded,
+                    }),
+                  ),
+                };
+              },
+            ),
           ],
           always: 'checking_if_signed_in',
         },
@@ -137,9 +141,12 @@ export const createAuthMachine = (params: {
         },
         signed_in: {
           exit: [
-            send(sourceModel.events.LOGGED_IN_USER_ID_UPDATED(null), {
-              to: (ctx) => ctx.sourceRef!,
-            }),
+            send<ContextFrom<typeof authModel>, EventFrom<typeof authModel>>(
+              sourceModel.events.LOGGED_IN_USER_ID_UPDATED(null),
+              {
+                to: (ctx) => ctx.sourceRef!,
+              },
+            ),
           ],
           tags: ['authorized'],
           on: {

@@ -311,7 +311,13 @@ export const makeSourceMachine = (params: {
                     assign({
                       sourceRawContent: (ctx, e) => e.code,
                     }),
-                    choose([
+                    choose<
+                      ContextFrom<typeof sourceModel>,
+                      Extract<
+                        EventFrom<typeof sourceModel>,
+                        { type: 'CODE_UPDATED' }
+                      >
+                    >([
                       {
                         actions: [
                           forwardTo('codeCacheMachine'),
@@ -394,7 +400,7 @@ export const makeSourceMachine = (params: {
                     ),
                   { to: (ctx: any) => ctx.notifRef },
                 ),
-                (_, e: any) => {
+                (_: any, e: any) => {
                   if (e.data instanceof NotFoundError) {
                     updateQueryParamsWithoutReload((queries) => {
                       queries.delete('id');
@@ -414,7 +420,13 @@ export const makeSourceMachine = (params: {
                 assign({
                   sourceRawContent: (ctx, e) => e.code,
                 }),
-                choose([
+                choose<
+                  ContextFrom<typeof sourceModel>,
+                  Extract<
+                    EventFrom<typeof sourceModel>,
+                    { type: 'CODE_UPDATED' }
+                  >
+                >([
                   {
                     actions: [
                       forwardTo('codeCacheMachine'),
