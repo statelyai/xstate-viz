@@ -8,7 +8,7 @@ import {
 import { createModel } from 'xstate/lib/model';
 import { Point } from './types';
 
-interface DragSession {
+export interface DragSession {
   pointerId: number;
   point: Point;
 }
@@ -38,8 +38,20 @@ export const dragSessionModel = createModel(
 export const dragSessionTracker = dragSessionModel.createMachine(
   {
     preserveActionOrder: true,
-    initial: 'idle',
+    initial: 'check_session_data',
     states: {
+      check_session_data: {
+        always: [
+          {
+            cond: (ctx) => !!ctx.session,
+            target: 'active',
+            actions: sendParent((ctx) =>
+              dragSessionModel.events.DRAG_SESSION_STARTED(ctx.session!),
+            ),
+          },
+          'idle',
+        ],
+      },
       idle: {
         invoke: {
           id: 'dragSessionStartedListener',

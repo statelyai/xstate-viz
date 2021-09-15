@@ -10,6 +10,7 @@ import { useEmbed } from './embedContext';
 import {
   dragSessionModel,
   dragSessionTracker,
+  DragSession,
   PointDelta,
 } from './dragSessionTracker';
 import { AnyState } from './types';
@@ -22,7 +23,9 @@ const dragModel = createModel(
     events: {
       LOCK: () => ({}),
       RELEASE: () => ({}),
-      ENABLE_PANNING: () => ({}),
+      ENABLE_PANNING: (sessionSeed: DragSession | null = null) => ({
+        sessionSeed,
+      }),
       DISABLE_PANNING: () => ({}),
       ENABLE_PAN_MODE: () => ({}),
       DISABLE_PAN_MODE: () => ({}),
@@ -33,6 +36,8 @@ const dragModel = createModel(
       POINTER_MOVED_BY: ({ delta }: { delta: PointDelta }) => ({
         delta,
       }),
+      WHEEL_PRESSED: (data: DragSession) => ({}),
+      WHEEL_RELEASED: () => ({}),
     },
   },
 );
@@ -62,11 +67,17 @@ const dragMachine = dragModel.createMachine(
                 initial: 'released',
                 states: {
                   released: {
-                    invoke: {
-                      src: 'invokeDetectLock',
-                    },
+                    invoke: [
+                      {
+                        src: 'invokeDetectLock',
+                      },
+                      {
+                        src: 'wheelPressListener',
+                      },
+                    ],
                     on: {
                       LOCK: 'locked',
+                      WHEEL_PRESSED: 'wheelPressed',
                     },
                   },
                   locked: {
@@ -80,6 +91,16 @@ const dragMachine = dragModel.createMachine(
                     invoke: {
                       src: 'invokeDetectRelease',
                     },
+                  },
+                  wheelPressed: {
+                    invoke: {
+                      src: 'wheelReleaseListener',
+                    },
+                    entry: actions.raise(((ctx: any, ev: any) =>
+                      dragModel.events.ENABLE_PANNING(ev.data)) as any) as any,
+                    exit: actions.raise(
+                      dragModel.events.DISABLE_PANNING(),
+                    ) as any,
                   },
                 },
                 on: {
@@ -108,10 +129,11 @@ const dragMachine = dragModel.createMachine(
                 exit: 'enableTextSelection',
                 invoke: {
                   id: 'dragSessionTracker',
-                  src: (ctx) =>
+                  src: (ctx, ev) =>
                     dragSessionTracker.withContext({
                       ...dragSessionModel.initialContext,
                       ref: ctx.ref,
+                      session: (ev as any).sessionSeed,
                     }),
                 },
                 on: {
@@ -178,6 +200,34 @@ const dragMachine = dragModel.createMachine(
       },
     },
     services: {
+      wheelPressListener: (ctx) => (sendBack) => {
+        const node = ctx.ref!.current!;
+        const listener = (ev: PointerEvent) => {
+          if (ev.button === 1) {
+            sendBack(
+              dragModel.events.WHEEL_PRESSED({
+                pointerId: ev.pointerId,
+                point: {
+                  x: ev.pageX,
+                  y: ev.pageY,
+                },
+              }),
+            );
+          }
+        };
+        node.addEventListener('pointerdown', listener);
+        return () => node.removeEventListener('pointerdown', listener);
+      },
+      wheelReleaseListener: (ctx) => (sendBack) => {
+        const node = ctx.ref!.current!;
+        const listener = (ev: PointerEvent) => {
+          if (ev.button === 1) {
+            sendBack(dragModel.events.WHEEL_RELEASED());
+          }
+        };
+        node.addEventListener('pointerup', listener);
+        return () => node.removeEventListener('pointerup', listener);
+      },
       invokeDetectLock: () => (sendBack) => {
         function keydownListener(e: KeyboardEvent) {
           const target = e.target as HTMLElement;
