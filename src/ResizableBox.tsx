@@ -64,6 +64,7 @@ const ResizeHandle: React.FC<{
 
   return (
     <Box
+      data-testid="resize-handle"
       width="1"
       css={{
         position: 'absolute',
@@ -100,12 +101,20 @@ const ResizeHandle: React.FC<{
       onPointerUp={() => {
         send(dragDropModel.events['DRAG.END']());
       }}
+      onPointerCancel={() => {
+        send(dragDropModel.events['DRAG.END']());
+      }}
     ></Box>
   );
 };
 
-export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
+interface ResizableBoxProps extends Omit<BoxProps, 'width'> {
+  disabled?: boolean;
+}
+
+export const ResizableBox: React.FC<ResizableBoxProps> = ({
   children,
+  disabled,
   ...props
 }) => {
   const [widthDelta, setWidthDelta] = useState(0);
@@ -113,9 +122,16 @@ export const ResizableBox: React.FC<Omit<BoxProps, 'width'>> = ({
   return (
     // 35rem to avoid shortcut codes breaking
     // into multiple lines
-    <Box width={`clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`} {...props}>
+    <Box
+      {...props}
+      style={
+        !disabled
+          ? { width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)` }
+          : undefined
+      }
+    >
       {children}
-      <ResizeHandle onChange={(value) => setWidthDelta(value)} />
+      {!disabled && <ResizeHandle onChange={(value) => setWidthDelta(value)} />}
     </Box>
   );
 };

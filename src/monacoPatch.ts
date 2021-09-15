@@ -7,6 +7,34 @@ import * as XState from 'xstate';
 import * as XStateModel from 'xstate/lib/model';
 import * as XStateActions from 'xstate/lib/actions';
 
+// dont hate the player, hate the game
+// https://github.com/microsoft/vscode-loader/issues/33
+if (typeof document !== 'undefined') {
+  const { insertBefore } = document.head;
+  document.head.insertBefore = function (
+    newChild: Node,
+    refChild: Node | null,
+  ): any {
+    // @ts-ignore
+    const self: HTMLHeadElement = this;
+
+    if (newChild.nodeType !== Node.ELEMENT_NODE) {
+      return insertBefore.call(self, newChild, refChild);
+    }
+
+    const newElement = newChild as Element;
+
+    if (
+      newElement.tagName === 'LINK' &&
+      (newElement as HTMLLinkElement).href.includes('/editor/')
+    ) {
+      return self.appendChild(newElement);
+    }
+
+    return insertBefore.call(self, newChild, refChild);
+  } as any;
+}
+
 const MONACO_LOCATION =
   process.env.NODE_ENV === 'development' ||
   Boolean(process.env.NEXT_PUBLIC_USE_LOCAL_MONACO)

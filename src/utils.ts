@@ -10,9 +10,16 @@ import {
   StateNode,
   TransitionDefinition,
 } from 'xstate';
-import { AnyState, AnyStateMachine } from './types';
+import {
+  AnyState,
+  AnyStateMachine,
+  EmbedMode,
+  EmbedPanel,
+  ParsedEmbed,
+} from './types';
 import { print } from 'graphql';
 import { useSelector } from '@xstate/react';
+import { NextRouter } from 'next/router';
 
 export function isNullEvent(eventName: string) {
   return eventName === ActionTypes.NullEvent;
@@ -113,7 +120,7 @@ export const isStringifiedFunction = (str: string): boolean =>
   /^function\s*\(/.test(str) || str.includes('=>');
 
 const testPlatform = (re: RegExp): boolean =>
-  re.test(window.navigator.platform);
+  re.test(globalThis?.navigator?.platform);
 
 export const isMac = () => testPlatform(/^Mac/);
 
@@ -194,6 +201,94 @@ export function isDelayedTransitionAction(
   }
 }
 
+/**
+ * /?mode=viz|full|panels default:viz
+ * /?mode=panels&panel=code|state|events|actors default:code
+ */
+export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
+  const parsedEmbed = {
+    mode: EmbedMode.Viz,
+    panel: EmbedPanel.Code,
+    showOriginalLink: true,
+    readOnly: true,
+    pan: false,
+    zoom: false,
+    controls: false,
+  };
+
+  const getQueryParamValue = (qParamValue: string | string[]) => {
+    return Array.isArray(qParamValue) ? qParamValue[0] : qParamValue;
+  };
+
+  const computeBooleanQParamValue = (qParamValue: string) => {
+    // Parse to number to treat "0" as false
+    return !!+qParamValue;
+  };
+
+  if (query?.mode) {
+    const parsedMode = getQueryParamValue(query?.mode);
+    if (Object.values(EmbedMode).includes(parsedMode as EmbedMode)) {
+      parsedEmbed.mode = parsedMode as EmbedMode;
+    }
+  }
+
+  if (query?.panel) {
+    const parsedPanel = getQueryParamValue(query?.panel);
+    if (Object.values(EmbedPanel).includes(parsedPanel as EmbedPanel)) {
+      parsedEmbed.panel = parsedPanel as EmbedPanel;
+    }
+  }
+
+  if (query?.showOriginalLink) {
+    const parsedValue = getQueryParamValue(query?.showOriginalLink);
+    parsedEmbed.showOriginalLink = computeBooleanQParamValue(parsedValue);
+  }
+
+  if (query?.readOnly) {
+    const parsedReadOnly = getQueryParamValue(query?.readOnly);
+    parsedEmbed.readOnly = computeBooleanQParamValue(parsedReadOnly);
+  }
+
+  if (query?.pan) {
+    const parsedPan = getQueryParamValue(query?.pan);
+    parsedEmbed.pan = computeBooleanQParamValue(parsedPan);
+  }
+
+  if (query?.zoom) {
+    const parsedZoom = getQueryParamValue(query?.zoom);
+    parsedEmbed.zoom = computeBooleanQParamValue(parsedZoom);
+  }
+
+  if (query?.controls) {
+    const parsedControls = getQueryParamValue(query?.controls);
+    parsedEmbed.controls = computeBooleanQParamValue(parsedControls);
+  }
+
+  return parsedEmbed;
+};
+
+export function calculatePanelIndexByPanelName(panelName: EmbedPanel) {
+  const tabs = Object.values(EmbedPanel);
+  const foundPanelIndex = tabs.findIndex((p) => p === panelName);
+  return foundPanelIndex >= 0 ? foundPanelIndex : 0;
+}
+
+export function withoutEmbedQueryParams(query: any): string {
+  const q = new URLSearchParams(query);
+  // We don't need embed related query params in the original link
+  [
+    'mode',
+    'panel',
+    'showOriginalLink',
+    'pan',
+    'zoom',
+    'controls',
+    'readOnly',
+  ].forEach((key) => {
+    q.delete(key);
+  });
+  return '/viz?' + q.toString();
+}
 const isTextAcceptingInputElement = (input: HTMLInputElement) =>
   input.type === 'email' ||
   input.type === 'password' ||
@@ -210,3 +305,15 @@ export const isTextInputLikeElement = (el: HTMLElement) => {
     el.isContentEditable
   );
 };
+
+// unsure if this should include button-like input elements
+export const hasRoleButton = (el: HTMLElement): boolean => {
+  const roleAttribute = el.getAttribute('role');
+  return roleAttribute
+    ? !!roleAttribute.split(' ').find((role) => role === 'button')
+    : el.tagName === 'BUTTON';
+};
+
+export const isAcceptingSpaceNatively = (el: HTMLElement): boolean =>
+  // from all the inputs `number` and `range` don't seem to accept space but it's probably not worth it to special case them here
+  el.tagName === 'INPUT' || isTextInputLikeElement(el) || hasRoleButton(el);

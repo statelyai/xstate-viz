@@ -296,22 +296,6 @@ export const simulationMachine = simModel.createMachine(
       },
       'SERVICE.SEND': {
         actions: [
-          (ctx, e) => {
-            const eventSchema =
-              ctx.serviceDataMap[ctx.currentSessionId!]!.machine.schema
-                ?.events?.[e.event.type];
-            const eventToSend = { ...e.event };
-
-            if (eventSchema) {
-              Object.keys(eventSchema.properties).forEach((prop) => {
-                const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                );
-
-                eventToSend.data[prop] = value;
-              });
-            }
-          },
           send(
             (ctx, e) => {
               return {
