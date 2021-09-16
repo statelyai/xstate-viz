@@ -25,6 +25,8 @@ const a = createMachine({
 
     cy.visit('/viz');
 
+    cy.getCanvas();
+
     cy.findByRole('tab', { name: /Actors/ }).click();
 
     // Should show 5:
