@@ -112,9 +112,7 @@ export const ActorsPanel: React.FC = () => {
                   ? 'line-through'
                   : undefined
               }
-              title={`Actor: ${
-                serviceData!.machine.id ?? '(machine)'
-              } (${sessionId})`}
+              data-testid={`actor:${sessionId}`}
             >
               {serviceData?.parent && services[serviceData!.parent] && (
                 <span>

@@ -36,7 +36,7 @@ const a = createMachine({
     // - a -> a1
     // - a -> a2
     cy.findByRole('tabpanel', { name: /Actors/ })
-      .findAllByTitle(/Actor:/)
+      .findAllByTestId(/actor:/)
       .should('have.length', 5);
   });
 });
