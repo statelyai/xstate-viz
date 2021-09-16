@@ -107,10 +107,10 @@ export const CanvasView: React.FC<BoxProps> = (props) => {
           position="absolute"
           bottom={0}
           left={0}
-          paddingX={2}
-          paddingY={3}
+          padding="2"
           zIndex={1}
           width="100%"
+          height="4rem"
         >
           <ButtonGroup size="sm" spacing={2} isAttached>
             <IconButton
@@ -130,19 +130,11 @@ export const CanvasView: React.FC<BoxProps> = (props) => {
               variant="secondary"
             />
             <IconButton
-              aria-label="Fit to view"
-              title="Fit to view"
-              icon={<CompressIcon />}
-              onClick={() => canvasService.send('FIT_TO_VIEW')}
-              variant="secondary"
-            />
-            <IconButton
               aria-label="Reset canvas"
               title="Reset canvas"
               icon={<RepeatIcon />}
               onClick={() => canvasService.send('POSITION.RESET')}
               variant="secondary"
-              disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
             />
           </ButtonGroup>
           <IconButton
@@ -183,6 +175,14 @@ export const CanvasView: React.FC<BoxProps> = (props) => {
               />
               <Portal>
                 <MenuList fontSize="sm" padding="0">
+                  <MenuItem
+                    as={Link}
+                    href="https://github.com/statelyai/xstate-viz/issues/new?template=bug_report.md"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Report an issue
+                  </MenuItem>
                   <MenuItem
                     as={Link}
                     href="https://github.com/statelyai/xstate"
