@@ -209,7 +209,6 @@ export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
   const parsedEmbed = {
     mode: EmbedMode.Full,
     panel: EmbedPanel.Code,
-    panelIndex: 0,
     showOriginalLink: true,
     readOnly: true,
     pan: false,
@@ -306,3 +305,15 @@ export const isTextInputLikeElement = (el: HTMLElement) => {
     el.isContentEditable
   );
 };
+
+// unsure if this should include button-like input elements
+export const hasRoleButton = (el: HTMLElement): boolean => {
+  const roleAttribute = el.getAttribute('role');
+  return roleAttribute
+    ? !!roleAttribute.split(' ').find((role) => role === 'button')
+    : el.tagName === 'BUTTON';
+};
+
+export const isAcceptingSpaceNatively = (el: HTMLElement): boolean =>
+  // from all the inputs `number` and `range` don't seem to accept space but it's probably not worth it to special case them here
+  el.tagName === 'INPUT' || isTextInputLikeElement(el) || hasRoleButton(el);

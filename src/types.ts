@@ -4,6 +4,7 @@ import type {
   State,
   StateMachine,
 } from 'xstate';
+import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
 import { Model } from 'xstate/lib/model.types';
 import type { editor } from 'monaco-editor';
 
@@ -23,6 +24,12 @@ export type AnyState = State<any, any>;
 
 export type SourceProvider = 'gist' | 'registry';
 
+export interface SourceRegistryData extends SourceFileFragment {
+  // we can't trust SSR data to be accurate because at the moment we can use authenticated user during SSR
+  // so properties like `youHaveLiked` might be initially inaccurate
+  dataSource: 'ssr' | 'client';
+}
+
 export type ServiceRefEvents =
   | {
       type: 'xstate.event';
@@ -39,6 +46,7 @@ export interface ServiceData {
   state: AnyState;
   status: AnyInterpreter['status'];
   source: 'inspector' | 'visualizer' | 'in-app';
+  parent: string | undefined;
 }
 
 export type SimulationMode = 'inspecting' | 'visualizing';

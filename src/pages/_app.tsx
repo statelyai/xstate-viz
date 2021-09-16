@@ -37,37 +37,14 @@ if (
 const MyApp = ({ pageProps, Component }: AppProps) => {
   const router = useRouter();
 
-  const routerReplace = (url: string) => {
-    /**
-     * Apologies for this line of code. The reason this is here
-     * is that XState + React Fast Refresh causes an error:
-     *
-     * Error: Unable to send event to child 'ctx => ctx.sourceRef'
-     * from service 'auth'.
-     *
-     * router.replace causes this in development, but not in prod
-     *
-     * So, we use window.location.href in development (with the /viz
-     * prefix which Next won't automatically add) and router.replace in prod
-     */
-    if (process.env.NODE_ENV === 'development') {
-      window.location.href = `/viz${url}`;
-    } else {
-      router.replace(`${url}`);
-    }
-  };
-
   const authService = useInterpret(
     createAuthMachine({
-      data: pageProps.data,
-      routerReplace,
-      redirectToNewUrlFromLegacyUrl: () => {
-        const id = new URLSearchParams(window.location.search)?.get('id');
-        routerReplace(`/${id}`);
-      },
+      sourceRegistryData: pageProps.sourceRegistryData,
+      router,
       isEmbbeded: pageProps.isEmbedded,
     }),
   );
+
   return (
     <AuthProvider value={authService}>
       <Component {...pageProps} />

@@ -32,6 +32,24 @@ describe('Visual', () => {
     });
   });
 
+  it('should have login button in the viewport after the right panel gets stretched and shrinked again', () => {
+    cy.visit('/viz');
+
+    cy.getMonacoEditor();
+
+    cy.getResizeHandle().realSwipe('toLeft', {
+      length: 100,
+    });
+
+    cy.getResizeHandle().realSwipe('toRight', {
+      length: 100,
+    });
+
+    cy.findByRole('button', { name: 'Login' }).then(($button) => {
+      expect(isInViewport($button)).to.be.true;
+    });
+  });
+
   it('should have editor buttons aligned vertically with canvas buttons', () => {
     cy.visit('/viz');
 

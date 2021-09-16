@@ -5,7 +5,7 @@ import { useAuth } from './authContext';
 import { getSupabaseClient } from './authMachine';
 import { AddLikeDocument } from './graphql/AddLike.generated';
 import { RemoveLikeDocument } from './graphql/RemoveLike.generated';
-import { Heart, HeartOutlined } from './Icons';
+import { HeartIcon, HeartOutlinedIcon } from './Icons';
 import { likesMachine } from './likesMachine';
 import { useSourceActor } from './sourceMachine';
 import { gQuery } from './utils';
@@ -68,9 +68,9 @@ export const LikeButton = () => {
     <Button
       leftIcon={
         userHasLiked ? (
-          <Heart w={4} h={4} fill="gray.200" />
+          <HeartIcon w={4} h={4} fill="gray.200" />
         ) : (
-          <HeartOutlined w={4} h={4} fill="gray.200" />
+          <HeartOutlinedIcon w={4} h={4} fill="gray.200" />
         )
       }
       color="gray.100"

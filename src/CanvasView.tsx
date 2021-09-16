@@ -31,13 +31,15 @@ import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
 import { Overlay } from './Overlay';
 import { useEmbed } from './embedContext';
-import { CompressIcon } from './Icons';
+import { CompressIcon, HandIcon } from './Icons';
 import { useSourceActor } from './sourceMachine';
 import { WelcomeArea } from './WelcomeArea';
-
 import { useAppService } from './AppContext';
 
 export const CanvasView: React.FC<BoxProps> = (props) => {
+  // TODO: refactor this so an event can be explicitly sent to a machine
+  // it isn't straightforward to do at the moment cause the target machine lives in a child component
+  const [panModeEnabled, setPanModeEnabled] = React.useState(false);
   const embed = useEmbed();
   const simService = useSimulation();
   const canvasService = useCanvas();
@@ -77,7 +79,12 @@ export const CanvasView: React.FC<BoxProps> = (props) => {
       {...props}
       // {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
     >
-      <CanvasContainer>
+      {/* {!embed?.isEmbedded && (
+        <Box data-testid="canvas-header" bg="gray.800" zIndex={1} padding="0">
+          <CanvasHeader />
+        </Box>
+      )} */}
+      <CanvasContainer panModeEnabled={panModeEnabled}>
         {digraph && <Graph digraph={digraph} />}
         {isLayoutPending && (
           <Overlay>
@@ -138,6 +145,16 @@ export const CanvasView: React.FC<BoxProps> = (props) => {
               disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
             />
           </ButtonGroup>
+          <IconButton
+            aria-label="Pan mode"
+            icon={<HandIcon />}
+            size="sm"
+            marginLeft={2}
+            onClick={() => setPanModeEnabled((v) => !v)}
+            aria-pressed={panModeEnabled}
+            variant={panModeEnabled ? 'secondaryPressed' : 'secondary'}
+            disabled={embed?.isEmbedded && !embed.pan}
+          />
           {simulationMode === 'visualizing' && (
             <Button
               size="sm"

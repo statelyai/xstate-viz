@@ -9,9 +9,11 @@ import {
   TabPanel,
   Button,
   BoxProps,
+  Badge,
 } from '@chakra-ui/react';
 import { useMemo } from 'react';
-import { ActorsPanel } from './ActorsPanel';
+import { useSelector } from '@xstate/react';
+import { ActorsPanel, selectServices } from './ActorsPanel';
 import { EditorPanel } from './EditorPanel';
 import { useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
@@ -30,6 +32,7 @@ export const PanelsView = (props: BoxProps) => {
   const appService = useAppService();
   const [state, send] = useActor(appService);
   const simService = useSimulation();
+  const services = useSelector(simService, selectServices);
   const [sourceState, sendToSourceService] = useSourceActor();
   const activePanelIndex = useMemo(
     () => (embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0),
@@ -57,7 +60,12 @@ export const PanelsView = (props: BoxProps) => {
           <Tab>Code</Tab>
           <Tab>State</Tab>
           <Tab>Events</Tab>
-          <Tab>Actors</Tab>
+          <Tab>
+            Actors{' '}
+            <Badge fontSize="x-small" marginLeft="1" colorScheme="blue">
+              {Object.values(services).length}
+            </Badge>
+          </Tab>
           {!embed?.isEmbedded && (
             <Tab marginLeft="auto" marginRight="2">
               <SettingsIcon />

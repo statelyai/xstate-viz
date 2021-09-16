@@ -140,12 +140,13 @@ const editorPanelMachine = editorPanelModel.createMachine(
               src: async (ctx) => {
                 const monaco = ctx.monacoRef!;
                 const uri = monaco.Uri.parse(ctx.mainFile);
-                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+                const getWorker =
+                  await monaco.languages.typescript.getTypeScriptWorker();
                 const tsWorker = await getWorker(uri);
 
-                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
-                  uri.toString(),
-                );
+                const usedXStateGistIdentifiers: string[] = await (
+                  tsWorker as any
+                ).queryXStateGistIdentifiers(uri.toString());
 
                 if (usedXStateGistIdentifiers.length > 0) {
                   const fixupImportsText = buildGistFixupImportsText(
@@ -436,7 +437,7 @@ export const EditorPanel: React.FC<{
         {simulationMode === 'visualizing' && (
           <>
             {/* This extra div acts as a placeholder that is supposed to stretch while EditorWithXStateImports lazy-loads (thanks to `1fr` on the grid) */}
-            <div style={{ minHeight: 0 }}>
+            <div style={{ minHeight: 0, minWidth: 0 }}>
               <EditorWithXStateImports
                 value={value}
                 onMount={(standaloneEditor, monaco) => {

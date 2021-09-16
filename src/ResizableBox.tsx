@@ -64,6 +64,7 @@ const ResizeHandle: React.FC<{
 
   return (
     <Box
+      data-testid="resize-handle"
       width="1"
       css={{
         position: 'absolute',
@@ -100,6 +101,9 @@ const ResizeHandle: React.FC<{
       onPointerUp={() => {
         send(dragDropModel.events['DRAG.END']());
       }}
+      onPointerCancel={() => {
+        send(dragDropModel.events['DRAG.END']());
+      }}
     ></Box>
   );
 };
@@ -120,9 +124,11 @@ export const ResizableBox: React.FC<ResizableBoxProps> = ({
     // into multiple lines
     <Box
       {...props}
-      {...(!disabled && {
-        width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)`,
-      })}
+      style={
+        !disabled
+          ? { width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)` }
+          : undefined
+      }
     >
       {children}
       {!disabled && <ResizeHandle onChange={(value) => setWidthDelta(value)} />}
