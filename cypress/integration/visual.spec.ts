@@ -70,7 +70,7 @@ describe('Visual', () => {
       expect(isInViewport($panels)).eq(true);
     });
 
-    cy.findByRole('button', { name: 'Collapse panels' }).click();
+    cy.findByRole('button', { name: /collapse panels/i }).click();
 
     cy.findByTestId('panels').then(($panels) => {
       expect(isInViewport($panels)).eq(false);
