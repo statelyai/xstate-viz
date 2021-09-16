@@ -1,5 +1,5 @@
 describe('Actors panel', () => {
-  it('should reset the list when the viz is resetted', () => {
+  it('should show all spawned and invoked actors', () => {
     // Plant a fake entry in localStorage
     cy.setLocalStorage(
       'xstate_viz_raw_source|no_source',
