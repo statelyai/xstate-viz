@@ -1,6 +1,7 @@
 ---
 'xstate-viz-app': patch
 ---
+pr: #214
 
 Multiple actors are now correctly visualized in the actors panel. This includes actors that are:
 
