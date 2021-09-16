@@ -27,6 +27,12 @@ const a = createMachine({
 
     cy.findByRole('tab', { name: /Actors/ }).click();
 
+    // Should show 5:
+    // - a1 (from createMachine)
+    // - a2 (from createMachine)
+    // - a  (from createMachine)
+    // - a -> a1
+    // - a -> a2
     cy.findByRole('tabpanel', { name: /Actors/ })
       .findAllByTitle(/Actor:/)
       .should('have.length', 5);
