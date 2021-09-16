@@ -1,0 +1,34 @@
+describe('Actors panel', () => {
+  it('should reset the list when the viz is resetted', () => {
+    // Plant a fake entry in localStorage
+    cy.setLocalStorage(
+      'xstate_viz_raw_source|no_source',
+      JSON.stringify({
+        date: new Date(),
+        sourceRawContent: `
+import { createMachine, assign, spawn } from 'xstate';
+
+const a1 = createMachine({});
+const a2 = createMachine({});
+const a = createMachine({
+  context: {},
+  invoke: {
+    src: a1
+  },
+  entry: assign({
+    ref: () => spawn(a2)
+  })
+});
+`,
+      }),
+    );
+
+    cy.visit('/viz');
+
+    cy.findByRole('tab', { name: /Actors/ }).click();
+
+    cy.findByRole('tabpanel', { name: /Actors/ })
+      .findAllByTitle(/Actor:/)
+      .should('have.length', 5);
+  });
+});
