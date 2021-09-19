@@ -107,6 +107,7 @@ export const CanvasView: React.FC = () => {
           zIndex={1}
           width="100%"
           height="4rem"
+          data-testid="controls"
         >
           <ButtonGroup size="sm" spacing={2} isAttached>
             <IconButton
@@ -126,11 +127,19 @@ export const CanvasView: React.FC = () => {
               variant="secondary"
             />
             <IconButton
+              aria-label="Fit to view"
+              title="Fit to view"
+              icon={<CompressIcon />}
+              onClick={() => canvasService.send('FIT_TO_VIEW')}
+              variant="secondary"
+            />
+            <IconButton
               aria-label="Reset canvas"
               title="Reset canvas"
               icon={<RepeatIcon />}
               onClick={() => canvasService.send('POSITION.RESET')}
               variant="secondary"
+              disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
             />
           </ButtonGroup>
           <IconButton
