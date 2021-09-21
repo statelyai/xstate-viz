@@ -315,7 +315,7 @@ const EmbedPreviewContent: React.FC = () => {
             <Button
               size="xs"
               position="absolute"
-              rounded="false"
+              rounded="none"
               top="0"
               right="0"
               transform="translateY(-110%)"

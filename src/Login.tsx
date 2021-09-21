@@ -33,7 +33,7 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
           className="btn-login"
           zIndex="1"
           colorScheme="blue"
-          rounded="false"
+          rounded="none"
           height="100%"
           isFullWidth
           onClick={() => {
