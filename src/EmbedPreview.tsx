@@ -327,6 +327,10 @@ const EmbedPreviewContent: React.FC = () => {
               minHeight="200px"
               readOnly
               value={previewState.context.embedCode}
+              onClick={(e) => {
+                (e.target as HTMLTextAreaElement).select();
+                copyEmbedCode();
+              }}
             />
           </Box>
         </VStack>
