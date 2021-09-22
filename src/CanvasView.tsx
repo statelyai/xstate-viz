@@ -73,7 +73,7 @@ export const CanvasView: React.FC = () => {
     <Box
       display="grid"
       height="100%"
-      {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
+      {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr auto' })}
     >
       {!embed?.isEmbedded && (
         <Box data-testid="canvas-header" bg="gray.800" zIndex={1} padding="0">
@@ -103,10 +103,10 @@ export const CanvasView: React.FC = () => {
           position="absolute"
           bottom={0}
           left={0}
-          padding="2"
+          paddingX={2}
+          paddingY={3}
           zIndex={1}
           width="100%"
-          height="4rem"
           data-testid="controls"
         >
           <ButtonGroup size="sm" spacing={2} isAttached>
