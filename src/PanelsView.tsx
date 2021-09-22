@@ -8,7 +8,7 @@ import {
   Button,
   BoxProps,
 } from '@chakra-ui/react';
-import React, { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { ActorsPanel } from './ActorsPanel';
 import { EditorPanel } from './EditorPanel';
 import { useEmbed } from './embedContext';
@@ -27,10 +27,15 @@ export const PanelsView = (props: BoxProps) => {
   const embed = useEmbed();
   const simService = useSimulation();
   const [sourceState, sendToSourceService] = useSourceActor();
-  const activePanelIndex = useMemo(
-    () => (embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0),
-    [embed],
+  const [activePanelIndex, setActiveTabIndex] = useState(
+    embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0,
   );
+
+  useEffect(() => {
+    if (embed?.isEmbedded) {
+      setActiveTabIndex(calculatePanelIndexByPanelName(embed.panel));
+    }
+  }, [embed]);
 
   return (
     <ResizableBox
@@ -46,7 +51,10 @@ export const PanelsView = (props: BoxProps) => {
         display="grid"
         gridTemplateRows="3rem 1fr"
         height="100%"
-        defaultIndex={activePanelIndex}
+        index={activePanelIndex}
+        onChange={(index) => {
+          setActiveTabIndex(index);
+        }}
       >
         <TabList>
           <Tab>Code</Tab>

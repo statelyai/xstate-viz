@@ -18,7 +18,7 @@ import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
-import { useRouter } from 'next/router';
+import router, { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
 
@@ -62,14 +62,14 @@ const getGridArea = (embed?: EmbedContext) => {
 };
 
 function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
-  const { query } = useRouter();
+  const { query, asPath } = useRouter();
   const embed = useMemo(
     () => ({
       ...parseEmbedQuery(query),
       isEmbedded,
       originalUrl: withoutEmbedQueryParams(query),
     }),
-    [query],
+    [query, asPath],
   );
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
@@ -89,6 +89,21 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
       id: machine?.id || '',
     });
   }, [machine?.id, sendToSourceService]);
+
+  // TODO: Subject to refactor into embedActor
+  useEffect(() => {
+    window.onmessage = async (message) => {
+      const { data } = message;
+      console.log(data);
+      switch (data.type) {
+        case 'EMBED_PARAMS_CHANGED':
+          let x = await router.replace(data.url, data.url);
+          console.log(x);
+          break;
+        default:
+      }
+    };
+  }, []);
 
   const sourceID = sourceState!.context.sourceID;
 

@@ -13,6 +13,7 @@ import {
   ModalOverlay,
   Spinner,
   useClipboard,
+  Center,
 } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -22,6 +23,7 @@ import { makeEmbedUrl, paramsToRecord } from './utils';
 import { send, assign } from 'xstate';
 import { Overlay } from './Overlay';
 import { useRouter } from 'next/router';
+import { log, pure } from 'xstate/lib/actions';
 
 const extractFormData = (form: HTMLFormElement): ParsedEmbed => {
   // This is needed because FormData doesn't include checkboxes that are unchecked by default
@@ -61,7 +63,10 @@ sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-ori
 
 const embedPreviewModel = createModel(
   {
+    loaded: false,
+    iframe: null as HTMLIFrameElement | null,
     embedUrl: '',
+    previewUrl: '', // Only the initial embedUrl for the iframe element. Consecutive previews will only update embedUrl to avoid refreshing the iframe
     embedCode: getEmbedCodeFromUrl(''),
     params: {
       mode: EmbedMode.Viz,
@@ -77,8 +82,10 @@ const embedPreviewModel = createModel(
     events: {
       PARAMS_CHANGED: (params: ParsedEmbed) => ({ params }),
       PREVIEW: () => ({}),
+      IFRAME_READY: (iframe: HTMLIFrameElement) => ({ iframe }),
       IFRAME_LOADED: () => ({}),
       IFRAME_ERROR: () => ({}),
+      RETRY: () => ({}),
     },
   },
 );
@@ -86,12 +93,24 @@ const embedPreviewModel = createModel(
 const embedPreviewMachine = embedPreviewModel.createMachine({
   id: 'preview',
   type: 'parallel',
+  preserveActionOrder: false, // TODO: remove this after we figured why this makes a bug
   states: {
     form: {
       initial: 'ready',
       states: {
         ready: {
-          entry: ['makeEmbedUrlAndCode', 'updateEmbedCopy', send('PREVIEW')],
+          entry: [
+            log('entry'),
+            'makeEmbedUrlAndCode',
+            pure((ctx) => {
+              console.debug(ctx.loaded, 'in pure');
+              if (!ctx.loaded) {
+                return { type: 'makePreviewUrl' };
+              }
+            }),
+            'updateEmbedCopy',
+            send('PREVIEW'),
+          ],
           on: {
             PARAMS_CHANGED: {
               actions: ['saveParams'],
@@ -105,10 +124,44 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
     iframe: {
       initial: 'idle',
       on: {
-        PREVIEW: '.loading',
+        PREVIEW: [
+          {
+            cond: (ctx) => ctx.loaded,
+            target: '.updating',
+            internal: false,
+          },
+          '.loading',
+        ],
+        IFRAME_READY: {
+          actions: [
+            embedPreviewModel.assign({
+              iframe: (_, e) => e.iframe,
+            }),
+          ],
+        },
       },
       states: {
         idle: {},
+        updating: {
+          meta: {
+            description:
+              'Once iframe is loaded, we no longer change its `src` because that reloads the iframe window. Instead, we send the new url to its window using `postMessage`. That message will be picked up by `window.onmessage` listener that uses NextJS `router.pushState`',
+          },
+          entry: (ctx) => {
+            console.debug(
+              'SENDING POSTMESSAGE',
+              ctx.params,
+              ctx.embedUrl.replace('/viz', ''),
+            );
+            ctx.iframe?.contentWindow?.postMessage(
+              {
+                type: 'EMBED_PARAMS_CHANGED',
+                url: ctx.embedUrl.replace('/viz', ''),
+              },
+              '*',
+            );
+          },
+        },
         loading: {
           tags: 'preview_loading',
           on: {
@@ -116,9 +169,14 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
             IFRAME_ERROR: 'error',
           },
         },
-        loaded: {},
+        loaded: {
+          entry: embedPreviewModel.assign({ loaded: true }),
+        },
         error: {
           tags: 'preview_error',
+          on: {
+            RETRY: 'loading',
+          },
         },
       },
     },
@@ -144,11 +202,15 @@ const EmbedPreviewContent: React.FC = () => {
     isCopied,
     setCopyText,
   } = useEmbedCodeClipboard();
-  const [previewState, sendPreviewEvent] = useMachine(
+  const iframe = useRef<HTMLIFrameElement>(null!);
+  const [previewState, sendPreviewEvent, service] = useMachine(
     embedPreviewMachine.withConfig({
       actions: {
         saveParams: assign({
-          params: (_, e) => (e as any).params,
+          params: (_, e) => {
+            console.debug('saveParams', e.params);
+            return (e as any).params;
+          },
         }),
         updateEmbedCopy: (ctx) => {
           setCopyText(ctx.embedCode);
@@ -165,12 +227,29 @@ const EmbedPreviewContent: React.FC = () => {
             params: ctx.params,
           };
         }),
+        makePreviewUrl: assign((ctx) => {
+          const url = makeEmbedUrl(
+            router.query.sourceFileId as string,
+            ctx.params,
+          );
+          return {
+            previewUrl: url,
+          };
+        }),
       },
     }),
   );
 
   useEffect(() => {
+    // service.onEvent((evt) => console.debug(evt.type));
+    service.onTransition((state, ctx) => {
+      console.debug(state.event, state.actions);
+    });
+  }, []);
+
+  useEffect(() => {
     const formRef = form.current;
+    sendPreviewEvent({ type: 'IFRAME_READY', iframe: iframe.current });
     return () => {
       formRef.reset();
     };
@@ -185,6 +264,7 @@ const EmbedPreviewContent: React.FC = () => {
       display="grid"
       gridTemplateAreas={`"sidebar preview"`}
       gridTemplateColumns="auto 1fr"
+      data-testid="embed-preview"
     >
       <Box
         gridArea="sidebar"
@@ -213,7 +293,13 @@ const EmbedPreviewContent: React.FC = () => {
                 <FormLabel marginBottom="0" htmlFor="mode" whiteSpace="nowrap">
                   Mode
                 </FormLabel>
-                <Select id="mode" name="mode" size="sm" width="auto">
+                <Select
+                  // defaultValue={previewState.context.params.mode}
+                  id="mode"
+                  name="mode"
+                  size="sm"
+                  width="auto"
+                >
                   {Object.values(EmbedMode).map((mode) => (
                     <option key={mode} value={mode}>
                       {mode}
@@ -230,12 +316,20 @@ const EmbedPreviewContent: React.FC = () => {
                 <FormLabel marginBottom="0" htmlFor="panel" whiteSpace="nowrap">
                   Active Panel
                 </FormLabel>
-                <Select id="panel" name="panel" size="sm" width="auto">
-                  {Object.values(EmbedPanel).map((panel) => (
-                    <option key={panel} value={panel}>
-                      {panel}
-                    </option>
-                  ))}
+                <Select
+                  // defaultValue={previewState.context.params.panel}
+                  id="panel"
+                  name="panel"
+                  size="sm"
+                  width="auto"
+                >
+                  {Object.values(EmbedPanel)
+                    .filter((panel) => panel !== EmbedPanel.Settings)
+                    .map((panel) => (
+                      <option key={panel} value={panel}>
+                        {panel}
+                      </option>
+                    ))}
                 </Select>
               </FormControl>
 
@@ -251,7 +345,11 @@ const EmbedPreviewContent: React.FC = () => {
                 >
                   Editor readonly
                 </FormLabel>
-                <Switch defaultChecked={true} id="readOnly" name="readOnly" />
+                <Switch
+                  defaultChecked={previewState.context.params.readOnly}
+                  id="readOnly"
+                  name="readOnly"
+                />
               </FormControl>
 
               <FormControl
@@ -267,7 +365,7 @@ const EmbedPreviewContent: React.FC = () => {
                   Show original link to visualizer
                 </FormLabel>
                 <Switch
-                  defaultChecked={true}
+                  defaultChecked={previewState.context.params.showOriginalLink}
                   id="showOriginalLink"
                   name="showOriginalLink"
                 />
@@ -285,7 +383,11 @@ const EmbedPreviewContent: React.FC = () => {
                 >
                   Show control buttons
                 </FormLabel>
-                <Switch defaultChecked={false} id="controls" name="controls" />
+                <Switch
+                  defaultChecked={previewState.context.params.controls}
+                  id="controls"
+                  name="controls"
+                />
               </FormControl>
 
               <FormControl
@@ -296,7 +398,11 @@ const EmbedPreviewContent: React.FC = () => {
                 <FormLabel marginBottom="0" htmlFor="pan" whiteSpace="nowrap">
                   Allow panning
                 </FormLabel>
-                <Switch defaultChecked={false} id="pan" name="pan" />
+                <Switch
+                  defaultChecked={previewState.context.params.pan}
+                  id="pan"
+                  name="pan"
+                />
               </FormControl>
 
               <FormControl
@@ -307,7 +413,11 @@ const EmbedPreviewContent: React.FC = () => {
                 <FormLabel marginBottom="0" htmlFor="zoom" whiteSpace="nowrap">
                   Allow zooming
                 </FormLabel>
-                <Switch defaultChecked={false} id="zoom" name="zoom" />
+                <Switch
+                  defaultChecked={previewState.context.params.zoom}
+                  id="zoom"
+                  name="zoom"
+                />
               </FormControl>
             </VStack>
           </form>
@@ -335,37 +445,71 @@ const EmbedPreviewContent: React.FC = () => {
           </Box>
         </VStack>
       </Box>
-      <Box gridArea="preview" paddingLeft="2">
+      <Box
+        gridArea="preview"
+        paddingLeft="2"
+        display="flex"
+        placeContent="center"
+      >
+        {/* <pre>{JSON.stringify(previewState.value, null, 2)}</pre>
+        <Button
+          onClick={() => {
+            previewState.context.iframe?.contentWindow?.postMessage(
+              {
+                type: 'EMBED_PARAMS_CHANGED',
+                url: previewState.context.embedUrl.replace('/viz', ''),
+              },
+              '*',
+            );
+          }}
+        >
+          Update
+        </Button> */}
         {isPreviewLoading && (
           <Overlay>
             <Spinner size="lg" />
           </Overlay>
         )}
-        {isPreviewError && <p>Error loading preview</p>}
-        <Box position="relative" width="100%" height="0" paddingTop="56.25%">
-          <iframe
-            style={{
-              position: 'absolute',
-              height: isPreviewLoading ? 0 : '100%',
-              left: 0,
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: '100%',
-            }}
-            onLoad={(e) => {
-              // Found at https://stackoverflow.com/questions/15273042/catch-error-if-iframe-src-fails-to-load-error-refused-to-display-http-ww
-              // If iframe isn't loaded, the contentWindow is either null or with length 0
-              const iframe = e.target as HTMLIFrameElement;
-              if (iframe.contentWindow?.length) {
-                sendPreviewEvent('IFRAME_LOADED');
-              } else {
-                sendPreviewEvent('IFRAME_ERROR');
-              }
-            }}
-            src={previewState.context.embedUrl}
-          ></iframe>
-        </Box>
+        {isPreviewError && (
+          <VStack justifyContent="center">
+            <Center color="red.500">Error loading preview</Center>
+            <Button
+              onClick={() => {
+                sendPreviewEvent('RETRY');
+              }}
+            >
+              Retry
+            </Button>
+          </VStack>
+        )}
+        {!isPreviewError && (
+          <Box position="relative" width="100%" height="0" paddingTop="56.25%">
+            <iframe
+              ref={iframe}
+              style={{
+                position: 'absolute',
+                height: isPreviewLoading ? 0 : '100%',
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: '100%',
+              }}
+              onLoad={(e) => {
+                // Found at https://stackoverflow.com/questions/15273042/catch-error-if-iframe-src-fails-to-load-error-refused-to-display-http-ww
+                // If iframe isn't loaded, the contentWindow is either null or with length 0
+                const iframe = e.target as HTMLIFrameElement;
+                // console.log(iframe.contentWindow);
+                if (iframe.contentWindow?.length) {
+                  sendPreviewEvent('IFRAME_LOADED');
+                } else {
+                  sendPreviewEvent('IFRAME_ERROR');
+                }
+              }}
+              src={previewState.context.previewUrl}
+            ></iframe>
+          </Box>
+        )}
       </Box>
     </Box>
   );
