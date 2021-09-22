@@ -6,7 +6,6 @@ import {
   ActorRefFrom,
   assign,
   ContextFrom,
-  createMachine,
   DoneInvokeEvent,
   EventFrom,
   forwardTo,
@@ -167,7 +166,7 @@ export const makeSourceMachine = (params: {
     return Boolean(params.auth.session());
   };
 
-  return createMachine<typeof sourceModel>(
+  return sourceModel.createMachine(
     {
       initial: 'checking_initial_data',
       preserveActionOrder: true,
@@ -312,7 +311,13 @@ export const makeSourceMachine = (params: {
                     assign({
                       sourceRawContent: (ctx, e) => e.code,
                     }),
-                    choose([
+                    choose<
+                      ContextFrom<typeof sourceModel>,
+                      Extract<
+                        EventFrom<typeof sourceModel>,
+                        { type: 'CODE_UPDATED' }
+                      >
+                    >([
                       {
                         actions: [
                           forwardTo('codeCacheMachine'),
@@ -395,7 +400,7 @@ export const makeSourceMachine = (params: {
                     ),
                   { to: (ctx: any) => ctx.notifRef },
                 ),
-                (_, e: any) => {
+                (_: any, e: any) => {
                   if (e.data instanceof NotFoundError) {
                     updateQueryParamsWithoutReload((queries) => {
                       queries.delete('id');
@@ -415,7 +420,13 @@ export const makeSourceMachine = (params: {
                 assign({
                   sourceRawContent: (ctx, e) => e.code,
                 }),
-                choose([
+                choose<
+                  ContextFrom<typeof sourceModel>,
+                  Extract<
+                    EventFrom<typeof sourceModel>,
+                    { type: 'CODE_UPDATED' }
+                  >
+                >([
                   {
                     actions: [
                       forwardTo('codeCacheMachine'),
