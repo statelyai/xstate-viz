@@ -246,7 +246,7 @@ const EmbedPreviewContent: React.FC = () => {
     <Box
       display="grid"
       gridTemplateAreas={`"sidebar preview"`}
-      gridTemplateColumns="auto 1fr"
+      gridTemplateColumns="20rem 1fr"
       data-testid="embed-preview"
     >
       <Box
@@ -257,8 +257,9 @@ const EmbedPreviewContent: React.FC = () => {
         cursor={!isFormReady ? 'not-allowed' : 'default'}
         disabled={!isFormReady}
       >
-        <VStack spacing="10">
+        <VStack spacing="10" justifyContent="space-between" height="100%">
           <form
+            style={{ width: '100%' }}
             onChange={() => {
               sendPreviewEvent({
                 type: 'PARAMS_CHANGED',
@@ -277,7 +278,7 @@ const EmbedPreviewContent: React.FC = () => {
                   Mode
                 </FormLabel>
                 <Select
-                  // defaultValue={previewState.context.params.mode}
+                  defaultValue={previewState.context.params.mode}
                   id="mode"
                   name="mode"
                   size="sm"
@@ -291,117 +292,141 @@ const EmbedPreviewContent: React.FC = () => {
                 </Select>
               </FormControl>
 
-              <FormControl
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <FormLabel marginBottom="0" htmlFor="panel" whiteSpace="nowrap">
-                  Active Panel
-                </FormLabel>
-                <Select
-                  defaultValue={previewState.context.params.panel}
-                  id="panel"
-                  name="panel"
-                  size="sm"
-                  width="auto"
-                >
-                  {Object.values(EmbedPanel)
-                    .filter((panel) => panel !== EmbedPanel.Settings)
-                    .map((panel) => (
-                      <option key={panel} value={panel}>
-                        {panel}
-                      </option>
-                    ))}
-                </Select>
-              </FormControl>
+              {previewState.context.params.mode !== EmbedMode.Viz && (
+                <>
+                  <FormControl
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <FormLabel
+                      marginBottom="0"
+                      htmlFor="panel"
+                      whiteSpace="nowrap"
+                    >
+                      Active Panel
+                    </FormLabel>
+                    <Select
+                      defaultValue={previewState.context.params.panel}
+                      id="panel"
+                      name="panel"
+                      size="sm"
+                      width="auto"
+                    >
+                      {Object.values(EmbedPanel)
+                        .filter((panel) => panel !== EmbedPanel.Settings)
+                        .map((panel) => (
+                          <option key={panel} value={panel}>
+                            {panel}
+                          </option>
+                        ))}
+                    </Select>
+                  </FormControl>
+                  <FormControl
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <FormLabel
+                      marginBottom="0"
+                      htmlFor="readOnly"
+                      whiteSpace="nowrap"
+                    >
+                      Editor readonly
+                    </FormLabel>
+                    <Switch
+                      defaultChecked={previewState.context.params.readOnly}
+                      id="readOnly"
+                      name="readOnly"
+                    />
+                  </FormControl>
+                  <FormControl
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <FormLabel
+                      marginBottom="0"
+                      htmlFor="showOriginalLink"
+                      whiteSpace="nowrap"
+                    >
+                      Show original link to visualizer
+                    </FormLabel>
+                    <Switch
+                      defaultChecked={
+                        previewState.context.params.showOriginalLink
+                      }
+                      id="showOriginalLink"
+                      name="showOriginalLink"
+                    />
+                  </FormControl>
+                </>
+              )}
 
-              <FormControl
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <FormLabel
-                  marginBottom="0"
-                  htmlFor="readOnly"
-                  whiteSpace="nowrap"
-                >
-                  Editor readonly
-                </FormLabel>
-                <Switch
-                  defaultChecked={previewState.context.params.readOnly}
-                  id="readOnly"
-                  name="readOnly"
-                />
-              </FormControl>
+              {previewState.context.params.mode !== EmbedMode.Panels && (
+                <>
+                  <FormControl
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <FormLabel
+                      marginBottom="0"
+                      htmlFor="controls"
+                      whiteSpace="nowrap"
+                    >
+                      Show control buttons
+                    </FormLabel>
+                    <Switch
+                      defaultChecked={previewState.context.params.controls}
+                      id="controls"
+                      name="controls"
+                    />
+                  </FormControl>
 
-              <FormControl
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <FormLabel
-                  marginBottom="0"
-                  htmlFor="showOriginalLink"
-                  whiteSpace="nowrap"
-                >
-                  Show original link to visualizer
-                </FormLabel>
-                <Switch
-                  defaultChecked={previewState.context.params.showOriginalLink}
-                  id="showOriginalLink"
-                  name="showOriginalLink"
-                />
-              </FormControl>
+                  {previewState.context.params.controls && (
+                    <>
+                      <FormControl
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                      >
+                        <FormLabel
+                          marginBottom="0"
+                          htmlFor="pan"
+                          whiteSpace="nowrap"
+                        >
+                          Allow panning
+                        </FormLabel>
+                        <Switch
+                          defaultChecked={previewState.context.params.pan}
+                          id="pan"
+                          name="pan"
+                        />
+                      </FormControl>
 
-              <FormControl
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <FormLabel
-                  marginBottom="0"
-                  htmlFor="controls"
-                  whiteSpace="nowrap"
-                >
-                  Show control buttons
-                </FormLabel>
-                <Switch
-                  defaultChecked={previewState.context.params.controls}
-                  id="controls"
-                  name="controls"
-                />
-              </FormControl>
-
-              <FormControl
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <FormLabel marginBottom="0" htmlFor="pan" whiteSpace="nowrap">
-                  Allow panning
-                </FormLabel>
-                <Switch
-                  defaultChecked={previewState.context.params.pan}
-                  id="pan"
-                  name="pan"
-                />
-              </FormControl>
-
-              <FormControl
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <FormLabel marginBottom="0" htmlFor="zoom" whiteSpace="nowrap">
-                  Allow zooming
-                </FormLabel>
-                <Switch
-                  defaultChecked={previewState.context.params.zoom}
-                  id="zoom"
-                  name="zoom"
-                />
-              </FormControl>
+                      <FormControl
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="space-between"
+                      >
+                        <FormLabel
+                          marginBottom="0"
+                          htmlFor="zoom"
+                          whiteSpace="nowrap"
+                        >
+                          Allow zooming
+                        </FormLabel>
+                        <Switch
+                          defaultChecked={previewState.context.params.zoom}
+                          id="zoom"
+                          name="zoom"
+                        />
+                      </FormControl>
+                    </>
+                  )}
+                </>
+              )}
             </VStack>
           </form>
           <Box position="relative" width="100%">
