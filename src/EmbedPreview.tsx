@@ -23,7 +23,7 @@ import { makeEmbedUrl, paramsToRecord } from './utils';
 import { send, assign } from 'xstate';
 import { Overlay } from './Overlay';
 import { useRouter } from 'next/router';
-import { log, pure } from 'xstate/lib/actions';
+import { pure } from 'xstate/lib/actions';
 
 const extractFormData = (form: HTMLFormElement): ParsedEmbed => {
   // This is needed because FormData doesn't include checkboxes that are unchecked by default
@@ -100,10 +100,8 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
       states: {
         ready: {
           entry: [
-            log('entry'),
             'makeEmbedUrlAndCode',
             pure((ctx) => {
-              console.debug(ctx.loaded, 'in pure');
               if (!ctx.loaded) {
                 return { type: 'makePreviewUrl' };
               }
@@ -148,11 +146,6 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
               'Once iframe is loaded, we no longer change its `src` because that reloads the iframe window. Instead, we send the new url to its window using `postMessage`. That message will be picked up by `window.onmessage` listener that uses NextJS `router.pushState`',
           },
           entry: (ctx) => {
-            console.debug(
-              'SENDING POSTMESSAGE',
-              ctx.params,
-              ctx.embedUrl.replace('/viz', ''),
-            );
             ctx.iframe?.contentWindow?.postMessage(
               {
                 type: 'EMBED_PARAMS_CHANGED',
@@ -203,12 +196,11 @@ const EmbedPreviewContent: React.FC = () => {
     setCopyText,
   } = useEmbedCodeClipboard();
   const iframe = useRef<HTMLIFrameElement>(null!);
-  const [previewState, sendPreviewEvent, service] = useMachine(
+  const [previewState, sendPreviewEvent] = useMachine(
     embedPreviewMachine.withConfig({
       actions: {
         saveParams: assign({
           params: (_, e) => {
-            console.debug('saveParams', e.params);
             return (e as any).params;
           },
         }),
@@ -239,13 +231,6 @@ const EmbedPreviewContent: React.FC = () => {
       },
     }),
   );
-
-  useEffect(() => {
-    // service.onEvent((evt) => console.debug(evt.type));
-    service.onTransition((state, ctx) => {
-      console.debug(state.event, state.actions);
-    });
-  }, []);
 
   useEffect(() => {
     const formRef = form.current;
@@ -317,7 +302,7 @@ const EmbedPreviewContent: React.FC = () => {
                   Active Panel
                 </FormLabel>
                 <Select
-                  // defaultValue={previewState.context.params.panel}
+                  defaultValue={previewState.context.params.panel}
                   id="panel"
                   name="panel"
                   size="sm"
@@ -451,20 +436,6 @@ const EmbedPreviewContent: React.FC = () => {
         display="flex"
         placeContent="center"
       >
-        {/* <pre>{JSON.stringify(previewState.value, null, 2)}</pre>
-        <Button
-          onClick={() => {
-            previewState.context.iframe?.contentWindow?.postMessage(
-              {
-                type: 'EMBED_PARAMS_CHANGED',
-                url: previewState.context.embedUrl.replace('/viz', ''),
-              },
-              '*',
-            );
-          }}
-        >
-          Update
-        </Button> */}
         {isPreviewLoading && (
           <Overlay>
             <Spinner size="lg" />
@@ -499,7 +470,6 @@ const EmbedPreviewContent: React.FC = () => {
                 // Found at https://stackoverflow.com/questions/15273042/catch-error-if-iframe-src-fails-to-load-error-refused-to-display-http-ww
                 // If iframe isn't loaded, the contentWindow is either null or with length 0
                 const iframe = e.target as HTMLIFrameElement;
-                // console.log(iframe.contentWindow);
                 if (iframe.contentWindow?.length) {
                   sendPreviewEvent('IFRAME_LOADED');
                 } else {
