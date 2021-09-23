@@ -94,11 +94,9 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
   useEffect(() => {
     window.onmessage = async (message) => {
       const { data } = message;
-      console.log(data);
       switch (data.type) {
         case 'EMBED_PARAMS_CHANGED':
           let x = await router.replace(data.url, data.url);
-          console.log(x);
           break;
         default:
       }
