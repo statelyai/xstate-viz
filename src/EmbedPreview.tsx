@@ -231,8 +231,11 @@ const EmbedPreviewContent: React.FC = () => {
   });
 
   useEffect(() => {
-    const formRef = form.current;
+    // On mount, signal that iframe ref is ready
     sendPreviewEvent({ type: 'IFRAME_READY', iframe: iframe.current });
+
+    const formRef = form.current;
+    // Reset the form when leaving the embed preview (unmount)
     return () => {
       formRef.reset();
     };

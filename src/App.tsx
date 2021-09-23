@@ -49,6 +49,17 @@ const VizHead = () => {
   );
 };
 
+const useReceiveMessage = (
+  eventHandlers?: Record<string, (data: any) => void>,
+) => {
+  useEffect(() => {
+    window.onmessage = async (message) => {
+      const { data } = message;
+      eventHandlers && eventHandlers[data.type]?.(data);
+    };
+  }, []);
+};
+
 const getGridArea = (embed?: EmbedContext) => {
   if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
     return 'canvas';
@@ -71,6 +82,7 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
     }),
     [query, asPath],
   );
+
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -83,6 +95,13 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
   const sourceService = useSelector(useAuth(), getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
 
+  useReceiveMessage({
+    // used to receive messages from the iframe in embed preview
+    EMBED_PARAMS_CHANGED: (data) => {
+      router.replace(data.url, data.url);
+    },
+  });
+
   useEffect(() => {
     sendToSourceService({
       type: 'MACHINE_ID_CHANGED',
@@ -91,17 +110,6 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
   }, [machine?.id, sendToSourceService]);
 
   // TODO: Subject to refactor into embedActor
-  useEffect(() => {
-    window.onmessage = async (message) => {
-      const { data } = message;
-      switch (data.type) {
-        case 'EMBED_PARAMS_CHANGED':
-          let x = await router.replace(data.url, data.url);
-          break;
-        default:
-      }
-    };
-  }, []);
 
   const sourceID = sourceState!.context.sourceID;
 
