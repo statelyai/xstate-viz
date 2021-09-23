@@ -46,6 +46,7 @@ export interface ServiceData {
   state: AnyState;
   status: AnyInterpreter['status'];
   source: 'inspector' | 'visualizer' | 'in-app';
+  parent: string | undefined;
 }
 
 export type SimulationMode = 'inspecting' | 'visualizing';
