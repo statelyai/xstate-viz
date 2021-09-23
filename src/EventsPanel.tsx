@@ -165,12 +165,12 @@ export const EventsPanel: React.FC = () => {
     (a, b) => JSON.stringify(a) === JSON.stringify(b),
   );
 
-  const [eventsState, sendToEventsMachine] = useMachine(() =>
-    eventsMachine.withContext({
+  const [eventsState, sendToEventsMachine] = useMachine(() => eventsMachine, {
+    context: {
       ...eventsModel.initialContext,
       rawEvents: rawEvents,
-    }),
-  );
+    },
+  });
 
   const finalEvents = deriveFinalEvents(eventsState.context);
 

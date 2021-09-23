@@ -196,41 +196,39 @@ const EmbedPreviewContent: React.FC = () => {
     setCopyText,
   } = useEmbedCodeClipboard();
   const iframe = useRef<HTMLIFrameElement>(null!);
-  const [previewState, sendPreviewEvent] = useMachine(
-    embedPreviewMachine.withConfig({
-      actions: {
-        saveParams: assign({
-          params: (_, e) => {
-            return (e as any).params;
-          },
-        }),
-        updateEmbedCopy: (ctx) => {
-          setCopyText(ctx.embedCode);
+  const [previewState, sendPreviewEvent] = useMachine(embedPreviewMachine, {
+    actions: {
+      saveParams: assign({
+        params: (_, e) => {
+          return (e as any).params;
         },
-        makeEmbedUrlAndCode: assign((ctx) => {
-          const url = makeEmbedUrl(
-            router.query.sourceFileId as string,
-            ctx.params,
-          );
-
-          return {
-            embedUrl: url,
-            embedCode: getEmbedCodeFromUrl(url),
-            params: ctx.params,
-          };
-        }),
-        makePreviewUrl: assign((ctx) => {
-          const url = makeEmbedUrl(
-            router.query.sourceFileId as string,
-            ctx.params,
-          );
-          return {
-            previewUrl: url,
-          };
-        }),
+      }),
+      updateEmbedCopy: (ctx) => {
+        setCopyText(ctx.embedCode);
       },
-    }),
-  );
+      makeEmbedUrlAndCode: assign((ctx) => {
+        const url = makeEmbedUrl(
+          router.query.sourceFileId as string,
+          ctx.params,
+        );
+
+        return {
+          embedUrl: url,
+          embedCode: getEmbedCodeFromUrl(url),
+          params: ctx.params,
+        };
+      }),
+      makePreviewUrl: assign((ctx) => {
+        const url = makeEmbedUrl(
+          router.query.sourceFileId as string,
+          ctx.params,
+        );
+        return {
+          previewUrl: url,
+        };
+      }),
+    },
+  });
 
   useEffect(() => {
     const formRef = form.current;
