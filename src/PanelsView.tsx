@@ -30,7 +30,7 @@ export const PanelsView = (props: BoxProps) => {
   const simService = useSimulation();
   const services = useSelector(simService, selectServices);
   const [sourceState, sendToSourceService] = useSourceActor();
-  const [activePanelIndex, setActiveTabIndex] = useState(
+  const [activePanelIndex, setActiveTabIndex] = useState(() =>
     embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0,
   );
 

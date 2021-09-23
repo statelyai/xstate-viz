@@ -462,7 +462,7 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
     return () => {
       canvasEl.removeEventListener('wheel', onCanvasWheel);
     };
-  }, [canvasService]);
+  }, [canvasService, embed]);
 
   return (
     <div
