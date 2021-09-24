@@ -319,7 +319,7 @@ export function paramsToRecord(
   );
 }
 
-export function makeEmbedUrl(id: string, params: ParsedEmbed) {
+export function makeEmbedUrl(id: string, baseUrl: string, params: ParsedEmbed) {
   const paramsWithNumberValues = Object.entries(params).reduce(
     (result, current) => {
       return {
@@ -332,7 +332,7 @@ export function makeEmbedUrl(id: string, params: ParsedEmbed) {
     {},
   );
   const query = new URLSearchParams(paramsWithNumberValues as any);
-  return `/viz/embed/${id}?${query.toString()}`;
+  return `${baseUrl}/viz/embed/${id}?${query.toString()}`;
 }
 // unsure if this should include button-like input elements
 export const hasRoleButton = (el: HTMLElement): boolean => {
