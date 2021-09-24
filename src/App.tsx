@@ -18,7 +18,7 @@ import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
-import { useRouter } from 'next/router';
+import router, { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
 
@@ -49,6 +49,17 @@ const VizHead = () => {
   );
 };
 
+const useReceiveMessage = (
+  eventHandlers?: Record<string, (data: any) => void>,
+) => {
+  useEffect(() => {
+    window.onmessage = async (message) => {
+      const { data } = message;
+      eventHandlers && eventHandlers[data.type]?.(data);
+    };
+  }, []);
+};
+
 const getGridArea = (embed?: EmbedContext) => {
   if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
     return 'canvas';
@@ -62,15 +73,16 @@ const getGridArea = (embed?: EmbedContext) => {
 };
 
 function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
-  const { query } = useRouter();
+  const { query, asPath } = useRouter();
   const embed = useMemo(
     () => ({
       ...parseEmbedQuery(query),
       isEmbedded,
       originalUrl: withoutEmbedQueryParams(query),
     }),
-    [query],
+    [query, asPath],
   );
+
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
@@ -83,12 +95,21 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
   const sourceService = useSelector(useAuth(), getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
 
+  useReceiveMessage({
+    // used to receive messages from the iframe in embed preview
+    EMBED_PARAMS_CHANGED: (data) => {
+      router.replace(data.url, data.url);
+    },
+  });
+
   useEffect(() => {
     sendToSourceService({
       type: 'MACHINE_ID_CHANGED',
       id: machine?.id || '',
     });
   }, [machine?.id, sendToSourceService]);
+
+  // TODO: Subject to refactor into embedActor
 
   const sourceID = sourceState!.context.sourceID;
 

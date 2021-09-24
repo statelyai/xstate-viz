@@ -79,8 +79,8 @@ const MAX_ZOOM_OUT_FACTOR = 0.1;
 
 const MAX_ZOOM_IN_FACTOR = 2;
 
-export const canZoom = (ctx: typeof initialContext) => {
-  return !ctx.embed?.isEmbedded || (ctx.embed.isEmbedded && ctx.embed.zoom);
+export const canZoom = (embed?: EmbedContext) => {
+  return !embed?.isEmbedded || embed.zoom;
 };
 
 export const canZoomOut = (ctx: typeof initialContext) => {
@@ -154,7 +154,7 @@ export const canvasMachine = canvasModel.createMachine({
           ctx.canvasPanelPosition,
         );
       }),
-      cond: (ctx) => canZoom(ctx) && canZoomOut(ctx),
+      cond: (ctx) => canZoom(ctx.embed) && canZoomOut(ctx),
       target: '.throttling',
       internal: false,
     },
@@ -171,7 +171,7 @@ export const canvasMachine = canvasModel.createMachine({
           ctx.canvasPanelPosition,
         );
       }),
-      cond: (ctx) => canZoom(ctx) && canZoomIn(ctx),
+      cond: (ctx) => canZoom(ctx.embed) && canZoomIn(ctx),
       target: '.throttling',
       internal: false,
     },

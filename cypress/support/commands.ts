@@ -217,6 +217,7 @@ const getControlButtons = () => {
   return cy.findByTestId('controls');
 };
 
+const getEmbedPreview = () => cy.findByTestId('embed-preview');
 const getResizeHandle = () => {
   return cy.findByTestId('resize-handle');
 };
@@ -270,6 +271,7 @@ declare global {
 
       getControlButtons: typeof getControlButtons;
 
+      getEmbedPreview: typeof getEmbedPreview;
       getResizeHandle: typeof getResizeHandle;
     }
   }
@@ -291,4 +293,5 @@ Cypress.Commands.add('getCanvasHeader', getCanvasHeader);
 Cypress.Commands.add('getStatePanel', getStatePanel);
 Cypress.Commands.add('getCanvasGraph', getCanvasGraph);
 Cypress.Commands.add('getControlButtons', getControlButtons);
+Cypress.Commands.add('getEmbedPreview', getEmbedPreview);
 Cypress.Commands.add('getResizeHandle', getResizeHandle);

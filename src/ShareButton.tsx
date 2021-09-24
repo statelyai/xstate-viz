@@ -10,10 +10,12 @@ import {
   Spinner,
   Text,
   useClipboard,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { useMachine } from '@xstate/react';
 import { featureFlags } from './featureFlags';
-import { TwitterIcon } from './Icons';
+import { EmbedPreview } from './EmbedPreview';
+import { TwitterIcon, EmbedIcon } from './Icons';
 import { registryLinks } from './registryLinks';
 import { shareMachine } from './shareMachine';
 
@@ -36,6 +38,7 @@ const useShareButton = (linkText: string) => {
 };
 
 export const ShareButton = ({ sourceId }: { sourceId: string }) => {
+  const { isOpen, onClose, onOpen } = useDisclosure();
   const linkText = window.location.href;
   const twitterText = `Check out the state machine I built in the @statelyai visualizer: ${linkText}`;
 
@@ -99,8 +102,15 @@ export const ShareButton = ({ sourceId }: { sourceId: string }) => {
               </HStack>
             </MenuItem>
           )}
+          <MenuItem onClick={onOpen}>
+            <HStack spacing="3">
+              <EmbedIcon fill="white" />
+              <Text>Embed</Text>
+            </HStack>
+          </MenuItem>
         </MenuList>
       </Menu>
+      <EmbedPreview isOpen={isOpen} onClose={onClose} />
     </>
   );
 };

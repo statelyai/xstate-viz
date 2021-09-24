@@ -57,12 +57,12 @@ export const CanvasView: React.FC = () => {
 
   const shouldEnableZoomOutButton = useSelector(
     canvasService,
-    (state) => canZoom(state.context) && canZoomOut(state.context),
+    (state) => canZoom(embed) && canZoomOut(state.context),
   );
 
   const shouldEnableZoomInButton = useSelector(
     canvasService,
-    (state) => canZoom(state.context) && canZoomIn(state.context),
+    (state) => canZoom(embed) && canZoomIn(state.context),
   );
 
   const simulationMode = useSimulationMode();

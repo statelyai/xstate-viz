@@ -12,23 +12,21 @@ export const useInterpretCanvas = ({
   sourceID: string | null;
   embed?: EmbedContext;
 }) => {
-  const canvasService = useInterpret(
-    canvasMachine.withContext({
-      ...canvasModel.initialContext,
-      embed,
-    }),
-    {
-      actions: {
-        persistPositionToLocalStorage: (context) => {
-          // TODO: This can be more elegant when we have system actor
-          const { zoom, pan, embed } = context;
-          if (!embed?.isEmbedded) {
-            localCache.savePosition(sourceID, { zoom, pan });
-          }
-        },
+  const canvasService = useInterpret(canvasMachine, {
+    actions: {
+      persistPositionToLocalStorage: (context) => {
+        // TODO: This can be more elegant when we have system actor
+        const { zoom, pan, embed } = context;
+        if (!embed?.isEmbedded) {
+          localCache.savePosition(sourceID, { zoom, pan });
+        }
       },
     },
-  );
+    context: {
+      ...canvasModel.initialContext,
+      embed,
+    },
+  });
 
   useEffect(() => {
     canvasService.send({

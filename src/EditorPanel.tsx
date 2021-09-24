@@ -140,13 +140,12 @@ const editorPanelMachine = editorPanelModel.createMachine(
               src: async (ctx) => {
                 const monaco = ctx.monacoRef!;
                 const uri = monaco.Uri.parse(ctx.mainFile);
-                const getWorker =
-                  await monaco.languages.typescript.getTypeScriptWorker();
+                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
                 const tsWorker = await getWorker(uri);
 
-                const usedXStateGistIdentifiers: string[] = await (
-                  tsWorker as any
-                ).queryXStateGistIdentifiers(uri.toString());
+                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
+                  uri.toString(),
+                );
 
                 if (usedXStateGistIdentifiers.length > 0) {
                   const fixupImportsText = buildGistFixupImportsText(
@@ -396,24 +395,21 @@ export const EditorPanel: React.FC<{
 
   const value = getEditorValue(sourceState);
 
-  const [current, send] = useMachine(
-    // TODO: had to shut up TS by extending model.initialContext
-    editorPanelMachine.withContext({
+  const [current, send] = useMachine(editorPanelMachine, {
+    actions: {
+      onChange: (ctx) => {
+        onChange(ctx.machines!);
+      },
+      onChangedCodeValue: (ctx) => {
+        onChangedCodeValue(ctx.code);
+      },
+    },
+    context: {
       ...editorPanelModel.initialContext,
       code: value,
       sourceRef: sourceService,
-    }),
-    {
-      actions: {
-        onChange: (ctx) => {
-          onChange(ctx.machines!);
-        },
-        onChangedCodeValue: (ctx) => {
-          onChangedCodeValue(ctx.code);
-        },
-      },
     },
-  );
+  });
   const isVisualizing = current.hasTag('visualizing');
 
   return (
