@@ -363,7 +363,7 @@ const dragMachine = dragModel.createMachine(
 
 const getCursorByState = (state: AnyState) =>
   (Object.values(state.meta).find(
-    (m) => !!(m as { cursor?: CSSProperties['cursor'] }).cursor,
+    (m) => Boolean(m as { cursor?: CSSProperties['cursor'] }).cursor,
   ) as { cursor?: CSSProperties['cursor'] })?.cursor;
 
 export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
