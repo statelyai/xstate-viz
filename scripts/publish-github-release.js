@@ -16,7 +16,7 @@ async function publishRelease(octokit, { repo }) {
     'utf-8',
   );
 
-  const versionHeader = /^##/gm;
+  const versionHeader = /^##(?!#)/gm;
 
   // we leverage statefulness of `g` regex here for the second `exec` to start of the `lastIndex` from the first match
   const start = versionHeader.exec(changelog).index;
