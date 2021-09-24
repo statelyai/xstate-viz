@@ -20,7 +20,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createModel } from 'xstate/lib/model';
 import { EmbedMode, EmbedPanel, ParsedEmbed } from './types';
 import { makeEmbedUrl, paramsToRecord } from './utils';
-import { send, assign } from 'xstate';
+import { send, assign, ContextFrom } from 'xstate';
 import { Overlay } from './Overlay';
 import { useRouter } from 'next/router';
 import { pure } from 'xstate/lib/actions';
@@ -101,7 +101,7 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
         ready: {
           entry: [
             'makeEmbedUrlAndCode',
-            pure((ctx) => {
+            pure((ctx: ContextFrom<typeof embedPreviewModel>) => {
               if (!ctx.loaded) {
                 return { type: 'makePreviewUrl' };
               }
