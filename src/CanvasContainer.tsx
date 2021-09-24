@@ -50,25 +50,27 @@ const dragSessionTracker = dragSessionModel.createMachine(
       idle: {
         invoke: {
           id: 'dragSessionStartedListener',
-          src: ({ ref }) => (sendBack) => {
-            const node = ref!.current!;
-            const listener = (ev: PointerEvent) => {
-              const isMouseLeftButton = ev.button === 0;
-              if (isMouseLeftButton) {
-                sendBack(
-                  dragSessionModel.events.DRAG_SESSION_STARTED({
-                    pointerId: ev.pointerId,
-                    point: {
-                      x: ev.pageX,
-                      y: ev.pageY,
-                    },
-                  }),
-                );
-              }
-            };
-            node.addEventListener('pointerdown', listener);
-            return () => node.removeEventListener('pointerdown', listener);
-          },
+          src:
+            ({ ref }) =>
+            (sendBack) => {
+              const node = ref!.current!;
+              const listener = (ev: PointerEvent) => {
+                const isMouseLeftButton = ev.button === 0;
+                if (isMouseLeftButton) {
+                  sendBack(
+                    dragSessionModel.events.DRAG_SESSION_STARTED({
+                      pointerId: ev.pointerId,
+                      point: {
+                        x: ev.pageX,
+                        y: ev.pageY,
+                      },
+                    }),
+                  );
+                }
+              };
+              node.addEventListener('pointerdown', listener);
+              return () => node.removeEventListener('pointerdown', listener);
+            },
         },
         on: {
           DRAG_SESSION_STARTED: {
@@ -82,35 +84,37 @@ const dragSessionTracker = dragSessionModel.createMachine(
         exit: ['releasePointer', 'clearSessionData'],
         invoke: {
           id: 'dragSessionListeners',
-          src: ({ ref, session }) => (sendBack) => {
-            const node = ref!.current!;
+          src:
+            ({ ref, session }) =>
+            (sendBack) => {
+              const node = ref!.current!;
 
-            const moveListener = (ev: PointerEvent) => {
-              if (ev.pointerId !== session!.pointerId) {
-                return;
-              }
-              sendBack(
-                dragSessionModel.events.DRAG_POINT_MOVED({
-                  point: { x: ev.pageX, y: ev.pageY },
-                }),
-              );
-            };
-            const stopListener = (ev: PointerEvent) => {
-              if (ev.pointerId !== session!.pointerId) {
-                return;
-              }
-              sendBack(dragSessionModel.events.DRAG_SESSION_STOPPED());
-            };
-            node.addEventListener('pointermove', moveListener);
-            node.addEventListener('pointerup', stopListener);
-            node.addEventListener('pointercancel', stopListener);
+              const moveListener = (ev: PointerEvent) => {
+                if (ev.pointerId !== session!.pointerId) {
+                  return;
+                }
+                sendBack(
+                  dragSessionModel.events.DRAG_POINT_MOVED({
+                    point: { x: ev.pageX, y: ev.pageY },
+                  }),
+                );
+              };
+              const stopListener = (ev: PointerEvent) => {
+                if (ev.pointerId !== session!.pointerId) {
+                  return;
+                }
+                sendBack(dragSessionModel.events.DRAG_SESSION_STOPPED());
+              };
+              node.addEventListener('pointermove', moveListener);
+              node.addEventListener('pointerup', stopListener);
+              node.addEventListener('pointercancel', stopListener);
 
-            return () => {
-              node.removeEventListener('pointermove', moveListener);
-              node.removeEventListener('pointerup', stopListener);
-              node.removeEventListener('pointercancel', stopListener);
-            };
-          },
+              return () => {
+                node.removeEventListener('pointermove', moveListener);
+                node.removeEventListener('pointerup', stopListener);
+                node.removeEventListener('pointercancel', stopListener);
+              };
+            },
         },
         on: {
           DRAG_POINT_MOVED: {
@@ -362,9 +366,11 @@ const dragMachine = dragModel.createMachine(
 );
 
 const getCursorByState = (state: AnyState) =>
-  (Object.values(state.meta).find(
-    (m) => Boolean(m as { cursor?: CSSProperties['cursor'] }).cursor,
-  ) as { cursor?: CSSProperties['cursor'] })?.cursor;
+  (
+    Object.values(state.meta).find((m) =>
+      Boolean((m as { cursor?: CSSProperties['cursor'] }).cursor),
+    ) as { cursor?: CSSProperties['cursor'] }
+  )?.cursor;
 
 export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
   children,
