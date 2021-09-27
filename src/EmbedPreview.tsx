@@ -209,6 +209,7 @@ const EmbedPreviewContent: React.FC = () => {
       makeEmbedUrlAndCode: assign((ctx) => {
         const url = makeEmbedUrl(
           router.query.sourceFileId as string,
+          window.location.origin,
           ctx.params,
         );
 
@@ -221,6 +222,7 @@ const EmbedPreviewContent: React.FC = () => {
       makePreviewUrl: assign((ctx) => {
         const url = makeEmbedUrl(
           router.query.sourceFileId as string,
+          window.location.origin,
           ctx.params,
         );
         return {

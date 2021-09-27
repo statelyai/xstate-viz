@@ -5,7 +5,7 @@ describe('utils', () => {
   describe('makeEmbedUrl', () => {
     it('makes a valid url with booleans turned to numbers', () => {
       expect(
-        utils.makeEmbedUrl('source_id', {
+        utils.makeEmbedUrl('source_id', 'https://stately.ai', {
           mode: EmbedMode.Panels,
           panel: EmbedPanel.Events,
           readOnly: false,
@@ -15,7 +15,7 @@ describe('utils', () => {
           controls: true,
         }),
       ).toBe(
-        '/viz/embed/source_id?mode=panels&panel=events&readOnly=0&pan=0&zoom=1&showOriginalLink=0&controls=1',
+        'https://stately.ai/viz/embed/source_id?mode=panels&panel=events&readOnly=0&pan=0&zoom=1&showOriginalLink=0&controls=1',
       );
     });
   });
