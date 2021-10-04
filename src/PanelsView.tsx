@@ -71,7 +71,7 @@ export const PanelsView = (props: BoxProps) => {
           </Tab>
           {!embed?.isEmbedded && (
             <Tab marginLeft="auto" marginRight="2">
-              <SettingsIcon />
+              <SettingsIcon aria-label="Settings" />
             </Tab>
           )}
           {!embed?.isEmbedded && <Login />}
