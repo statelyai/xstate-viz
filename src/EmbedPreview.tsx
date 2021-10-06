@@ -19,7 +19,7 @@ import { useMachine } from '@xstate/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { createModel } from 'xstate/lib/model';
 import { EmbedMode, EmbedPanel, ParsedEmbed } from './types';
-import { makeEmbedUrl, paramsToRecord } from './utils';
+import { DEFAULT_EMBED_PARAMS, makeEmbedUrl, paramsToRecord } from './utils';
 import { send, assign, ContextFrom } from 'xstate';
 import { Overlay } from './Overlay';
 import { useRouter } from 'next/router';
@@ -247,6 +247,8 @@ const EmbedPreviewContent: React.FC = () => {
   const isPreviewLoading = previewState.hasTag('preview_loading');
   const isPreviewError = previewState.hasTag('preview_error');
 
+  console.log(previewState.context.params);
+
   return (
     <Box
       display="grid"
@@ -268,7 +270,10 @@ const EmbedPreviewContent: React.FC = () => {
             onChange={() => {
               sendPreviewEvent({
                 type: 'PARAMS_CHANGED',
-                params: extractFormData(form.current),
+                params: {
+                  ...DEFAULT_EMBED_PARAMS,
+                  ...extractFormData(form.current),
+                },
               });
             }}
             ref={form}
