@@ -206,16 +206,17 @@ export function isDelayedTransitionAction(
  * /?mode=viz|full|panels default:viz
  * /?mode=panels&panel=code|state|events|actors default:code
  */
+export const DEFAULT_EMBED_PARAMS: ParsedEmbed = {
+  mode: EmbedMode.Viz,
+  panel: EmbedPanel.Code,
+  showOriginalLink: true,
+  readOnly: true,
+  pan: false,
+  zoom: false,
+  controls: false,
+};
 export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
-  const parsedEmbed = {
-    mode: EmbedMode.Viz,
-    panel: EmbedPanel.Code,
-    showOriginalLink: true,
-    readOnly: true,
-    pan: false,
-    zoom: false,
-    controls: false,
-  };
+  const parsedEmbed = DEFAULT_EMBED_PARAMS;
 
   const getQueryParamValue = (qParamValue: string | string[]) => {
     return Array.isArray(qParamValue) ? qParamValue[0] : qParamValue;
