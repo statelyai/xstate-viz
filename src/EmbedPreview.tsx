@@ -247,8 +247,6 @@ const EmbedPreviewContent: React.FC = () => {
   const isPreviewLoading = previewState.hasTag('preview_loading');
   const isPreviewError = previewState.hasTag('preview_error');
 
-  console.log(previewState.context.params);
-
   return (
     <Box
       display="grid"
