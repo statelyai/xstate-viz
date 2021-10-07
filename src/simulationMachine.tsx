@@ -138,6 +138,9 @@ export const simulationMachine = simModel.createMachine(
                     }),
                   );
                   break;
+                case 'xstate.disconnect' as any:
+                  sendBack(simModel.events['MACHINES.RESET']());
+                  break;
                 case 'service.state':
                   sendBack(
                     simModel.events['SERVICE.STATE'](
@@ -153,6 +156,11 @@ export const simulationMachine = simModel.createMachine(
                   break;
               }
             }).unsubscribe;
+          },
+        },
+        on: {
+          'MACHINES.RESET': {
+            actions: ['resetVisualizationState'],
           },
         },
       },
