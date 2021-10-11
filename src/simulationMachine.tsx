@@ -107,9 +107,11 @@ export const simulationMachine = simModel.createMachine(
     states: {
       inspecting: {
         tags: 'inspecting',
-        initial: new URLSearchParams(window.location.search).has('server')
-          ? 'websocket'
-          : 'window',
+        initial:
+          isOnClientSide() &&
+          new URLSearchParams(window.location.search).has('server')
+            ? 'websocket'
+            : 'window',
         states: {
           websocket: {
             invoke: {
