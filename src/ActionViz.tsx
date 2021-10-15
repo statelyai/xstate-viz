@@ -169,6 +169,16 @@ export const ChooseActionLabel: React.FC<{
   );
 };
 
+export const CustomActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<ActionObject<any, any>>;
+}> = ({ action }) => {
+  return (
+    <ActionType>
+      <strong>{getActionLabel(action)}</strong>
+    </ActionType>
+  );
+};
+
 export const ActionViz: React.FC<{
   action: ActionObject<any, any>;
   kind: 'entry' | 'exit' | 'do';
@@ -198,7 +208,7 @@ export const ActionViz: React.FC<{
     [ActionTypes.Choose]: (
       <ChooseActionLabel action={action as ChooseAction<any, any>} />
     ),
-  }[action.type] ?? <div data-viz="action-type">{getActionLabel(action)}</div>;
+  }[action.type] ?? <CustomActionLabel action={action} />;
 
   return (
     <div data-viz="action" data-viz-action={kind}>
