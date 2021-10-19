@@ -135,15 +135,19 @@ export const dragSessionTracker = dragSessionModel.createMachine(
   },
   {
     actions: {
-      capturePointer: ({ ref }, ev: any) =>
-        ref!.current!.setPointerCapture(ev!.pointerId),
+      capturePointer: ({ ref, session }, ev: any) =>
+        ref!.current!.setPointerCapture(ev!.pointerId || session?.pointerId),
       releasePointer: ({ ref, session }) =>
         ref!.current!.releasePointerCapture(session!.pointerId),
       setSessionData: assign({
-        session: (ctx, ev: any) => ({
-          pointerId: ev.pointerId,
-          point: ev.point,
-        }),
+        session: (ctx, ev: any) => {
+          if (ev.pointerId && ev.point)
+            return {
+              pointerId: ev.pointerId,
+              point: ev.point,
+            };
+          return ctx.session;
+        },
       }),
       clearSessionData: assign({
         session: null,

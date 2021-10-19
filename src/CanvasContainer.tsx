@@ -36,7 +36,7 @@ const dragModel = createModel(
       POINTER_MOVED_BY: ({ delta }: { delta: PointDelta }) => ({
         delta,
       }),
-      WHEEL_PRESSED: (data: DragSession) => ({}),
+      WHEEL_PRESSED: (data: DragSession) => ({ data }),
       WHEEL_RELEASED: () => ({}),
     },
   },
@@ -89,12 +89,12 @@ const dragMachine = dragModel.createMachine(
                     },
                   },
                   wheelPressed: {
-                    invoke: {
-                      src: 'wheelReleaseListener',
-                    },
                     entry: actions.raise(((_ctx: any, ev: any) =>
                       dragModel.events.ENABLE_PANNING(ev.data)) as any),
                     exit: actions.raise(dragModel.events.DISABLE_PANNING()),
+                    on: {
+                      DRAG_SESSION_STOPPED: 'released',
+                    },
                   },
                 },
                 on: {
@@ -127,9 +127,19 @@ const dragMachine = dragModel.createMachine(
                     dragSessionTracker.withContext({
                       ...dragSessionModel.initialContext,
                       ref: ctx.ref,
-                      session: (
-                        ev as Extract<typeof ev, { type: 'ENABLE_PANNING' }>
-                      ).sessionSeed,
+                      session:
+                        // this is just defensive programming
+                        // this really should receive ENABLE_PANNING at all times as this is the event that is making this state to be entered
+                        // however, raised events are not given to invoke creators so we have to fallback handling WHEEL_PRESSED event
+                        // in reality, because of this issue, ENABLE_PANNING that we can receive here won't ever hold any `sessionSeed` (as that is only coming from the wheel-oriented interaction)
+                        ev.type === 'ENABLE_PANNING'
+                          ? ev.sessionSeed
+                          : (
+                              ev as Extract<
+                                typeof ev,
+                                { type: 'WHEEL_PRESSED' }
+                              >
+                            ).data,
                     }),
                 },
                 on: {
@@ -213,16 +223,6 @@ const dragMachine = dragModel.createMachine(
         };
         node.addEventListener('pointerdown', listener);
         return () => node.removeEventListener('pointerdown', listener);
-      },
-      wheelReleaseListener: (ctx) => (sendBack) => {
-        const node = ctx.ref!.current!;
-        const listener = (ev: PointerEvent) => {
-          if (ev.button === 1) {
-            sendBack(dragModel.events.WHEEL_RELEASED());
-          }
-        };
-        node.addEventListener('pointerup', listener);
-        return () => node.removeEventListener('pointerup', listener);
       },
       invokeDetectLock: () => (sendBack) => {
         function keydownListener(e: KeyboardEvent) {
