@@ -31,7 +31,7 @@ import Editor from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import { format } from 'date-fns';
 import React, { useEffect, useState } from 'react';
-import { assign, createMachine, SCXML, send, StateFrom } from 'xstate';
+import { assign, SCXML, send, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { JSONView } from './JSONView';
@@ -90,7 +90,7 @@ const eventsModel = createModel(
     },
   },
 );
-const eventsMachine = createMachine<typeof eventsModel>({
+const eventsMachine = eventsModel.createMachine({
   initial: 'raw',
   context: eventsModel.initialContext,
   states: {
@@ -165,12 +165,12 @@ export const EventsPanel: React.FC = () => {
     (a, b) => JSON.stringify(a) === JSON.stringify(b),
   );
 
-  const [eventsState, sendToEventsMachine] = useMachine(() =>
-    eventsMachine.withContext({
+  const [eventsState, sendToEventsMachine] = useMachine(() => eventsMachine, {
+    context: {
       ...eventsModel.initialContext,
       rawEvents: rawEvents,
-    }),
-  );
+    },
+  });
 
   const finalEvents = deriveFinalEvents(eventsState.context);
 

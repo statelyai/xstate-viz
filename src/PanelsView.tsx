@@ -7,9 +7,11 @@ import {
   TabPanel,
   Button,
   BoxProps,
+  Badge,
 } from '@chakra-ui/react';
-import React, { useMemo } from 'react';
-import { ActorsPanel } from './ActorsPanel';
+import React, { useMemo, useEffect, useState } from 'react';
+import { useSelector } from '@xstate/react';
+import { ActorsPanel, selectServices } from './ActorsPanel';
 import { EditorPanel } from './EditorPanel';
 import { useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
@@ -26,11 +28,17 @@ import { calculatePanelIndexByPanelName } from './utils';
 export const PanelsView = (props: BoxProps) => {
   const embed = useEmbed();
   const simService = useSimulation();
+  const services = useSelector(simService, selectServices);
   const [sourceState, sendToSourceService] = useSourceActor();
-  const activePanelIndex = useMemo(
-    () => (embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0),
-    [embed],
+  const [activePanelIndex, setActiveTabIndex] = useState(() =>
+    embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0,
   );
+
+  useEffect(() => {
+    if (embed?.isEmbedded) {
+      setActiveTabIndex(calculatePanelIndexByPanelName(embed.panel));
+    }
+  }, [embed]);
 
   return (
     <ResizableBox
@@ -46,16 +54,24 @@ export const PanelsView = (props: BoxProps) => {
         display="grid"
         gridTemplateRows="3rem 1fr"
         height="100%"
-        defaultIndex={activePanelIndex}
+        index={activePanelIndex}
+        onChange={(index) => {
+          setActiveTabIndex(index);
+        }}
       >
         <TabList>
           <Tab>Code</Tab>
           <Tab>State</Tab>
           <Tab>Events</Tab>
-          <Tab>Actors</Tab>
+          <Tab>
+            Actors{' '}
+            <Badge fontSize="x-small" marginLeft="1" colorScheme="blue">
+              {Object.values(services).length}
+            </Badge>
+          </Tab>
           {!embed?.isEmbedded && (
             <Tab marginLeft="auto" marginRight="2">
-              <SettingsIcon />
+              <SettingsIcon aria-label="Settings" />
             </Tab>
           )}
           {!embed?.isEmbedded && <Login />}

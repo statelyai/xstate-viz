@@ -57,12 +57,12 @@ export const CanvasView: React.FC = () => {
 
   const shouldEnableZoomOutButton = useSelector(
     canvasService,
-    (state) => canZoom(state.context) && canZoomOut(state.context),
+    (state) => canZoom(embed) && canZoomOut(state.context),
   );
 
   const shouldEnableZoomInButton = useSelector(
     canvasService,
-    (state) => canZoom(state.context) && canZoomIn(state.context),
+    (state) => canZoom(embed) && canZoomIn(state.context),
   );
 
   const simulationMode = useSimulationMode();
@@ -73,7 +73,7 @@ export const CanvasView: React.FC = () => {
     <Box
       display="grid"
       height="100%"
-      {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr' })}
+      {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr auto' })}
     >
       {!embed?.isEmbedded && (
         <Box data-testid="canvas-header" bg="gray.800" zIndex={1} padding="0">
@@ -179,6 +179,14 @@ export const CanvasView: React.FC = () => {
             />
             <Portal>
               <MenuList fontSize="sm" padding="0">
+                <MenuItem
+                  as={Link}
+                  href="https://github.com/statelyai/xstate-viz/issues/new?template=bug_report.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Report an issue
+                </MenuItem>
                 <MenuItem
                   as={Link}
                   href="https://github.com/statelyai/xstate"

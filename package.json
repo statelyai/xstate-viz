@@ -1,6 +1,6 @@
 {
   "name": "xstate-viz-app",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "dependencies": {
     "@chakra-ui/icons": "^1.0.13",
@@ -30,7 +30,7 @@
     "realms-shim": "^1.2.2",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
-    "xstate": "^4.23.0"
+    "xstate": "^4.25.0"
   },
   "scripts": {
     "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",

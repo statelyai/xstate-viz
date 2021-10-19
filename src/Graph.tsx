@@ -33,6 +33,7 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
       },
     },
   });
+
   const canvasService = useCanvas();
   const { pan, zoom } = useSelector(canvasService, (s) => s.context);
 

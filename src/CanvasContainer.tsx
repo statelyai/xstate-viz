@@ -266,8 +266,8 @@ const dragMachine = dragModel.createMachine(
 
 const getCursorByState = (state: AnyState) =>
   (
-    Object.values(state.meta).find(
-      (m) => !!(m as { cursor?: CSSProperties['cursor'] }).cursor,
+    Object.values(state.meta).find((m) =>
+      Boolean((m as { cursor?: CSSProperties['cursor'] }).cursor),
     ) as { cursor?: CSSProperties['cursor'] }
   )?.cursor;
 
@@ -278,27 +278,23 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
   const canvasService = useCanvas();
   const embed = useEmbed();
   const canvasRef = useRef<HTMLDivElement>(null!);
-  const [state, send] = useMachine(
-    dragMachine.withConfig(
-      {
-        actions: {
-          sendPanChange: actions.send(
-            (ctx, ev: any) => {
-              return canvasModel.events.PAN(ev.delta.x, ev.delta.y);
-            },
-            { to: canvasService as any },
-          ),
+  const [state, send] = useMachine(dragMachine, {
+    actions: {
+      sendPanChange: actions.send(
+        (_, ev: any) => {
+          return canvasModel.events.PAN(ev.delta.x, ev.delta.y);
         },
-        guards: {
-          isPanDisabled: () => !!embed?.isEmbedded && !embed.pan,
-        },
-      },
-      {
-        ...dragModel.initialContext,
-        ref: canvasRef,
-      },
-    ),
-  );
+        { to: canvasService as any },
+      ),
+    },
+    guards: {
+      isPanDisabled: () => !!embed?.isEmbedded && !embed.pan,
+    },
+    context: {
+      ...dragModel.initialContext,
+      ref: canvasRef,
+    },
+  });
 
   React.useEffect(() => {
     if (panModeEnabled) {
@@ -371,7 +367,7 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
     return () => {
       canvasEl.removeEventListener('wheel', onCanvasWheel);
     };
-  }, [canvasService]);
+  }, [canvasService, embed]);
 
   return (
     <div

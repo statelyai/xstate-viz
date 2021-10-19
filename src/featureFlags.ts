@@ -1,3 +1,3 @@
 export const featureFlags = {
-  'Show OG Images': false,
+  'Show OG Images': true,
 };

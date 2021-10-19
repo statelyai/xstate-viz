@@ -35,17 +35,18 @@ export function isInternalEvent(eventName: string) {
 }
 
 export function createInterpreterContext<
-  TInterpreter extends Interpreter<any, any, any>,
+  TInterpreter extends Interpreter<any, any, any>
 >(displayName: string) {
-  const [Provider, useContext] =
-    createRequiredContext<TInterpreter>(displayName);
+  const [Provider, useContext] = createRequiredContext<TInterpreter>(
+    displayName,
+  );
 
-  const createUseSelector =
-    <Data>(selector: (state: TInterpreter['state']) => Data) =>
-    () => {
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      return useSelector(useContext(), selector);
-    };
+  const createUseSelector = <Data>(
+    selector: (state: TInterpreter['state']) => Data,
+  ) => () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useSelector(useContext(), selector);
+  };
 
   return [Provider, useContext, createUseSelector] as const;
 }
@@ -70,7 +71,7 @@ export function createRequiredContext<T>(displayName: string) {
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string,
+  TEventType extends TEvent['type'] = string
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;
@@ -205,16 +206,17 @@ export function isDelayedTransitionAction(
  * /?mode=viz|full|panels default:viz
  * /?mode=panels&panel=code|state|events|actors default:code
  */
+export const DEFAULT_EMBED_PARAMS: ParsedEmbed = {
+  mode: EmbedMode.Viz,
+  panel: EmbedPanel.Code,
+  showOriginalLink: true,
+  readOnly: true,
+  pan: false,
+  zoom: false,
+  controls: false,
+};
 export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
-  const parsedEmbed = {
-    mode: EmbedMode.Viz,
-    panel: EmbedPanel.Code,
-    showOriginalLink: true,
-    readOnly: true,
-    pan: false,
-    zoom: false,
-    controls: false,
-  };
+  const parsedEmbed = DEFAULT_EMBED_PARAMS;
 
   const getQueryParamValue = (qParamValue: string | string[]) => {
     return Array.isArray(qParamValue) ? qParamValue[0] : qParamValue;
@@ -306,6 +308,33 @@ export const isTextInputLikeElement = (el: HTMLElement) => {
   );
 };
 
+export function paramsToRecord(
+  params: { name: string; value: string | boolean }[],
+): ParsedEmbed {
+  return params.reduce(
+    (result, current) => ({
+      ...result,
+      [current.name]: current.value,
+    }),
+    {} as ParsedEmbed,
+  );
+}
+
+export function makeEmbedUrl(id: string, baseUrl: string, params: ParsedEmbed) {
+  const paramsWithNumberValues = Object.entries(params).reduce(
+    (result, current) => {
+      return {
+        ...result,
+        // Convert true|false to 1|0
+        [current[0]]:
+          typeof current[1] === 'boolean' ? +current[1] : current[1],
+      };
+    },
+    {},
+  );
+  const query = new URLSearchParams(paramsWithNumberValues as any);
+  return `${baseUrl}/viz/embed/${id}?${query.toString()}`;
+}
 // unsure if this should include button-like input elements
 export const hasRoleButton = (el: HTMLElement): boolean => {
   const roleAttribute = el.getAttribute('role');
