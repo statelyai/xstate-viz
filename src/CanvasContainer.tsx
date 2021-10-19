@@ -81,12 +81,8 @@ const dragMachine = dragModel.createMachine(
                     },
                   },
                   locked: {
-                    entry: actions.raise(
-                      dragModel.events.ENABLE_PANNING(),
-                    ) as any,
-                    exit: actions.raise(
-                      dragModel.events.DISABLE_PANNING(),
-                    ) as any,
+                    entry: actions.raise(dragModel.events.ENABLE_PANNING()),
+                    exit: actions.raise(dragModel.events.DISABLE_PANNING()),
                     on: { RELEASE: 'released' },
                     invoke: {
                       src: 'invokeDetectRelease',
@@ -96,11 +92,9 @@ const dragMachine = dragModel.createMachine(
                     invoke: {
                       src: 'wheelReleaseListener',
                     },
-                    entry: actions.raise(((ctx: any, ev: any) =>
-                      dragModel.events.ENABLE_PANNING(ev.data)) as any) as any,
-                    exit: actions.raise(
-                      dragModel.events.DISABLE_PANNING(),
-                    ) as any,
+                    entry: actions.raise(((_ctx: any, ev: any) =>
+                      dragModel.events.ENABLE_PANNING(ev.data)) as any),
+                    exit: actions.raise(dragModel.events.DISABLE_PANNING()),
                   },
                 },
                 on: {
@@ -108,8 +102,8 @@ const dragMachine = dragModel.createMachine(
                 },
               },
               pan: {
-                entry: actions.raise(dragModel.events.ENABLE_PANNING()) as any,
-                exit: actions.raise(dragModel.events.DISABLE_PANNING()) as any,
+                entry: actions.raise(dragModel.events.ENABLE_PANNING()),
+                exit: actions.raise(dragModel.events.DISABLE_PANNING()),
                 on: {
                   DISABLE_PAN_MODE: 'lockable',
                 },
@@ -133,7 +127,9 @@ const dragMachine = dragModel.createMachine(
                     dragSessionTracker.withContext({
                       ...dragSessionModel.initialContext,
                       ref: ctx.ref,
-                      session: (ev as any).sessionSeed,
+                      session: (
+                        ev as Extract<typeof ev, { type: 'ENABLE_PANNING' }>
+                      ).sessionSeed,
                     }),
                 },
                 on: {

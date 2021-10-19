@@ -62,7 +62,7 @@ const resizableMachine = resizableModel.createMachine({
 const ResizeHandle: React.FC<{
   onChange: (width: number) => void;
 }> = ({ onChange }) => {
-  const ref = useRef<HTMLElement>(null!);
+  const ref = useRef<HTMLDivElement>(null!);
 
   const [state] = useMachine(
     resizableMachine.withContext({
@@ -77,7 +77,7 @@ const ResizeHandle: React.FC<{
 
   return (
     <Box
-      ref={ref as any}
+      ref={ref}
       data-testid="resize-handle"
       width="1"
       css={{
