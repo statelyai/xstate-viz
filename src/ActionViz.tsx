@@ -23,19 +23,12 @@ type PotentiallyStructurallyCloned<T> = {
   [K in keyof T]: AnyFunction extends T[K] ? T[K] | undefined : T[K];
 };
 
-export function getActionLabel(
-  action: ActionObject<any, any>,
-): string | JSX.Element {
+export function getActionLabel(action: ActionObject<any, any>): string | null {
   if (typeof action.exec === 'function') {
-    return isStringifiedFunction(action.type) ? (
-      <em>anonymous</em>
-    ) : (
-      action.type
-    );
+    return isStringifiedFunction(action.type) ? null : action.type;
   }
   if (action.type.startsWith('xstate.')) {
-    const builtInActionType = action.type.match(/^xstate\.(.+)$/)![1];
-    return <strong>{builtInActionType}</strong>;
+    return action.type.match(/^xstate\.(.+)$/)![1];
   }
   return action.type;
 }
@@ -169,6 +162,18 @@ export const ChooseActionLabel: React.FC<{
   );
 };
 
+export const CustomActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<ActionObject<any, any>>;
+}> = ({ action }) => {
+  const label = getActionLabel(action);
+
+  return (
+    <ActionType>
+      {label !== null ? <strong>{label}</strong> : <em>anonymous</em>}
+    </ActionType>
+  );
+};
+
 export const ActionViz: React.FC<{
   action: ActionObject<any, any>;
   kind: 'entry' | 'exit' | 'do';
@@ -198,7 +203,7 @@ export const ActionViz: React.FC<{
     [ActionTypes.Choose]: (
       <ChooseActionLabel action={action as ChooseAction<any, any>} />
     ),
-  }[action.type] ?? <div data-viz="action-type">{getActionLabel(action)}</div>;
+  }[action.type] ?? <CustomActionLabel action={action} />;
 
   return (
     <div data-viz="action" data-viz-action={kind}>
