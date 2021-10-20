@@ -24,7 +24,7 @@ type Event =
 export const likesMachine = createMachine<Context, Event>({
   id: 'likes',
   initial: 'waitingForSourceData',
-  entry: assign({
+  entry: assign<Context, Event>({
     notifRef: () => spawn(notifMachine),
   }),
   on: {

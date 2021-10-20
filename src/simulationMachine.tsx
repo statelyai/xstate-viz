@@ -48,7 +48,7 @@ export const simModel = createModel(
         sessionId,
         state,
       }),
-      'SERVICE.UNREGISTER': (sessionId: string) => ({ sessionId }),
+      'SERVICES.UNREGISTER_ALL': () => ({}),
       'SERVICE.STOP': (sessionId: string) => ({ sessionId }),
       'SERVICE.FOCUS': (sessionId: string) => ({ sessionId }),
       ERROR: (message: string) => ({ message }),
@@ -76,6 +76,7 @@ export const simulationMachine = simModel.createMachine(
               sessionId: service.sessionId,
               machine: service.machine,
               state: service.state || service.initialState,
+              parent: service.parent?.sessionId,
               source: 'in-app',
             }),
           );
@@ -127,12 +128,12 @@ export const simulationMachine = simModel.createMachine(
               switch (event.type) {
                 case 'service.register':
                   let state = event.machine.resolveState(event.state);
-
                   sendBack(
                     simModel.events['SERVICE.REGISTER']({
                       sessionId: event.sessionId,
                       machine: event.machine,
                       state,
+                      parent: event.parent,
                       source: 'inspector',
                     }),
                   );
@@ -161,51 +162,52 @@ export const simulationMachine = simModel.createMachine(
           id: 'proxy',
           src: () => (sendBack, onReceive) => {
             const serviceMap: Map<string, AnyInterpreter> = new Map();
-            let rootMachine: AnyStateMachine;
-            let rootService: AnyInterpreter;
+            const machines = new Set<AnyStateMachine>();
+            const rootServices = new Set<AnyInterpreter>();
 
             function locallyInterpret(machine: AnyStateMachine) {
-              rootMachine = machine;
-              // stop all existing services
-              Array.from(serviceMap.values()).forEach((runningService) => {
-                runningService.stop();
-                sendBack({
-                  type: 'SERVICE.UNREGISTER',
-                  sessionId: runningService.sessionId,
-                });
-              });
-              serviceMap.clear();
+              machines.add(machine);
 
-              rootService = interpret(machine);
-              serviceMap.set(rootService.sessionId, rootService);
+              const service = interpret(machine, { devTools: true });
+              rootServices.add(service);
+              serviceMap.set(service.sessionId, service);
 
               sendBack(
                 simModel.events['SERVICE.REGISTER']({
-                  sessionId: rootService.sessionId,
-                  machine: rootService.machine,
-                  state: rootService.machine.initialState,
+                  sessionId: service.sessionId,
+                  machine: service.machine,
+                  state: service.machine.initialState,
+                  parent: service.parent?.sessionId,
                   source: 'visualizer',
                 }),
               );
 
-              rootService.subscribe((state) => {
+              service.subscribe((state) => {
                 sendBack(
-                  simModel.events['SERVICE.STATE'](
-                    rootService.sessionId,
-                    state,
-                  ),
+                  simModel.events['SERVICE.STATE'](service.sessionId, state),
                 );
               });
-              rootService.start();
+              service.start();
+            }
+
+            function stopRootServices() {
+              rootServices.forEach((service) => {
+                sendBack(simModel.events['SERVICES.UNREGISTER_ALL']());
+                service.stop();
+              });
+              rootServices.clear();
+              serviceMap.clear();
             }
 
             onReceive((event) => {
               if (event.type === 'INTERPRET') {
-                try {
-                  locallyInterpret(event.machine);
-                } catch (e) {
-                  sendBack(simModel.events.ERROR((e as Error).message));
-                }
+                event.machines.forEach((machine: AnyStateMachine) => {
+                  try {
+                    locallyInterpret(machine);
+                  } catch (e) {
+                    sendBack(simModel.events.ERROR((e as Error).message));
+                  }
+                });
               } else if (event.type === 'xstate.event') {
                 const service = serviceMap.get(event.sessionId);
                 if (service) {
@@ -217,8 +219,13 @@ export const simulationMachine = simModel.createMachine(
                   }
                 }
               } else if (event.type === 'RESET') {
-                rootService?.stop();
-                locallyInterpret(rootMachine);
+                stopRootServices();
+                machines.forEach((machine) => {
+                  locallyInterpret(machine);
+                });
+              } else if (event.type === 'STOP') {
+                stopRootServices();
+                machines.clear();
               }
             });
           },
@@ -241,10 +248,11 @@ export const simulationMachine = simModel.createMachine(
           'MACHINES.REGISTER': {
             actions: [
               'resetVisualizationState',
+              send('STOP', { to: 'proxy' }),
               send(
                 (_, e) => ({
                   type: 'INTERPRET',
-                  machine: e.machines[0],
+                  machines: e.machines,
                 }),
                 { to: 'proxy' },
               ),
@@ -265,8 +273,13 @@ export const simulationMachine = simModel.createMachine(
           simModel.assign({
             serviceDataMap: (ctx, e) =>
               produce(ctx.serviceDataMap, (draft) => {
-                const service = ctx.serviceDataMap[e.sessionId]!;
-                draft[e.sessionId]!.state = service?.machine.resolveState(
+                const service = draft[e.sessionId];
+
+                if (!service) {
+                  return;
+                }
+
+                draft[e.sessionId]!.state = service.machine.resolveState(
                   e.state,
                 );
               }),
@@ -283,22 +296,6 @@ export const simulationMachine = simModel.createMachine(
       },
       'SERVICE.SEND': {
         actions: [
-          (ctx, e) => {
-            const eventSchema =
-              ctx.serviceDataMap[ctx.currentSessionId!]!.machine.schema
-                ?.events?.[e.event.type];
-            const eventToSend = { ...e.event };
-
-            if (eventSchema) {
-              Object.keys(eventSchema.properties).forEach((prop) => {
-                const value = prompt(
-                  `Enter value for "${prop}" (${eventSchema.properties[prop].type}):`,
-                );
-
-                eventToSend.data[prop] = value;
-              });
-            }
-          },
           send(
             (ctx, e) => {
               return {
@@ -323,27 +320,22 @@ export const simulationMachine = simModel.createMachine(
           },
         }),
       },
-      'SERVICE.UNREGISTER': {
+      'SERVICES.UNREGISTER_ALL': {
         actions: simModel.assign({
-          serviceDataMap: (ctx, e) => {
-            return produce(ctx.serviceDataMap, (draft) => {
-              delete draft[e.sessionId];
-            });
-          },
-          currentSessionId: (ctx, e) => {
-            if (ctx.currentSessionId === e.sessionId) {
-              return null;
-            }
-
-            return ctx.currentSessionId;
-          },
+          serviceDataMap: {},
+          currentSessionId: null,
         }),
       },
       'SERVICE.STOP': {
         actions: simModel.assign({
           serviceDataMap: (ctx, e) =>
             produce(ctx.serviceDataMap, (draft) => {
-              draft[e.sessionId]!.status = InterpreterStatus.Stopped;
+              const serviceData = draft[e.sessionId];
+              if (!serviceData) {
+                return;
+              }
+
+              serviceData.status = InterpreterStatus.Stopped;
             }),
         }),
       },

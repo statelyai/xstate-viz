@@ -1,12 +1,13 @@
 /// <reference types="cypress" />
 
-import { GetSourceFileSsrQuery } from '../../src/graphql/GetSourceFileSSR.generated';
+import { SourceFileFragment } from '../../src/graphql/SourceFileFragment.generated';
 import '@testing-library/cypress/add-commands';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
 import { inspect, Inspector } from '@xstate/inspect';
 import { interpret, InterpreterFrom, StateMachine } from 'xstate';
 import { state } from './state';
+import { ParsedEmbed } from '../../src/types';
 import { Mutation, Query } from '../../src/graphql/schemaTypes.generated';
 
 const setMockAuthToken = () => {
@@ -78,14 +79,56 @@ const visitInspector = () => {
  * Allows you to visit the /viz/:id page and mock
  * its SSR return
  */
-const visitVizWithNextPageProps = (
-  data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
-) => {
+const visitVizWithNextPageProps = (data: Partial<SourceFileFragment>) => {
   cy.visit(
     `/viz/${data.id}?ssr=${encodeURIComponent(
       JSON.stringify({ data, id: data.id }),
     )}`,
   );
+};
+
+const visitEmbedWithNextPageProps = ({
+  mode,
+  panel,
+  readOnly,
+  showOriginalLink,
+  pan,
+  zoom,
+  controls,
+  sourceFile,
+}: Partial<ParsedEmbed> & {
+  sourceFile: Partial<SourceFileFragment>;
+}) => {
+  const path = sourceFile ? `/viz/embed/${sourceFile.id}` : '/viz/embed';
+  const searchParams = new URLSearchParams();
+  if (sourceFile) {
+    searchParams.set(
+      'ssr',
+      JSON.stringify({ data: sourceFile, id: sourceFile.id }),
+    );
+  }
+  if (mode) {
+    searchParams.set('mode', mode);
+  }
+  if (panel) {
+    searchParams.set('panel', panel);
+  }
+  if (typeof readOnly === 'boolean') {
+    searchParams.set('readOnly', String(Number(readOnly)));
+  }
+  if (typeof showOriginalLink === 'boolean') {
+    searchParams.set('showOriginalLink', String(Number(showOriginalLink)));
+  }
+  if (typeof pan === 'boolean') {
+    searchParams.set('pan', String(Number(pan)));
+  }
+  if (typeof zoom === 'boolean') {
+    searchParams.set('zoom', String(Number(zoom)));
+  }
+  if (typeof showOriginalLink === 'boolean') {
+    searchParams.set('controls', String(Number(controls)));
+  }
+  cy.visit(`${path}?${searchParams}`);
 };
 
 const waitOnInspector = (inspector: Inspector) =>
@@ -154,6 +197,31 @@ const getMonacoEditor = () => {
   return cy.get('.monaco-editor').first();
 };
 
+const getPanelsView = () => {
+  return cy.findByTestId('panels-view');
+};
+
+const getCanvasHeader = () => {
+  return cy.findByTestId('canvas-header');
+};
+
+const getStatePanel = () => {
+  return cy.findByTestId('state-panel');
+};
+
+const getCanvasGraph = () => {
+  return cy.findByTestId('canvas-graph');
+};
+
+const getControlButtons = () => {
+  return cy.findByTestId('controls');
+};
+
+const getEmbedPreview = () => cy.findByTestId('embed-preview');
+const getResizeHandle = () => {
+  return cy.findByTestId('resize-handle');
+};
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -190,6 +258,21 @@ declare global {
       inspectMachine: typeof inspectMachine;
 
       visitVizWithNextPageProps: typeof visitVizWithNextPageProps;
+
+      visitEmbedWithNextPageProps: typeof visitEmbedWithNextPageProps;
+
+      getPanelsView: typeof getPanelsView;
+
+      getCanvasHeader: typeof getCanvasHeader;
+
+      getStatePanel: typeof getStatePanel;
+
+      getCanvasGraph: typeof getCanvasGraph;
+
+      getControlButtons: typeof getControlButtons;
+
+      getEmbedPreview: typeof getEmbedPreview;
+      getResizeHandle: typeof getResizeHandle;
     }
   }
 }
@@ -201,3 +284,14 @@ Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
 Cypress.Commands.add('visitVizWithNextPageProps', visitVizWithNextPageProps);
+Cypress.Commands.add(
+  'visitEmbedWithNextPageProps',
+  visitEmbedWithNextPageProps,
+);
+Cypress.Commands.add('getPanelsView', getPanelsView);
+Cypress.Commands.add('getCanvasHeader', getCanvasHeader);
+Cypress.Commands.add('getStatePanel', getStatePanel);
+Cypress.Commands.add('getCanvasGraph', getCanvasGraph);
+Cypress.Commands.add('getControlButtons', getControlButtons);
+Cypress.Commands.add('getEmbedPreview', getEmbedPreview);
+Cypress.Commands.add('getResizeHandle', getResizeHandle);

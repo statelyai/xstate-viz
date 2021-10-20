@@ -1,5 +1,49 @@
 # XState Visualizer
 
+## 0.4.0
+
+### Minor Changes
+
+- [#209](https://github.com/statelyai/xstate-viz/pull/209) [`45cdb47`](https://github.com/statelyai/xstate-viz/commit/45cdb47349f2507ad3a8199d9938199f1261f11c) Thanks [@farskid](https://github.com/farskid)! - Embedded Mode!
+
+  The visualizer/inspector can now be used in embedded mode. In this mode, some parts of the application can be configured such as control buttons, panning, zooming, etc.
+
+  The embed preview frame lets users configure how they want the embedded visualizer to look:
+
+  <img width="1214" alt="image" src="https://user-images.githubusercontent.com/8332043/134560683-5c654c59-799f-4f18-a927-bea0fd61ec34.png">
+
+* [#198](https://github.com/statelyai/xstate-viz/pull/198) [`784ded9`](https://github.com/statelyai/xstate-viz/commit/784ded9f7c1ea63997cfd6faa95891db31462f38) Thanks [@mattpocock](https://github.com/mattpocock)! - Added generated OG images to visualized machine links. You can copy these links yourself to embed an up-to-date image of your visualized machine - for instance in docs. Here's where the share button is in the viz:
+
+  ![Share button on Stately Viz](https://user-images.githubusercontent.com/28293365/134316316-70f2cd1d-aa05-409c-b058-4a46fc8af1b5.png)
+
+- [#246](https://github.com/statelyai/xstate-viz/pull/246) [`22f1724`](https://github.com/statelyai/xstate-viz/commit/22f17242d85d86c6a3101900b0c90310d4c2b365) Thanks [@Andarist](https://github.com/Andarist)! - Added a hand icon to the canvas' toolbar:
+
+  <img alt="Canvas toolbar with the hand icon" src="https://user-images.githubusercontent.com/9800850/133060078-30127739-1f8b-47fd-9f2b-308fc3c641bb.png" width="255" />
+
+  This allows you to enable the "pan mode" to drag the canvas around without holding the spacebar button down at the same time.
+
+### Patch Changes
+
+- [#263](https://github.com/statelyai/xstate-viz/pull/263) [`4a0f041`](https://github.com/statelyai/xstate-viz/commit/4a0f041d52cb3c0c15d27244b83c41f5120bf28a) Thanks [@Andarist](https://github.com/Andarist)! - Fixed an issue with right-side panels getting cut off after stretching them and shrinking back with the resize handle.
+
+* [#240](https://github.com/statelyai/xstate-viz/pull/240) [`fbb2f00`](https://github.com/statelyai/xstate-viz/commit/fbb2f006aebe5a0413f62274666cb69dcd00d0bc) Thanks [@mattpocock](https://github.com/mattpocock)! - Added support for using setInterval, setTimeout, clearInterval and clearTimeout in the viz.
+
+- [#217](https://github.com/statelyai/xstate-viz/pull/217) [`92a2bba`](https://github.com/statelyai/xstate-viz/commit/92a2bbafba7455a15b13192ee69a03a719d857b7) Thanks [@mattpocock](https://github.com/mattpocock)! - Added a button to allow users to report any issues they find, using a GitHub issue template.
+
+  ![Report an issue button in the info menu](https://user-images.githubusercontent.com/28293365/130981880-23bc25aa-e4af-4b9c-95b6-d2de3a7b5dec.png)
+
+* [#238](https://github.com/statelyai/xstate-viz/pull/238) [`e074059`](https://github.com/statelyai/xstate-viz/commit/e074059d45247de5fbea116449c093728b7d3e6f) Thanks [@mattpocock](https://github.com/mattpocock)! - When you press visualize, machines will now automatically 'fit to view'. This prevents various bugs around state machines appearing not to be visible, when they're actually just off screen.
+
+- [#214](https://github.com/statelyai/xstate-viz/pull/214) [`b9020a6`](https://github.com/statelyai/xstate-viz/commit/b9020a642d649d15de253779884a8fbe4710ccd0) Thanks [@davidkpiano](https://github.com/davidkpiano)! - Multiple actors are now correctly visualized in the actors panel. This includes actors that are:
+
+  - Created with `createMachine(...)` (automatically interpreted by default)
+  - Invoked with `invoke: { ... }`
+  - Spawned with `spawn(...)`
+
+  <img width="935" alt="Screenshot showing multiple actors visible in the actors panel" src="https://user-images.githubusercontent.com/1093738/133617666-e36d525b-37b2-49a7-9354-92b7d3cd62ac.png">
+
+* [#247](https://github.com/statelyai/xstate-viz/pull/247) [`bdbc892`](https://github.com/statelyai/xstate-viz/commit/bdbc892a010fc7dc3ef3f304348ecac60f62966e) Thanks [@Andarist](https://github.com/Andarist)! - Fixed an issue with the code editor becoming visually broken after saving a machine.
+
 ## 0.3.0
 
 ### Minor Changes

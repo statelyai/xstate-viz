@@ -1,11 +1,11 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
 import { useActor, useSelector } from '@xstate/react';
+import { NextRouter } from 'next/router';
 import { AuthMachine } from './authMachine';
 import {
   ActorRefFrom,
   assign,
   ContextFrom,
-  createMachine,
   DoneInvokeEvent,
   EventFrom,
   forwardTo,
@@ -18,10 +18,7 @@ import {
 import { createModel } from 'xstate/lib/model';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
-import {
-  CreateSourceFileDocument,
-  CreateSourceFileMutation,
-} from './graphql/CreateSourceFile.generated';
+import { CreateSourceFileDocument } from './graphql/CreateSourceFile.generated';
 import {
   GetSourceFileDocument,
   GetSourceFileQuery,
@@ -34,11 +31,11 @@ import {
 import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
 import { gQuery, updateQueryParamsWithoutReload } from './utils';
-import { SourceProvider } from './types';
+import { SourceProvider, SourceRegistryData } from './types';
 import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
-import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
 import { isOnClientSide } from './isOnClientSide';
 import { useAuth } from './authContext';
+import { choose, pure } from 'xstate/lib/actions';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -91,7 +88,7 @@ export const sourceModel = createModel(
     sourceID: null as string | null,
     sourceProvider: null as SourceProvider | null,
     sourceRawContent: null as string | null,
-    sourceRegistryData: null as null | SourceFileFragment,
+    sourceRegistryData: null as SourceRegistryData | null,
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     loggedInUserId: null as string | null,
     desiredMachineName: null as string | null,
@@ -105,7 +102,9 @@ export const sourceModel = createModel(
       LOADED_FROM_GIST: (rawSource: string) => ({
         rawSource,
       }),
-      LOADED_FROM_REGISTRY: (data: GetSourceFileQuery) => ({ data }),
+      LOADED_FROM_REGISTRY: (
+        data: NonNullable<GetSourceFileQuery['getSourceFile']>,
+      ) => ({ data }),
       CODE_UPDATED: (code: string, sourceID: string | null) => ({
         code,
         sourceID,
@@ -141,25 +140,42 @@ class NotFoundError extends Error {
   }
 }
 
+// TODO - find a better way to handle this than dynamically changing the invoked services
+function getInvocations(isEmbedded: boolean) {
+  if (!isEmbedded) {
+    return [
+      {
+        src: cacheCodeChangesMachine,
+        id: 'codeCacheMachine',
+      },
+      {
+        src: confirmBeforeLeavingMachine,
+        id: 'confirmBeforeLeavingMachine',
+      },
+    ];
+  } else [];
+}
+
 export const makeSourceMachine = (params: {
   auth: SupabaseAuthClient;
-  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
-  redirectToNewUrlFromLegacyUrl: () => void;
-  routerReplace: (url: string) => void;
+  sourceRegistryData: SourceRegistryData | null;
+  router: NextRouter;
+  isEmbedded: boolean;
 }) => {
   const isLoggedIn = () => {
     return Boolean(params.auth.session());
   };
 
-  return createMachine<typeof sourceModel>(
+  return sourceModel.createMachine(
     {
-      initial: 'checking_if_on_legacy_url',
+      initial: 'checking_initial_data',
       preserveActionOrder: true,
       context: {
         ...sourceModel.initialContext,
-        sourceRawContent: params.data?.text || null,
-        sourceID: params.data?.id || null,
-        sourceProvider: params.data ? 'registry' : null,
+        sourceRawContent: params.sourceRegistryData?.text || null,
+        sourceID: params.sourceRegistryData?.id || null,
+        sourceProvider: params.sourceRegistryData ? 'registry' : null,
+        sourceRegistryData: params.sourceRegistryData,
       },
       entry: assign({ notifRef: () => spawn(notifMachine) }),
       on: {
@@ -183,8 +199,19 @@ export const makeSourceMachine = (params: {
         },
       },
       states: {
+        checking_initial_data: {
+          always: [
+            {
+              target: 'with_source',
+              cond: (ctx) => Boolean(ctx.sourceRegistryData),
+            },
+            {
+              target: 'checking_if_on_legacy_url',
+            },
+          ],
+        },
         checking_if_on_legacy_url: {
-          onDone: 'checking_initial_data',
+          onDone: 'checking_url',
           meta: {
             description: `This state checks if you're on /id?=<id>, and redirects to you /<id>`,
           },
@@ -193,11 +220,14 @@ export const makeSourceMachine = (params: {
             checking_if_id_on_query_params: {
               always: [
                 {
-                  cond: () => {
+                  cond: (ctx) => {
+                    // TODO: check if `params.router.query.id` can be reliably used here instead of the client check
                     if (!isOnClientSide()) return false;
                     const queries = new URLSearchParams(window.location.search);
 
-                    return Boolean(queries.get('id') && !params.data);
+                    return Boolean(
+                      queries.get('id') && !ctx.sourceRegistryData,
+                    );
                   },
                   target: 'redirecting',
                 },
@@ -213,14 +243,6 @@ export const makeSourceMachine = (params: {
               type: 'final',
             },
           },
-        },
-        checking_initial_data: {
-          always: [
-            { target: 'with_source', cond: (ctx) => Boolean(ctx.sourceID) },
-            {
-              target: 'checking_url',
-            },
-          ],
         },
         checking_url: {
           entry: 'parseQueries',
@@ -257,9 +279,12 @@ export const makeSourceMachine = (params: {
                     target: 'source_loaded',
                     actions: assign((context, event) => {
                       return {
-                        sourceID: event.data.getSourceFile?.id,
-                        sourceRawContent: event.data.getSourceFile?.text,
-                        sourceRegistryData: event.data.getSourceFile,
+                        sourceID: event.data.id,
+                        sourceRawContent: event.data.text,
+                        sourceRegistryData: {
+                          ...event.data,
+                          dataSource: 'client',
+                        },
                       };
                     }),
                   },
@@ -286,8 +311,21 @@ export const makeSourceMachine = (params: {
                     assign({
                       sourceRawContent: (ctx, e) => e.code,
                     }),
-                    forwardTo('codeCacheMachine'),
-                    forwardTo('confirmBeforeLeavingMachine'),
+                    choose<
+                      ContextFrom<typeof sourceModel>,
+                      Extract<
+                        EventFrom<typeof sourceModel>,
+                        { type: 'CODE_UPDATED' }
+                      >
+                    >([
+                      {
+                        actions: [
+                          forwardTo('codeCacheMachine'),
+                          forwardTo('confirmBeforeLeavingMachine'),
+                        ],
+                        cond: () => !params.isEmbedded,
+                      },
+                    ]),
                   ],
                 },
                 LOGGED_IN_USER_ID_UPDATED: {
@@ -299,16 +337,7 @@ export const makeSourceMachine = (params: {
                   target: '.checking_if_user_owns_source',
                 },
               },
-              invoke: [
-                {
-                  src: cacheCodeChangesMachine,
-                  id: 'codeCacheMachine',
-                },
-                {
-                  src: confirmBeforeLeavingMachine,
-                  id: 'confirmBeforeLeavingMachine',
-                },
-              ],
+              invoke: getInvocations(params.isEmbedded),
               initial: 'checking_if_user_owns_source',
               states: {
                 checking_if_user_owns_source: {
@@ -371,7 +400,7 @@ export const makeSourceMachine = (params: {
                     ),
                   { to: (ctx: any) => ctx.notifRef },
                 ),
-                (_, e: any) => {
+                (_: any, e: any) => {
                   if (e.data instanceof NotFoundError) {
                     updateQueryParamsWithoutReload((queries) => {
                       queries.delete('id');
@@ -391,8 +420,21 @@ export const makeSourceMachine = (params: {
                 assign({
                   sourceRawContent: (ctx, e) => e.code,
                 }),
-                forwardTo('codeCacheMachine'),
-                forwardTo('confirmBeforeLeavingMachine'),
+                choose<
+                  ContextFrom<typeof sourceModel>,
+                  Extract<
+                    EventFrom<typeof sourceModel>,
+                    { type: 'CODE_UPDATED' }
+                  >
+                >([
+                  {
+                    actions: [
+                      forwardTo('codeCacheMachine'),
+                      forwardTo('confirmBeforeLeavingMachine'),
+                    ],
+                    cond: () => !params.isEmbedded,
+                  },
+                ]),
               ],
             },
             SAVE: [
@@ -407,16 +449,7 @@ export const makeSourceMachine = (params: {
               },
             ],
           },
-          invoke: [
-            {
-              src: cacheCodeChangesMachine,
-              id: 'codeCacheMachine',
-            },
-            {
-              src: confirmBeforeLeavingMachine,
-              id: 'confirmBeforeLeavingMachine',
-            },
-          ],
+          invoke: getInvocations(params.isEmbedded),
           initial: 'checking_if_in_local_storage',
           states: {
             checking_if_in_local_storage: {
@@ -526,7 +559,10 @@ export const makeSourceMachine = (params: {
                     return {
                       sourceID: event.data.updateSourceFile.id,
                       sourceProvider: 'registry',
-                      sourceRegistryData: event.data.updateSourceFile,
+                      sourceRegistryData: {
+                        ...event.data.updateSourceFile,
+                        dataSource: 'client',
+                      },
                     };
                   },
                 ),
@@ -570,7 +606,10 @@ export const makeSourceMachine = (params: {
         },
       },
       actions: {
-        redirectToNewUrlFromLegacyUrl: params.redirectToNewUrlFromLegacyUrl,
+        redirectToNewUrlFromLegacyUrl: () => {
+          const id = new URLSearchParams(window.location.search).get('id');
+          params.router.replace(`/${id}`, undefined, { shallow: true });
+        },
         assignExampleMachineToContext: assign((context, event) => {
           return {
             sourceRawContent: exampleMachineCode,
@@ -606,11 +645,16 @@ export const makeSourceMachine = (params: {
           return {
             sourceID: event.data?.id,
             sourceProvider: 'registry',
-            sourceRegistryData: event.data,
+            sourceRegistryData: {
+              ...event.data,
+              dataSource: 'client',
+            },
           };
         }),
         updateURLWithMachineID: (ctx) => {
-          params.routerReplace(`/${ctx.sourceID}`);
+          params.router.replace(`/${ctx.sourceID}`, undefined, {
+            shallow: true,
+          });
         },
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
@@ -711,12 +755,15 @@ export const makeSourceMachine = (params: {
                 },
                 params.auth.session()?.access_token!,
               );
-              if (!result.data?.getSourceFile) {
+              const sourceFile = result.data?.getSourceFile;
+
+              if (!sourceFile) {
                 throw new NotFoundError('Source not found in Registry');
               }
+
               send({
                 type: 'LOADED_FROM_REGISTRY',
-                data: result.data,
+                data: sourceFile,
               });
               break;
             default:
@@ -736,6 +783,14 @@ export const useSourceActor = () => {
   const sourceService = useSelector(authService, getSourceActor);
 
   return useActor(sourceService!);
+};
+
+export const useSourceRegistryData = () => {
+  const sourceService = useSelector(useAuth(), getSourceActor);
+  return useSelector(
+    sourceService,
+    (state) => state.context.sourceRegistryData,
+  );
 };
 
 export const getEditorValue = (state: SourceMachineState) => {

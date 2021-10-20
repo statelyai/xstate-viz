@@ -1,17 +1,19 @@
-import { SettingsIcon } from '@chakra-ui/icons';
+import { SettingsIcon, ExternalLinkIcon } from '@chakra-ui/icons';
 import {
   Tabs,
   TabList,
   Tab,
   TabPanels,
   TabPanel,
-  Box,
-  Link,
-  Text,
+  Button,
+  BoxProps,
+  Badge,
 } from '@chakra-ui/react';
-import { ActorsPanel } from './ActorsPanel';
-import { useAuth } from './authContext';
+import React, { useMemo, useEffect, useState } from 'react';
+import { useSelector } from '@xstate/react';
+import { ActorsPanel, selectServices } from './ActorsPanel';
 import { EditorPanel } from './EditorPanel';
+import { useEmbed } from './embedContext';
 import { EventsPanel } from './EventsPanel';
 import { Login } from './Login';
 import { ResizableBox } from './ResizableBox';
@@ -20,28 +22,74 @@ import { useSimulation } from './SimulationContext';
 import { useSourceActor } from './sourceMachine';
 import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
+import { EmbedMode } from './types';
+import { calculatePanelIndexByPanelName } from './utils';
 
-export const PanelsView = () => {
+export const PanelsView = (props: BoxProps) => {
+  const embed = useEmbed();
   const simService = useSimulation();
+  const services = useSelector(simService, selectServices);
   const [sourceState, sendToSourceService] = useSourceActor();
+  const [activePanelIndex, setActiveTabIndex] = useState(() =>
+    embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0,
+  );
+
+  useEffect(() => {
+    if (embed?.isEmbedded) {
+      setActiveTabIndex(calculatePanelIndexByPanelName(embed.panel));
+    }
+  }, [embed]);
 
   return (
-    <ResizableBox gridArea="panels" minHeight={0}>
+    <ResizableBox
+      {...props}
+      gridArea="panels"
+      minHeight={0}
+      disabled={embed?.isEmbedded && embed.mode !== EmbedMode.Full}
+      hidden={embed?.isEmbedded && embed.mode === EmbedMode.Viz}
+      data-testid="panels-view"
+    >
       <Tabs
         bg="gray.800"
         display="grid"
         gridTemplateRows="3rem 1fr"
         height="100%"
+        index={activePanelIndex}
+        onChange={(index) => {
+          setActiveTabIndex(index);
+        }}
       >
         <TabList>
           <Tab>Code</Tab>
           <Tab>State</Tab>
           <Tab>Events</Tab>
-          <Tab>Actors</Tab>
-          <Tab marginLeft="auto" marginRight="2">
-            <SettingsIcon />
+          <Tab>
+            Actors{' '}
+            <Badge fontSize="x-small" marginLeft="1" colorScheme="blue">
+              {Object.values(services).length}
+            </Badge>
           </Tab>
-          <Login />
+          {!embed?.isEmbedded && (
+            <Tab marginLeft="auto" marginRight="2">
+              <SettingsIcon aria-label="Settings" />
+            </Tab>
+          )}
+          {!embed?.isEmbedded && <Login />}
+          {embed?.isEmbedded && embed.showOriginalLink && embed.originalUrl && (
+            <Button
+              height="100%"
+              rounded="none"
+              marginLeft="auto"
+              colorScheme="blue"
+              as="a"
+              target="_blank"
+              rel="noopener noreferer nofollow"
+              href={embed?.originalUrl}
+              leftIcon={<ExternalLinkIcon />}
+            >
+              Open in Stately.ai/viz
+            </Button>
+          )}
         </TabList>
 
         <TabPanels minHeight={0}>
@@ -97,9 +145,11 @@ export const PanelsView = () => {
           <TabPanel height="100%" overflowY="auto">
             <ActorsPanel />
           </TabPanel>
-          <TabPanel height="100%" overflowY="auto">
-            <SettingsPanel />
-          </TabPanel>
+          {!embed?.isEmbedded && (
+            <TabPanel height="100%" overflowY="auto">
+              <SettingsPanel />
+            </TabPanel>
+          )}
         </TabPanels>
       </Tabs>
     </ResizableBox>

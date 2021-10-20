@@ -49,7 +49,6 @@ const getDelayFromEventType = (
         finalDelay = delayExpr;
       } else {
         // if configured delay is getter function
-        console.log({ event, delay, finalDelay, delayExpr });
         // @ts-expect-error
         finalDelay = delayExpr(context, event);
       }

@@ -1,16 +1,10 @@
-import {
-  createClient,
-  Provider,
-  Session,
-  SupabaseClient,
-} from '@supabase/supabase-js';
+import { createClient, Provider, Session } from '@supabase/supabase-js';
 import {
   ActorRefFrom,
   assign,
-  createMachine,
+  ContextFrom,
   DoneInvokeEvent,
   EventFrom,
-  MachineOptions,
   send,
   spawn,
   StateFrom,
@@ -29,19 +23,25 @@ import {
 } from './sourceMachine';
 import { storage } from './localCache';
 import { gQuery } from './utils';
-import { GetSourceFileSsrQuery } from './graphql/GetSourceFileSSR.generated';
+import { SourceRegistryData } from './types';
+import { NextRouter } from 'next/router';
 
 const authModel = createModel(
   {
-    client: null! as SupabaseClient,
+    client: createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_API_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_API_KEY,
+      {
+        localStorage: storage,
+      },
+    ),
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
     sourceRef: null as SourceMachineActorRef | null,
-    loggedInUserData: null as null | LoggedInUserFragment,
+    loggedInUserData: null as LoggedInUserFragment | null,
   },
   {
     events: {
-      SIGNED_OUT: () => ({}),
-      SIGNED_IN: (session: Session) => ({ session }),
+      SIGNED_IN: () => ({}),
       SIGN_IN: (provider: Provider) => ({ provider }),
       SIGN_OUT: () => ({}),
       CHOOSE_PROVIDER: () => ({}),
@@ -51,37 +51,18 @@ const authModel = createModel(
   },
 );
 
-const authOptions: Partial<
-  MachineOptions<
-    typeof authModel['initialContext'],
-    EventFrom<typeof authModel>
-  >
-> = {
-  services: {
-    signOutUser: (ctx) => {
-      return ctx.client.auth.signOut();
-    },
-  },
-  actions: {
-    signInUser: (ctx, e) =>
-      ctx.client.auth.signIn(
-        { provider: (e as any).provider },
-        { redirectTo: window.location.href },
-      ),
-  },
-};
-
 export type AuthMachine = ReturnType<typeof createAuthMachine>;
 
 export type AuthMachineState = StateFrom<AuthMachine>;
 
 export const createAuthMachine = (params: {
-  data: GetSourceFileSsrQuery['getSourceFile'] | undefined;
-  redirectToNewUrlFromLegacyUrl: () => void;
-  routerReplace: (url: string) => void;
+  sourceRegistryData: SourceRegistryData | null;
+  router: NextRouter;
+  isEmbbeded: boolean;
 }) =>
-  createMachine<typeof authModel>(
+  authModel.createMachine(
     {
+      preserveActionOrder: true,
       id: 'auth',
       initial: 'initializing',
       context: authModel.initialContext,
@@ -89,18 +70,21 @@ export const createAuthMachine = (params: {
         notifRef: () => spawn(notifMachine),
       }),
       invoke: {
+        // this wouldn't be needed if only internal Supabase's `getSessionFromUrl` (happening after redirect) would be synchronous
         src: (ctx) => (sendBack) => {
-          ctx.client.auth.onAuthStateChange((state, session) => {
-            if (session) {
-              sendBack({ type: 'SIGNED_IN', session });
-            } else {
-              sendBack('SIGNED_OUT');
+          if (ctx.client.auth.session()) {
+            sendBack({ type: 'SIGNED_IN' });
+          }
+          ctx.client.auth.onAuthStateChange((state) => {
+            // we only care about SIGNED_IN because signing out is "synchronous" from our perspective anyway
+            // and is handled in response to user actions
+            if (state === 'SIGNED_IN') {
+              sendBack({ type: 'SIGNED_IN' });
             }
           });
         },
       },
       on: {
-        SIGNED_OUT: { target: 'signed_out', internal: true },
         SIGNED_IN: {
           target: 'signed_in',
           internal: true,
@@ -109,22 +93,14 @@ export const createAuthMachine = (params: {
       states: {
         initializing: {
           entry: [
-            assign((ctx) => {
-              const client = createClient(
-                process.env.NEXT_PUBLIC_SUPABASE_API_URL,
-                process.env.NEXT_PUBLIC_SUPABASE_ANON_API_KEY,
-                { localStorage: storage as Storage },
-              );
-
+            authModel.assign((ctx) => {
               return {
-                client,
                 sourceRef: spawn(
                   makeSourceMachine({
-                    auth: client.auth,
-                    data: params.data,
-                    redirectToNewUrlFromLegacyUrl:
-                      params.redirectToNewUrlFromLegacyUrl,
-                    routerReplace: params.routerReplace,
+                    auth: ctx.client.auth,
+                    sourceRegistryData: params.sourceRegistryData,
+                    router: params.router,
+                    isEmbedded: params.isEmbbeded,
                   }),
                 ),
               };
@@ -169,7 +145,10 @@ export const createAuthMachine = (params: {
           ],
           tags: ['authorized'],
           on: {
-            SIGN_OUT: 'signing_out',
+            SIGN_OUT: {
+              target: 'signed_out',
+              actions: 'signOutUser',
+            },
           },
           initial: 'fetchingUser',
           states: {
@@ -243,30 +222,25 @@ export const createAuthMachine = (params: {
           `,
           },
         },
-        signing_out: {
-          invoke: {
-            src: 'signOutUser',
-            onDone: {
-              target: 'signed_out',
-            },
-            onError: {
-              target: 'signed_in',
-              actions: [
-                send(
-                  (_, e) => ({
-                    type: 'BROADCAST',
-                    status: 'error',
-                    message: e.data,
-                  }),
-                  { to: (ctx) => ctx.notifRef },
-                ),
-              ],
-            },
-          },
+      },
+    },
+    {
+      actions: {
+        signInUser: (ctx, e) => {
+          ctx.client.auth.signIn(
+            { provider: (e as any).provider },
+            { redirectTo: window.location.href },
+          );
+        },
+        signOutUser: (ctx) => {
+          // This synchronously removes locally stored token and asynchronously revokes all (😢) refresh tokens.
+          // Retrying this isn't possible using the public API of the auth client because the access token is no longer available then.
+          // So we just ignore a possible error here as it's not really actionable.
+          // However, the token won't be available on this machine anymore so, in a sense, the signing out is always successful.
+          ctx.client.auth.signOut().catch(() => {});
         },
       },
     },
-    authOptions,
   );
 
 export const getSupabaseClient = (state: AuthMachineState) => {
