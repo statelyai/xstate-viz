@@ -56,8 +56,10 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
       <div
         data-testid="canvas-graph"
         style={{
-          transformOrigin: '0 0', // Since our layout is LTR, it's more predictable for zoom to happen from top left point
-          transform: `translate3d(${pan.dx}px, ${pan.dy}px, 0) scale(${zoom})`,
+          transformOrigin: '0 0',
+          // dx/dy represents the "window over canvas" and we need to flip its position for the tranform here
+          // Since our layout is LTR, it's more predictable for zoom to happen from top left point
+          transform: `translate3d(${-pan.dx}px, ${-pan.dy}px, 0) scale(${zoom})`,
         }}
       >
         <MemoizedEdges digraph={digraph} />

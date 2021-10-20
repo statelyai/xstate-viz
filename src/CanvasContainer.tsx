@@ -6,10 +6,10 @@ import { actions } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
 import {
+  isAcceptingArrowKey,
   isAcceptingSpaceNatively,
-  isWithPlatformMetaKey,
-  isTabLikeElement,
   isTextInputLikeElement,
+  isWithPlatformMetaKey,
 } from './utils';
 import { useEmbed } from './embedContext';
 import {
@@ -283,7 +283,9 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
     actions: {
       sendPanChange: actions.send(
         (_, ev: any) => {
-          return canvasModel.events.PAN(ev.delta.x, ev.delta.y);
+          // we need to translate a pointer move to the "window over canvas" move
+          // and that is going into the opposite direction than the pointer
+          return canvasModel.events.PAN(-ev.delta.x, -ev.delta.y);
         },
         { to: canvasService as any },
       ),
@@ -332,51 +334,90 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
 
   useEffect(() => {
     function keydownListener(e: KeyboardEvent) {
-      const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement | SVGElement;
 
-      if (isTextInputLikeElement(target) || isTabLikeElement(target)) {
+      if (isTextInputLikeElement(target)) {
         return;
       }
 
       switch (e.key) {
         case 'w':
         case 'W':
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
+          return;
         case 'ArrowUp':
-          canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
-          break;
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
+          return;
         case 'a':
         case 'A':
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
+          return;
         case 'ArrowLeft':
-          canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
-          break;
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
+          return;
         case 's':
         case 'S':
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
+          return;
         case 'ArrowDown':
-          canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
-          break;
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
+          return;
         case 'd':
         case 'D':
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
+          return;
         case 'ArrowRight':
-          canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
-          break;
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
+          return;
         case '+':
+          // allow to zoom the whole page
+          if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          e.preventDefault();
           canvasService.send('ZOOM.IN');
-          break;
+          return;
         case '-':
+          // allow to zoom the whole page
+          if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          e.preventDefault();
           canvasService.send('ZOOM.OUT');
-          break;
+          return;
         case 'r':
+          // allow to refresh the page without resetting the position
+          if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          e.preventDefault();
           canvasService.send('POSITION.RESET');
-          break;
+          return;
         case 'f':
+          e.preventDefault();
           canvasService.send('FIT_TO_VIEW');
-          break;
-        default:
-          // Returning here to retain other keyboard events as intended.
           return;
       }
-
-      e.preventDefault();
     }
 
     window.addEventListener('keydown', keydownListener);

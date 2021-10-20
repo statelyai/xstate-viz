@@ -186,8 +186,8 @@ export const canvasMachine = canvasModel.createMachine({
       actions: canvasModel.assign({
         pan: (ctx, e) => {
           return {
-            dx: ctx.pan.dx - e.dx,
-            dy: ctx.pan.dy - e.dy,
+            dx: ctx.pan.dx + e.dx,
+            dy: ctx.pan.dy + e.dy,
           };
         },
       }),
@@ -198,7 +198,7 @@ export const canvasMachine = canvasModel.createMachine({
     'PAN.LEFT': {
       actions: canvasModel.assign({
         pan: (ctx, e) => ({
-          dx: ctx.pan.dx + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          dx: ctx.pan.dx - (e.isLongPan ? LONG_PAN : SHORT_PAN),
           dy: ctx.pan.dy,
         }),
       }),
@@ -208,7 +208,7 @@ export const canvasMachine = canvasModel.createMachine({
     'PAN.RIGHT': {
       actions: canvasModel.assign({
         pan: (ctx, e) => ({
-          dx: ctx.pan.dx - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          dx: ctx.pan.dx + (e.isLongPan ? LONG_PAN : SHORT_PAN),
           dy: ctx.pan.dy,
         }),
       }),
@@ -219,7 +219,7 @@ export const canvasMachine = canvasModel.createMachine({
       actions: canvasModel.assign({
         pan: (ctx, e) => ({
           dx: ctx.pan.dx,
-          dy: ctx.pan.dy + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          dy: ctx.pan.dy - (e.isLongPan ? LONG_PAN : SHORT_PAN),
         }),
       }),
       target: '.throttling',
@@ -229,7 +229,7 @@ export const canvasMachine = canvasModel.createMachine({
       actions: canvasModel.assign({
         pan: (ctx, e) => ({
           dx: ctx.pan.dx,
-          dy: ctx.pan.dy - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          dy: ctx.pan.dy + (e.isLongPan ? LONG_PAN : SHORT_PAN),
         }),
       }),
       target: '.throttling',

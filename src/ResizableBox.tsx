@@ -49,7 +49,7 @@ const resizableMachine = resizableModel.createMachine({
         POINTER_MOVED_BY: {
           actions: assign({
             widthDelta: (ctx, e) => {
-              return Math.max(0, ctx.widthDelta + e.delta.x);
+              return Math.max(0, ctx.widthDelta - e.delta.x);
             },
           }),
         },
