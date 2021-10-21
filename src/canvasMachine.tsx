@@ -3,7 +3,7 @@ import { createModel } from 'xstate/lib/model';
 import { ModelEventsFrom } from 'xstate/lib/model.types';
 import { StateElkNode } from './graphUtils';
 import { localCache } from './localCache';
-import { EmbedContext } from './types';
+import { EmbedContext, Point } from './types';
 
 export enum ZoomFactor {
   slow = 1.09,
@@ -12,9 +12,9 @@ export enum ZoomFactor {
 
 const initialPosition = {
   zoom: 1,
-  pan: {
-    dx: 0,
-    dy: 0,
+  viewbox: {
+    x: 0,
+    y: 0,
   },
   canvasPanelPosition: {
     offsetY: 50,
@@ -30,10 +30,10 @@ const initialContext = {
   embed: undefined as EmbedContext | undefined,
 };
 
-export type Pan = {
-  dx: number;
-  dy: number;
-};
+export interface Viewbox {
+  x: number;
+  y: number;
+}
 
 const LONG_PAN = 50;
 const SHORT_PAN = 10;
@@ -107,28 +107,28 @@ export const canPan = (ctx: typeof initialContext) => {
  *
  * https://github.com/excalidraw/excalidraw/blob/10cd6a24b0d5715d25ad413784a4b5b57f500b79/src/scene/zoom.ts
  */
-const getNewZoomAndPan = (
+const getNewZoomAndViewbox = (
   prevZoomValue: number,
   newZoomValue: number,
-  currentPan: Pan,
-  cursorPosition: Pan,
+  currentViewbox: Viewbox,
+  cursorPosition: Point,
   canvasOffset: {
     offsetY: number;
     offsetX: number;
   },
-): { zoom: number; pan: Pan } => {
+): { zoom: number; viewbox: Viewbox } => {
   return {
     zoom: newZoomValue,
-    pan: {
-      dx:
-        cursorPosition.dx -
+    viewbox: {
+      x:
+        cursorPosition.x -
         canvasOffset.offsetX -
-        (cursorPosition.dx - canvasOffset.offsetX - currentPan.dx) *
+        (cursorPosition.x - canvasOffset.offsetX - currentViewbox.x) *
           (newZoomValue / prevZoomValue),
-      dy:
-        cursorPosition.dy -
+      y:
+        cursorPosition.y -
         canvasOffset.offsetY -
-        (cursorPosition.dy - canvasOffset.offsetY - currentPan.dy) *
+        (cursorPosition.y - canvasOffset.offsetY - currentViewbox.y) *
           (newZoomValue / prevZoomValue),
     },
   };
@@ -150,13 +150,13 @@ export const canvasMachine = canvasModel.createMachine({
     },
     'ZOOM.OUT': {
       actions: canvasModel.assign((ctx, e) => {
-        return getNewZoomAndPan(
+        return getNewZoomAndViewbox(
           ctx.zoom,
           ctx.zoom * calculateZoomOutFactor(e.zoomFactor),
-          ctx.pan,
+          ctx.viewbox,
           {
-            dx: e.x || ctx.canvasPanelPosition.width / 2,
-            dy: e.y || ctx.canvasPanelPosition.height / 2,
+            x: e.x || ctx.canvasPanelPosition.width / 2,
+            y: e.y || ctx.canvasPanelPosition.height / 2,
           },
           ctx.canvasPanelPosition,
         );
@@ -167,13 +167,13 @@ export const canvasMachine = canvasModel.createMachine({
     },
     'ZOOM.IN': {
       actions: canvasModel.assign((ctx, e) => {
-        return getNewZoomAndPan(
+        return getNewZoomAndViewbox(
           ctx.zoom,
           ctx.zoom * (e.zoomFactor || DEFAULT_ZOOM_IN_FACTOR),
-          ctx.pan,
+          ctx.viewbox,
           {
-            dx: e.x || ctx.canvasPanelPosition.width / 2,
-            dy: e.y || ctx.canvasPanelPosition.height / 2,
+            x: e.x || ctx.canvasPanelPosition.width / 2,
+            y: e.y || ctx.canvasPanelPosition.height / 2,
           },
           ctx.canvasPanelPosition,
         );
@@ -184,10 +184,10 @@ export const canvasMachine = canvasModel.createMachine({
     },
     PAN: {
       actions: canvasModel.assign({
-        pan: (ctx, e) => {
+        viewbox: (ctx, e) => {
           return {
-            dx: ctx.pan.dx + e.dx,
-            dy: ctx.pan.dy + e.dy,
+            x: ctx.viewbox.x + e.dx,
+            y: ctx.viewbox.y + e.dy,
           };
         },
       }),
@@ -197,9 +197,9 @@ export const canvasMachine = canvasModel.createMachine({
     },
     'PAN.LEFT': {
       actions: canvasModel.assign({
-        pan: (ctx, e) => ({
-          dx: ctx.pan.dx - (e.isLongPan ? LONG_PAN : SHORT_PAN),
-          dy: ctx.pan.dy,
+        viewbox: (ctx, e) => ({
+          x: ctx.viewbox.x - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          y: ctx.viewbox.y,
         }),
       }),
       target: '.throttling',
@@ -207,9 +207,9 @@ export const canvasMachine = canvasModel.createMachine({
     },
     'PAN.RIGHT': {
       actions: canvasModel.assign({
-        pan: (ctx, e) => ({
-          dx: ctx.pan.dx + (e.isLongPan ? LONG_PAN : SHORT_PAN),
-          dy: ctx.pan.dy,
+        viewbox: (ctx, e) => ({
+          x: ctx.viewbox.x + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          y: ctx.viewbox.y,
         }),
       }),
       target: '.throttling',
@@ -217,9 +217,9 @@ export const canvasMachine = canvasModel.createMachine({
     },
     'PAN.UP': {
       actions: canvasModel.assign({
-        pan: (ctx, e) => ({
-          dx: ctx.pan.dx,
-          dy: ctx.pan.dy - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+        viewbox: (ctx, e) => ({
+          x: ctx.viewbox.x,
+          y: ctx.viewbox.y - (e.isLongPan ? LONG_PAN : SHORT_PAN),
         }),
       }),
       target: '.throttling',
@@ -227,9 +227,9 @@ export const canvasMachine = canvasModel.createMachine({
     },
     'PAN.DOWN': {
       actions: canvasModel.assign({
-        pan: (ctx, e) => ({
-          dx: ctx.pan.dx,
-          dy: ctx.pan.dy + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+        viewbox: (ctx, e) => ({
+          x: ctx.viewbox.x,
+          y: ctx.viewbox.y + (e.isLongPan ? LONG_PAN : SHORT_PAN),
         }),
       }),
       target: '.throttling',
@@ -238,7 +238,7 @@ export const canvasMachine = canvasModel.createMachine({
     'POSITION.RESET': {
       actions: canvasModel.assign({
         zoom: canvasModel.initialContext.zoom,
-        pan: canvasModel.initialContext.pan,
+        viewbox: canvasModel.initialContext.viewbox,
       }),
       target: '.throttling',
       internal: false,
@@ -281,13 +281,13 @@ export const canvasMachine = canvasModel.createMachine({
           },
         }),
         canvasModel.assign({
-          pan: (ctx) => {
-            if (!ctx.elkGraph) return ctx.pan;
+          viewbox: (ctx) => {
+            if (!ctx.elkGraph) return ctx.viewbox;
             return {
-              dx:
+              x:
                 ctx.canvasPanelPosition.width / 2 -
                 (ctx.elkGraph.width! * ctx.zoom) / 2,
-              dy:
+              y:
                 ctx.canvasPanelPosition.height / 2 -
                 (ctx.elkGraph.height! * ctx.zoom) / 2,
             };

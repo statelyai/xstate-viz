@@ -283,7 +283,7 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
     actions: {
       sendPanChange: actions.send(
         (_, ev: any) => {
-          // we need to translate a pointer move to the "window over canvas" move
+          // we need to translate a pointer move to the viewbox move
           // and that is going into the opposite direction than the pointer
           return canvasModel.events.PAN(-ev.delta.x, -ev.delta.y);
         },
