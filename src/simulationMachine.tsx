@@ -68,6 +68,9 @@ export const simulationMachine = simModel.createMachine(
         ? 'inspecting'
         : 'visualizing',
     entry: assign({ notifRef: () => spawn(notifMachine) }),
+    invoke: {
+      src: 'captureEventsFromChildServices',
+    },
     states: {
       inspecting: {
         tags: 'inspecting',
@@ -251,14 +254,15 @@ export const simulationMachine = simModel.createMachine(
                   e.state,
                 );
               }),
-            events: (ctx, e) =>
-              produce(ctx.events, (draft) => {
+            events: (ctx, e) => {
+              return produce(ctx.events, (draft) => {
                 draft.push({
                   ...e.state._event,
                   timestamp: Date.now(),
                   sessionId: e.sessionId,
                 });
-              }),
+              });
+            },
           }),
         ],
       },
@@ -333,6 +337,39 @@ export const simulationMachine = simModel.createMachine(
     },
   },
   {
+    services: {
+      captureEventsFromChildServices: () => (sendBack) => {
+        devTools.onRegister((service) => {
+          if (service.parent) {
+            sendBack(
+              simModel.events['SERVICE.REGISTER']({
+                sessionId: service.sessionId,
+                machine: service.machine,
+                state: service.state || service.initialState,
+                parent: service.parent?.sessionId,
+                source: 'child',
+              }),
+            );
+            service.subscribe((state) => {
+              // `onRegister`'s callback gets called from within `.start()`
+              // `subscribe` calls the callback immediately with the current state
+              // but the `service.state` state has not yet been set when this gets called for the first time from within `.start()`
+              if (!state) {
+                return;
+              }
+
+              sendBack(
+                simModel.events['SERVICE.STATE'](service.sessionId, state),
+              );
+            });
+
+            service.onStop(() => {
+              sendBack(simModel.events['SERVICE.STOP'](service.sessionId));
+            });
+          }
+        });
+      },
+    },
     actions: {
       resetVisualizationState: simModel.assign<
         EventFrom<typeof simModel>['type']
