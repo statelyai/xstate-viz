@@ -151,7 +151,6 @@ export const simulationMachine = simModel.createMachine(
               );
 
               service.subscribe((state) => {
-                console.log('LINE 189');
                 sendBack(
                   simModel.events['SERVICE.STATE'](service.sessionId, state),
                 );
@@ -252,15 +251,14 @@ export const simulationMachine = simModel.createMachine(
                   e.state,
                 );
               }),
-            events: (ctx, e) => {
-              return produce(ctx.events, (draft) => {
+            events: (ctx, e) =>
+              produce(ctx.events, (draft) => {
                 draft.push({
                   ...e.state._event,
                   timestamp: Date.now(),
                   sessionId: e.sessionId,
                 });
-              });
-            },
+              }),
           }),
         ],
       },
