@@ -340,6 +340,7 @@ export const simulationMachine = simModel.createMachine(
     services: {
       captureEventsFromChildServices: () => (sendBack) => {
         devTools.onRegister((service) => {
+          // Only capture machines that are spawned or invoked
           if (service.parent) {
             sendBack(
               simModel.events['SERVICE.REGISTER']({
