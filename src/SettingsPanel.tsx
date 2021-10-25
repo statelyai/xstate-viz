@@ -19,7 +19,7 @@ import { getPlatformMetaKeyLabel } from './utils';
 const KeyboardShortcuts = () => (
   <Box>
     <Heading as="h2" fontSize="l" marginBottom="5">
-      Keyboard shorcuts
+      Keyboard shortcuts
     </Heading>
     <Table size="sm">
       <Thead>
