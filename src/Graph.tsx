@@ -58,7 +58,7 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
         style={{
           transformOrigin: '0 0',
           // Since our layout is LTR, it's more predictable for zoom to happen from top left point
-          transform: `translate3d(${-viewbox.x}px, ${-viewbox.y}px, 0) scale(${zoom})`,
+          transform: `translate3d(${-viewbox.minX}px, ${-viewbox.minY}px, 0) scale(${zoom})`,
         }}
       >
         <MemoizedEdges digraph={digraph} />

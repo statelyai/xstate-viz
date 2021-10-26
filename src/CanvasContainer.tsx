@@ -314,14 +314,16 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
 
-      if (!entry) return;
+      // entry contains `contentRect` but we are interested in the `clientRect`
+      // height/width are going to be the same but not the offsets
+      const clientRect = entry.target.getBoundingClientRect();
 
       canvasService.send({
         type: 'CANVAS_RECT_CHANGED',
-        height: entry.contentRect.height,
-        width: entry.contentRect.width,
-        offsetX: entry.contentRect.left,
-        offsetY: entry.contentRect.top,
+        height: clientRect.height,
+        width: clientRect.width,
+        offsetX: clientRect.left,
+        offsetY: clientRect.top,
       });
     });
 
@@ -439,16 +441,14 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
         if (e.deltaY > 0) {
           canvasService.send(
             canvasModel.events['ZOOM.OUT'](
-              e.clientX,
-              e.clientY,
+              { x: e.clientX, y: e.clientY },
               ZoomFactor.slow,
             ),
           );
         } else if (e.deltaY < 0) {
           canvasService.send(
             canvasModel.events['ZOOM.IN'](
-              e.clientX,
-              e.clientY,
+              { x: e.clientX, y: e.clientY },
               ZoomFactor.slow,
             ),
           );
