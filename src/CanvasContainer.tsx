@@ -342,72 +342,89 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
         return;
       }
 
-      switch (e.key) {
-        case 'w':
-        case 'W':
+      switch (e.keyCode) {
+        // w/W
+        case 87:
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
           return;
-        case 'ArrowUp':
+        // ArrowUp
+        case 38:
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
           return;
-        case 'a':
-        case 'A':
+        // a/A
+        case 65:
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
           return;
-        case 'ArrowLeft':
+        // ArrowLeft
+        case 37:
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
           return;
-        case 's':
-        case 'S':
+        // s/S
+        case 83:
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
           return;
-        case 'ArrowDown':
+        // ArrowDown
+        case 40:
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
           return;
-        case 'd':
-        case 'D':
+        // d/D
+        case 68:
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
           return;
-        case 'ArrowRight':
+        // ArrowRight
+        case 39:
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
           return;
-        case '+':
+        // + (numpad key)
+        case 107:
+        // =/+
+        case 187:
           // allow to zoom the whole page
           if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          if (e.shiftKey) {
             return;
           }
           e.preventDefault();
           canvasService.send('ZOOM.IN');
           return;
-        case '-':
+        // − (actual minus sign, available on numpad)
+        case 109:
+        // -/_
+        case 189:
           // allow to zoom the whole page
           if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          if (e.shiftKey) {
             return;
           }
           e.preventDefault();
           canvasService.send('ZOOM.OUT');
           return;
-        case 'r':
+        // r/R
+        case 82:
           // allow to refresh the page without resetting the position
           if (isWithPlatformMetaKey(e)) {
             return;
@@ -415,7 +432,8 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
           e.preventDefault();
           canvasService.send('POSITION.RESET');
           return;
-        case 'f':
+        // f/F
+        case 70:
           e.preventDefault();
           canvasService.send('FIT_TO_VIEW');
           return;
