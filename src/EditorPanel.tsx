@@ -140,12 +140,13 @@ const editorPanelMachine = editorPanelModel.createMachine(
               src: async (ctx) => {
                 const monaco = ctx.monacoRef!;
                 const uri = monaco.Uri.parse(ctx.mainFile);
-                const getWorker = await monaco.languages.typescript.getTypeScriptWorker();
+                const getWorker =
+                  await monaco.languages.typescript.getTypeScriptWorker();
                 const tsWorker = await getWorker(uri);
 
-                const usedXStateGistIdentifiers: string[] = await (tsWorker as any).queryXStateGistIdentifiers(
-                  uri.toString(),
-                );
+                const usedXStateGistIdentifiers: string[] = await (
+                  tsWorker as any
+                ).queryXStateGistIdentifiers(uri.toString());
 
                 if (usedXStateGistIdentifiers.length > 0) {
                   const fixupImportsText = buildGistFixupImportsText(
@@ -335,7 +336,7 @@ const getSourceOwnershipStatus = (sourceState: SourceMachineState) => {
   if (!sourceState.matches('no_source')) {
     if (
       sourceState.context.loggedInUserId ===
-      sourceState.context.sourceRegistryData?.owner?.id
+      sourceState.context.sourceRegistryData?.system?.owner?.id
     ) {
       sourceStatus = 'user-owns-source';
     } else {

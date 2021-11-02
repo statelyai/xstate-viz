@@ -24,7 +24,8 @@ export const CanvasHeader: React.FC = () => {
 
   const loggedInUserData = useLoggedInUserData();
   const registryData = sourceState.context.sourceRegistryData;
-  const userOwnsSource = loggedInUserData?.id === registryData?.owner?.id;
+  const userOwnsSource =
+    loggedInUserData?.id === registryData?.system?.owner?.id;
   return (
     <HStack zIndex={1} justifyContent="space-between" height="3rem">
       <Link
@@ -52,7 +53,7 @@ export const CanvasHeader: React.FC = () => {
       {registryData && (
         <Stack direction="row" spacing="4" alignItems="center" pr="4">
           <Text fontWeight="semibold" fontSize="sm" color="gray.100">
-            {registryData?.name || 'Unnamed Source'}
+            {registryData?.system?.name || 'Unnamed Source'}
           </Text>
           <HStack>
             <LikeButton />
@@ -65,28 +66,31 @@ export const CanvasHeader: React.FC = () => {
                 size="sm"
               />
               <MenuList>
-                {userOwnsSource && sourceState.context.sourceID && (
+                {userOwnsSource &&
+                  sourceState.context.sourceRegistryData?.system?.id && (
+                    <MenuItem
+                      as="a"
+                      href={registryLinks.editSystem(
+                        sourceState.context.sourceRegistryData?.system?.id,
+                      )}
+                    >
+                      <HStack spacing="3">
+                        <EditIcon />
+                        <Text>Edit</Text>
+                      </HStack>
+                    </MenuItem>
+                  )}
+                {registryData.system?.owner && (
                   <MenuItem
                     as="a"
-                    href={registryLinks.editSourceFile(
-                      sourceState.context.sourceID,
+                    href={registryLinks.viewUserById(
+                      registryData?.system?.owner?.id,
                     )}
                   >
                     <HStack spacing="3">
-                      <EditIcon />
-                      <Text>Edit</Text>
-                    </HStack>
-                  </MenuItem>
-                )}
-                {registryData.owner && (
-                  <MenuItem
-                    as="a"
-                    href={registryLinks.viewUserById(registryData?.owner?.id)}
-                  >
-                    <HStack spacing="3">
                       <Avatar
-                        src={registryData.owner?.avatarUrl || ''}
-                        name={registryData.owner?.displayName || ''}
+                        src={registryData.system?.owner?.avatarUrl || ''}
+                        name={registryData.system?.owner?.displayName || ''}
                         size="xs"
                         height="24px"
                         width="24px"
