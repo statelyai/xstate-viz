@@ -39,11 +39,13 @@ const VizHead = () => {
 
   return (
     <AppHead
-      title={[sourceRegistryData.name, defaultHeadProps.title]
+      title={[sourceRegistryData.system?.name, defaultHeadProps.title]
         .filter(Boolean)
         .join(' | ')}
-      ogTitle={sourceRegistryData.name || defaultHeadProps.ogTitle}
-      description={sourceRegistryData.name || defaultHeadProps.description}
+      ogTitle={sourceRegistryData.system?.name || defaultHeadProps.ogTitle}
+      description={
+        sourceRegistryData.system?.name || defaultHeadProps.description
+      }
       ogImageUrl={registryLinks.sourceFileOgImage(sourceRegistryData.id)}
     />
   );

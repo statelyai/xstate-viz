@@ -344,7 +344,8 @@ export const makeSourceMachine = (params: {
                   always: [
                     {
                       cond: (ctx) => {
-                        const ownerId = ctx.sourceRegistryData?.owner?.id;
+                        const ownerId =
+                          ctx.sourceRegistryData?.system?.owner?.id;
 
                         if (!ownerId || !ctx.loggedInUserId) return false;
 
