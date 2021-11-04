@@ -165,8 +165,8 @@ export const dragSessionTracker = dragSessionModel.createMachine(
         ) => ({
           type: 'POINTER_MOVED_BY',
           delta: {
-            x: ctx.session!.point.x - ev.point.x,
-            y: ctx.session!.point.y - ev.point.y,
+            x: ev.point.x - ctx.session!.point.x,
+            y: ev.point.y - ctx.session!.point.y,
           },
         }),
       ) as any,

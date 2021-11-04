@@ -35,18 +35,17 @@ export function isInternalEvent(eventName: string) {
 }
 
 export function createInterpreterContext<
-  TInterpreter extends Interpreter<any, any, any>
+  TInterpreter extends Interpreter<any, any, any>,
 >(displayName: string) {
-  const [Provider, useContext] = createRequiredContext<TInterpreter>(
-    displayName,
-  );
+  const [Provider, useContext] =
+    createRequiredContext<TInterpreter>(displayName);
 
-  const createUseSelector = <Data>(
-    selector: (state: TInterpreter['state']) => Data,
-  ) => () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useSelector(useContext(), selector);
-  };
+  const createUseSelector =
+    <Data>(selector: (state: TInterpreter['state']) => Data) =>
+    () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      return useSelector(useContext(), selector);
+    };
 
   return [Provider, useContext, createUseSelector] as const;
 }
@@ -71,7 +70,7 @@ export function createRequiredContext<T>(displayName: string) {
 export interface Edge<
   TContext,
   TEvent extends AnyEventObject,
-  TEventType extends TEvent['type'] = string
+  TEventType extends TEvent['type'] = string,
 > {
   event: TEventType;
   source: StateNode<TContext, any, TEvent>;
@@ -299,13 +298,100 @@ const isTextAcceptingInputElement = (input: HTMLInputElement) =>
   input.type === 'text' ||
   input.type === 'url';
 
-export const isTextInputLikeElement = (el: HTMLElement) => {
+const isSvgElement = (el: any): el is SVGElement =>
+  !!el && (/svg/i.test(el.tagName) || !!el.ownerSVGElement);
+
+export const isTextInputLikeElement = (
+  el: HTMLElement | SVGElement,
+): boolean => {
   return (
     (el.tagName === 'INPUT' &&
       isTextAcceptingInputElement(el as HTMLInputElement)) ||
     el.tagName === 'TEXTAREA' ||
-    el.isContentEditable
+    (!isSvgElement(el) && el.isContentEditable)
   );
+};
+
+const getRoles = (el: HTMLElement | SVGElement): string[] => {
+  const explicitRole = el.getAttribute('role');
+
+  if (explicitRole) {
+    // based on https://github.com/testing-library/dom-testing-library/blob/fbbb29a6d9655d41bc8f91d49dc64326f588c0d6/src/queries/role.js#L107-L112
+    return explicitRole.split(' ').filter(Boolean);
+  }
+
+  // this is obviously highly incomplete atm
+  switch (el.tagName) {
+    case 'BUTTON':
+      return ['button'];
+    case 'SELECT': {
+      const multiple = el.getAttribute('multiple');
+      const size = el.getAttribute('multiple');
+      return multiple && size && parseInt(size) > 1
+        ? ['listbox']
+        : ['combobox'];
+    }
+    case 'INPUT': {
+      const input = el as HTMLInputElement;
+      switch (input.type) {
+        case 'button':
+        case 'image':
+        case 'reset':
+        case 'submit':
+          return ['button'];
+        case 'checkbox':
+          return ['checkbox'];
+        case 'email':
+        case 'search':
+        case 'tel':
+        case 'text':
+        case 'url':
+          return el.getAttribute('list') ? ['combobox'] : ['textbox'];
+        case 'number':
+          return ['spinbutton'];
+        case 'radio':
+          return ['radio'];
+        case 'range':
+          return ['slider'];
+        default:
+          return [];
+      }
+    }
+    case 'TEXTAREA':
+      return ['textbox'];
+    default:
+      return [];
+  }
+};
+
+export const isAcceptingArrowKey = (el: HTMLElement | SVGElement): boolean => {
+  if (isTextInputLikeElement(el)) {
+    return true;
+  }
+
+  if (el.tagName === 'INPUT') {
+    const input = el as HTMLInputElement;
+    return input.type === 'range';
+  }
+
+  // TODO: support accordion headers, aria grids, treegrid (keep in midn that treegrid can contain interactive elements)
+  const rolesWithArrowsSupport: Record<string, boolean> = {
+    // not every button accepts arrows but let's assume that they all do since menu buttons and buttons in toolbars accept them
+    // but there is no good way to quickly differentiate those
+    button: true,
+    combobox: true,
+    listbox: true,
+    menu: true,
+    menubar: true,
+    menuitem: true,
+    radio: true,
+    radiogroup: true,
+    tab: true,
+    textbox: true,
+    treeitem: true,
+    tree: true,
+  };
+  return getRoles(el).some((role) => rolesWithArrowsSupport[role]);
 };
 
 export function paramsToRecord(
@@ -335,14 +421,11 @@ export function makeEmbedUrl(id: string, baseUrl: string, params: ParsedEmbed) {
   const query = new URLSearchParams(paramsWithNumberValues as any);
   return `${baseUrl}/viz/embed/${id}?${query.toString()}`;
 }
-// unsure if this should include button-like input elements
-export const hasRoleButton = (el: HTMLElement): boolean => {
-  const roleAttribute = el.getAttribute('role');
-  return roleAttribute
-    ? !!roleAttribute.split(' ').find((role) => role === 'button')
-    : el.tagName === 'BUTTON';
-};
 
-export const isAcceptingSpaceNatively = (el: HTMLElement): boolean =>
+export const isAcceptingSpaceNatively = (
+  el: HTMLElement | SVGElement,
+): boolean =>
   // from all the inputs `number` and `range` don't seem to accept space but it's probably not worth it to special case them here
-  el.tagName === 'INPUT' || isTextInputLikeElement(el) || hasRoleButton(el);
+  el.tagName === 'INPUT' ||
+  isTextInputLikeElement(el) ||
+  getRoles(el).includes('button');

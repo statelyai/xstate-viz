@@ -5,7 +5,12 @@ import { useMachine } from '@xstate/react';
 import { actions } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { Point } from './pathUtils';
-import { isAcceptingSpaceNatively, isWithPlatformMetaKey } from './utils';
+import {
+  isAcceptingArrowKey,
+  isAcceptingSpaceNatively,
+  isTextInputLikeElement,
+  isWithPlatformMetaKey,
+} from './utils';
 import { useEmbed } from './embedContext';
 import {
   dragSessionModel,
@@ -278,7 +283,9 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
     actions: {
       sendPanChange: actions.send(
         (_, ev: any) => {
-          return canvasModel.events.PAN(ev.delta.x, ev.delta.y);
+          // we need to translate a pointer move to the viewbox move
+          // and that is going into the opposite direction than the pointer
+          return canvasModel.events.PAN(-ev.delta.x, -ev.delta.y);
         },
         { to: canvasService as any },
       ),
@@ -307,14 +314,16 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
 
-      if (!entry) return;
+      // entry contains `contentRect` but we are interested in the `clientRect`
+      // height/width are going to be the same but not the offsets
+      const clientRect = entry.target.getBoundingClientRect();
 
       canvasService.send({
         type: 'CANVAS_RECT_CHANGED',
-        height: entry.contentRect.height,
-        width: entry.contentRect.width,
-        offsetX: entry.contentRect.left,
-        offsetY: entry.contentRect.top,
+        height: clientRect.height,
+        width: clientRect.width,
+        offsetX: clientRect.left,
+        offsetY: clientRect.top,
       });
     });
 
@@ -324,6 +333,118 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
       resizeObserver.disconnect();
     };
   }, [canvasService]);
+
+  useEffect(() => {
+    function keydownListener(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | SVGElement;
+
+      if (isTextInputLikeElement(target)) {
+        return;
+      }
+
+      switch (e.keyCode) {
+        // w/W
+        case 87:
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
+          return;
+        // ArrowUp
+        case 38:
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
+          return;
+        // a/A
+        case 65:
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
+          return;
+        // ArrowLeft
+        case 37:
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
+          return;
+        // s/S
+        case 83:
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
+          return;
+        // ArrowDown
+        case 40:
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
+          return;
+        // d/D
+        case 68:
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
+          return;
+        // ArrowRight
+        case 39:
+          if (isAcceptingArrowKey(target)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
+          return;
+        // + (numpad key)
+        case 107:
+        // =/+
+        case 187:
+          // allow to zoom the whole page
+          if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          if (e.shiftKey) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send('ZOOM.IN');
+          return;
+        // − (actual minus sign, available on numpad)
+        case 109:
+        // -/_
+        case 189:
+          // allow to zoom the whole page
+          if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          if (e.shiftKey) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send('ZOOM.OUT');
+          return;
+        // r/R
+        case 82:
+          // allow to refresh the page without resetting the position
+          if (isWithPlatformMetaKey(e)) {
+            return;
+          }
+          e.preventDefault();
+          canvasService.send('POSITION.RESET');
+          return;
+        // f/F
+        case 70:
+          e.preventDefault();
+          canvasService.send('FIT_TO_VIEW');
+          return;
+      }
+    }
+
+    window.addEventListener('keydown', keydownListener);
+    return () => {
+      window.removeEventListener('keydown', keydownListener);
+    };
+  }, []);
 
   /**
    * Tracks Wheel Event on canvas
@@ -338,16 +459,14 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
         if (e.deltaY > 0) {
           canvasService.send(
             canvasModel.events['ZOOM.OUT'](
-              e.clientX,
-              e.clientY,
+              { x: e.clientX, y: e.clientY },
               ZoomFactor.slow,
             ),
           );
         } else if (e.deltaY < 0) {
           canvasService.send(
             canvasModel.events['ZOOM.IN'](
-              e.clientX,
-              e.clientY,
+              { x: e.clientX, y: e.clientY },
               ZoomFactor.slow,
             ),
           );

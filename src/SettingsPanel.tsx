@@ -54,6 +54,47 @@ const KeyboardShortcuts = () => (
           </Td>
           <Td>Show the Command palette</Td>
         </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <span>
+                <Kbd>Up</Kbd>,<Kbd>Left</Kbd>,<Kbd>Down</Kbd>,<Kbd>Right</Kbd>
+              </span>
+              <span>
+                <Kbd>w</Kbd>,<Kbd>a</Kbd>,<Kbd>s</Kbd>,<Kbd>d</Kbd>
+              </span>
+            </VStack>
+          </Td>
+          <Td>
+            Pan the view. Use <Kbd>Shift</Kbd> for a larger pan.
+          </Td>
+        </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <Kbd>f</Kbd>
+            </VStack>
+          </Td>
+          <Td>Fit to view</Td>
+        </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <Kbd>r</Kbd>
+            </VStack>
+          </Td>
+          <Td>Reset the view</Td>
+        </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <span>
+                <Kbd>+</Kbd>, <Kbd>-</Kbd>
+              </span>
+            </VStack>
+          </Td>
+          <Td>Zoom-in/out</Td>
+        </Tr>
       </Tbody>
     </Table>
   </Box>
