@@ -108,46 +108,34 @@ export const simulationMachine = simModel.createMachine(
     states: {
       inspecting: {
         tags: 'inspecting',
-        initial:
-          isOnClientSide() &&
-          new URLSearchParams(window.location.search).has('server')
-            ? 'websocket'
-            : 'window',
-        states: {
-          websocket: {
-            entry: [
-              assign({
-                receiverRef: () => {
-                  const queries = new URLSearchParams(window.location.search);
-                  const server = queries.get('server') as string;
-                  const protocol =
-                    (queries.get('protocol') as 'ws' | 'wss' | undefined) ??
-                    'ws';
-                  return createWebSocketReceiver({ server, protocol });
-                },
-              }),
-            ],
-            invoke: {
-              id: 'proxy',
-              src: 'inspectorProxy',
+        entry: [
+          assign({
+            receiverRef: () => {
+              const serverUrl = new URLSearchParams(window.location.search).get(
+                'server',
+              );
+
+              if (serverUrl) {
+                const [protocol, ...server] = serverUrl.split('://');
+                return createWebSocketReceiver({
+                  protocol: protocol as 'ws' | 'wss',
+                  server: server.join('://'),
+                });
+              }
+
+              return createWindowReceiver({
+                // for some random reason the `window.top` is being rewritten to `window.self`
+                // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
+                // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
+                // so we pass it explicitly here
+                targetWindow: window.opener || window.parent,
+              });
             },
-          },
-          window: {
-            entry: assign({
-              receiverRef: () =>
-                createWindowReceiver({
-                  // for some random reason the `window.top` is being rewritten to `window.self`
-                  // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
-                  // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
-                  // so we pass it explicitly here
-                  targetWindow: window.opener || window.parent,
-                }),
-            }),
-            invoke: {
-              id: 'proxy',
-              src: 'inspectorProxy',
-            },
-          },
+          }),
+        ],
+        invoke: {
+          id: 'proxy',
+          src: 'inspectorProxy',
         },
       },
       visualizing: {
