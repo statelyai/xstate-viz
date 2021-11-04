@@ -71,7 +71,7 @@ export const simulationMachine = simModel.createMachine(
       new URLSearchParams(window.location.search).has('inspect')
         ? 'inspecting'
         : 'visualizing',
-    entry: [assign({ notifRef: () => spawn(notifMachine) })],
+    entry: assign({ notifRef: () => spawn(notifMachine) }),
     invoke: {
       src: () => (sendBack) => {
         devTools.onRegister((service) => {
@@ -114,15 +114,15 @@ export const simulationMachine = simModel.createMachine(
               'server',
             );
 
-            let receiverRef: InspectReceiver;
+            let receiver: InspectReceiver;
             if (serverUrl) {
               const [protocol, ...server] = serverUrl.split('://');
-              receiverRef = createWebSocketReceiver({
+              receiver = createWebSocketReceiver({
                 protocol: protocol as 'ws' | 'wss',
                 server: server.join('://'),
               });
             } else {
-              receiverRef = createWindowReceiver({
+              receiver = createWindowReceiver({
                 // for some random reason the `window.top` is being rewritten to `window.self`
                 // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
                 // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
@@ -133,7 +133,7 @@ export const simulationMachine = simModel.createMachine(
 
             onReceive((event) => {
               if (event.type === 'xstate.event') {
-                receiverRef.send({
+                receiver.send({
                   ...event,
                   type: 'xstate.event',
                   event: JSON.stringify(event.event),
@@ -141,7 +141,7 @@ export const simulationMachine = simModel.createMachine(
               }
             });
 
-            return receiverRef.subscribe((event) => {
+            return receiver.subscribe((event) => {
               switch (event.type) {
                 case 'service.register':
                   let state = event.machine.resolveState(event.state);
