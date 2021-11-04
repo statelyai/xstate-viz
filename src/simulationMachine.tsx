@@ -32,7 +32,6 @@ export const simModel = createModel(
     currentSessionId: null as string | null,
     events: [] as SimEvent[],
     previewEvent: undefined as string | undefined,
-    receiverRef: undefined as InspectReceiver | undefined,
   },
   {
     events: {
@@ -108,34 +107,70 @@ export const simulationMachine = simModel.createMachine(
     states: {
       inspecting: {
         tags: 'inspecting',
-        entry: [
-          assign({
-            receiverRef: () => {
-              const serverUrl = new URLSearchParams(window.location.search).get(
-                'server',
-              );
+        invoke: {
+          id: 'proxy',
+          src: () => (sendBack, onReceive) => {
+            const serverUrl = new URLSearchParams(window.location.search).get(
+              'server',
+            );
 
-              if (serverUrl) {
-                const [protocol, ...server] = serverUrl.split('://');
-                return createWebSocketReceiver({
-                  protocol: protocol as 'ws' | 'wss',
-                  server: server.join('://'),
-                });
-              }
-
-              return createWindowReceiver({
+            let receiverRef: InspectReceiver;
+            if (serverUrl) {
+              const [protocol, ...server] = serverUrl.split('://');
+              receiverRef = createWebSocketReceiver({
+                protocol: protocol as 'ws' | 'wss',
+                server: server.join('://'),
+              });
+            } else {
+              receiverRef = createWindowReceiver({
                 // for some random reason the `window.top` is being rewritten to `window.self`
                 // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
                 // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
                 // so we pass it explicitly here
                 targetWindow: window.opener || window.parent,
               });
-            },
-          }),
-        ],
-        invoke: {
-          id: 'proxy',
-          src: 'inspectorProxy',
+            }
+
+            onReceive((event) => {
+              if (event.type === 'xstate.event') {
+                receiverRef.send({
+                  ...event,
+                  type: 'xstate.event',
+                  event: JSON.stringify(event.event),
+                });
+              }
+            });
+
+            return receiverRef.subscribe((event) => {
+              switch (event.type) {
+                case 'service.register':
+                  let state = event.machine.resolveState(event.state);
+                  sendBack(
+                    simModel.events['SERVICE.REGISTER']({
+                      sessionId: event.sessionId,
+                      machine: event.machine,
+                      state,
+                      parent: event.parent,
+                      source: 'inspector',
+                    }),
+                  );
+                  break;
+                case 'service.state':
+                  sendBack(
+                    simModel.events['SERVICE.STATE'](
+                      event.sessionId,
+                      event.state,
+                    ),
+                  );
+                  break;
+                case 'service.stop':
+                  sendBack(simModel.events['SERVICE.STOP'](event.sessionId));
+                  break;
+                default:
+                  break;
+              }
+            }).unsubscribe;
+          },
         },
       },
       visualizing: {
@@ -355,54 +390,6 @@ export const simulationMachine = simModel.createMachine(
         previewEvent: undefined,
         currentSessionId: null,
       }),
-    },
-    services: {
-      inspectorProxy:
-        ({ receiverRef }) =>
-        (sendBack, onReceive) => {
-          if (typeof receiverRef === 'undefined')
-            throw new Error('receiverRef is undefined');
-
-          onReceive((event) => {
-            if (event.type === 'xstate.event') {
-              receiverRef.send({
-                ...event,
-                type: 'xstate.event',
-                event: JSON.stringify(event.event),
-              });
-            }
-          });
-
-          return receiverRef.subscribe((event) => {
-            switch (event.type) {
-              case 'service.register':
-                let state = event.machine.resolveState(event.state);
-                sendBack(
-                  simModel.events['SERVICE.REGISTER']({
-                    sessionId: event.sessionId,
-                    machine: event.machine,
-                    state,
-                    parent: event.parent,
-                    source: 'inspector',
-                  }),
-                );
-                break;
-              case 'service.state':
-                sendBack(
-                  simModel.events['SERVICE.STATE'](
-                    event.sessionId,
-                    event.state,
-                  ),
-                );
-                break;
-              case 'service.stop':
-                sendBack(simModel.events['SERVICE.STOP'](event.sessionId));
-                break;
-              default:
-                break;
-            }
-          }).unsubscribe;
-        },
     },
   },
 );
