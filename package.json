@@ -30,7 +30,7 @@
     "realms-shim": "^1.2.2",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
-    "xstate": "^4.25.0"
+    "xstate": "^4.26.0"
   },
   "scripts": {
     "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",
