@@ -1,3 +1,5 @@
+import { EmbedMode, EmbedPanel } from '../../src/types';
+
 const sourceFileFixture = {
   id: 'source-file-id',
   text: `
@@ -15,7 +17,7 @@ createMachine({
 };
 
 describe('Embedded mode', () => {
-  describe('default (mode:viz)', () => {
+  describe('default (mode:viz)1', () => {
     before(() => {
       cy.interceptGraphQL({
         getSourceFile: sourceFileFixture,
@@ -27,11 +29,12 @@ describe('Embedded mode', () => {
     it('panels should be hidden', () => {
       cy.getPanelsView().should('be.hidden');
     });
-    it('zoom and pan buttons group should be hidden', () => {
-      cy.getControlButtons().should('not.exist');
-    });
     it('canvas header should be hidden', () => {
       cy.getCanvasHeader().should('not.exist');
+    });
+    it('RESET and fit_to_content should be visible', () => {
+      cy.getResetButton().should('be.visible');
+      cy.getFitToContentButton().should('be.visible');
     });
   });
 
@@ -41,17 +44,21 @@ describe('Embedded mode', () => {
         getSourceFile: sourceFileFixture,
       });
     });
+    it('RESET and fit_to_content should be visible', () => {
+      cy.getResetButton().should('be.visible');
+      cy.getFitToContentButton().should('be.visible');
+    });
     it('should show panels view', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
+        mode: EmbedMode.Panels,
       });
       cy.getPanelsView().should('be.visible');
     });
     it('should show CODE panel by default', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
+        mode: EmbedMode.Panels,
       });
       cy.findByRole('tab', { name: /code/i }).should(
         'have.attr',
@@ -79,7 +86,7 @@ describe('Embedded mode', () => {
     it('should be able to make code editor editable', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
+        mode: EmbedMode.Panels,
         readOnly: false,
       });
       const editor = cy.getMonacoEditor();
@@ -89,8 +96,8 @@ describe('Embedded mode', () => {
     it('should be able to choose active panel', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
-        panel: 'state',
+        mode: EmbedMode.Panels,
+        panel: EmbedPanel.State,
       });
       cy.findByRole('tab', { name: /state/i }).should(
         'have.attr',
@@ -102,7 +109,7 @@ describe('Embedded mode', () => {
     it('should be able to hide the original link', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
+        mode: EmbedMode.Panels,
         showOriginalLink: false,
       });
       cy.findByRole('link', { name: /open in stately\.ai\/viz/i }).should(
@@ -112,14 +119,14 @@ describe('Embedded mode', () => {
     it('the visualize button should be hidden', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
+        mode: EmbedMode.Panels,
       });
       cy.contains('button', /visualize/i).should('not.exist');
     });
     it('the visualize button should be shown if readOnly is disabled', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
+        mode: EmbedMode.Panels,
         readOnly: false,
       });
       cy.findByRole('button', { name: /visualize/i }).should('be.visible');
@@ -127,7 +134,7 @@ describe('Embedded mode', () => {
     it('the "New" and "Login to fork" should be hidden', () => {
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'panels',
+        mode: EmbedMode.Panels,
       });
       [/new/i, /login to fork/i].forEach((text) => {
         cy.contains('button', text).should('not.exist');
@@ -142,8 +149,12 @@ describe('Embedded mode', () => {
       });
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
-        mode: 'full',
+        mode: EmbedMode.Full,
       });
+    });
+    it('RESET and fit_to_content should be visible', () => {
+      cy.getResetButton().should('be.visible');
+      cy.getFitToContentButton().should('be.visible');
     });
     it('should show both canvas and panels', () => {
       cy.getCanvasGraph().should('be.visible');
