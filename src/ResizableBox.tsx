@@ -124,7 +124,7 @@ export const ResizableBox: React.FC<ResizableBoxProps> = ({
       {...props}
       style={
         !disabled
-          ? { width: `clamp(35rem, calc(35rem + ${widthDelta}px), 70vw)` }
+          ? { width: `clamp(36rem, calc(36rem + ${widthDelta}px), 70vw)` }
           : undefined
       }
     >
