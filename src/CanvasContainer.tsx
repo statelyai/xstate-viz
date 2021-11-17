@@ -342,63 +342,39 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
         return;
       }
 
-      switch (e.keyCode) {
-        // w/W
-        case 87:
-          e.preventDefault();
-          canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
-          return;
-        // ArrowUp
-        case 38:
+      switch (e.key) {
+        case 'ArrowUp':
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.DOWN'](e.shiftKey));
           return;
-        // a/A
-        case 65:
-          e.preventDefault();
-          canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
-          return;
-        // ArrowLeft
-        case 37:
+        case 'ArrowLeft':
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.RIGHT'](e.shiftKey));
           return;
-        // s/S
-        case 83:
-          e.preventDefault();
-          canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
-          return;
-        // ArrowDown
-        case 40:
+        case 'ArrowDown':
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.UP'](e.shiftKey));
           return;
-        // d/D
-        case 68:
-          e.preventDefault();
-          canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
-          return;
-        // ArrowRight
-        case 39:
+        case 'ArrowRight':
           if (isAcceptingArrowKey(target)) {
             return;
           }
           e.preventDefault();
           canvasService.send(canvasModel.events['PAN.LEFT'](e.shiftKey));
           return;
-        // + (numpad key)
-        case 107:
-        // =/+
-        case 187:
+        // can come from numpad
+        case '+':
+        // this corresponds to the =/+ key, we expect it to be pressed without a Shift
+        case '=':
           // allow to zoom the whole page
           if (isWithPlatformMetaKey(e)) {
             return;
@@ -409,10 +385,9 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
           e.preventDefault();
           canvasService.send('ZOOM.IN');
           return;
-        // − (actual minus sign, available on numpad)
-        case 109:
-        // -/_
-        case 189:
+        // this corresponds to the -/_ key, we expect it to be pressed without a Shift
+        // it apparently also corresponds to the minus sign on the numpad, even though it inputs the actual minus sign (char code 8722)
+        case '-':
           // allow to zoom the whole page
           if (isWithPlatformMetaKey(e)) {
             return;
@@ -423,19 +398,15 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
           e.preventDefault();
           canvasService.send('ZOOM.OUT');
           return;
-        // r/R
-        case 82:
-          // allow to refresh the page without resetting the position
-          if (isWithPlatformMetaKey(e)) {
+        // can come from numpad
+        case '1':
+        // this corresponds to the 1/! key
+        case '!':
+          if (!e.shiftKey) {
             return;
           }
           e.preventDefault();
-          canvasService.send('POSITION.RESET');
-          return;
-        // f/F
-        case 70:
-          e.preventDefault();
-          canvasService.send('FIT_TO_VIEW');
+          canvasService.send('FIT_TO_CONTENT');
           return;
       }
     }
