@@ -139,7 +139,10 @@ const mapModuleNameToModule = (name: string) => {
 };
 
 //** A really simple version of path.resolve */
-const mapRelativePath = (moduleDeclaration: string, currentPath: string) => {
+const mapRelativePath = (
+  moduleDeclaration: string,
+  currentPath: string,
+): string => {
   // https://stackoverflow.com/questions/14780350/convert-relative-path-to-absolute-using-javascript
   function absolute(base: string, relative: string) {
     if (!base) return relative;
@@ -155,6 +158,7 @@ const mapRelativePath = (moduleDeclaration: string, currentPath: string) => {
       if (parts[i] == '..') stack.pop();
       else stack.push(parts[i]);
     }
+
     return stack.join('/');
   }
 
@@ -569,7 +573,11 @@ const getDependenciesForModule = (
           throw `No outer module or path for a relative import: ${moduleToDownload}`;
         }
 
-        const absolutePathForModule = mapRelativePath(moduleToDownload, path);
+        let absolutePathForModule = mapRelativePath(moduleToDownload, path);
+
+        if (moduleToDownload === '.') {
+          absolutePathForModule += '/index';
+        }
 
         // So it doesn't run twice for a package
         acquiredTypeDefs[moduleID] = null;
