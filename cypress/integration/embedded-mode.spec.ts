@@ -17,6 +17,22 @@ createMachine({
 };
 
 describe('Embedded mode', () => {
+  describe('default controls', () => {
+    before(() => {
+      cy.interceptGraphQL({
+        getSourceFile: sourceFileFixture,
+      });
+      cy.visitEmbedWithNextPageProps({
+        sourceFile: sourceFileFixture,
+        controls: true,
+      });
+    });
+
+    it('RESET and fit_to_content button should be visible regardless of the mode only if constols is enabled', () => {
+      cy.getResetButton().should('be.visible');
+      cy.getFitToContentButton().should('be.visible');
+    });
+  });
   describe('default (mode:viz)1', () => {
     before(() => {
       cy.interceptGraphQL({
@@ -32,10 +48,6 @@ describe('Embedded mode', () => {
     it('canvas header should be hidden', () => {
       cy.getCanvasHeader().should('not.exist');
     });
-    it('RESET and fit_to_content should be visible', () => {
-      cy.getResetButton().should('be.visible');
-      cy.getFitToContentButton().should('be.visible');
-    });
   });
 
   describe('mode:panels', () => {
@@ -43,10 +55,6 @@ describe('Embedded mode', () => {
       cy.interceptGraphQL({
         getSourceFile: sourceFileFixture,
       });
-    });
-    it('RESET and fit_to_content should be visible', () => {
-      cy.getResetButton().should('be.visible');
-      cy.getFitToContentButton().should('be.visible');
     });
     it('should show panels view', () => {
       cy.visitEmbedWithNextPageProps({
@@ -151,10 +159,6 @@ describe('Embedded mode', () => {
         sourceFile: sourceFileFixture,
         mode: EmbedMode.Full,
       });
-    });
-    it('RESET and fit_to_content should be visible', () => {
-      cy.getResetButton().should('be.visible');
-      cy.getFitToContentButton().should('be.visible');
     });
     it('should show both canvas and panels', () => {
       cy.getCanvasGraph().should('be.visible');
