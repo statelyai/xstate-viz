@@ -126,6 +126,9 @@ const visitEmbedWithNextPageProps = ({
     searchParams.set('zoom', String(Number(zoom)));
   }
   if (typeof showOriginalLink === 'boolean') {
+    searchParams.set('showOriginalLink', String(Number(showOriginalLink)));
+  }
+  if (typeof controls === 'boolean') {
     searchParams.set('controls', String(Number(controls)));
   }
   cy.visit(`${path}?${searchParams}`);
@@ -223,7 +226,7 @@ const getResizeHandle = () => {
 };
 
 const getResetButton = () => cy.findByText('RESET')
-const getFitToContentButton = () => cy.findByLabelText('Fit to view')
+const getFitToContentButton = () => cy.findByLabelText('Fit to content')
 
 type DeepPartial<T> = T extends Function
   ? T
