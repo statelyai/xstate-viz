@@ -211,7 +211,7 @@ export const CanvasView: React.FC = () => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  XState version 4.23.0
+                  XState version 4.26.0
                 </MenuItem>
                 <MenuItem
                   as={Link}
