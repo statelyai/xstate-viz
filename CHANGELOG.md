@@ -1,5 +1,36 @@
 # XState Visualizer
 
+## 0.5.0
+
+### Minor Changes
+
+- [#269](https://github.com/statelyai/xstate-viz/pull/269) [`0f8e205`](https://github.com/statelyai/xstate-viz/commit/0f8e205fd2652df6d07dff53eea18588d7b3e2d4) Thanks [@Andarist](https://github.com/Andarist)! - A possibility to start panning the canvas by pressing the middle button of a mouse has been added.
+
+* [#237](https://github.com/statelyai/xstate-viz/pull/237) [`7599a26`](https://github.com/statelyai/xstate-viz/commit/7599a26e7482a0f8895e7821d223b6fcdde99c79) Thanks [@rthor](https://github.com/rthor), [@Andarist](https://github.com/Andarist)! - Added more keyboard interactions to the canvas:
+
+  - arrows (<kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd><kbd>←</kbd>) can be used to move the canvas around (with <kbd>Shift</kbd> the step move is increased)
+  - <kbd>+</kbd>/<kbd>-</kbd> can be used to zoom in/out
+  - <kbd>Shift</kbd> + <kbd>1</kbd> can be used to fit the machine on the canvas
+
+- [#315](https://github.com/statelyai/xstate-viz/pull/315) [`f98ce3f`](https://github.com/statelyai/xstate-viz/commit/f98ce3f97b58b499ceb88c5bdd15899b59eb12a7) Thanks [@farskid](https://github.com/farskid)! - Tweak controls options in embed mode
+
+  - RESET and Fit To View are now available in all embed modes with `controls=1`
+  - Zoom in and out buttons are only available if controls and Zoom are both enabled
+  - Hand tool (pan button) is only available if controls and pan are both enabled
+  - Reset canvas button and Help button are no longer available in embed mode
+
+### Patch Changes
+
+- [#289](https://github.com/statelyai/xstate-viz/pull/289) [`48af2ef`](https://github.com/statelyai/xstate-viz/commit/48af2ef6dc90afe9bfcf922e575dc9846ea8b5ea) Thanks [@farskid](https://github.com/farskid)! - Fix a bug with inconsistent embed previews
+
+* [#278](https://github.com/statelyai/xstate-viz/pull/278) [`cd128a1`](https://github.com/statelyai/xstate-viz/commit/cd128a15486d9253edaaa360ee6c1b150f293f5c) Thanks [@farskid](https://github.com/farskid)! - Show full url in the embed code inside embed preview
+
+- [#298](https://github.com/statelyai/xstate-viz/pull/298) [`0c3bfec`](https://github.com/statelyai/xstate-viz/commit/0c3bfec1925463b50ff443e4c74a9915c32aa32d) Thanks [@christoph-fricke](https://github.com/christoph-fricke)! - Align the visualization of custom actions with the visualization of XState-provided actions. Previously, the labels for custom actions were not rendered with a bold font.
+
+* [#312](https://github.com/statelyai/xstate-viz/pull/312) [`d10238a`](https://github.com/statelyai/xstate-viz/commit/d10238a7c0e2d25f01fa076197d95ebf8369d421) Thanks [@Andarist](https://github.com/Andarist)! - Updated XState to its latest version ([4.26.0](https://github.com/statelyai/xstate/releases/tag/xstate%404.26.0)). Visualizer should be able to use the new goodies now, such as it should provide access to the `invoke.meta` object in the invoke creators.
+
+- [#303](https://github.com/statelyai/xstate-viz/pull/303) [`2cb5ccf`](https://github.com/statelyai/xstate-viz/commit/2cb5ccfe5eb95ceb0919d247ba07ae70054dba5d) Thanks [@mattpocock](https://github.com/mattpocock)! - Fixed an issue where events were being duplicated in the right-hand events panel.
+
 ## 0.4.0
 
 ### Minor Changes
