@@ -69,6 +69,8 @@ export const CanvasView: React.FC = () => {
 
   const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
 
+  const showControls = useMemo(() => !embed?.isEmbedded || embed.controls, [embed])
+
   const showZoomButtonsInEmbed = useMemo(
     () => !embed?.isEmbedded || (embed.controls && embed.zoom),
     [embed],
@@ -104,7 +106,7 @@ export const CanvasView: React.FC = () => {
         {isEmpty && canShowWelcomeMessage && <WelcomeArea />}
       </CanvasContainer>
 
-      <Box
+      {showControls && <Box
         display="flex"
         flexDirection="row"
         alignItems="center"
@@ -223,7 +225,7 @@ export const CanvasView: React.FC = () => {
             </Portal>
           </Menu>
         )}
-      </Box>
+      </Box>}
     </Box>
   );
 };
