@@ -575,6 +575,8 @@ const getDependenciesForModule = (
 
         let absolutePathForModule = mapRelativePath(moduleToDownload, path);
 
+        // patch the broken logic from the original `typeAcquisition`
+        // TODO: replace the whole thing with `@typescript/ata` that has been published since our "fork" was created
         if (moduleToDownload === '.') {
           absolutePathForModule += '/index';
         }
