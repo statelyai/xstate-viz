@@ -142,10 +142,10 @@ export const CanvasView: React.FC = () => {
             </>
           )}
           <IconButton
-            aria-label="Fit to view"
-            title="Fit to view"
+            aria-label="Fit to content"
+            title="Fit to content"
             icon={<CompressIcon />}
-            onClick={() => canvasService.send('FIT_TO_VIEW')}
+            onClick={() => canvasService.send('FIT_TO_CONTENT')}
             variant="secondary"
           />
           {!embed?.isEmbedded && (

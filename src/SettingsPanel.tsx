@@ -58,10 +58,7 @@ const KeyboardShortcuts = () => (
           <Td>
             <VStack alignItems="flex-start">
               <span>
-                <Kbd>Up</Kbd>,<Kbd>Left</Kbd>,<Kbd>Down</Kbd>,<Kbd>Right</Kbd>
-              </span>
-              <span>
-                <Kbd>w</Kbd>,<Kbd>a</Kbd>,<Kbd>s</Kbd>,<Kbd>d</Kbd>
+                <Kbd>Up</Kbd> , <Kbd>Left</Kbd> , <Kbd>Down</Kbd> , <Kbd>Right</Kbd>
               </span>
             </VStack>
           </Td>
@@ -71,25 +68,15 @@ const KeyboardShortcuts = () => (
         </Tr>
         <Tr>
           <Td>
-            <VStack alignItems="flex-start">
-              <Kbd>f</Kbd>
-            </VStack>
+              <Kbd>Shift</Kbd> + <Kbd>1</Kbd>
           </Td>
-          <Td>Fit to view</Td>
-        </Tr>
-        <Tr>
-          <Td>
-            <VStack alignItems="flex-start">
-              <Kbd>r</Kbd>
-            </VStack>
-          </Td>
-          <Td>Reset the view</Td>
+          <Td>Fit to content</Td>
         </Tr>
         <Tr>
           <Td>
             <VStack alignItems="flex-start">
               <span>
-                <Kbd>+</Kbd>, <Kbd>-</Kbd>
+                <Kbd>+</Kbd> , <Kbd>-</Kbd>
               </span>
             </VStack>
           </Td>

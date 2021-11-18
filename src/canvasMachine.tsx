@@ -72,7 +72,7 @@ export const canvasModel = createModel(initialContext, {
       height,
     }),
     'elkGraph.UPDATE': (elkGraph: StateElkNode) => ({ elkGraph }),
-    FIT_TO_VIEW: () => ({}),
+    FIT_TO_CONTENT: () => ({}),
   },
 });
 
@@ -258,10 +258,10 @@ export const canvasMachine = canvasModel.createMachine({
         canvasModel.assign({
           elkGraph: (_, e) => e.elkGraph,
         }),
-        send('FIT_TO_VIEW'),
+        send('FIT_TO_CONTENT'),
       ],
     },
-    FIT_TO_VIEW: {
+    FIT_TO_CONTENT: {
       actions: [
         canvasModel.assign({
           zoom: (ctx) => {
