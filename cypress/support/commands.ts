@@ -222,6 +222,9 @@ const getResizeHandle = () => {
   return cy.findByTestId('resize-handle');
 };
 
+const getResetButton = () => cy.findByText('RESET')
+const getFitToContentButton = () => cy.findByLabelText('Fit to view')
+
 type DeepPartial<T> = T extends Function
   ? T
   : T extends Array<infer U>
@@ -273,6 +276,10 @@ declare global {
 
       getEmbedPreview: typeof getEmbedPreview;
       getResizeHandle: typeof getResizeHandle;
+
+      getResetButton: typeof getResetButton;
+
+      getFitToContentButton: typeof getFitToContentButton;
     }
   }
 }
@@ -295,3 +302,5 @@ Cypress.Commands.add('getCanvasGraph', getCanvasGraph);
 Cypress.Commands.add('getControlButtons', getControlButtons);
 Cypress.Commands.add('getEmbedPreview', getEmbedPreview);
 Cypress.Commands.add('getResizeHandle', getResizeHandle);
+Cypress.Commands.add('getResetButton', getResetButton);
+Cypress.Commands.add('getFitToContentButton', getFitToContentButton);

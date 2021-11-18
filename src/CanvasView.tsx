@@ -69,6 +69,15 @@ export const CanvasView: React.FC = () => {
 
   const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
 
+  const showZoomButtonsInEmbed = useMemo(
+    () => !embed?.isEmbedded || (embed.controls && embed.zoom),
+    [embed],
+  );
+  const showPanButtonInEmbed = useMemo(
+    () => !embed?.isEmbedded || (embed.controls && embed.pan),
+    [embed],
+  );
+
   return (
     <Box
       display="grid"
@@ -94,54 +103,60 @@ export const CanvasView: React.FC = () => {
         )}
         {isEmpty && canShowWelcomeMessage && <WelcomeArea />}
       </CanvasContainer>
-      {!(embed?.isEmbedded && !embed.controls) && (
-        <Box
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="flex-start"
-          position="absolute"
-          bottom={0}
-          left={0}
-          paddingX={2}
-          paddingY={3}
-          zIndex={1}
-          width="100%"
-          data-testid="controls"
-        >
-          <ButtonGroup size="sm" spacing={2} isAttached>
-            <IconButton
-              aria-label="Zoom out"
-              title="Zoom out"
-              icon={<MinusIcon />}
-              disabled={!shouldEnableZoomOutButton}
-              onClick={() => canvasService.send('ZOOM.OUT')}
-              variant="secondary"
-            />
-            <IconButton
-              aria-label="Zoom in"
-              title="Zoom in"
-              icon={<AddIcon />}
-              disabled={!shouldEnableZoomInButton}
-              onClick={() => canvasService.send('ZOOM.IN')}
-              variant="secondary"
-            />
-            <IconButton
-              aria-label="Fit to content"
-              title="Fit to content"
-              icon={<CompressIcon />}
-              onClick={() => canvasService.send('FIT_TO_CONTENT')}
-              variant="secondary"
-            />
+
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        justifyContent="flex-start"
+        position="absolute"
+        bottom={0}
+        left={0}
+        paddingX={2}
+        paddingY={3}
+        zIndex={1}
+        width="100%"
+        data-testid="controls"
+      >
+        <ButtonGroup size="sm" spacing={2} isAttached>
+          {showZoomButtonsInEmbed && (
+            <>
+              <IconButton
+                aria-label="Zoom out"
+                title="Zoom out"
+                icon={<MinusIcon />}
+                disabled={!shouldEnableZoomOutButton}
+                onClick={() => canvasService.send('ZOOM.OUT')}
+                variant="secondary"
+              />
+              <IconButton
+                aria-label="Zoom in"
+                title="Zoom in"
+                icon={<AddIcon />}
+                disabled={!shouldEnableZoomInButton}
+                onClick={() => canvasService.send('ZOOM.IN')}
+                variant="secondary"
+              />
+            </>
+          )}
+          <IconButton
+            aria-label="Fit to content"
+            title="Fit to content"
+            icon={<CompressIcon />}
+            onClick={() => canvasService.send('FIT_TO_CONTENT')}
+            variant="secondary"
+          />
+          {!embed?.isEmbedded && (
             <IconButton
               aria-label="Reset canvas"
               title="Reset canvas"
               icon={<RepeatIcon />}
               onClick={() => canvasService.send('POSITION.RESET')}
               variant="secondary"
-              disabled={embed?.isEmbedded && !embed.zoom && !embed.pan}
             />
-          </ButtonGroup>
+          )}
+        </ButtonGroup>
+        {showPanButtonInEmbed && (
           <IconButton
             aria-label="Pan mode"
             icon={<HandIcon />}
@@ -150,18 +165,19 @@ export const CanvasView: React.FC = () => {
             onClick={() => setPanModeEnabled((v) => !v)}
             aria-pressed={panModeEnabled}
             variant={panModeEnabled ? 'secondaryPressed' : 'secondary'}
-            disabled={embed?.isEmbedded && !embed.pan}
           />
-          {simulationMode === 'visualizing' && (
-            <Button
-              size="sm"
-              marginLeft={2}
-              onClick={() => simService.send('MACHINES.RESET')}
-              variant="secondary"
-            >
-              RESET
-            </Button>
-          )}
+        )}
+        {simulationMode === 'visualizing' && (
+          <Button
+            size="sm"
+            marginLeft={2}
+            onClick={() => simService.send('MACHINES.RESET')}
+            variant="secondary"
+          >
+            RESET
+          </Button>
+        )}
+        {!embed?.isEmbedded && (
           <Menu closeOnSelect={true} placement="top-end">
             <MenuButton
               as={IconButton}
@@ -206,8 +222,8 @@ export const CanvasView: React.FC = () => {
               </MenuList>
             </Portal>
           </Menu>
-        </Box>
-      )}
+        )}
+      </Box>
     </Box>
   );
 };

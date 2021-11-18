@@ -26,6 +26,7 @@ export const AppHead = ({ importElk = true, ...props }: AppHeadProps) => {
   return (
     <Head>
       <link rel="apple-touch-icon" href="/viz/favicon@256.png" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <link rel="icon" href="/viz/favicon.png" />
       <title>{props.title}</title>
       <meta name="description" content={props.description} />
