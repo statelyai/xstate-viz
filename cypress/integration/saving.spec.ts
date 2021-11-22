@@ -5,8 +5,10 @@ describe('Saving', () => {
     const sourceFileToBeCreated = {
       id: 'source-file-id',
       name: 'My awesome source file',
-      owner: {
-        id: 'id',
+      system: {
+        owner: {
+          id: 'id',
+        },
       },
     };
 
@@ -22,9 +24,11 @@ describe('Saving', () => {
       },
       createSourceFile: {
         id: 'source-file-id',
-        name: 'Source File',
-        owner: {
-          id: 'id',
+        system: {
+          name: 'Source File',
+          owner: {
+            id: 'id',
+          },
         },
       },
     });
@@ -53,16 +57,20 @@ describe('Saving', () => {
       getSourceFile: {
         id: 'source-file-id',
         text: '// New File',
-        name: 'Source File',
-        owner: {
-          id: 'id',
+        system: {
+          name: 'Source File',
+          owner: {
+            id: 'id',
+          },
         },
       },
       updateSourceFile: {
         id: 'source-file-id',
-        name: 'Source File',
-        owner: {
-          id: 'id',
+        system: {
+          name: 'Source File',
+          owner: {
+            id: 'id',
+          },
         },
       },
     });
