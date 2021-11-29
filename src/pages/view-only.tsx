@@ -22,7 +22,7 @@ const parseMachineFromQuery = (query: NextRouter['query']) => {
   }
 
   if (Array.isArray(query.machine)) {
-    throw new Error();
+    throw new Error("`machine` query param can't be an array");
   }
 
   const lzResult = lzString.decompressFromEncodedURIComponent(query.machine);
