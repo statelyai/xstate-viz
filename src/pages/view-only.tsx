@@ -32,7 +32,11 @@ const parseMachineFromQuery = (query: NextRouter['query']) => {
   const machineConfig = JSON.parse(lzResult);
 
   // Tests that the machine is valid
-  return createMachine(machineConfig);
+  try {
+    return createMachine(machineConfig);
+  } catch {
+    throw new Error("decompressed `machine` couldn't be used to `createMachine`")
+  }
 };
 
 const viewOnlyPageMachine = createMachine<{
