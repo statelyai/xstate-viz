@@ -18,7 +18,7 @@ import lzString from 'lz-string';
 
 const parseMachineFromQuery = (query: NextRouter['query']) => {
   if (!query.machine) {
-    throw new Error();
+    throw new Error("`machine` query param is required");
   }
 
   if (Array.isArray(query.machine)) {
