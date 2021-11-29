@@ -15,10 +15,11 @@ import { useInterpretCanvas } from '../useInterpretCanvas';
 import { parseEmbedQuery, withoutEmbedQueryParams } from '../utils';
 import { withReadyRouter } from '../withReadyRouter';
 import lzString from 'lz-string';
+import { AppHead } from '../AppHead';
 
 const parseMachineFromQuery = (query: NextRouter['query']) => {
   if (!query.machine) {
-    throw new Error("`machine` query param is required");
+    throw new Error('`machine` query param is required');
   }
 
   if (Array.isArray(query.machine)) {
@@ -27,7 +28,8 @@ const parseMachineFromQuery = (query: NextRouter['query']) => {
 
   const lzResult = lzString.decompressFromEncodedURIComponent(query.machine);
 
-  if (!lzResult) throw new Error("`machine` query param couldn't be decompressed");
+  if (!lzResult)
+    throw new Error("`machine` query param couldn't be decompressed");
 
   const machineConfig = JSON.parse(lzResult);
 
@@ -35,7 +37,9 @@ const parseMachineFromQuery = (query: NextRouter['query']) => {
   try {
     return createMachine(machineConfig);
   } catch {
-    throw new Error("decompressed `machine` couldn't be used to `createMachine`")
+    throw new Error(
+      "decompressed `machine` couldn't be used to `createMachine`",
+    );
   }
 };
 
@@ -111,33 +115,35 @@ const ViewOnlyPage = withReadyRouter(() => {
   );
 
   return (
-    <>
-      <EmbedProvider value={embed}>
-        <ChakraProvider theme={theme}>
-          <CanvasProvider value={canvasService}>
-            <SimulationProvider value={simulationService}>
-              <Box
-                data-testid="app"
-                data-viz-theme="dark"
-                as="main"
-                height="100vh"
-              >
-                <CanvasView />
-              </Box>
-            </SimulationProvider>
-          </CanvasProvider>
-        </ChakraProvider>
-      </EmbedProvider>
-    </>
+    <EmbedProvider value={embed}>
+      <ChakraProvider theme={theme}>
+        <CanvasProvider value={canvasService}>
+          <SimulationProvider value={simulationService}>
+            <Box
+              data-testid="app"
+              data-viz-theme="dark"
+              as="main"
+              height="100vh"
+            >
+              <CanvasView />
+            </Box>
+          </SimulationProvider>
+        </CanvasProvider>
+      </ChakraProvider>
+    </EmbedProvider>
   );
 });
 
 const ViewOnlyPageParent: NextComponentWithMeta = () => {
   return (
     <>
-      <Head>
-        <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
-      </Head>
+      <AppHead
+        description="A visualisation of a state machine"
+        title="XState Visualizer"
+        ogImageUrl={null}
+        ogTitle="XState Visualizer"
+        importElk
+      />
       <ViewOnlyPage />
     </>
   );
