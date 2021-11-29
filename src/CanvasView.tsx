@@ -1,8 +1,8 @@
 import {
   AddIcon,
   MinusIcon,
-  RepeatIcon,
   QuestionOutlineIcon,
+  RepeatIcon,
 } from '@chakra-ui/icons';
 import {
   Box,
@@ -19,78 +19,60 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
-import xstatePkgJson from 'xstate/package.json';
 import React, { useMemo } from 'react';
+import xstatePkgJson from 'xstate/package.json';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
-import { canZoom, canZoomIn, canZoomOut } from './canvasMachine';
+import { CanvasHeader } from './CanvasHeader';
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
-import { useSimulation, useSimulationMode } from './SimulationContext';
-import { CanvasHeader } from './CanvasHeader';
-import { Overlay } from './Overlay';
-import { useEmbed } from './embedContext';
 import { CompressIcon, HandIcon } from './Icons';
-import { useSourceActor } from './sourceMachine';
+import { Overlay } from './Overlay';
+import { useSimulation, useSimulationMode } from './SimulationContext';
 import { WelcomeArea } from './WelcomeArea';
 
-export const CanvasView: React.FC = () => {
+export const CanvasView = (props: {
+  shouldEnableZoomOutButton?: boolean;
+  shouldEnableZoomInButton?: boolean;
+  canShowWelcomeMessage?: boolean;
+  showControls?: boolean;
+  showZoomButtonsInEmbed?: boolean;
+  showPanButtonInEmbed?: boolean;
+  isEmbedded?: boolean;
+  hideHeader: boolean;
+}) => {
   // TODO: refactor this so an event can be explicitly sent to a machine
   // it isn't straightforward to do at the moment cause the target machine lives in a child component
   const [panModeEnabled, setPanModeEnabled] = React.useState(false);
-  const embed = useEmbed();
-  const simService = useSimulation();
   const canvasService = useCanvas();
-  const [sourceState] = useSourceActor();
+
+  const simService = useSimulation();
+
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-  const isLayoutPending = useSelector(simService, (state) =>
-    state.hasTag('layoutPending'),
-  );
-  const isEmpty = useSelector(simService, (state) => state.hasTag('empty'));
+
+  const simulationMode = useSimulationMode();
+
   const digraph = useMemo(
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
 
-  const shouldEnableZoomOutButton = useSelector(
-    canvasService,
-    (state) => canZoom(embed) && canZoomOut(state.context),
+  const isLayoutPending = useSelector(simService, (state) =>
+    state.hasTag('layoutPending'),
   );
-
-  const shouldEnableZoomInButton = useSelector(
-    canvasService,
-    (state) => canZoom(embed) && canZoomIn(state.context),
-  );
-
-  const simulationMode = useSimulationMode();
-
-  const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
-
-  const showControls = useMemo(
-    () => !embed?.isEmbedded || embed.controls,
-    [embed],
-  );
-
-  const showZoomButtonsInEmbed = useMemo(
-    () => !embed?.isEmbedded || (embed.controls && embed.zoom),
-    [embed],
-  );
-  const showPanButtonInEmbed = useMemo(
-    () => !embed?.isEmbedded || (embed.controls && embed.pan),
-    [embed],
-  );
+  const isEmpty = useSelector(simService, (state) => state.hasTag('empty'));
 
   return (
     <Box
       display="grid"
       height="100%"
-      {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr auto' })}
+      {...(!props.hideHeader && { gridTemplateRows: '3rem 1fr auto' })}
     >
-      {!embed?.isEmbedded && (
+      {!props.hideHeader && (
         <Box data-testid="canvas-header" bg="gray.800" zIndex={1} padding="0">
           <CanvasHeader />
         </Box>
@@ -107,10 +89,10 @@ export const CanvasView: React.FC = () => {
             </Box>
           </Overlay>
         )}
-        {isEmpty && canShowWelcomeMessage && <WelcomeArea />}
+        {isEmpty && props.canShowWelcomeMessage && <WelcomeArea />}
       </CanvasContainer>
 
-      {showControls && (
+      {props.showControls && (
         <Box
           display="flex"
           flexDirection="row"
@@ -126,13 +108,13 @@ export const CanvasView: React.FC = () => {
           data-testid="controls"
         >
           <ButtonGroup size="sm" spacing={2} isAttached>
-            {showZoomButtonsInEmbed && (
+            {props.showZoomButtonsInEmbed && (
               <>
                 <IconButton
                   aria-label="Zoom out"
                   title="Zoom out"
                   icon={<MinusIcon />}
-                  disabled={!shouldEnableZoomOutButton}
+                  disabled={!props.shouldEnableZoomOutButton}
                   onClick={() => canvasService.send('ZOOM.OUT')}
                   variant="secondary"
                 />
@@ -140,7 +122,7 @@ export const CanvasView: React.FC = () => {
                   aria-label="Zoom in"
                   title="Zoom in"
                   icon={<AddIcon />}
-                  disabled={!shouldEnableZoomInButton}
+                  disabled={!props.shouldEnableZoomInButton}
                   onClick={() => canvasService.send('ZOOM.IN')}
                   variant="secondary"
                 />
@@ -153,7 +135,7 @@ export const CanvasView: React.FC = () => {
               onClick={() => canvasService.send('FIT_TO_CONTENT')}
               variant="secondary"
             />
-            {!embed?.isEmbedded && (
+            {!props.isEmbedded && (
               <IconButton
                 aria-label="Reset canvas"
                 title="Reset canvas"
@@ -163,7 +145,7 @@ export const CanvasView: React.FC = () => {
               />
             )}
           </ButtonGroup>
-          {showPanButtonInEmbed && (
+          {props.showPanButtonInEmbed && (
             <IconButton
               aria-label="Pan mode"
               icon={<HandIcon />}
@@ -184,7 +166,7 @@ export const CanvasView: React.FC = () => {
               RESET
             </Button>
           )}
-          {!embed?.isEmbedded && (
+          {!props.isEmbedded && (
             <Menu closeOnSelect={true} placement="top-end">
               <MenuButton
                 as={IconButton}

@@ -214,17 +214,18 @@ export const DEFAULT_EMBED_PARAMS: ParsedEmbed = {
   zoom: false,
   controls: false,
 };
+
+const getQueryParamValue = (qParamValue: string | string[]) => {
+  return Array.isArray(qParamValue) ? qParamValue[0] : qParamValue;
+};
+
+const computeBooleanQParamValue = (qParamValue: string) => {
+  // Parse to number to treat "0" as false
+  return !!+qParamValue;
+};
+
 export const parseEmbedQuery = (query?: NextRouter['query']): ParsedEmbed => {
   const parsedEmbed = DEFAULT_EMBED_PARAMS;
-
-  const getQueryParamValue = (qParamValue: string | string[]) => {
-    return Array.isArray(qParamValue) ? qParamValue[0] : qParamValue;
-  };
-
-  const computeBooleanQParamValue = (qParamValue: string) => {
-    // Parse to number to treat "0" as false
-    return !!+qParamValue;
-  };
 
   if (query?.mode) {
     const parsedMode = getQueryParamValue(query?.mode);

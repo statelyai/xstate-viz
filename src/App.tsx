@@ -11,7 +11,7 @@ import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
-import { SimulationProvider } from './SimulationContext';
+import { SimulationProvider, useSimulationMode } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
 import { getSourceActor, useSourceRegistryData } from './sourceMachine';
 import { theme } from './theme';
@@ -21,6 +21,7 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 import router, { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
+import { canZoom, canZoomIn, canZoomOut } from './canvasMachine';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -88,6 +89,7 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
   const paletteService = useInterpret(paletteMachine);
   // don't use `devTools: true` here as it would freeze your browser
   const simService = useInterpret(simulationMachine);
+
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -120,6 +122,32 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
     embed,
   });
 
+  const shouldEnableZoomOutButton = useSelector(
+    canvasService,
+    (state) => canZoom(embed) && canZoomOut(state.context),
+  );
+
+  const shouldEnableZoomInButton = useSelector(
+    canvasService,
+    (state) => canZoom(embed) && canZoomIn(state.context),
+  );
+
+  const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
+
+  const showControls = useMemo(
+    () => !embed?.isEmbedded || embed.controls,
+    [embed],
+  );
+
+  const showZoomButtonsInEmbed = useMemo(
+    () => !embed?.isEmbedded || (embed.controls && embed.zoom),
+    [embed],
+  );
+  const showPanButtonInEmbed = useMemo(
+    () => !embed?.isEmbedded || (embed.controls && embed.pan),
+    [embed],
+  );
+
   // This is because we're doing loads of things on client side anyway
   if (!isOnClientSide()) return <VizHead />;
 
@@ -142,7 +170,16 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
                 >
                   {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
                     <CanvasProvider value={canvasService}>
-                      <CanvasView />
+                      <CanvasView
+                        shouldEnableZoomOutButton={shouldEnableZoomOutButton}
+                        shouldEnableZoomInButton={shouldEnableZoomInButton}
+                        canShowWelcomeMessage={canShowWelcomeMessage}
+                        showControls={showControls}
+                        showZoomButtonsInEmbed={showZoomButtonsInEmbed}
+                        showPanButtonInEmbed={showPanButtonInEmbed}
+                        isEmbedded={embed?.isEmbedded}
+                        hideHeader={false}
+                      />
                     </CanvasProvider>
                   )}
                   <PanelsView />
