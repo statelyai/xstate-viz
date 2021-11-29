@@ -1,27 +1,26 @@
 import { Box, ChakraProvider } from '@chakra-ui/react';
-import React, { useEffect, useMemo } from 'react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
-import { useAuth } from './authContext';
+import router, { useRouter } from 'next/router';
+import React, { useEffect, useMemo } from 'react';
 import { AppHead } from './AppHead';
+import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
-import { EmbedProvider } from './embedContext';
 import { CanvasView } from './CanvasView';
+import { EmbedProvider } from './embedContext';
 import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
-import { SimulationProvider, useSimulationMode } from './SimulationContext';
+import { registryLinks } from './registryLinks';
+import { SimulationProvider } from './SimulationContext';
 import { simulationMachine } from './simulationMachine';
 import { getSourceActor, useSourceRegistryData } from './sourceMachine';
 import { theme } from './theme';
 import { EditorThemeProvider } from './themeContext';
 import { EmbedContext, EmbedMode } from './types';
 import { useInterpretCanvas } from './useInterpretCanvas';
-import router, { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
-import { registryLinks } from './registryLinks';
-import { canZoom, canZoomIn, canZoomOut } from './canvasMachine';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -113,8 +112,6 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
     });
   }, [machine?.id, sendToSourceService]);
 
-  // TODO: Subject to refactor into embedActor
-
   const sourceID = sourceState!.context.sourceID;
 
   const canvasService = useInterpretCanvas({
@@ -122,31 +119,7 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
     embed,
   });
 
-  const shouldEnableZoomOutButton = useSelector(
-    canvasService,
-    (state) => canZoom(embed) && canZoomOut(state.context),
-  );
-
-  const shouldEnableZoomInButton = useSelector(
-    canvasService,
-    (state) => canZoom(embed) && canZoomIn(state.context),
-  );
-
   const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
-
-  const showControls = useMemo(
-    () => !embed?.isEmbedded || embed.controls,
-    [embed],
-  );
-
-  const showZoomButtonsInEmbed = useMemo(
-    () => !embed?.isEmbedded || (embed.controls && embed.zoom),
-    [embed],
-  );
-  const showPanButtonInEmbed = useMemo(
-    () => !embed?.isEmbedded || (embed.controls && embed.pan),
-    [embed],
-  );
 
   // This is because we're doing loads of things on client side anyway
   if (!isOnClientSide()) return <VizHead />;
@@ -171,14 +144,7 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
                   {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
                     <CanvasProvider value={canvasService}>
                       <CanvasView
-                        shouldEnableZoomOutButton={shouldEnableZoomOutButton}
-                        shouldEnableZoomInButton={shouldEnableZoomInButton}
                         canShowWelcomeMessage={canShowWelcomeMessage}
-                        showControls={showControls}
-                        showZoomButtonsInEmbed={showZoomButtonsInEmbed}
-                        showPanButtonInEmbed={showPanButtonInEmbed}
-                        isEmbedded={embed?.isEmbedded}
-                        hideHeader={false}
                       />
                     </CanvasProvider>
                   )}

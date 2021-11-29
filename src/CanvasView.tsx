@@ -1,8 +1,8 @@
 import {
   AddIcon,
   MinusIcon,
-  QuestionOutlineIcon,
   RepeatIcon,
+  QuestionOutlineIcon,
 } from '@chakra-ui/icons';
 import {
   Box,
@@ -19,60 +19,67 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
-import React, { useMemo } from 'react';
 import xstatePkgJson from 'xstate/package.json';
+import React, { useMemo } from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
-import { CanvasHeader } from './CanvasHeader';
+import { canZoom, canZoomIn, canZoomOut } from './canvasMachine';
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
-import { CompressIcon, HandIcon } from './Icons';
-import { Overlay } from './Overlay';
 import { useSimulation, useSimulationMode } from './SimulationContext';
+import { CanvasHeader } from './CanvasHeader';
+import { Overlay } from './Overlay';
+import { useEmbed } from './embedContext';
+import { CompressIcon, HandIcon } from './Icons';
 import { WelcomeArea } from './WelcomeArea';
 
-export const CanvasView = (props: {
-  shouldEnableZoomOutButton?: boolean;
-  shouldEnableZoomInButton?: boolean;
-  canShowWelcomeMessage?: boolean;
-  showControls?: boolean;
-  showZoomButtonsInEmbed?: boolean;
-  showPanButtonInEmbed?: boolean;
-  isEmbedded?: boolean;
-  hideHeader: boolean;
-}) => {
+export const CanvasView = (props: { canShowWelcomeMessage?: boolean }) => {
   // TODO: refactor this so an event can be explicitly sent to a machine
   // it isn't straightforward to do at the moment cause the target machine lives in a child component
   const [panModeEnabled, setPanModeEnabled] = React.useState(false);
-  const canvasService = useCanvas();
-
+  const embed = useEmbed();
   const simService = useSimulation();
-
+  const canvasService = useCanvas();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
       : undefined;
   });
-
-  const simulationMode = useSimulationMode();
-
+  const isLayoutPending = useSelector(simService, (state) =>
+    state.hasTag('layoutPending'),
+  );
+  const isEmpty = useSelector(simService, (state) => state.hasTag('empty'));
   const digraph = useMemo(
     () => (machine ? toDirectedGraph(machine) : undefined),
     [machine],
   );
 
-  const isLayoutPending = useSelector(simService, (state) =>
-    state.hasTag('layoutPending'),
+  const shouldEnableZoomOutButton = useSelector(
+    canvasService,
+    (state) => canZoom(embed) && canZoomOut(state.context),
   );
-  const isEmpty = useSelector(simService, (state) => state.hasTag('empty'));
+
+  const shouldEnableZoomInButton = useSelector(
+    canvasService,
+    (state) => canZoom(embed) && canZoomIn(state.context),
+  );
+
+  const simulationMode = useSimulationMode();
+
+  const showControls = !embed?.isEmbedded || embed.controls;
+
+  const showZoomButtonsInEmbed =
+    !embed?.isEmbedded || (embed.controls && embed.zoom);
+  const showPanButtonInEmbed =
+    !embed?.isEmbedded || (embed.controls && embed.pan);
 
   return (
     <Box
       display="grid"
       height="100%"
-      {...(!props.hideHeader && { gridTemplateRows: '3rem 1fr auto' })}
+      {...(!embed?.isEmbedded && { gridTemplateRows: '3rem 1fr auto' })}
     >
-      {!props.hideHeader && (
+      {!embed?.isEmbedded && (
         <Box data-testid="canvas-header" bg="gray.800" zIndex={1} padding="0">
           <CanvasHeader />
         </Box>
@@ -92,7 +99,7 @@ export const CanvasView = (props: {
         {isEmpty && props.canShowWelcomeMessage && <WelcomeArea />}
       </CanvasContainer>
 
-      {props.showControls && (
+      {showControls && (
         <Box
           display="flex"
           flexDirection="row"
@@ -108,13 +115,13 @@ export const CanvasView = (props: {
           data-testid="controls"
         >
           <ButtonGroup size="sm" spacing={2} isAttached>
-            {props.showZoomButtonsInEmbed && (
+            {showZoomButtonsInEmbed && (
               <>
                 <IconButton
                   aria-label="Zoom out"
                   title="Zoom out"
                   icon={<MinusIcon />}
-                  disabled={!props.shouldEnableZoomOutButton}
+                  disabled={!shouldEnableZoomOutButton}
                   onClick={() => canvasService.send('ZOOM.OUT')}
                   variant="secondary"
                 />
@@ -122,7 +129,7 @@ export const CanvasView = (props: {
                   aria-label="Zoom in"
                   title="Zoom in"
                   icon={<AddIcon />}
-                  disabled={!props.shouldEnableZoomInButton}
+                  disabled={!shouldEnableZoomInButton}
                   onClick={() => canvasService.send('ZOOM.IN')}
                   variant="secondary"
                 />
@@ -135,7 +142,7 @@ export const CanvasView = (props: {
               onClick={() => canvasService.send('FIT_TO_CONTENT')}
               variant="secondary"
             />
-            {!props.isEmbedded && (
+            {!embed?.isEmbedded && (
               <IconButton
                 aria-label="Reset canvas"
                 title="Reset canvas"
@@ -145,7 +152,7 @@ export const CanvasView = (props: {
               />
             )}
           </ButtonGroup>
-          {props.showPanButtonInEmbed && (
+          {showPanButtonInEmbed && (
             <IconButton
               aria-label="Pan mode"
               icon={<HandIcon />}
@@ -166,7 +173,7 @@ export const CanvasView = (props: {
               RESET
             </Button>
           )}
-          {!props.isEmbedded && (
+          {!embed?.isEmbedded && (
             <Menu closeOnSelect={true} placement="top-end">
               <MenuButton
                 as={IconButton}
