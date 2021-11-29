@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
  * query params loaded)
  */
 export const withReadyRouter = (WrappedComponent: any) => {
-  WrappedComponent.displayName = `WithReadyRouter${WrappedComponent.displayName}`;
+  WrappedComponent.displayName = `WithReadyRouter(${WrappedComponent.displayName || WrappedComponent.name})`;
 
   const WithReadyRouter = () => {
     const router = useRouter();
