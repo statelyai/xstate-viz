@@ -27,7 +27,7 @@ const parseMachineFromQuery = (query: NextRouter['query']) => {
 
   const lzResult = lzString.decompressFromEncodedURIComponent(query.machine);
 
-  if (!lzResult) throw new Error();
+  if (!lzResult) throw new Error("`machine` query param couldn't be decompressed");
 
   const machineConfig = JSON.parse(lzResult);
 
