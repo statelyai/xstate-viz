@@ -98,12 +98,17 @@ export const TransitionViz: React.FC<{
     return null;
   }
 
+  // extra check if the transition might be blocked by the 'in' property...
+  const isBlocked = !!definition.in && !state.matches(definition.in);
+
   const isDisabled =
     delay?.delayType === 'DELAYED_INVALID' ||
     !state.nextEvents.includes(definition.eventType);
+
   const isPotential =
-    state.nextEvents.includes(edge.transition.eventType) &&
-    !!state.configuration.find((sn) => sn === edge.source);
+    state.nextEvents.includes(definition.eventType) &&
+    !!state.configuration.find((sn) => sn === edge.source) &&
+    !isBlocked;
 
   return (
     <button
