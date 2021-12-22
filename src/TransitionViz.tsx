@@ -80,16 +80,20 @@ export const TransitionViz: React.FC<{
     service,
     (s) => s.context.serviceDataMap[s.context.currentSessionId!]?.state,
   );
+  const machine = useSelector(
+    service,
+    (s) => s.context.serviceDataMap[s.context.currentSessionId!]?.machine,
+  );
   const delayOptions = useSelector(service, delayOptionsSelector);
   const delay = useMemo(
     () =>
       delayOptions
         ? getDelayFromEventType(
-            definition.eventType,
-            delayOptions,
-            state?.context,
-            state?.event,
-          )
+          definition.eventType,
+          delayOptions,
+          state?.context,
+          state?.event,
+        )
         : undefined,
     [definition.eventType, delayOptions, state],
   );
@@ -99,7 +103,14 @@ export const TransitionViz: React.FC<{
   }
 
   // extra check if the transition might be blocked by the 'in' property...
-  const isBlocked = !!definition.in && !state.matches(definition.in);
+  const isBlocked =
+    typeof definition.in === "string" &&  // exists
+    definition.in.length > 0 &&           // with non empty content
+    (
+      definition.in[0] === "#"            // is 'custom id' or path?
+        ? !machine || !state.matches(machine.getStateNodeById(definition.in.substring(1)).path.join(machine.delimiter))
+        : !state.matches(definition.in)
+    )
 
   const isDisabled =
     delay?.delayType === 'DELAYED_INVALID' ||
