@@ -23,9 +23,17 @@ type PotentiallyStructurallyCloned<T> = {
   [K in keyof T]: AnyFunction extends T[K] ? T[K] | undefined : T[K];
 };
 
+// at the moment a lot of invalid values can be passed through `createMachine` and reach lines like here
+// so we need to be defensive about this before we implement some kind of a validation so we could raise such problems early and discard the invalid values
 export function getActionLabel(action: ActionObject<any, any>): string | null {
+  if (!action) {
+    return null;
+  }
   if (typeof action.exec === 'function') {
-    return isStringifiedFunction(action.type) ? null : action.type;
+    return isStringifiedFunction(action.type) ? 'anonymous' : action.type;
+  }
+  if (!action.type) {
+    return null;
   }
   if (action.type.startsWith('xstate.')) {
     return action.type.match(/^xstate\.(.+)$/)![1];
@@ -167,9 +175,13 @@ export const CustomActionLabel: React.FC<{
 }> = ({ action }) => {
   const label = getActionLabel(action);
 
+  if (label === null) {
+    return null;
+  }
+
   return (
     <ActionType>
-      {label !== null ? <strong>{label}</strong> : <em>anonymous</em>}
+      {label === 'anonymous' ? <em>anonymous</em> : <strong>{label}</strong>}
     </ActionType>
   );
 };
