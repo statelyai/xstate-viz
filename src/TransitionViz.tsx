@@ -1,6 +1,6 @@
 import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
-import type { AnyStateNodeDefinition, Guard } from 'xstate';
+import type { AnyStateNodeDefinition, Guard, StateNode } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { Point } from './pathUtils';
@@ -65,6 +65,38 @@ const getDelayFromEventType = (
   }
 };
 
+// traverses down compound state nodes using relative path segments
+const resolveStateDown = (startState: StateNode, relativePath : Array<string>): StateNode => {
+  if (relativePath.length===0)
+    return startState;
+
+  for (let i=0; i<relativePath.length && startState !== undefined; i++) {
+    startState = startState.states[relativePath[i]];
+  }
+
+  return startState;
+}
+
+
+// recousrive function that tries to find the state via relative path segments
+const resolveState = (startState: StateNode, relativePath : Array<string>): StateNode => {
+  
+  // let's try to look deeper down first
+  const state = resolveStateDown(startState, relativePath);  
+  
+  if (state === undefined) {
+    // didn't found it, thus,
+    // we need to climbe up the hirarcy first
+    if (startState.parent === undefined) {      
+      throw Error("cannot resolve/find state to check for the 'in' condition")      
+    } else {
+      return resolveState(startState.parent, relativePath)
+    }
+  }
+
+  return state;    
+}
+
 const delayOptionsSelector = (state: StateFrom<typeof simulationMachine>) =>
   state.context.serviceDataMap[state.context.currentSessionId!]?.machine.options
     ?.delays;
@@ -84,6 +116,7 @@ export const TransitionViz: React.FC<{
     service,
     (s) => s.context.serviceDataMap[s.context.currentSessionId!]?.machine,
   );
+  const deliminator = machine?.delimiter || ".";
   const delayOptions = useSelector(service, delayOptionsSelector);
   const delay = useMemo(
     () =>
@@ -101,15 +134,17 @@ export const TransitionViz: React.FC<{
   if (!state) {
     return null;
   }
-
+  
   // extra check if the transition might be blocked by the 'in' property...
   const isBlocked =
     typeof definition.in === "string" &&  // exists
     definition.in.length > 0 &&           // with non empty content
     (
-      definition.in[0] === "#"            // is 'custom id' or path?
-        ? !machine || !state.matches(machine.getStateNodeById(definition.in.substring(1)).path.join(machine.delimiter))
-        : !state.matches(definition.in)
+      definition.in[0] === "#"            
+        // is 'custom id' 
+        ? !machine || !state.matches(machine.getStateNodeById(definition.in.substring(1)).path.join(deliminator))
+        // is (relative) path
+        : !state.matches(resolveState(definition.source, definition.in.split(deliminator)).path.join(deliminator))   
     )
 
   const isDisabled =
