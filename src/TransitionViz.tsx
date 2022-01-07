@@ -66,7 +66,7 @@ const getDelayFromEventType = (
 };
 
 // traverses down compound state nodes using relative path segments
-const resolveStateDown = (startState: StateNode, relativePath : Array<string>): StateNode => {
+function resolveStateDown (startState: StateNode, relativePath : Array<string>): StateNode {
   if (relativePath.length===0)
     return startState;
 
@@ -78,23 +78,23 @@ const resolveStateDown = (startState: StateNode, relativePath : Array<string>): 
 }
 
 
-// recousrive function that tries to find the state via relative path segments
-const resolveState = (startState: StateNode, relativePath : Array<string>): StateNode => {
+// function that tries to find the state via relative path segments
+function resolveState(startState: StateNode, relativePath : Array<string>): StateNode {
   
+  let localStartState : StateNode | undefined = startState;
+  let resolvedState;
   // let's try to look deeper down first
-  const state = resolveStateDown(startState, relativePath);  
+  do {
+    resolvedState   = resolveStateDown(localStartState, relativePath);
+    localStartState = localStartState.parent;
+  } while (resolvedState===undefined && localStartState!==undefined)
   
-  if (state === undefined) {
-    // didn't found it, thus,
-    // we need to climbe up the hirarcy first
-    if (startState.parent === undefined) {      
-      throw Error("cannot resolve/find state to check for the 'in' condition")      
-    } else {
-      return resolveState(startState.parent, relativePath)
-    }
+  if (resolvedState === undefined) {
+    // didn't found it, and there is no parent furhter up to ask...
+    //throw Error("cannot resolve/find state to check for the 'in' condition")          
   }
 
-  return state;    
+  return resolvedState;    
 }
 
 const delayOptionsSelector = (state: StateFrom<typeof simulationMachine>) =>
