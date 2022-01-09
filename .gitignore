@@ -25,4 +25,5 @@ yarn-error.log*
 *.generated.*
 public/monaco-editor
 cypress/videos
+cypress/screenshots
 .next

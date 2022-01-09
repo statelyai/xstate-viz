@@ -23,19 +23,20 @@ type PotentiallyStructurallyCloned<T> = {
   [K in keyof T]: AnyFunction extends T[K] ? T[K] | undefined : T[K];
 };
 
-export function getActionLabel(
-  action: ActionObject<any, any>,
-): string | JSX.Element {
+// at the moment a lot of invalid values can be passed through `createMachine` and reach lines like here
+// so we need to be defensive about this before we implement some kind of a validation so we could raise such problems early and discard the invalid values
+export function getActionLabel(action: ActionObject<any, any>): string | null {
+  if (!action) {
+    return null;
+  }
   if (typeof action.exec === 'function') {
-    return isStringifiedFunction(action.type) ? (
-      <em>anonymous</em>
-    ) : (
-      action.type
-    );
+    return isStringifiedFunction(action.type) ? 'anonymous' : action.type;
+  }
+  if (!action.type) {
+    return null;
   }
   if (action.type.startsWith('xstate.')) {
-    const builtInActionType = action.type.match(/^xstate\.(.+)$/)![1];
-    return <strong>{builtInActionType}</strong>;
+    return action.type.match(/^xstate\.(.+)$/)![1];
   }
   return action.type;
 }
@@ -169,6 +170,22 @@ export const ChooseActionLabel: React.FC<{
   );
 };
 
+export const CustomActionLabel: React.FC<{
+  action: PotentiallyStructurallyCloned<ActionObject<any, any>>;
+}> = ({ action }) => {
+  const label = getActionLabel(action);
+
+  if (label === null) {
+    return null;
+  }
+
+  return (
+    <ActionType>
+      {label === 'anonymous' ? <em>anonymous</em> : <strong>{label}</strong>}
+    </ActionType>
+  );
+};
+
 export const ActionViz: React.FC<{
   action: ActionObject<any, any>;
   kind: 'entry' | 'exit' | 'do';
@@ -198,7 +215,7 @@ export const ActionViz: React.FC<{
     [ActionTypes.Choose]: (
       <ChooseActionLabel action={action as ChooseAction<any, any>} />
     ),
-  }[action.type] ?? <div data-viz="action-type">{getActionLabel(action)}</div>;
+  }[action.type] ?? <CustomActionLabel action={action} />;
 
   return (
     <div data-viz="action" data-viz-action={kind}>

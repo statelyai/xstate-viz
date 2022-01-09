@@ -19,7 +19,7 @@ import { getPlatformMetaKeyLabel } from './utils';
 const KeyboardShortcuts = () => (
   <Box>
     <Heading as="h2" fontSize="l" marginBottom="5">
-      Keyboard shorcuts
+      Keyboard shortcuts
     </Heading>
     <Table size="sm">
       <Thead>
@@ -53,6 +53,34 @@ const KeyboardShortcuts = () => (
             </VStack>
           </Td>
           <Td>Show the Command palette</Td>
+        </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <span>
+                <Kbd>Up</Kbd> , <Kbd>Left</Kbd> , <Kbd>Down</Kbd> , <Kbd>Right</Kbd>
+              </span>
+            </VStack>
+          </Td>
+          <Td>
+            Pan the view. Use <Kbd>Shift</Kbd> for a larger pan.
+          </Td>
+        </Tr>
+        <Tr>
+          <Td>
+              <Kbd>Shift</Kbd> + <Kbd>1</Kbd>
+          </Td>
+          <Td>Fit to content</Td>
+        </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <span>
+                <Kbd>+</Kbd> , <Kbd>-</Kbd>
+              </span>
+            </VStack>
+          </Td>
+          <Td>Zoom-in/out</Td>
         </Tr>
       </Tbody>
     </Table>

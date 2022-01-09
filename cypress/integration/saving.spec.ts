@@ -1,15 +1,34 @@
 describe('Saving', () => {
   it('Should allow you to save a file for the first time', () => {
     cy.setMockAuthToken();
+
+    const sourceFileToBeCreated = {
+      id: 'source-file-id',
+      name: 'My awesome source file',
+      system: {
+        owner: {
+          id: 'id',
+        },
+      },
+    };
+
+    cy.intercept('source-file-id.json?sourceFileId=source-file-id', {
+      pageProps: {
+        id: sourceFileToBeCreated.id,
+        data: sourceFileToBeCreated,
+      },
+    });
     cy.interceptGraphQL({
       getLoggedInUser: {
         id: 'id',
       },
       createSourceFile: {
         id: 'source-file-id',
-        name: 'Source File',
-        owner: {
-          id: 'id',
+        system: {
+          name: 'Source File',
+          owner: {
+            id: 'id',
+          },
         },
       },
     });
@@ -38,16 +57,20 @@ describe('Saving', () => {
       getSourceFile: {
         id: 'source-file-id',
         text: '// New File',
-        name: 'Source File',
-        owner: {
-          id: 'id',
+        system: {
+          name: 'Source File',
+          owner: {
+            id: 'id',
+          },
         },
       },
       updateSourceFile: {
         id: 'source-file-id',
-        name: 'Source File',
-        owner: {
-          id: 'id',
+        system: {
+          name: 'Source File',
+          owner: {
+            id: 'id',
+          },
         },
       },
     });

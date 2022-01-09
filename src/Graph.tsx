@@ -33,8 +33,9 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
       },
     },
   });
+
   const canvasService = useCanvas();
-  const { pan, zoom } = useSelector(canvasService, (s) => s.context);
+  const { viewbox, zoom } = useSelector(canvasService, (s) => s.context);
 
   useEffect(() => {
     send({ type: 'GRAPH_UPDATED', digraph });
@@ -55,8 +56,9 @@ export const Graph: React.FC<{ digraph: DirectedGraphNode }> = ({
       <div
         data-testid="canvas-graph"
         style={{
-          transformOrigin: '0 0', // Since our layout is LTR, it's more predictable for zoom to happen from top left point
-          transform: `translate3d(${pan.dx}px, ${pan.dy}px, 0) scale(${zoom})`,
+          transformOrigin: '0 0',
+          // Since our layout is LTR, it's more predictable for zoom to happen from top left point
+          transform: `translate3d(${-viewbox.minX}px, ${-viewbox.minY}px, 0) scale(${zoom})`,
         }}
       >
         <MemoizedEdges digraph={digraph} />

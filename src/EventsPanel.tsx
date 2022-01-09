@@ -31,7 +31,7 @@ import Editor from '@monaco-editor/react';
 import { useActor, useMachine, useSelector } from '@xstate/react';
 import { format } from 'date-fns';
 import React, { useEffect, useState } from 'react';
-import { assign, createMachine, SCXML, send, StateFrom } from 'xstate';
+import { assign, SCXML, send, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { JSONView } from './JSONView';
@@ -90,7 +90,7 @@ const eventsModel = createModel(
     },
   },
 );
-const eventsMachine = createMachine<typeof eventsModel>({
+const eventsMachine = eventsModel.createMachine({
   initial: 'raw',
   context: eventsModel.initialContext,
   states: {
@@ -165,12 +165,12 @@ export const EventsPanel: React.FC = () => {
     (a, b) => JSON.stringify(a) === JSON.stringify(b),
   );
 
-  const [eventsState, sendToEventsMachine] = useMachine(() =>
-    eventsMachine.withContext({
+  const [eventsState, sendToEventsMachine] = useMachine(() => eventsMachine, {
+    context: {
       ...eventsModel.initialContext,
       rawEvents: rawEvents,
-    }),
-  );
+    },
+  });
 
   const finalEvents = deriveFinalEvents(eventsState.context);
 
@@ -316,12 +316,10 @@ const EventRow: React.FC<{ event: SimEvent }> = ({ event }) => {
 
 const newEventModel = createModel(
   {
-    eventType: '',
     eventString: `{\n\t"type": ""\n}`,
   },
   {
     events: {
-      'EVENT.TYPE': (value: string) => ({ value }),
       'EVENT.PAYLOAD': (value: string) => ({ value }),
       'EVENT.SEND': () => ({}),
       'EVENT.RESET': () => ({}),
@@ -381,10 +379,7 @@ const NewEvent: React.FC<{
     actions: {
       sendEvent: (ctx) => {
         try {
-          const scxmlEvent = toSCXMLEvent({
-            type: ctx.eventType,
-            ...JSON.parse(ctx.eventString),
-          });
+          const scxmlEvent = toSCXMLEvent(JSON.parse(ctx.eventString));
 
           onSend(scxmlEvent);
         } catch (e) {

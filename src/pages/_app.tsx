@@ -1,6 +1,10 @@
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 import type { AppProps } from 'next/app';
+import { useRouter } from 'next/router';
+import { useInterpret } from '@xstate/react';
+import { createAuthMachine } from '../authMachine';
+import { AuthProvider } from '../authContext';
 import '../ActionViz.scss';
 import '../base.scss';
 import '../DelayViz.scss';
@@ -10,6 +14,8 @@ import '../InvokeViz.scss';
 import '../monacoPatch';
 import '../StateNodeViz.scss';
 import '../TransitionViz.scss';
+
+// import { isOnClientSide } from '../isOnClientSide';
 
 if (
   process.env.NODE_ENV === 'production' &&
@@ -27,10 +33,21 @@ if (
 }
 
 const MyApp = ({ pageProps, Component }: AppProps) => {
+  const router = useRouter();
+
+  const authService = useInterpret(
+    createAuthMachine({
+      sourceRegistryData: pageProps.sourceRegistryData,
+      router,
+      isEmbbeded: pageProps.isEmbedded,
+    }),
+  );
+
   return (
-    <>
+    <AuthProvider value={authService}>
       <Component {...pageProps} />
-    </>
+    </AuthProvider>
   );
 };
+
 export default MyApp;

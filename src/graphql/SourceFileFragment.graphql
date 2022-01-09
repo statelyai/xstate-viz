@@ -1,13 +1,16 @@
 fragment SourceFile on SourceFile {
   id
   updatedAt
-  name
   text
   youHaveLiked
   likesCount
-  owner {
+  system {
     id
-    avatarUrl
-    displayName
+    name
+    owner {
+      id
+      displayName
+      avatarUrl
+    }
   }
 }

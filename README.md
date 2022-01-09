@@ -27,3 +27,7 @@ Alternatively, you can install it locally (see installation)
 1. Clone this GitHub repo
 1. Run `yarn install`
 1. Run `npm start` and visit [localhost:3000](https://localhost:3000)
+
+## Releases
+
+https://www.loom.com/share/5357e00577e64387b45de8ee65cb3805

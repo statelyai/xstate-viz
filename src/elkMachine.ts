@@ -1,4 +1,4 @@
-import { assign, createMachine, DoneInvokeEvent } from 'xstate';
+import { assign, DoneInvokeEvent } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { DirectedGraphNode } from './directedGraph';
 import { getElkGraph, StateElkNode } from './graphUtils';
@@ -16,7 +16,7 @@ export const createElkMachine = (digraph: DirectedGraphNode) => {
     },
   );
 
-  return createMachine<typeof elkModel>({
+  return elkModel.createMachine({
     context: elkModel.initialContext,
     initial: 'loading',
     states: {

@@ -4,6 +4,7 @@ import type {
   State,
   StateMachine,
 } from 'xstate';
+import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
 import { Model } from 'xstate/lib/model.types';
 import type { editor } from 'monaco-editor';
 
@@ -23,6 +24,12 @@ export type AnyState = State<any, any>;
 
 export type SourceProvider = 'gist' | 'registry';
 
+export interface SourceRegistryData extends SourceFileFragment {
+  // we can't trust SSR data to be accurate because at the moment we can use authenticated user during SSR
+  // so properties like `youHaveLiked` might be initially inaccurate
+  dataSource: 'ssr' | 'client';
+}
+
 export type ServiceRefEvents =
   | {
       type: 'xstate.event';
@@ -38,7 +45,8 @@ export interface ServiceData {
   machine: AnyStateMachine;
   state: AnyState;
   status: AnyInterpreter['status'];
-  source: 'inspector' | 'visualizer' | 'in-app';
+  source: 'inspector' | 'visualizer' | 'child';
+  parent: string | undefined;
 }
 
 export type SimulationMode = 'inspecting' | 'visualizing';
@@ -46,3 +54,33 @@ export type SimulationMode = 'inspecting' | 'visualizing';
 export type EditorThemeDefinition = editor.IStandaloneThemeData & {
   name: string;
 };
+
+export enum EmbedMode {
+  Viz = 'viz',
+  Panels = 'panels',
+  Full = 'full',
+}
+export enum EmbedPanel {
+  Code = 'code',
+  State = 'state',
+  Events = 'events',
+  Actors = 'actors',
+  Settings = 'settings',
+}
+export interface ParsedEmbed {
+  mode: EmbedMode;
+  panel: EmbedPanel;
+  showOriginalLink: boolean;
+  readOnly: boolean;
+  pan: boolean;
+  zoom: boolean;
+  controls: boolean;
+}
+export type EmbedContext =
+  | { isEmbedded: false }
+  | ({ isEmbedded: true; originalUrl: string } & ParsedEmbed);
+
+export interface Point {
+  x: number;
+  y: number;
+}

@@ -9,9 +9,9 @@ export const storage = testStorageSupport()
 
 export interface CachedPosition {
   zoom: number;
-  pan: {
-    dx: number;
-    dy: number;
+  viewbox: {
+    minX: number;
+    minY: number;
   };
 }
 
@@ -33,9 +33,9 @@ const makeRawSourceCacheKey = (sourceID: string | null) =>
 const cachedPositionCodec = codec.createCodec<CachedPosition>()(
   codec.obj({
     zoom: codec.num(),
-    pan: codec.obj({
-      dx: codec.num(),
-      dy: codec.num(),
+    viewbox: codec.obj({
+      minX: codec.num(),
+      minY: codec.num(),
     }),
   }),
 );
@@ -60,7 +60,16 @@ const getPosition = (sourceID: string | null): CachedPosition | null => {
   if (!result) return null;
 
   try {
-    return cachedPositionCodec.decode(JSON.parse(result));
+    const parsed = JSON.parse(result);
+    // migration from the old format, can be removed after a while
+    if ('pan' in parsed) {
+      parsed.viewbox = {
+        minX: parsed.pan.dx,
+        minY: parsed.pan.dy,
+      };
+      delete parsed.pan;
+    }
+    return cachedPositionCodec.decode(parsed);
   } catch (e) {}
   return null;
 };

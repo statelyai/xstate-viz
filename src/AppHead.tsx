@@ -1,7 +1,8 @@
+import * as React from 'react';
 import Head from 'next/head';
 import { featureFlags } from './featureFlags';
 
-interface AppHeadProps {
+export interface AppHeadProps {
   /**
    * @example
    * XState Visualizer | My Great Machine
@@ -16,26 +17,20 @@ interface AppHeadProps {
    * My Great Machine
    */
   ogTitle: string;
-  importElk: boolean;
   description: string;
-  importPrettier: boolean;
-  ogImageUrl: string | undefined;
+  ogImageUrl: string | null;
+  importElk?: boolean;
 }
 
-export const AppHead = (props: AppHeadProps) => {
+export const AppHead = ({ importElk = true, ...props }: AppHeadProps) => {
   return (
     <Head>
       <link rel="apple-touch-icon" href="/viz/favicon@256.png" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <link rel="icon" href="/viz/favicon.png" />
       <title>{props.title}</title>
       <meta name="description" content={props.description} />
-      {props.importPrettier && (
-        <>
-          <script src="https://unpkg.com/prettier@2.3.2/standalone.js"></script>
-          <script src="https://unpkg.com/prettier@2.3.2/parser-typescript.js"></script>
-        </>
-      )}
-      {props.importElk && (
+      {importElk && (
         <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
       )}
 
