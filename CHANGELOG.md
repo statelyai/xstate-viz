@@ -1,5 +1,28 @@
 # XState Visualizer
 
+## 0.5.1
+
+### Patch Changes
+
+- [#332](https://github.com/statelyai/xstate-viz/pull/332) [`9f93d67`](https://github.com/statelyai/xstate-viz/commit/9f93d67972aac00236333829ab55163ba65e2290) Thanks [@Andarist](https://github.com/Andarist)! - Fixed the app crashing when processing invalid actions - like when using a guard accidentally in a place of an action.
+
+* [#334](https://github.com/statelyai/xstate-viz/pull/334) [`fecdc01`](https://github.com/statelyai/xstate-viz/commit/fecdc019b54c326b81afbf3c14d494d7a92351f5) Thanks [@davidkpiano](https://github.com/davidkpiano)! - Self-transitions on the machine will no longer cause graph layout to fail:
+
+  ```js
+  import { createMachine } from 'xstate';
+
+  const machine = createMachine({
+    on: {
+      // These will now display as expected
+      LOAD: {},
+      UPDATE: {},
+    },
+    states: {
+      something: {},
+    },
+  });
+  ```
+
 ## 0.5.0
 
 ### Minor Changes
