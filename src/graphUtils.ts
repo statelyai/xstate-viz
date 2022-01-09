@@ -24,16 +24,6 @@ if (typeof ELK !== 'undefined') {
   elk = new ELK();
 }
 
-const rootLayoutOptions: LayoutOptions = {
-  'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
-  'elk.algorithm': 'layered',
-  'elk.layered.considerModelOrder': 'NODES_AND_EDGES',
-  'elk.layered.wrapping.strategy': 'MULTI_EDGE',
-  'elk.layered.compaction.postCompaction.strategy': 'LEFT',
-  'elk.aspectRatio': '2',
-  'elk.direction': 'RIGHT',
-};
-
 type RelativeNodeEdgeMap = [
   Map<StateNode | undefined, DirectedGraphEdge[]>,
   Map<string, StateNode | undefined>,
@@ -298,7 +288,7 @@ export function isStateElkNode(node: ElkNode): node is StateElkNode {
   return 'absolutePosition' in node;
 }
 
-function elkJSON(elkNode: StateElkNode): any {
+function elkJSON(elkNode: ElkNode): any {
   const { id, layoutOptions, width, height, children, edges, ports } = elkNode;
 
   return {
@@ -312,7 +302,9 @@ function elkJSON(elkNode: StateElkNode): any {
       width: port.width,
       height: port.height,
     })),
-    edges: edges.map((edge) => {
+    edges: edges?.map((_edge) => {
+      const edge = _edge as ElkExtendedEdge;
+
       return {
         id: getElkId(edge.id),
         labels: edge.labels?.map((label) => ({
@@ -349,7 +341,14 @@ export async function getElkGraph(
     id: 'root',
     edges: rootEdges.map((edge) => getElkEdge(edge, rectMap)),
     children: [getElkChild(rootDigraphNode, runContext)],
-    layoutOptions: rootLayoutOptions,
+    layoutOptions: {
+      'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+      'elk.algorithm': 'layered',
+      'elk.layered.considerModelOrder': 'NODES_AND_EDGES',
+      'elk.layered.wrapping.strategy': 'MULTI_EDGE',
+      'elk.aspectRatio': '2',
+      'elk.direction': 'RIGHT',
+    },
   });
 
   let rootElkNode: ElkNode | undefined = undefined;
