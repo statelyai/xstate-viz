@@ -165,6 +165,11 @@ export const TransitionViz: React.FC<{
           </div>
         )}
       </div>
+      {definition.description && (
+        <div data-viz="transition-description">
+          <p>{definition.description}</p>
+        </div>
+      )}
     </button>
   );
 };

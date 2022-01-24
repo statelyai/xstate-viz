@@ -82,6 +82,8 @@ export const StateNodeViz: React.FC<{
     return null;
   }
 
+  const description = stateNode.description || stateNode.meta?.description;
+
   return (
     <div
       data-viz="stateNodeGroup"
@@ -166,14 +168,14 @@ export const StateNodeViz: React.FC<{
               })}
             </div>
           )}
-          {stateNode.meta?.description && (
+          {description && (
             <div data-viz="stateNode-meta">
               <ReactMarkdown
                 components={{
                   a: ({ node, ...props }) => <Link {...props} />,
                 }}
               >
-                {stateNode.meta.description}
+                {description}
               </ReactMarkdown>
             </div>
           )}
