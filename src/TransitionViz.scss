@@ -72,3 +72,17 @@
   }
   padding: 0rem 0.5rem 0.5rem;
 }
+
+[data-viz='transition-description'] {
+ &:empty {
+    display: none;
+  }
+  border-top: 2px solid var(--chakra-colors-whiteAlpha-300);
+  padding: 0.5rem;
+  min-width: max-content;
+  font-size: var(--chakra-fontSizes-sm);
+  text-align: left;
+  > p {
+    max-width: 10rem;
+  }
+}
