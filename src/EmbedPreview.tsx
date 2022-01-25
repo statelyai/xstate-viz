@@ -56,10 +56,10 @@ const extractFormData = (form: HTMLFormElement): ParsedEmbed => {
   return paramsToRecord(data);
 };
 
-const getEmbedCodeFromUrl = (embedUrl: string) => `<iframe src="${embedUrl}"
-allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-></iframe>`;
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox
+ */
+const getEmbedCodeFromUrl = (embedUrl: string) => `<iframe src="${embedUrl}" sandbox="allow-same-origin allow-scripts"></iframe>`;
 
 const embedPreviewModel = createModel(
   {

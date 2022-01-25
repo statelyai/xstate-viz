@@ -39,7 +39,7 @@ describe('Embed Preview', () => {
     cy.findByRole('menuitem', { name: /embed/i }).should('be.visible');
   });
 
-  it('Clicking on the Embed button opens the Embed preview', () => {
+  it('Opens the Embed preview when clicking on the Embed button', () => {
     cy.findByRole('button', { name: /share/i }).click();
     cy.findByRole('menuitem', { name: /embed/i }).click();
     cy.getEmbedPreview().should('be.visible');
