@@ -1,5 +1,15 @@
 # XState Visualizer
 
+## 0.6.0
+
+### Minor Changes
+
+- [#338](https://github.com/statelyai/xstate-viz/pull/338) [`196e44d`](https://github.com/statelyai/xstate-viz/commit/196e44d296a845cdd0f6dfa230fdad3089a77d21) Thanks [@riccardo-forina](https://github.com/riccardo-forina)! - You can now visualize descriptions added directly to state nodes and transitions
+
+### Patch Changes
+
+- [#336](https://github.com/statelyai/xstate-viz/pull/336) [`225757d`](https://github.com/statelyai/xstate-viz/commit/225757de7c9d65397a2d14c5397a1432373a7266) Thanks [@kmannislands](https://github.com/kmannislands)! - Remove unecessary feature policy claims from generated embed iframes
+
 ## 0.5.1
 
 ### Patch Changes
