@@ -59,7 +59,8 @@ const extractFormData = (form: HTMLFormElement): ParsedEmbed => {
 /**
  * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox
  */
-const getEmbedCodeFromUrl = (embedUrl: string) => `<iframe src="${embedUrl}" sandbox="allow-same-origin allow-scripts"></iframe>`;
+const getEmbedCodeFromUrl = (embedUrl: string) =>
+  `<iframe src="${embedUrl}" sandbox="allow-same-origin allow-scripts"></iframe>`;
 
 const embedPreviewModel = createModel(
   {
@@ -91,6 +92,7 @@ const embedPreviewModel = createModel(
 );
 
 const embedPreviewMachine = embedPreviewModel.createMachine({
+  tsTypes: {} as import("./EmbedPreview.typegen").Typegen0,
   id: 'preview',
   type: 'parallel',
   preserveActionOrder: false, // TODO: remove this after we figured why this makes a bug
@@ -101,11 +103,7 @@ const embedPreviewMachine = embedPreviewModel.createMachine({
         ready: {
           entry: [
             'makeEmbedUrlAndCode',
-            pure((ctx: ContextFrom<typeof embedPreviewModel>) => {
-              if (!ctx.loaded) {
-                return { type: 'makePreviewUrl' };
-              }
-            }),
+            'makePreviewUrl',
             'updateEmbedCopy',
             send('PREVIEW'),
           ],
@@ -220,6 +218,7 @@ const EmbedPreviewContent: React.FC = () => {
         };
       }),
       makePreviewUrl: assign((ctx) => {
+        if (!ctx.loaded) return {};
         const url = makeEmbedUrl(
           router.query.sourceFileId as string,
           window.location.origin,

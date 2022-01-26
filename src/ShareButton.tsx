@@ -24,7 +24,7 @@ const useShareButton = (linkText: string) => {
 
   const [state, send] = useMachine(shareMachine, {
     actions: {
-      copyLinkToClipboard: () => {
+      copyLinkToClipboard: (context) => {
         clipboard.onCopy();
       },
     },

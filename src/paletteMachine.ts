@@ -9,6 +9,7 @@ const paletteModel = createModel(undefined, {
 });
 
 export const paletteMachine = paletteModel.createMachine({
+  tsTypes: {} as import("./paletteMachine.typegen").Typegen0,
   initial: 'closed',
   states: {
     closed: {

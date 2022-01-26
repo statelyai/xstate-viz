@@ -17,6 +17,7 @@ export const createElkMachine = (digraph: DirectedGraphNode) => {
   );
 
   return elkModel.createMachine({
+    tsTypes: {} as import("./elkMachine.typegen").Typegen0,
     context: elkModel.initialContext,
     initial: 'loading',
     states: {

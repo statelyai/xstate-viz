@@ -24,6 +24,7 @@ export const confirmBeforeLeavingMachine = createModel(
     },
   },
 ).createMachine({
+  tsTypes: {} as import("./confirmLeavingService.typegen").Typegen0,
   initial: 'notConfirming',
   on: {
     CODE_UPDATED: {
