@@ -141,7 +141,7 @@ export const dragSessionTracker = dragSessionModel.createMachine(
         ref!.current!.releasePointerCapture(session!.pointerId),
       setSessionData: assign({
         session: (ctx, ev: any) => {
-          if (ev.pointerId && ev.point)
+          if ('pointerId' in ev && ev.point)
             return {
               pointerId: ev.pointerId,
               point: ev.point,
