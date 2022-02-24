@@ -14,6 +14,7 @@ import { devTools } from './devInterface';
 import { notifMachine } from './notificationMachine';
 import { AnyState, AnyStateMachine, ServiceData } from './types';
 import { isOnClientSide } from './isOnClientSide';
+import { findChildService } from './utils';
 
 export interface SimEvent extends SCXML.Event<any> {
   timestamp: number;
@@ -180,7 +181,7 @@ export const simulationMachine = simModel.createMachine(
                   }
                 });
               } else if (event.type === 'xstate.event') {
-                const service = serviceMap.get(event.sessionId);
+                const service = serviceMap.get(event.sessionId) || findChildService(Array.from(serviceMap.values()), event.sessionId);
                 if (service) {
                   try {
                     service.send(event.event);
