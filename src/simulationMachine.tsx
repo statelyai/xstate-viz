@@ -135,6 +135,11 @@ export const simulationMachine = simModel.createMachine(
             const serviceMap: Map<string, AnyInterpreter> = new Map();
             const machines = new Set<AnyStateMachine>();
             const rootServices = new Set<AnyInterpreter>();
+            function addChildService(service: AnyInterpreter) {
+              if (!serviceMap.has(service.sessionId)) {
+                serviceMap.set(service.sessionId, service);
+              }
+            }
 
             function locallyInterpret(machine: AnyStateMachine) {
               machines.add(machine);
@@ -177,6 +182,16 @@ export const simulationMachine = simModel.createMachine(
                     locallyInterpret(machine);
                   } catch (e) {
                     sendBack(simModel.events.ERROR((e as Error).message));
+                  }
+                });
+              } else if (event.type === 'ADDSERVICE') {
+                event.services.forEach((service: AnyInterpreter) => {
+                  if (service?.sessionId) {
+                    try {
+                      addChildService(service);
+                    } catch (e) {
+                      sendBack(simModel.events.ERROR((e as Error).message));
+                    }
                   }
                 });
               } else if (event.type === 'xstate.event') {
@@ -281,16 +296,25 @@ export const simulationMachine = simModel.createMachine(
         ],
       },
       'SERVICE.REGISTER': {
-        actions: simModel.assign({
-          serviceDataMap: (ctx, { type, ...data }) => {
-            return produce(ctx.serviceDataMap, (draft) => {
-              draft[data.sessionId] = data;
-            });
-          },
-          currentSessionId: (ctx, e) => {
-            return ctx.currentSessionId ?? e.sessionId;
-          },
-        }),
+        actions: [
+          send(
+            (_, e) => ({
+              type: 'ADDSERVICE',
+              services: [e.service],
+            }),
+            { to: 'proxy' },
+          ),
+          simModel.assign({
+            serviceDataMap: (ctx, { type, ...data }) => {
+              return produce(ctx.serviceDataMap, (draft) => {
+                draft[data.sessionId] = data;
+              });
+            },
+            currentSessionId: (ctx, e) => {
+              return ctx.currentSessionId ?? e.sessionId;
+            },
+          }),
+        ],
       },
       'SERVICES.UNREGISTER_ALL': {
         actions: simModel.assign({
@@ -344,6 +368,7 @@ export const simulationMachine = simModel.createMachine(
           if (service.parent) {
             sendBack(
               simModel.events['SERVICE.REGISTER']({
+                service: service,
                 sessionId: service.sessionId,
                 machine: service.machine,
                 state: service.state || service.initialState,
