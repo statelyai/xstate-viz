@@ -7,7 +7,7 @@ import {
   SCXML,
 } from 'xstate';
 import { AnyEventObject, assign, interpret, send, spawn } from 'xstate';
-import { createWindowReceiver } from '@xstate/inspect';
+import { createWindowReceiver, createWebSocketReceiver } from '@xstate/inspect';
 
 import { createModel } from 'xstate/lib/model';
 import { devTools } from './devInterface';
@@ -77,13 +77,38 @@ export const simulationMachine = simModel.createMachine(
         invoke: {
           id: 'proxy',
           src: () => (sendBack, onReceive) => {
-            const receiver = createWindowReceiver({
-              // for some random reason the `window.top` is being rewritten to `window.self`
-              // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
-              // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
-              // so we pass it explicitly here
-              targetWindow: window.opener || window.parent,
-            });
+            let _receiver;
+            let server: string | null = new URLSearchParams(window.location.search).get('server')
+            if(server === null)
+            {
+              _receiver = createWindowReceiver({
+                // for some random reason the `window.top` is being rewritten to `window.self`
+                // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
+                // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
+                // so we pass it explicitly here
+                targetWindow: window.opener || window.parent,
+              });
+            }
+            else
+            {
+
+              let match = (server as string).match(/^(?<protocol>wss?):\/\//);
+              let protocol: "ws" | "wss" | undefined = "ws"
+              if(match && match.groups)
+              {
+                if(match.groups.protocol === "wss")
+                {
+                  protocol = "wss"
+                }
+                server = server.replace(/^wss?:\/\//, "")
+              }
+              _receiver = createWebSocketReceiver({
+                protocol,
+                server
+              });
+            }
+
+            const receiver = _receiver;
 
             onReceive((event) => {
               if (event.type === 'xstate.event') {
