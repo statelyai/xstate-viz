@@ -1,5 +1,15 @@
 # XState Visualizer
 
+## 0.7.0
+
+### Minor Changes
+
+- [#293](https://github.com/statelyai/xstate-viz/pull/293) [`67e24ae`](https://github.com/statelyai/xstate-viz/commit/67e24ae76aa253855c6bd866472f45c77be75367) Thanks [@jacksteamdev](https://github.com/jacksteamdev)! - You can now inspect via WebSocket. To do that you can add the WebSocket server url as a query parameter, for example `https://stately.ai/viz?inspect&server=ws://localhost:3000`
+
+### Patch Changes
+
+- [#343](https://github.com/statelyai/xstate-viz/pull/343) [`632f950`](https://github.com/statelyai/xstate-viz/commit/632f950c6d0d1989a263d2cb0f5cf0483950e8f2) Thanks [@Andarist](https://github.com/Andarist)! - Fixed panning/dragging interations (the ones that include pressing pointer down) in FireFox.
+
 ## 0.6.0
 
 ### Minor Changes
