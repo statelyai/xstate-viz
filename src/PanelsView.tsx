@@ -24,10 +24,12 @@ import { SpinnerWithText } from './SpinnerWithText';
 import { StatePanel } from './StatePanel';
 import { EmbedMode } from './types';
 import { calculatePanelIndexByPanelName } from './utils';
+import { useVizOrientation } from './visualizerOrientationContext';
 
 export const PanelsView = (props: BoxProps) => {
   const embed = useEmbed();
   const simService = useSimulation();
+  const vizOrientation = useVizOrientation();
   const services = useSelector(simService, selectServices);
   const [sourceState, sendToSourceService] = useSourceActor();
   const [activePanelIndex, setActiveTabIndex] = useState(() =>
@@ -40,10 +42,10 @@ export const PanelsView = (props: BoxProps) => {
     }
   }, [embed]);
 
-  return (
+  return vizOrientation.orientation === 'full' ? null : (
     <ResizableBox
       {...props}
-      gridArea="panels"
+      gridArea={vizOrientation.orientation !== 'top/bottom' ? 'panels' : ''}
       minHeight={0}
       disabled={embed?.isEmbedded && embed.mode !== EmbedMode.Full}
       hidden={embed?.isEmbedded && embed.mode === EmbedMode.Viz}
