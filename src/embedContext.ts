@@ -1,6 +1,8 @@
+import { createContext, useContext } from 'react';
 import { EmbedContext } from './types';
-import { createRequiredContext } from './utils';
 
-export const [EmbedProvider, useEmbed] = createRequiredContext<
-  EmbedContext | undefined
->('Embed');
+const EmbedReactContext = createContext(null as EmbedContext);
+
+export const EmbedProvider = EmbedReactContext.Provider;
+
+export const useEmbed = () => useContext(EmbedReactContext);

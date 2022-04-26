@@ -7,6 +7,7 @@ import type {
 import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
 import { Model } from 'xstate/lib/model.types';
 import type { editor } from 'monaco-editor';
+import { NextPage } from 'next';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
@@ -84,3 +85,7 @@ export interface Point {
   x: number;
   y: number;
 }
+
+export type NextComponentWithMeta = NextPage & {
+  preventAuth?: boolean;
+};

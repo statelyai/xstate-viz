@@ -31,17 +31,15 @@ import { CanvasHeader } from './CanvasHeader';
 import { Overlay } from './Overlay';
 import { useEmbed } from './embedContext';
 import { CompressIcon, HandIcon } from './Icons';
-import { useSourceActor } from './sourceMachine';
 import { WelcomeArea } from './WelcomeArea';
 
-export const CanvasView: React.FC = () => {
+export const CanvasView = (props: { canShowWelcomeMessage?: boolean }) => {
   // TODO: refactor this so an event can be explicitly sent to a machine
   // it isn't straightforward to do at the moment cause the target machine lives in a child component
   const [panModeEnabled, setPanModeEnabled] = React.useState(false);
   const embed = useEmbed();
   const simService = useSimulation();
   const canvasService = useCanvas();
-  const [sourceState] = useSourceActor();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -68,21 +66,12 @@ export const CanvasView: React.FC = () => {
 
   const simulationMode = useSimulationMode();
 
-  const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
+  const showControls = !embed?.isEmbedded || embed.controls;
 
-  const showControls = useMemo(
-    () => !embed?.isEmbedded || embed.controls,
-    [embed],
-  );
-
-  const showZoomButtonsInEmbed = useMemo(
-    () => !embed?.isEmbedded || (embed.controls && embed.zoom),
-    [embed],
-  );
-  const showPanButtonInEmbed = useMemo(
-    () => !embed?.isEmbedded || (embed.controls && embed.pan),
-    [embed],
-  );
+  const showZoomButtonsInEmbed =
+    !embed?.isEmbedded || (embed.controls && embed.zoom);
+  const showPanButtonInEmbed =
+    !embed?.isEmbedded || (embed.controls && embed.pan);
 
   return (
     <Box
@@ -107,7 +96,7 @@ export const CanvasView: React.FC = () => {
             </Box>
           </Overlay>
         )}
-        {isEmpty && canShowWelcomeMessage && <WelcomeArea />}
+        {isEmpty && props.canShowWelcomeMessage && <WelcomeArea />}
       </CanvasContainer>
 
       {showControls && (
