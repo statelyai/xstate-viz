@@ -18,13 +18,13 @@ import {
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
 import React from 'react';
-import { useAuth } from './authContext';
+import { useAuth, useLoggedInUserData } from './authContext';
 import { registryLinks } from './registryLinks';
 
 export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
   const authService = useAuth();
+  const loggedInUserData = useLoggedInUserData();
   const [state] = useActor(authService);
-  const session = state.context!.client.auth.session();
 
   return (
     <Box {...props} zIndex="1" display="flex" alignItems="center">
@@ -44,28 +44,23 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
         </Button>
       )}
 
-      {state.hasTag('authorized') && (
+      {state.hasTag('authorized') && loggedInUserData && (
         <Menu closeOnSelect={true}>
           <MenuButton>
             <Avatar
               marginRight="2"
-              src={session?.user?.user_metadata?.avatar_url || ''}
-              name={
-                session?.user?.user_metadata?.full_name ||
-                session?.user?.user_metadata?.user_name
-              }
+              src={loggedInUserData.avatarUrl || undefined}
+              name={loggedInUserData.displayName || undefined}
               height="30px"
               width="30px"
             />
           </MenuButton>
           <Portal>
             <MenuList>
-              {state.context.loggedInUserData && (
+              {loggedInUserData && (
                 <MenuItem
                   as="a"
-                  href={registryLinks.viewUserById(
-                    state.context.loggedInUserData.id,
-                  )}
+                  href={registryLinks.viewUserById(loggedInUserData.id)}
                 >
                   View Machines
                 </MenuItem>
