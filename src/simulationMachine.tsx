@@ -289,7 +289,10 @@ export const simulationMachine = simModel.createMachine(
             (ctx, e) => {
               return {
                 type: 'xstate.event',
-                event: e.event,
+                event: {
+                  ...e.event,
+                  origin: e.event.origin || ctx.currentSessionId,
+                },
                 sessionId: ctx.currentSessionId,
               };
             },
