@@ -29,6 +29,7 @@ const resizableModel = createModel(
 );
 
 const resizableMachine = resizableModel.createMachine({
+  tsTypes: {} as import("./ResizableBox.typegen").Typegen0,
   invoke: {
     id: 'dragSessionTracker',
     src: (ctx) =>

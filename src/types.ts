@@ -5,22 +5,11 @@ import type {
   StateMachine,
 } from 'xstate';
 import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
-import { Model } from 'xstate/lib/model.types';
 import type { editor } from 'monaco-editor';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
-export type StateFrom<T> = T extends StateMachine<
-  infer TContext,
-  any,
-  infer TEvent
->
-  ? State<TContext, TEvent>
-  : T extends Model<infer TContext, infer TEvent>
-  ? State<TContext, TEvent, any, any>
-  : never;
-
-export type AnyState = State<any, any>;
+export type AnyState = State<any, any, any, any, any>;
 
 export type SourceProvider = 'gist' | 'registry';
 

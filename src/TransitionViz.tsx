@@ -1,11 +1,11 @@
 import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
-import type { AnyStateNodeDefinition, Guard } from 'xstate';
+import type { AnyStateNodeDefinition, Guard, StateFrom } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { Point } from './pathUtils';
 import { useSimulation } from './SimulationContext';
-import { AnyStateMachine, StateFrom } from './types';
+import { AnyStateMachine } from './types';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';
 import { ActionViz } from './ActionViz';
@@ -43,7 +43,7 @@ const getDelayFromEventType = (
 
     // if configurable delay, get it from the machine options
     if (Number.isNaN(finalDelay)) {
-      const delayExpr = delayOptions[delay];
+      const delayExpr = delayOptions?.[delay];
       // if configured delay is a fixed number value
       if (typeof delayExpr === 'number') {
         finalDelay = delayExpr;

@@ -35,7 +35,7 @@ export function isInternalEvent(eventName: string) {
 }
 
 export function createInterpreterContext<
-  TInterpreter extends Interpreter<any, any, any>,
+  TInterpreter extends Interpreter<any, any, any, any, any>,
 >(displayName: string) {
   const [Provider, useContext] =
     createRequiredContext<TInterpreter>(displayName);

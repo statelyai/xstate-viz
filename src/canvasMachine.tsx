@@ -141,110 +141,150 @@ const getNewZoomAndViewbox = (
   };
 };
 
-export const canvasMachine = canvasModel.createMachine({
-  on: {
-    CANVAS_RECT_CHANGED: {
-      actions: canvasModel.assign((ctx, e) => {
-        return {
-          canvasPanelPosition: {
-            offsetY: e.offsetY,
-            offsetX: e.offsetX,
-            height: e.height,
-            width: e.width,
-          },
-        };
-      }),
-    },
-    'ZOOM.OUT': {
-      actions: canvasModel.assign((ctx, e) => {
-        return getNewZoomAndViewbox(ctx, {
-          translationPoint: e.point,
-          zoomFactor: calculateZoomOutFactor(e.zoomFactor),
-        });
-      }),
-      cond: (ctx) => canZoom(ctx.embed) && canZoomOut(ctx),
-      target: '.throttling',
-      internal: false,
-    },
-    'ZOOM.IN': {
-      actions: canvasModel.assign((ctx, e) => {
-        return getNewZoomAndViewbox(ctx, {
-          translationPoint: e.point,
-          zoomFactor: e.zoomFactor || DEFAULT_ZOOM_IN_FACTOR,
-        });
-      }),
-      cond: (ctx) => canZoom(ctx.embed) && canZoomIn(ctx),
-      target: '.throttling',
-      internal: false,
-    },
-    PAN: {
-      actions: canvasModel.assign({
-        viewbox: (ctx, e) => {
+export const canvasMachine = canvasModel.createMachine(
+  {
+    tsTypes: {} as import("./canvasMachine.typegen").Typegen0,
+    on: {
+      CANVAS_RECT_CHANGED: {
+        actions: canvasModel.assign((ctx, e) => {
           return {
-            minX: ctx.viewbox.minX + e.dx,
-            minY: ctx.viewbox.minY + e.dy,
+            canvasPanelPosition: {
+              offsetY: e.offsetY,
+              offsetX: e.offsetX,
+              height: e.height,
+              width: e.width,
+            },
           };
+        }),
+      },
+      'ZOOM.OUT': {
+        actions: canvasModel.assign((ctx, e) => {
+          return getNewZoomAndViewbox(ctx, {
+            translationPoint: e.point,
+            zoomFactor: calculateZoomOutFactor(e.zoomFactor),
+          });
+        }),
+        cond: (ctx) => canZoom(ctx.embed) && canZoomOut(ctx),
+        target: '.throttling',
+        internal: false,
+      },
+      'ZOOM.IN': {
+        actions: 'assignAfterZoomIn',
+        cond: 'canZoomIn',
+        target: '.throttling',
+        internal: false,
+      },
+      PAN: {
+        actions: canvasModel.assign({
+          viewbox: (ctx, e) => {
+            return {
+              minX: ctx.viewbox.minX + e.dx,
+              minY: ctx.viewbox.minY + e.dy,
+            };
+          },
+        }),
+        cond: (ctx) => canPan(ctx),
+        target: '.throttling',
+        internal: false,
+      },
+      'PAN.LEFT': {
+        actions: canvasModel.assign({
+          viewbox: (ctx, e) => ({
+            minX: ctx.viewbox.minX - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+            minY: ctx.viewbox.minY,
+          }),
+        }),
+        target: '.throttling',
+        internal: false,
+      },
+      'PAN.RIGHT': {
+        actions: canvasModel.assign({
+          viewbox: (ctx, e) => ({
+            minX: ctx.viewbox.minX + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+            minY: ctx.viewbox.minY,
+          }),
+        }),
+        target: '.throttling',
+        internal: false,
+      },
+      'PAN.UP': {
+        actions: canvasModel.assign({
+          viewbox: (ctx, e) => ({
+            minX: ctx.viewbox.minX,
+            minY: ctx.viewbox.minY - (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          }),
+        }),
+        target: '.throttling',
+        internal: false,
+      },
+      'PAN.DOWN': {
+        actions: canvasModel.assign({
+          viewbox: (ctx, e) => ({
+            minX: ctx.viewbox.minX,
+            minY: ctx.viewbox.minY + (e.isLongPan ? LONG_PAN : SHORT_PAN),
+          }),
+        }),
+        target: '.throttling',
+        internal: false,
+      },
+      'POSITION.RESET': {
+        actions: 'resetPosition',
+        target: '.throttling',
+        internal: false,
+      },
+      SOURCE_CHANGED: {
+        target: '.throttling',
+        internal: false,
+        actions: 'setPositionAfterSourceChanged',
+      },
+      'elkGraph.UPDATE': {
+        actions: [
+          canvasModel.assign({
+            elkGraph: (_, e) => e.elkGraph,
+          }),
+          send('FIT_TO_CONTENT'),
+        ],
+      },
+      FIT_TO_CONTENT: {
+        actions: [
+          'assignZoomAfterFitToContent',
+          'assignViewBoxAfterFitToContent',
+        ],
+      },
+    },
+    initial: 'idle',
+    states: {
+      idle: {},
+      throttling: {
+        after: {
+          300: 'saving',
         },
-      }),
-      cond: (ctx) => canPan(ctx),
-      target: '.throttling',
-      internal: false,
+        description: `
+        Throttling a moment before saving to ensure
+        we don't do too much saving to localStorage
+      `,
+      },
+      saving: {
+        always: {
+          actions: 'persistPositionToLocalStorage',
+          target: 'idle',
+        },
+      },
     },
-    'PAN.LEFT': {
-      actions: canvasModel.assign({
-        viewbox: (ctx, e) => ({
-          minX: ctx.viewbox.minX - (e.isLongPan ? LONG_PAN : SHORT_PAN),
-          minY: ctx.viewbox.minY,
-        }),
-      }),
-      target: '.throttling',
-      internal: false,
+  },
+  {
+    guards: {
+      canZoomIn: (ctx) => canZoom(ctx.embed) && canZoomIn(ctx),
     },
-    'PAN.RIGHT': {
-      actions: canvasModel.assign({
-        viewbox: (ctx, e) => ({
-          minX: ctx.viewbox.minX + (e.isLongPan ? LONG_PAN : SHORT_PAN),
-          minY: ctx.viewbox.minY,
-        }),
-      }),
-      target: '.throttling',
-      internal: false,
-    },
-    'PAN.UP': {
-      actions: canvasModel.assign({
-        viewbox: (ctx, e) => ({
-          minX: ctx.viewbox.minX,
-          minY: ctx.viewbox.minY - (e.isLongPan ? LONG_PAN : SHORT_PAN),
-        }),
-      }),
-      target: '.throttling',
-      internal: false,
-    },
-    'PAN.DOWN': {
-      actions: canvasModel.assign({
-        viewbox: (ctx, e) => ({
-          minX: ctx.viewbox.minX,
-          minY: ctx.viewbox.minY + (e.isLongPan ? LONG_PAN : SHORT_PAN),
-        }),
-      }),
-      target: '.throttling',
-      internal: false,
-    },
-    'POSITION.RESET': {
-      actions: canvasModel.assign({
+    actions: {
+      resetPosition: canvasModel.assign({
         zoom: canvasModel.initialContext.zoom,
         viewbox: canvasModel.initialContext.viewbox,
       }),
-      target: '.throttling',
-      internal: false,
-    },
-    SOURCE_CHANGED: {
-      target: '.throttling',
-      internal: false,
-      actions: canvasModel.assign((context, event) => {
+      setPositionAfterSourceChanged: canvasModel.assign((context, event) => {
         // TODO: This can be more elegant when we have system actor
         if (!context.embed?.isEmbedded) {
-          const position = getPositionFromEvent(event);
+          const position = getPositionFromEvent(event.id);
 
           if (!position) return {};
 
@@ -252,71 +292,42 @@ export const canvasMachine = canvasModel.createMachine({
         }
         return {};
       }),
-    },
-    'elkGraph.UPDATE': {
-      actions: [
-        canvasModel.assign({
-          elkGraph: (_, e) => e.elkGraph,
-        }),
-        send('FIT_TO_CONTENT'),
-      ],
-    },
-    FIT_TO_CONTENT: {
-      actions: [
-        canvasModel.assign({
-          zoom: (ctx) => {
-            if (!ctx.elkGraph) return ctx.zoom;
-            return (
-              Math.min(
-                ctx.canvasPanelPosition.width / ctx.elkGraph.width!,
-                ctx.canvasPanelPosition.height / ctx.elkGraph.height!,
-                MAX_ZOOM_IN_FACTOR,
-              ) * 0.9 // Ensure machine does not touch sides
-            );
-          },
-        }),
-        canvasModel.assign({
-          viewbox: (ctx) => {
-            if (!ctx.elkGraph) return ctx.viewbox;
-            return {
-              minX:
-                (ctx.elkGraph.width! * ctx.zoom) / 2 -
-                ctx.canvasPanelPosition.width / 2,
-              minY:
-                (ctx.elkGraph.height! * ctx.zoom) / 2 -
-                ctx.canvasPanelPosition.height / 2,
-            };
-          },
-        }),
-      ],
+      assignZoomAfterFitToContent: canvasModel.assign({
+        zoom: (ctx) => {
+          if (!ctx.elkGraph) return ctx.zoom;
+          return (
+            Math.min(
+              ctx.canvasPanelPosition.width / ctx.elkGraph.width!,
+              ctx.canvasPanelPosition.height / ctx.elkGraph.height!,
+              MAX_ZOOM_IN_FACTOR,
+            ) * 0.9 // Ensure machine does not touch sides
+          );
+        },
+      }),
+      assignViewBoxAfterFitToContent: canvasModel.assign({
+        viewbox: (ctx) => {
+          if (!ctx.elkGraph) return ctx.viewbox;
+          return {
+            minX:
+              (ctx.elkGraph.width! * ctx.zoom) / 2 -
+              ctx.canvasPanelPosition.width / 2,
+            minY:
+              (ctx.elkGraph.height! * ctx.zoom) / 2 -
+              ctx.canvasPanelPosition.height / 2,
+          };
+        },
+      }),
+      assignAfterZoomIn: canvasModel.assign((ctx, e) => {
+        return getNewZoomAndViewbox(ctx, {
+          translationPoint: e.point,
+          zoomFactor: e.zoomFactor || DEFAULT_ZOOM_IN_FACTOR,
+        });
+      }),
     },
   },
-  initial: 'idle',
-  states: {
-    idle: {},
-    throttling: {
-      after: {
-        300: 'saving',
-      },
-      meta: {
-        description: `
-          Throttling a moment before saving to ensure
-          we don't do too much saving to localStorage
-        `,
-      },
-    },
-    saving: {
-      always: {
-        actions: 'persistPositionToLocalStorage',
-        target: 'idle',
-      },
-    },
-  },
-});
+);
 
-const getPositionFromEvent = (event: ModelEventsFrom<typeof canvasModel>) => {
-  if (event.type !== 'SOURCE_CHANGED') return null;
-
-  const position = localCache.getPosition(event.id);
+const getPositionFromEvent = (id: string | null) => {
+  const position = localCache.getPosition(id);
   return position;
 };

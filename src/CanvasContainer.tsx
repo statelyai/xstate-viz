@@ -49,6 +49,7 @@ const dragModel = createModel(
 
 const dragMachine = dragModel.createMachine(
   {
+    tsTypes: {} as import("./CanvasContainer.typegen").Typegen0,
     preserveActionOrder: true,
     initial: 'checking_if_disabled',
     states: {
@@ -282,7 +283,7 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
   const [state, send] = useMachine(dragMachine, {
     actions: {
       sendPanChange: actions.send(
-        (_, ev: any) => {
+        (_, ev) => {
           // we need to translate a pointer move to the viewbox move
           // and that is going into the opposite direction than the pointer
           return canvasModel.events.PAN(-ev.delta.x, -ev.delta.y);

@@ -9,6 +9,7 @@ import {
   DoneInvokeEvent,
   EventFrom,
   forwardTo,
+  InterpreterFrom,
   send,
   sendParent,
   spawn,
@@ -120,14 +121,11 @@ export const sourceModel = createModel(
   },
 );
 
-export type SourceMachineActorRef = ActorRefFrom<
+export type SourceMachineActorRef = InterpreterFrom<
   ReturnType<typeof makeSourceMachine>
 >;
 
-export type SourceMachineState = State<
-  ContextFrom<typeof sourceModel>,
-  EventFrom<typeof sourceModel>
->;
+export type SourceMachineState = StateFrom<typeof makeSourceMachine>;
 
 class NotFoundError extends Error {
   constructor(message: string) {
@@ -168,6 +166,14 @@ export const makeSourceMachine = (params: {
 
   return sourceModel.createMachine(
     {
+      schema: {
+        services: {} as {
+          updateSourceFile: {
+            data: UpdateSourceFileMutation;
+          };
+        },
+      },
+      tsTypes: {} as import("./sourceMachine.typegen").Typegen0,
       initial: 'checking_initial_data',
       preserveActionOrder: true,
       context: {
@@ -212,23 +218,13 @@ export const makeSourceMachine = (params: {
         },
         checking_if_on_legacy_url: {
           onDone: 'checking_url',
-          meta: {
-            description: `This state checks if you're on /id?=<id>, and redirects to you /<id>`,
-          },
+          description: `This state checks if you're on /id?=<id>, and redirects to you /<id>`,
           initial: 'checking_if_id_on_query_params',
           states: {
             checking_if_id_on_query_params: {
               always: [
                 {
-                  cond: (ctx) => {
-                    // TODO: check if `params.router.query.id` can be reliably used here instead of the client check
-                    if (!isOnClientSide()) return false;
-                    const queries = new URLSearchParams(window.location.search);
-
-                    return Boolean(
-                      queries.get('id') && !ctx.sourceRegistryData,
-                    );
-                  },
+                  cond: 'hasIdOnQueryParams',
                   target: 'redirecting',
                 },
                 {
@@ -552,21 +548,7 @@ export const makeSourceMachine = (params: {
             onDone: {
               target: 'with_source.source_loaded.user_owns_this_source',
               actions: [
-                assign(
-                  (
-                    context,
-                    event: DoneInvokeEvent<UpdateSourceFileMutation>,
-                  ) => {
-                    return {
-                      sourceID: event.data.updateSourceFile.id,
-                      sourceProvider: 'registry',
-                      sourceRegistryData: {
-                        ...event.data.updateSourceFile,
-                        dataSource: 'client',
-                      },
-                    };
-                  },
-                ),
+                'assignSourceFileToContext',
                 send(
                   notifModel.events.BROADCAST('Saved successfully', 'success'),
                   {
@@ -597,6 +579,13 @@ export const makeSourceMachine = (params: {
     },
     {
       guards: {
+        hasIdOnQueryParams: (ctx) => {
+          // TODO: check if `params.router.query.id` can be reliably used here instead of the client check
+          if (!isOnClientSide()) return false;
+          const queries = new URLSearchParams(window.location.search);
+
+          return Boolean(queries.get('id') && !ctx.sourceRegistryData);
+        },
         hasLocalStorageCachedSource: (context) => {
           const result = localCache.getSourceRawContent(
             context.sourceID,
@@ -690,6 +679,16 @@ export const makeSourceMachine = (params: {
         openNewWindowAtRoot: () => {
           window.open('/viz', '_blank', 'noopener');
         },
+        assignSourceFileToContext: assign((context, event) => {
+          return {
+            sourceID: event.data?.updateSourceFile.id,
+            sourceProvider: 'registry',
+            sourceRegistryData: {
+              ...event.data.updateSourceFile,
+              dataSource: 'client',
+            },
+          };
+        }),
       },
       services: {
         createSourceFile: async (ctx, e): Promise<SourceFileFragment> => {
@@ -715,8 +714,7 @@ export const makeSourceMachine = (params: {
             return res.data?.createSourceFile!;
           });
         },
-        updateSourceFile: async (ctx, e) => {
-          if (e.type !== 'SAVE') return;
+        updateSourceFile: (ctx, e) => {
           return gQuery(
             UpdateSourceFileDocument,
             {
@@ -724,7 +722,10 @@ export const makeSourceMachine = (params: {
               text: ctx.sourceRawContent,
             },
             params.auth.session()?.access_token!,
-          ).then((res) => res.data);
+          ).then((res) => {
+            if (!res.data) throw new Error('');
+            return res.data;
+          });
         },
         loadSourceContent: (ctx) => async (send) => {
           switch (ctx.sourceProvider) {

@@ -12,7 +12,14 @@ import { useActor, useMachine, useSelector } from '@xstate/react';
 import { editor, Range } from 'monaco-editor';
 import dynamic from 'next/dynamic';
 import React from 'react';
-import { ActorRefFrom, assign, DoneInvokeEvent, send, spawn } from 'xstate';
+import {
+  ActorRefFrom,
+  assign,
+  DoneInvokeEvent,
+  send,
+  spawn,
+  StateNode,
+} from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { useAuth } from './authContext';
 import { CommandPalette } from './CommandPalette';
@@ -83,9 +90,9 @@ const editorPanelModel = createModel(
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
     monacoRef: null as Monaco | null,
     standaloneEditorRef: null as editor.IStandaloneCodeEditor | null,
-    sourceRef: null as SourceMachineActorRef,
+    sourceRef: null as unknown as SourceMachineActorRef,
     mainFile: 'main.ts',
-    machines: null as AnyStateMachine[] | null,
+    machines: null as ReturnType<typeof parseMachines> | null,
     deltaDecorations: [] as string[],
   },
   {
@@ -107,6 +114,14 @@ const editorPanelModel = createModel(
 
 const editorPanelMachine = editorPanelModel.createMachine(
   {
+    tsTypes: {} as import("./EditorPanel.typegen").Typegen0,
+    schema: {} as {
+      services: {
+        parseMachines: {
+          data: ReturnType<typeof parseMachines>;
+        };
+      };
+    },
     entry: [assign({ notifRef: () => spawn(notifMachine) })],
     initial: 'booting',
     states: {
@@ -185,48 +200,10 @@ const editorPanelMachine = editorPanelModel.createMachine(
       compiling: {
         tags: ['visualizing'],
         invoke: {
-          src: async (ctx) => {
-            const monaco = ctx.monacoRef!;
-            const uri = monaco.Uri.parse(ctx.mainFile);
-            const tsWoker = await monaco.languages.typescript
-              .getTypeScriptWorker()
-              .then((worker) => worker(uri));
-
-            const syntaxErrors = await tsWoker.getSyntacticDiagnostics(
-              uri.toString(),
-            );
-
-            if (syntaxErrors.length > 0) {
-              const model = ctx.monacoRef?.editor.getModel(uri);
-              // Only report one error at a time
-              const error = syntaxErrors[0];
-
-              const start = model?.getPositionAt(error.start!);
-              const end = model?.getPositionAt(error.start! + error.length!);
-              const errorRange = new ctx.monacoRef!.Range(
-                start?.lineNumber!,
-                0, // beginning of the line where error occured
-                end?.lineNumber!,
-                end?.column!,
-              );
-              return Promise.reject(
-                new SyntaxError(error.messageText.toString(), errorRange),
-              );
-            }
-
-            const compiledSource = await tsWoker
-              .getEmitOutput(uri.toString())
-              .then((result) => result.outputFiles[0].text);
-
-            return parseMachines(compiledSource);
-          },
+          src: 'parseMachines',
           onDone: {
             target: 'updating',
-            actions: [
-              assign({
-                machines: (_, e: any) => e.data,
-              }),
-            ],
+            actions: ['assignParsedMachinesToContext'],
           },
           onError: [
             {
@@ -276,13 +253,15 @@ const editorPanelMachine = editorPanelModel.createMachine(
     guards: {
       isGist: (ctx) =>
         ctx.sourceRef.getSnapshot()!.context.sourceProvider === 'gist',
-      isSyntaxError: (_, e: any) => e.data instanceof SyntaxError,
+      isSyntaxError: (_, e) => e.data instanceof SyntaxError,
     },
     actions: {
-      broadcastError: send((_, e: any) => ({
+      assignParsedMachinesToContext: assign({
+        machines: (_, e) => e.data,
+      }),
+      broadcastError: send((_, e) => ({
         type: 'EDITOR_ENCOUNTERED_ERROR',
-        title: e.data.title,
-        message: e.data.message,
+        message: (e.data as Error).message,
       })),
       addDecorations: assign({
         deltaDecorations: (ctx, e) => {
@@ -320,6 +299,41 @@ const editorPanelMachine = editorPanelModel.createMachine(
         } = e as DoneInvokeEvent<{ message: string; range: Range }>;
         const editor = ctx.standaloneEditorRef;
         editor?.revealLineInCenterIfOutsideViewport(range.startLineNumber);
+      },
+    },
+    services: {
+      parseMachines: async (ctx) => {
+        const monaco = ctx.monacoRef!;
+        const uri = monaco.Uri.parse(ctx.mainFile);
+        const tsWoker = await monaco.languages.typescript
+          .getTypeScriptWorker()
+          .then((worker) => worker(uri));
+
+        const syntaxErrors = await tsWoker.getSyntacticDiagnostics(
+          uri.toString(),
+        );
+
+        if (syntaxErrors.length > 0) {
+          const model = ctx.monacoRef?.editor.getModel(uri);
+          // Only report one error at a time
+          const error = syntaxErrors[0];
+
+          const start = model?.getPositionAt(error.start!);
+          const end = model?.getPositionAt(error.start! + error.length!);
+          const errorRange = new ctx.monacoRef!.Range(
+            start?.lineNumber!,
+            0, // beginning of the line where error occured
+            end?.lineNumber!,
+            end?.column!,
+          );
+          throw new SyntaxError(error.messageText.toString(), errorRange);
+        }
+
+        const compiledSource = await tsWoker
+          .getEmitOutput(uri.toString())
+          .then((result) => result.outputFiles[0].text);
+
+        return parseMachines(compiledSource);
       },
     },
   },
@@ -373,7 +387,7 @@ export const EditorPanel: React.FC<{
   onSave: () => void;
   onFork: () => void;
   onCreateNew: () => void;
-  onChange: (machine: AnyStateMachine[]) => void;
+  onChange: (machine: ReturnType<typeof parseMachines>) => void;
   onChangedCodeValue: (code: string) => void;
 }> = ({ onSave, onChange, onChangedCodeValue, onFork, onCreateNew }) => {
   const embed = useEmbed();
@@ -512,8 +526,6 @@ export const EditorPanel: React.FC<{
                 {sourceOwnershipStatus === 'user-owns-source' &&
                   !embed?.isEmbedded && (
                     <Button
-                      disabled={sourceState.hasTag('forking')}
-                      isLoading={sourceState.hasTag('forking')}
                       onClick={() => {
                         onFork();
                       }}

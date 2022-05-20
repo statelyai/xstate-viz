@@ -5,6 +5,7 @@ import {
   EventFrom,
   InterpreterStatus,
   SCXML,
+  StateNode,
 } from 'xstate';
 import { AnyEventObject, assign, interpret, send, spawn } from 'xstate';
 import {
@@ -36,7 +37,7 @@ export const simModel = createModel(
   {
     events: {
       'SERVICE.SEND': (event: SCXML.Event<AnyEventObject>) => ({ event }),
-      'MACHINES.REGISTER': (machines: Array<AnyStateMachine>) => ({
+      'MACHINES.REGISTER': (machines: Array<StateNode>) => ({
         machines,
       }),
 
@@ -64,6 +65,7 @@ export const simModel = createModel(
 
 export const simulationMachine = simModel.createMachine(
   {
+    tsTypes: {} as import("./simulationMachine.typegen").Typegen0,
     preserveActionOrder: true,
     context: simModel.initialContext,
     initial:
@@ -102,7 +104,7 @@ export const simulationMachine = simModel.createMachine(
               });
             }
 
-            onReceive((event) => {
+            onReceive((event: any) => {
               if (event.type === 'xstate.event') {
                 receiver.send({
                   ...event,
@@ -187,7 +189,7 @@ export const simulationMachine = simModel.createMachine(
               serviceMap.clear();
             }
 
-            onReceive((event) => {
+            onReceive((event: any) => {
               if (event.type === 'INTERPRET') {
                 event.machines.forEach((machine: AnyStateMachine) => {
                   try {
@@ -269,7 +271,7 @@ export const simulationMachine = simModel.createMachine(
 
                 draft[e.sessionId]!.state = service.machine.resolveState(
                   e.state,
-                );
+                ) as any;
               }),
             events: (ctx, e) => {
               return produce(ctx.events, (draft) => {

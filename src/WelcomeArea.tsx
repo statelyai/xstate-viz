@@ -41,16 +41,18 @@ const buttonStyleProps: ButtonProps = {
   justifyContent: 'start',
 };
 
-const welcomeAreaMachine = createMachine<
-  {},
-  | { type: 'CLICK_START_CODING' }
-  | {
-      type: 'CLICK_SEE_EXAMPLE';
-    }
-  | {
-      type: 'BACK';
-    }
->({
+const welcomeAreaMachine = createMachine({
+  schema: {
+    events: {} as
+      | { type: 'CLICK_START_CODING' }
+      | {
+          type: 'CLICK_SEE_EXAMPLE';
+        }
+      | {
+          type: 'BACK';
+        },
+  },
+  tsTypes: {} as import("./WelcomeArea.typegen").Typegen0,
   initial: 'welcomeArea',
   states: {
     welcomeArea: {

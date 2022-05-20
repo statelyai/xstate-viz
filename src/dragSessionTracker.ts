@@ -37,6 +37,7 @@ export const dragSessionModel = createModel(
 
 export const dragSessionTracker = dragSessionModel.createMachine(
   {
+    tsTypes: {} as import("./dragSessionTracker.typegen").Typegen0,
     preserveActionOrder: true,
     initial: 'check_session_data',
     states: {
@@ -135,8 +136,10 @@ export const dragSessionTracker = dragSessionModel.createMachine(
   },
   {
     actions: {
-      capturePointer: ({ ref, session }, ev: any) =>
-        ref!.current!.setPointerCapture(ev!.pointerId || session?.pointerId),
+      capturePointer: ({ ref, session }, ev) =>
+        ref!.current!.setPointerCapture(
+          (ev.pointerId || session?.pointerId) as number,
+        ),
       releasePointer: ({ ref, session }) =>
         ref!.current!.releasePointerCapture(session!.pointerId),
       setSessionData: assign({
@@ -149,27 +152,22 @@ export const dragSessionTracker = dragSessionModel.createMachine(
           return ctx.session;
         },
       }),
-      clearSessionData: assign({
+      clearSessionData: assign((ctx) => ({
         session: null,
-      }) as any,
+      })),
       updatePoint: assign({
-        session: (ctx, ev: any) => ({
+        session: (ctx, ev) => ({
           ...ctx.session!,
           point: ev.point,
         }),
       }),
-      sendPointDelta: sendParent(
-        (
-          ctx: ContextFrom<typeof dragSessionModel>,
-          ev: ReturnType<typeof dragSessionModel.events.DRAG_POINT_MOVED>,
-        ) => ({
-          type: 'POINTER_MOVED_BY',
-          delta: {
-            x: ev.point.x - ctx.session!.point.x,
-            y: ev.point.y - ctx.session!.point.y,
-          },
-        }),
-      ) as any,
+      sendPointDelta: sendParent((ctx, ev) => ({
+        type: 'POINTER_MOVED_BY',
+        delta: {
+          x: ev.point.x - ctx.session!.point.x,
+          y: ev.point.y - ctx.session!.point.y,
+        },
+      })),
     },
   },
 );
