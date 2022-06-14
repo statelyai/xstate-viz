@@ -28,12 +28,5 @@ export const useInterpretCanvas = ({
     },
   });
 
-  useEffect(() => {
-    canvasService.send({
-      type: 'SOURCE_CHANGED',
-      id: sourceID,
-    });
-  }, [sourceID, canvasService]);
-
   return canvasService;
 };

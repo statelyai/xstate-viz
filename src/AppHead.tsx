@@ -19,10 +19,9 @@ export interface AppHeadProps {
   ogTitle: string;
   description: string;
   ogImageUrl: string | null;
-  importElk?: boolean;
 }
 
-export const AppHead = ({ importElk = true, ...props }: AppHeadProps) => {
+export const AppHead = (props: AppHeadProps) => {
   return (
     <Head>
       <link rel="apple-touch-icon" href="/viz/favicon@256.png" />
@@ -30,9 +29,7 @@ export const AppHead = ({ importElk = true, ...props }: AppHeadProps) => {
       <link rel="icon" href="/viz/favicon.png" />
       <title>{props.title}</title>
       <meta name="description" content={props.description} />
-      {importElk && (
-        <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
-      )}
+      <script src="https://unpkg.com/elkjs@0.7.1/lib/elk.bundled.js"></script>
 
       <meta property="og:type" content="website" />
       <meta property="og:url" content={`https://stately.ai/viz`} />

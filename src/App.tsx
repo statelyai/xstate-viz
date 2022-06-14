@@ -1,26 +1,24 @@
-import { Box, ChakraProvider } from '@chakra-ui/react';
-import React, { useEffect, useMemo } from 'react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
-import { useAuth } from './authContext';
+import router, { useRouter } from 'next/router';
+import { useEffect, useMemo } from 'react';
 import { AppHead } from './AppHead';
+import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
-import { EmbedProvider } from './embedContext';
 import { CanvasView } from './CanvasView';
+import { CommonAppProviders } from './CommonAppProviders';
+import { EmbedProvider, useEmbed } from './embedContext';
 import { isOnClientSide } from './isOnClientSide';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
-import { SimulationProvider } from './SimulationContext';
-import { simulationMachine } from './simulationMachine';
-import { getSourceActor, useSourceRegistryData } from './sourceMachine';
-import { theme } from './theme';
-import { EditorThemeProvider } from './themeContext';
-import { EmbedContext, EmbedMode } from './types';
-import { useInterpretCanvas } from './useInterpretCanvas';
-import router, { useRouter } from 'next/router';
-import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
+import { RootContainer } from './RootContainer';
+import { useSimulation } from './SimulationContext';
+import { getSourceActor, useSourceRegistryData } from './sourceMachine';
+import { EmbedMode } from './types';
+import { useInterpretCanvas } from './useInterpretCanvas';
+import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -62,32 +60,9 @@ const useReceiveMessage = (
   }, []);
 };
 
-const getGridArea = (embed?: EmbedContext) => {
-  if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
-    return 'canvas';
-  }
-
-  if (embed?.isEmbedded && embed.mode === EmbedMode.Panels) {
-    return 'panels';
-  }
-
-  return 'canvas panels';
-};
-
-function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
-  const { query, asPath } = useRouter();
-  const embed = useMemo(
-    () => ({
-      ...parseEmbedQuery(query),
-      isEmbedded,
-      originalUrl: withoutEmbedQueryParams(query),
-    }),
-    [query, asPath],
-  );
-
-  const paletteService = useInterpret(paletteMachine);
-  // don't use `devTools: true` here as it would freeze your browser
-  const simService = useInterpret(simulationMachine);
+function WebApp() {
+  const embed = useEmbed();
+  const simService = useSimulation();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -96,6 +71,12 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
 
   const sourceService = useSelector(useAuth(), getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
+  const sourceID = sourceState!.context.sourceID;
+
+  const canvasService = useInterpretCanvas({
+    sourceID,
+    embed,
+  });
 
   useReceiveMessage({
     // used to receive messages from the iframe in embed preview
@@ -111,48 +92,60 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
     });
   }, [machine?.id, sendToSourceService]);
 
-  // TODO: Subject to refactor into embedActor
+  useEffect(() => {
+    canvasService.send({
+      type: 'SOURCE_CHANGED',
+      id: sourceID,
+    });
+  }, [sourceID, canvasService]);
 
-  const sourceID = sourceState!.context.sourceID;
+  const shouldRenderCanvas =
+    !embed?.isEmbedded || embed.mode !== EmbedMode.Panels;
+  const shouldRenderPanels = !embed?.isEmbedded || embed.mode !== EmbedMode.Viz;
 
-  const canvasService = useInterpretCanvas({
-    sourceID,
-    embed,
-  });
+  return (
+    <>
+      <RootContainer
+        canvas={
+          shouldRenderCanvas && (
+            <CanvasProvider value={canvasService}>
+              <CanvasView />
+            </CanvasProvider>
+          )
+        }
+        panels={<PanelsView />}
+      />
+      <MachineNameChooserModal />
+    </>
+  );
+}
 
-  // This is because we're doing loads of things on client side anyway
-  if (!isOnClientSide()) return <VizHead />;
+function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
+  const { query, asPath } = useRouter();
+  const embed = useMemo(
+    () => ({
+      ...parseEmbedQuery(query),
+      isEmbedded,
+      originalUrl: withoutEmbedQueryParams(query),
+    }),
+    [query, asPath],
+  );
+
+  const paletteService = useInterpret(paletteMachine);
 
   return (
     <>
       <VizHead />
-      <EmbedProvider value={embed}>
-        <ChakraProvider theme={theme}>
-          <EditorThemeProvider>
+      {/* This is because we're doing loads of things on client side anyway */}
+      {isOnClientSide() && (
+        <CommonAppProviders>
+          <EmbedProvider value={embed}>
             <PaletteProvider value={paletteService}>
-              <SimulationProvider value={simService}>
-                <Box
-                  data-testid="app"
-                  data-viz-theme="dark"
-                  as="main"
-                  display="grid"
-                  gridTemplateColumns="1fr auto"
-                  gridTemplateAreas={`"${getGridArea(embed)}"`}
-                  height="100vh"
-                >
-                  {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
-                    <CanvasProvider value={canvasService}>
-                      <CanvasView />
-                    </CanvasProvider>
-                  )}
-                  <PanelsView />
-                  <MachineNameChooserModal />
-                </Box>
-              </SimulationProvider>
+              <WebApp />
             </PaletteProvider>
-          </EditorThemeProvider>
-        </ChakraProvider>
-      </EmbedProvider>
+          </EmbedProvider>
+        </CommonAppProviders>
+      )}
     </>
   );
 }

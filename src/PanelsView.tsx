@@ -29,7 +29,6 @@ export const PanelsView = (props: BoxProps) => {
   return (
     <ResizableBox
       {...props}
-      gridArea="panels"
       minHeight={0}
       disabled={embed?.isEmbedded && embed.mode !== EmbedMode.Full}
       hidden={embed?.isEmbedded && embed.mode === EmbedMode.Viz}
