@@ -83,7 +83,7 @@ const editorPanelModel = createModel(
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
     monacoRef: null as Monaco | null,
     standaloneEditorRef: null as editor.IStandaloneCodeEditor | null,
-    sourceRef: null as SourceMachineActorRef,
+    sourceRef: null as unknown as SourceMachineActorRef,
     mainFile: 'main.ts',
     machines: null as AnyStateMachine[] | null,
     deltaDecorations: [] as string[],

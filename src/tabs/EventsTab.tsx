@@ -19,7 +19,9 @@ import {
   PopoverTrigger,
   Portal,
   Switch,
+  Tab,
   Table,
+  TabPanel,
   Tbody,
   Td,
   Text,
@@ -34,10 +36,10 @@ import React, { useEffect, useState } from 'react';
 import { assign, SCXML, send, StateFrom } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 import { toSCXMLEvent } from 'xstate/lib/utils';
-import { JSONView } from './JSONView';
-import { useSimulation } from './SimulationContext';
-import { SimEvent, simulationMachine } from './simulationMachine';
-import { isInternalEvent, isNullEvent } from './utils';
+import { JSONView } from '../JSONView';
+import { useSimulation } from '../SimulationContext';
+import { SimEvent, simulationMachine } from '../simulationMachine';
+import { isInternalEvent, isNullEvent } from '../utils';
 
 const EventConnection: React.FC<{ event: SimEvent }> = ({ event }) => {
   const sim = useSimulation();
@@ -155,7 +157,7 @@ const selectMachine = (state: StateFrom<typeof simulationMachine>) =>
     ? state.context.serviceDataMap[state.context.currentSessionId]
     : undefined; // TODO: select() method on model
 
-export const EventsPanel: React.FC = () => {
+const EventsPanel: React.FC = () => {
   const sim = useSimulation();
   const [state, send] = useActor(sim);
   const rawEvents = state.context!.events;
@@ -476,4 +478,13 @@ const NewEvent: React.FC<{
       </Popover>
     </Box>
   );
+};
+
+export const EventsTab = {
+  Tab: () => <Tab>Events</Tab>,
+  TabPanel: () => (
+    <TabPanel height="100%" overflow="hidden">
+      <EventsPanel />
+    </TabPanel>
+  ),
 };

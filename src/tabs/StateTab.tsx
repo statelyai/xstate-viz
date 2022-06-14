@@ -1,17 +1,19 @@
-import React from 'react';
-import { useSelector } from '@xstate/react';
-import { StateFrom } from 'xstate';
 import {
   Accordion,
-  AccordionItem,
   AccordionButton,
-  AccordionPanel,
   AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
   Box,
+  Tab,
+  TabPanel,
 } from '@chakra-ui/react';
-import { useSimulation } from './SimulationContext';
-import { simulationMachine } from './simulationMachine';
-import { JSONView } from './JSONView';
+import { useSelector } from '@xstate/react';
+import React from 'react';
+import { StateFrom } from 'xstate';
+import { JSONView } from '../JSONView';
+import { useSimulation } from '../SimulationContext';
+import { simulationMachine } from '../simulationMachine';
 
 const selectState = (state: StateFrom<typeof simulationMachine>) =>
   state.context.currentSessionId
@@ -64,8 +66,17 @@ const StateAccordion: React.FC<{ state: any; title: string }> = ({
   );
 };
 
-export const StatePanel: React.FC = () => {
+const StatePanel: React.FC = () => {
   const state = useSelector(useSimulation(), selectState);
 
   return <ActorState state={state} />;
+};
+
+export const StateTab = {
+  Tab: () => <Tab>State</Tab>,
+  TabPanel: () => (
+    <TabPanel height="100%" overflowY="auto">
+      <StatePanel />
+    </TabPanel>
+  ),
 };
