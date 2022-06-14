@@ -23,7 +23,7 @@ import xstatePkgJson from 'xstate/package.json';
 import React, { useMemo } from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { useCanvas } from './CanvasContext';
-import { canZoom, canZoomIn, canZoomOut } from './canvasMachine';
+import { canZoomIn, canZoomOut } from './canvasMachine';
 import { toDirectedGraph } from './directedGraph';
 import { Graph } from './Graph';
 import { useSimulation, useSimulationMode } from './SimulationContext';
@@ -56,14 +56,12 @@ export const CanvasView: React.FC = () => {
     [machine],
   );
 
-  const shouldEnableZoomOutButton = useSelector(
-    canvasService,
-    (state) => canZoom(embed) && canZoomOut(state.context),
+  const shouldEnableZoomOutButton = useSelector(canvasService, (state) =>
+    canZoomOut(state.context),
   );
 
-  const shouldEnableZoomInButton = useSelector(
-    canvasService,
-    (state) => canZoom(embed) && canZoomIn(state.context),
+  const shouldEnableZoomInButton = useSelector(canvasService, (state) =>
+    canZoomIn(state.context),
   );
 
   const simulationMode = useSimulationMode();

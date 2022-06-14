@@ -1,14 +1,12 @@
+import { useInterpret } from '@xstate/react';
+import { CanvasProvider } from './CanvasContext';
+import { canvasMachine } from './canvasMachine';
+import { CanvasView } from './CanvasView';
 import { CommonAppProviders } from './CommonAppProviders';
 import { RootContainer } from './RootContainer';
-import { CanvasProvider } from './CanvasContext';
-import { CanvasView } from './CanvasView';
-import { useInterpretCanvas } from './useInterpretCanvas';
 
 export const WebExtension = () => {
-  const canvasService = useInterpretCanvas({
-    sourceID: null,
-    embed: undefined,
-  });
+  const canvasService = useInterpret(canvasMachine);
   return (
     <CommonAppProviders>
       <RootContainer

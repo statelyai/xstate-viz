@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { AppHead } from './AppHead';
 import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
+import { canvasMachine, canvasModel } from './canvasMachine';
 import { CanvasView } from './CanvasView';
 import { CommonAppProviders } from './CommonAppProviders';
 import { EmbedProvider, useEmbed } from './embedContext';
@@ -17,7 +18,6 @@ import { RootContainer } from './RootContainer';
 import { useSimulation } from './SimulationContext';
 import { getSourceActor, useSourceRegistryData } from './sourceMachine';
 import { EmbedMode } from './types';
-import { useInterpretCanvas } from './useInterpretCanvas';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 
 const defaultHeadProps = {
@@ -73,9 +73,13 @@ function WebApp() {
   const [sourceState, sendToSourceService] = useActor(sourceService!);
   const sourceID = sourceState!.context.sourceID;
 
-  const canvasService = useInterpretCanvas({
-    sourceID,
-    embed,
+  const canvasService = useInterpret(canvasMachine, {
+    context: {
+      ...canvasModel.initialContext,
+      sourceID,
+      zoomable: !embed?.isEmbedded || embed.zoom,
+      pannable: !embed?.isEmbedded || embed.pan,
+    },
   });
 
   useReceiveMessage({
