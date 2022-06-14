@@ -1,3 +1,5 @@
+import { ExternalLinkIcon } from '@chakra-ui/icons';
+import { Button } from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import router, { useRouter } from 'next/router';
 import { useEffect, useMemo } from 'react';
@@ -9,6 +11,7 @@ import { CanvasView } from './CanvasView';
 import { CommonAppProviders } from './CommonAppProviders';
 import { EmbedProvider, useEmbed } from './embedContext';
 import { isOnClientSide } from './isOnClientSide';
+import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
@@ -17,8 +20,17 @@ import { registryLinks } from './registryLinks';
 import { RootContainer } from './RootContainer';
 import { useSimulation } from './SimulationContext';
 import { getSourceActor, useSourceRegistryData } from './sourceMachine';
+import { ActorsTab } from './tabs/ActorsTab';
+import { CodeTab } from './tabs/CodeTab';
+import { EventsTab } from './tabs/EventsTab';
+import { SettingsTab } from './tabs/SettingsTab';
+import { StateTab } from './tabs/StateTab';
 import { EmbedMode } from './types';
-import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
+import {
+  calculatePanelIndexByPanelName,
+  parseEmbedQuery,
+  withoutEmbedQueryParams,
+} from './utils';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -117,7 +129,44 @@ function WebApp() {
             </CanvasProvider>
           )
         }
-        panels={<PanelsView />}
+        panels={
+          shouldRenderPanels && (
+            <PanelsView
+              defaultIndex={
+                embed?.isEmbedded
+                  ? calculatePanelIndexByPanelName(embed.panel)
+                  : 0
+              }
+              tabs={(() => {
+                const tabs = [CodeTab, StateTab, EventsTab, ActorsTab];
+                if (!embed?.isEmbedded) {
+                  tabs.push(SettingsTab);
+                }
+                return tabs;
+              })()}
+              tabListRightButtons={
+                !embed?.isEmbedded ? (
+                  <Login />
+                ) : embed.showOriginalLink && embed.originalUrl ? (
+                  <Button
+                    height="100%"
+                    rounded="none"
+                    marginLeft="auto"
+                    colorScheme="blue"
+                    as="a"
+                    target="_blank"
+                    rel="noopener noreferer nofollow"
+                    href={embed?.originalUrl}
+                    leftIcon={<ExternalLinkIcon />}
+                  >
+                    Open in Stately.ai/viz
+                  </Button>
+                ) : null
+              }
+              resizable={!embed?.isEmbedded || embed.mode === EmbedMode.Full}
+            />
+          )
+        }
       />
       <MachineNameChooserModal />
     </>

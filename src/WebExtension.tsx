@@ -4,6 +4,10 @@ import { canvasMachine } from './canvasMachine';
 import { CanvasView } from './CanvasView';
 import { CommonAppProviders } from './CommonAppProviders';
 import { RootContainer } from './RootContainer';
+import { ActorsTab } from './tabs/ActorsTab';
+import { EventsTab } from './tabs/EventsTab';
+import { SettingsTab } from './tabs/SettingsTab';
+import { StateTab } from './tabs/StateTab';
 
 export const WebExtension = () => {
   const canvasService = useInterpret(canvasMachine);
@@ -15,7 +19,7 @@ export const WebExtension = () => {
             <CanvasView />
           </CanvasProvider>
         }
-        panels={null}
+        panels={[StateTab, EventsTab, ActorsTab, SettingsTab]}
       />
     </CommonAppProviders>
   );

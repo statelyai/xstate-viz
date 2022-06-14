@@ -1,37 +1,27 @@
-import { ExternalLinkIcon } from '@chakra-ui/icons';
-import { BoxProps, Button, TabList, TabPanels, Tabs } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
-import { useEmbed } from './embedContext';
-import { Login } from './Login';
+import { BoxProps, TabList, TabPanels, Tabs } from '@chakra-ui/react';
+import React from 'react';
 import { ResizableBox } from './ResizableBox';
 
-import { ActorsTab } from './tabs/ActorsTab';
-import { CodeTab } from './tabs/CodeTab';
-import { EventsTab } from './tabs/EventsTab';
-import { SettingsTab } from './tabs/SettingsTab';
-import { StateTab } from './tabs/StateTab';
-import { EmbedMode } from './types';
-import { calculatePanelIndexByPanelName } from './utils';
-
-export const PanelsView = (props: BoxProps) => {
-  const embed = useEmbed();
-
-  const [activePanelIndex, setActiveTabIndex] = useState(() =>
-    embed?.isEmbedded ? calculatePanelIndexByPanelName(embed.panel) : 0,
-  );
-
-  useEffect(() => {
-    if (embed?.isEmbedded) {
-      setActiveTabIndex(calculatePanelIndexByPanelName(embed.panel));
-    }
-  }, [embed]);
-
+export const PanelsView = ({
+  defaultIndex = 0,
+  resizable = true,
+  tabs,
+  tabListRightButtons,
+  ...props
+}: BoxProps & {
+  defaultIndex?: number;
+  resizable?: boolean;
+  tabs: Array<{
+    Tab: React.ComponentType;
+    TabPanel: React.ComponentType;
+  }>;
+  tabListRightButtons: React.ReactNode;
+}) => {
   return (
     <ResizableBox
       {...props}
       minHeight={0}
-      disabled={embed?.isEmbedded && embed.mode !== EmbedMode.Full}
-      hidden={embed?.isEmbedded && embed.mode === EmbedMode.Viz}
+      disabled={resizable}
       data-testid="panels-view"
     >
       <Tabs
@@ -39,44 +29,19 @@ export const PanelsView = (props: BoxProps) => {
         display="grid"
         gridTemplateRows="3rem 1fr"
         height="100%"
-        index={activePanelIndex}
-        onChange={(index) => {
-          setActiveTabIndex(index);
-        }}
+        defaultIndex={defaultIndex}
       >
         <TabList>
-          <CodeTab.Tab />
-          <StateTab.Tab />
-          <EventsTab.Tab />
-          <ActorsTab.Tab />
-
-          {!embed?.isEmbedded && <SettingsTab.Tab />}
-          {!embed?.isEmbedded ? (
-            <Login />
-          ) : embed.showOriginalLink && embed.originalUrl ? (
-            <Button
-              height="100%"
-              rounded="none"
-              marginLeft="auto"
-              colorScheme="blue"
-              as="a"
-              target="_blank"
-              rel="noopener noreferer nofollow"
-              href={embed?.originalUrl}
-              leftIcon={<ExternalLinkIcon />}
-            >
-              Open in Stately.ai/viz
-            </Button>
-          ) : null}
+          {tabs.map(({ Tab }, index) => (
+            <Tab key={index} />
+          ))}
+          {tabListRightButtons}
         </TabList>
 
         <TabPanels minHeight={0}>
-          <CodeTab.TabPanel />
-          <StateTab.TabPanel />
-          <EventsTab.TabPanel />
-          <ActorsTab.TabPanel />
-
-          {!embed?.isEmbedded && <SettingsTab.TabPanel />}
+          {tabs.map(({ TabPanel }, index) => (
+            <TabPanel key={index} />
+          ))}
         </TabPanels>
       </Tabs>
     </ResizableBox>
