@@ -455,6 +455,7 @@ export const EditorPanel: React.FC<{
                 onSave={() => {
                   onSave();
                 }}
+                readOnly={embed?.isEmbedded && embed.readOnly}
               />
             </div>
             <HStack padding="2" w="full" justifyContent="space-between">

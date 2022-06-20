@@ -1,11 +1,23 @@
-import { ExternalLinkIcon } from '@chakra-ui/icons';
-import { Button } from '@chakra-ui/react';
+import { ExternalLinkIcon, QuestionOutlineIcon } from '@chakra-ui/icons';
+import {
+  Box,
+  Button,
+  IconButton,
+  Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Portal,
+} from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
 import router, { useRouter } from 'next/router';
 import { useEffect, useMemo } from 'react';
+import xstatePkgJson from 'xstate/package.json';
 import { AppHead } from './AppHead';
 import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
+import { CanvasHeader } from './CanvasHeader';
 import { canvasMachine, canvasModel } from './canvasMachine';
 import { CanvasView } from './CanvasView';
 import { CommonAppProviders } from './CommonAppProviders';
@@ -31,6 +43,7 @@ import {
   parseEmbedQuery,
   withoutEmbedQueryParams,
 } from './utils';
+import { WelcomeArea } from './WelcomeArea';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -72,8 +85,60 @@ const useReceiveMessage = (
   }, []);
 };
 
+function ControlsAdditionalMenu() {
+  return (
+    <Menu closeOnSelect={true} placement="top-end">
+      <MenuButton
+        as={IconButton}
+        size="sm"
+        isRound
+        aria-label="More info"
+        marginLeft="auto"
+        variant="secondary"
+        icon={
+          <QuestionOutlineIcon
+            boxSize={6}
+            css={{ '& circle': { display: 'none' } }}
+          />
+        }
+      />
+      <Portal>
+        <MenuList fontSize="sm" padding="0">
+          <MenuItem
+            as={Link}
+            href="https://github.com/statelyai/xstate-viz/issues/new?template=bug_report.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Report an issue
+          </MenuItem>
+          <MenuItem
+            as={Link}
+            href="https://github.com/statelyai/xstate"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {`XState version ${xstatePkgJson.version}`}
+          </MenuItem>
+          <MenuItem
+            as={Link}
+            href="https://stately.ai/privacy"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Privacy Policy
+          </MenuItem>
+        </MenuList>
+      </Portal>
+    </Menu>
+  );
+}
+
 function WebApp() {
   const embed = useEmbed();
+  const pannable = !embed?.isEmbedded || embed.pan;
+  const zoomable = !embed?.isEmbedded || embed.zoom;
+
   const simService = useSimulation();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
@@ -83,14 +148,15 @@ function WebApp() {
 
   const sourceService = useSelector(useAuth(), getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
-  const sourceID = sourceState!.context.sourceID;
+  const sourceID = sourceState.context.sourceID;
+  const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
 
   const canvasService = useInterpret(canvasMachine, {
     context: {
       ...canvasModel.initialContext,
       sourceID,
-      zoomable: !embed?.isEmbedded || embed.zoom,
-      pannable: !embed?.isEmbedded || embed.pan,
+      pannable,
+      zoomable,
     },
   });
 
@@ -125,7 +191,28 @@ function WebApp() {
         canvas={
           shouldRenderCanvas && (
             <CanvasProvider value={canvasService}>
-              <CanvasView />
+              <CanvasView
+                pannable={pannable}
+                zoomable={zoomable}
+                showControls={!embed?.isEmbedded || embed.controls}
+                Header={
+                  !embed?.isEmbedded && (
+                    <Box
+                      data-testid="canvas-header"
+                      bg="gray.800"
+                      zIndex={1}
+                      padding="0"
+                      height="3rem"
+                    >
+                      <CanvasHeader />
+                    </Box>
+                  )
+                }
+                Empty={canShowWelcomeMessage && <WelcomeArea />}
+                ControlsAdditionalMenu={
+                  !embed?.isEmbedded && <ControlsAdditionalMenu />
+                }
+              />
             </CanvasProvider>
           )
         }

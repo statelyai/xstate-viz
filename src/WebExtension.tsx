@@ -9,6 +9,9 @@ import { EventsTab } from './tabs/EventsTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { StateTab } from './tabs/StateTab';
 
+// TODO: implement something nicer
+const Empty = () => null;
+
 export const WebExtension = () => {
   const canvasService = useInterpret(canvasMachine);
   return (
@@ -16,7 +19,7 @@ export const WebExtension = () => {
       <RootContainer
         canvas={
           <CanvasProvider value={canvasService}>
-            <CanvasView />
+            <CanvasView Empty={<Empty />} />
           </CanvasProvider>
         }
         panels={[StateTab, EventsTab, ActorsTab, SettingsTab]}
