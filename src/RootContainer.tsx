@@ -13,7 +13,6 @@ export const RootContainer = ({
   return (
     <Box
       data-testid="app"
-      data-viz-theme="dark"
       as="main"
       display="grid"
       height="100vh"

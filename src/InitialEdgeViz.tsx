@@ -31,23 +31,21 @@ export const InitialEdgeViz: React.FC<{ node: DirectedGraphNode }> = ({
   const markerId = `n${Math.floor(Math.random() * 1000)}`;
 
   return (
-    <g data-viz="edgeGroup" data-viz-active={isActive || undefined}>
+    <g style={!isActive ? { opacity: 0.25 } : undefined}>
       <defs>
         <ArrowMarker id={markerId} />
       </defs>
       <circle
-        data-viz="initialEdge-circle"
         r="4"
         cx={startPoint.x}
         cy={startPoint.y}
-        fill="var(--stroke)"
+        fill="var(--viz-edge-color)"
       />
       <path
-        data-viz="edge"
         d={`M ${startPoint.x},${startPoint.y} Q ${startPoint.x},${endPoint.y} ${
           endPoint.x
         },${endPoint.y} L ${endPoint.x + 1}, ${endPoint.y}`}
-        stroke="var(--stroke)"
+        stroke="var(--viz-edge-color)"
         strokeWidth={2}
         fill="none"
         markerEnd={`url(#${markerId})`}

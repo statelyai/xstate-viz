@@ -299,6 +299,7 @@ const editorPanelMachine = editorPanelModel.createMachine(
                   range,
                   options: {
                     isWholeLine: true,
+                    // TODO: recheck if those are actually working
                     glyphMarginClassName: 'editor__glyph-margin',
                     className: 'editor__error-content',
                   },
