@@ -7,6 +7,8 @@ import {
   Box,
   Tab,
   TabPanel,
+  TabPanelProps,
+  TabProps,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React from 'react';
@@ -73,9 +75,9 @@ const StatePanel: React.FC = () => {
 };
 
 export const StateTab = {
-  Tab: () => <Tab>State</Tab>,
-  TabPanel: () => (
-    <TabPanel height="100%" overflowY="auto">
+  Tab: (props: TabProps) => <Tab {...props}>State</Tab>,
+  TabPanel: (props: TabPanelProps) => (
+    <TabPanel {...props} height="100%" overflowY="auto">
       <StatePanel />
     </TabPanel>
   ),

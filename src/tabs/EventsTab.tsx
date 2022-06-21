@@ -22,6 +22,8 @@ import {
   Tab,
   Table,
   TabPanel,
+  TabPanelProps,
+  TabProps,
   Tbody,
   Td,
   Text,
@@ -481,9 +483,9 @@ const NewEvent: React.FC<{
 };
 
 export const EventsTab = {
-  Tab: () => <Tab>Events</Tab>,
-  TabPanel: () => (
-    <TabPanel height="100%" overflow="hidden">
+  Tab: (props: TabProps) => <Tab {...props}>Events</Tab>,
+  TabPanel: (props: TabPanelProps) => (
+    <TabPanel {...props} height="100%" overflow="hidden">
       <EventsPanel />
     </TabPanel>
   ),

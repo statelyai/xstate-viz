@@ -13,6 +13,8 @@ import {
   ListItem,
   Tab,
   TabPanel,
+  TabPanelProps,
+  TabProps,
   Text,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
@@ -133,11 +135,11 @@ const ActorsPanel: React.FC = () => {
 };
 
 export const ActorsTab = {
-  Tab: () => {
+  Tab: (props: TabProps) => {
     const simService = useSimulation();
     const services = useSelector(simService, selectServices);
     return (
-      <Tab>
+      <Tab {...props}>
         Actors{' '}
         <Badge fontSize="x-small" marginLeft="1" colorScheme="blue">
           {Object.values(services).length}
@@ -145,8 +147,8 @@ export const ActorsTab = {
       </Tab>
     );
   },
-  TabPanel: () => (
-    <TabPanel height="100%" overflowY="auto">
+  TabPanel: (props: TabPanelProps) => (
+    <TabPanel {...props} height="100%" overflowY="auto">
       <ActorsPanel />
     </TabPanel>
   ),

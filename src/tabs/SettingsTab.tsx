@@ -7,6 +7,8 @@ import {
   Tab,
   Table,
   TabPanel,
+  TabPanelProps,
+  TabProps,
   Tbody,
   Td,
   Th,
@@ -121,13 +123,13 @@ const SettingsPanel: React.FC = () => {
 };
 
 export const SettingsTab = {
-  Tab: () => (
-    <Tab marginLeft="auto" marginRight="2">
+  Tab: (props: TabProps) => (
+    <Tab {...props} marginLeft="auto" marginRight="2">
       <SettingsIcon aria-label="Settings" />
     </Tab>
   ),
-  TabPanel: () => (
-    <TabPanel height="100%" overflowY="auto">
+  TabPanel: (props: TabPanelProps) => (
+    <TabPanel {...props} height="100%" overflowY="auto">
       <SettingsPanel />
     </TabPanel>
   ),

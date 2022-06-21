@@ -1,16 +1,16 @@
-import { Tab, TabPanel } from '@chakra-ui/react';
+import { Tab, TabPanel, TabPanelProps, TabProps } from '@chakra-ui/react';
 import { EditorPanel } from '../EditorPanel';
 import { useSimulation } from '../SimulationContext';
 import { useSourceActor } from '../sourceMachine';
 import { SpinnerWithText } from '../SpinnerWithText';
 
 export const CodeTab = {
-  Tab: () => <Tab>Code</Tab>,
-  TabPanel: () => {
+  Tab: (props: TabProps) => <Tab {...props}>Code</Tab>,
+  TabPanel: (props: TabPanelProps) => {
     const [sourceState, sendToSourceService] = useSourceActor();
     const simService = useSimulation();
     return (
-      <TabPanel height="100%" padding={0}>
+      <TabPanel {...props} height="100%" padding={0}>
         {sourceState.matches({
           with_source: 'loading_content',
         }) && (
