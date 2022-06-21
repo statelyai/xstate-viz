@@ -11,6 +11,10 @@ import {
 import { useCanvasDrag } from './CanvasDragContext';
 import { AnyState } from './types';
 
+const getCanvasRef = (
+  state: ReturnType<typeof useCanvasDrag>['initialState'],
+) => state.context.ref;
+
 const getCursorByState = (state: AnyState) =>
   (
     Object.values(state.meta).find((m) =>
@@ -29,7 +33,7 @@ export const CanvasContainer = ({
 }) => {
   const canvasService = useCanvas();
   const canvasDragService = useCanvasDrag();
-  const canvasRef = canvasDragService.state.context.ref;
+  const canvasRef = useSelector(canvasDragService, getCanvasRef);
   const cursor = useSelector(canvasDragService, getCursorByState);
 
   /**
