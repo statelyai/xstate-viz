@@ -21,7 +21,7 @@ export const PanelsView = ({
     <ResizableBox
       {...props}
       minHeight={0}
-      disabled={resizable}
+      disabled={!resizable}
       data-testid="panels-view"
     >
       <Tabs
