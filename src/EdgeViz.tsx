@@ -62,19 +62,17 @@ export const EdgeViz: React.FC<{ edge: DirectedGraphEdge; order: number }> = ({
 
   return path ? (
     <g
-      data-viz="edgeGroup"
       data-viz-edge={edge.id}
-      data-viz-active={isActive || undefined}
+      style={!isActive ? { opacity: 0.25 } : undefined}
     >
       <defs>
         <ArrowMarker id={markerId} />
       </defs>
       <path
-        stroke="#fff4"
+        stroke="var(--viz-edge-color)"
         strokeWidth={2}
         fill="none"
         d={pathToD(roundPath(path))}
-        data-viz="edge"
         markerEnd={`url(#${markerId})`}
       ></path>
     </g>

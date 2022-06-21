@@ -21,7 +21,7 @@ export interface PointDelta {
 export const dragSessionModel = createModel(
   {
     session: null as DragSession | null,
-    ref: null as React.MutableRefObject<HTMLElement> | null,
+    ref: null as unknown as React.RefObject<HTMLElement>,
   },
   {
     events: {

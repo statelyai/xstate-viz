@@ -18,6 +18,25 @@ export const theme = extendTheme({
         overflow: 'hidden',
         overscrollBehavior: 'none',
         fontFamily: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif`,
+
+        background: 'var(--viz-color-bg)',
+        color: 'var(--viz-color-fg)',
+
+        '--viz-color-transparent': '#fff6',
+        '--viz-color-active': '#679ae7',
+        '--viz-border-color': 'var(--viz-node-color-bg)',
+        '--viz-border-width': '2px',
+        '--viz-border': 'var(--viz-border-width) solid var(--viz-border-color)',
+        '--viz-radius': '0.25rem',
+        '--viz-node-border-style': 'solid',
+        '--viz-node-parallel-border-style': 'dashed',
+        '--viz-font-size-base': '14px',
+        '--viz-font-size-sm': '12px',
+
+        '--viz-color-fg': '#fff',
+        '--viz-color-bg': '#111',
+        '--viz-node-color-bg': '#2d2d2d',
+        '--viz-edge-color': 'white',
       },
       '#root': {
         height: '100vh',

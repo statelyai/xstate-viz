@@ -1,15 +1,25 @@
+import { chakra, keyframes } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
 import type { AnyStateNodeDefinition, Guard } from 'xstate';
+import { toSCXMLEvent } from 'xstate/lib/utils';
+import { ActionViz } from './ActionViz';
+import { DelayViz } from './DelayViz';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { Point } from './pathUtils';
 import { useSimulation } from './SimulationContext';
-import { AnyStateMachine, StateFrom } from './types';
-import { toSCXMLEvent } from 'xstate/lib/utils';
 import { simulationMachine } from './simulationMachine';
-import { ActionViz } from './ActionViz';
-import { DelayViz } from './DelayViz';
+import { AnyStateMachine, StateFrom } from './types';
+
+const moveLeft = keyframes`
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+`;
 
 const getGuardType = (guard: Guard<any, any>) => {
   return guard.name; // v4
@@ -106,11 +116,25 @@ export const TransitionViz: React.FC<{
     !!state.configuration.find((sn) => sn === edge.source);
 
   return (
-    <button
+    <chakra.button
       data-viz="transition"
-      data-viz-potential={isPotential || undefined}
-      data-viz-disabled={isDisabled || undefined}
-      data-is-delayed={delay ?? undefined}
+      css={{
+        '--viz-transition-color': isPotential
+          ? 'var(--viz-color-active)'
+          : 'gray',
+        display: 'block',
+        borderRadius: '1rem',
+        backgroundColor: 'var(--viz-transition-color)',
+        appearance: 'none',
+      }}
+      _after={
+        delay && !isDisabled
+          ? {
+              animation: `${moveLeft} calc(var(--delay) * 1ms) linear`,
+              zIndex: 0,
+            }
+          : undefined
+      }
       data-rect-id={edge.id}
       style={{
         position: 'absolute',
@@ -143,33 +167,76 @@ export const TransitionViz: React.FC<{
         });
       }}
     >
-      <div data-viz="transition-label">
-        <span data-viz="transition-event">
+      <chakra.div
+        css={{
+          alignSelf: 'center',
+          flexShrink: 0,
+          fontSize: 'var(--viz-font-size-sm)',
+          fontWeight: 'bold',
+          color: 'white',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          overflow: 'hidden',
+        }}
+      >
+        <chakra.span
+          css={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: '1ch',
+            padding: '0.25rem 0.5rem',
+          }}
+        >
           <EventTypeViz eventType={definition.eventType} delay={delay} />
           {delay && delay.delayType === 'DELAYED_VALID' && (
             <DelayViz active={isPotential} duration={delay.delay} />
           )}
-        </span>
+        </chakra.span>
         {definition.cond && (
-          <span data-viz="transition-guard">
+          <chakra.span
+            css={{
+              padding: '0 0.5rem',
+            }}
+            _before={{
+              content: "'['",
+            }}
+            _after={{
+              content: "']'",
+            }}
+          >
             {getGuardType(definition.cond)}
-          </span>
+          </chakra.span>
         )}
-      </div>
-      <div data-viz="transition-content">
-        {definition.actions.length > 0 && (
-          <div data-viz="transition-actions">
-            {definition.actions.map((action, index) => {
-              return <ActionViz key={index} action={action} kind="do" />;
-            })}
-          </div>
-        )}
-      </div>
-      {definition.description && (
-        <div data-viz="transition-description">
-          <p>{definition.description}</p>
-        </div>
+      </chakra.div>
+      {definition.actions.length > 0 && (
+        <chakra.div
+          css={{
+            padding: '0rem 0.5rem 0.5rem',
+          }}
+        >
+          {definition.actions.map((action, index) => {
+            return <ActionViz key={index} action={action} kind="do" />;
+          })}
+        </chakra.div>
       )}
-    </button>
+      {definition.description && (
+        <chakra.div
+          css={{
+            borderTop: '2px solid var(--chakra-colors-whiteAlpha-300)',
+            padding: '0.5rem',
+            minWidth: 'max-content',
+            fontSize: 'var(--chakra-fontSizes-sm)',
+            textAlign: 'left',
+          }}
+        >
+          <chakra.p css={{ maxWidth: '10rem' }}>
+            {definition.description}
+          </chakra.p>
+        </chakra.div>
+      )}
+    </chakra.button>
   );
 };

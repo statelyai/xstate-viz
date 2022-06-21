@@ -1,25 +1,29 @@
-import React from 'react';
-import { useSelector } from '@xstate/react';
-import { useSimulation } from './SimulationContext';
+import { ArrowForwardIcon } from '@chakra-ui/icons';
 import {
   Accordion,
-  AccordionItem,
   AccordionButton,
-  AccordionPanel,
   AccordionIcon,
-  Button,
+  AccordionItem,
+  AccordionPanel,
+  Badge,
   Box,
+  Button,
   List,
-  ListItem,
   ListIcon,
+  ListItem,
+  Tab,
+  TabPanel,
+  TabPanelProps,
+  TabProps,
   Text,
-  Link,
 } from '@chakra-ui/react';
-import { ArrowForwardIcon } from '@chakra-ui/icons';
+import { useSelector } from '@xstate/react';
+import React from 'react';
 import { InterpreterStatus, StateFrom } from 'xstate';
-import { simulationMachine } from './simulationMachine';
+import { useSimulation } from '../SimulationContext';
+import { simulationMachine } from '../simulationMachine';
 
-export const selectServices = (state: StateFrom<typeof simulationMachine>) => {
+const selectServices = (state: StateFrom<typeof simulationMachine>) => {
   return state.context.serviceDataMap;
 };
 
@@ -71,7 +75,7 @@ const ActorDetails: React.FC<{ state: any; title: string }> = ({
   );
 };
 
-export const ActorsPanel: React.FC = () => {
+const ActorsPanel: React.FC = () => {
   const simActor = useSimulation();
   const services = useSelector(simActor, selectServices);
   const currentSessionId = useSelector(
@@ -128,4 +132,24 @@ export const ActorsPanel: React.FC = () => {
       })}
     </List>
   );
+};
+
+export const ActorsTab = {
+  Tab: (props: TabProps) => {
+    const simService = useSimulation();
+    const services = useSelector(simService, selectServices);
+    return (
+      <Tab {...props}>
+        Actors{' '}
+        <Badge fontSize="x-small" marginLeft="1" colorScheme="blue">
+          {Object.values(services).length}
+        </Badge>
+      </Tab>
+    );
+  },
+  TabPanel: (props: TabPanelProps) => (
+    <TabPanel {...props} height="100%" overflowY="auto">
+      <ActorsPanel />
+    </TabPanel>
+  ),
 };

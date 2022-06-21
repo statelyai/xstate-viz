@@ -83,7 +83,7 @@ const editorPanelModel = createModel(
     notifRef: undefined! as ActorRefFrom<typeof notifMachine>,
     monacoRef: null as Monaco | null,
     standaloneEditorRef: null as editor.IStandaloneCodeEditor | null,
-    sourceRef: null as SourceMachineActorRef,
+    sourceRef: null as unknown as SourceMachineActorRef,
     mainFile: 'main.ts',
     machines: null as AnyStateMachine[] | null,
     deltaDecorations: [] as string[],
@@ -299,6 +299,7 @@ const editorPanelMachine = editorPanelModel.createMachine(
                   range,
                   options: {
                     isWholeLine: true,
+                    // TODO: recheck if those are actually working
                     glyphMarginClassName: 'editor__glyph-margin',
                     className: 'editor__error-content',
                   },
@@ -455,6 +456,7 @@ export const EditorPanel: React.FC<{
                 onSave={() => {
                   onSave();
                 }}
+                readOnly={embed?.isEmbedded && embed.readOnly}
               />
             </div>
             <HStack padding="2" w="full" justifyContent="space-between">

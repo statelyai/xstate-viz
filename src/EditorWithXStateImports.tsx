@@ -2,7 +2,6 @@ import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useEffect, useRef } from 'react';
 import { themes } from './editor-themes';
-import { useEmbed } from './embedContext';
 import { localCache } from './localCache';
 import { prettierLoader } from './prettier';
 import { SpinnerWithText } from './SpinnerWithText';
@@ -22,6 +21,7 @@ interface EditorWithXStateImportsProps {
   onSave?: () => void;
   onFormat?: () => void;
   value: string;
+  readOnly?: boolean;
 }
 
 // based on the logic here: https://github.com/microsoft/TypeScript-Website/blob/103f80e7490ad75c34917b11e3ebe7ab9e8fc418/packages/sandbox/src/index.ts
@@ -66,10 +66,10 @@ const withTypeAcquisition = (
   return editor;
 };
 
-export const EditorWithXStateImports = (
-  props: EditorWithXStateImportsProps,
-) => {
-  const embed = useEmbed();
+export const EditorWithXStateImports = ({
+  readOnly,
+  ...props
+}: EditorWithXStateImportsProps) => {
   const editorTheme = useEditorTheme();
   const editorRef = useRef<typeof editor | null>(null);
   const definedEditorThemes = useRef(new Set<string>());
@@ -99,7 +99,7 @@ export const EditorWithXStateImports = (
         minimap: { enabled: false },
         tabSize: 2,
         glyphMargin: true,
-        readOnly: embed?.isEmbedded && embed.readOnly,
+        readOnly,
       }}
       loading={<SpinnerWithText text="Preparing the editor" />}
       onChange={(text) => {

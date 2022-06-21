@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
 import {
   ActionObject,
   ActionTypes,
@@ -12,6 +11,8 @@ import {
   SpecialTargets,
   StopAction,
 } from 'xstate';
+import { ActionLabelBeforeElement } from './ActionLabelBeforeElement';
+import { SpecificActionLabel } from './SpecificActionLabel';
 import { isDelayedTransitionAction, isStringifiedFunction } from './utils';
 
 type AnyFunction = (...args: any[]) => any;
@@ -41,33 +42,13 @@ export function getActionLabel(action: ActionObject<any, any>): string | null {
   return action.type;
 }
 
-export const ActionType: React.FC<{ title?: string }> = ({
-  children,
-  title,
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [resolvedTitle, setTitle] = useState(title || '');
-
-  useEffect(() => {
-    if (ref.current && !title) {
-      setTitle(ref.current.textContent!);
-    }
-  }, [title]);
-
-  return (
-    <div data-viz="action-type" title={resolvedTitle} ref={ref}>
-      {children}
-    </div>
-  );
-};
-
 export const RaiseActionLabel: React.FC<{
   action: PotentiallyStructurallyCloned<RaiseAction<EventObject>>;
 }> = ({ action }) => {
   return (
-    <ActionType>
+    <SpecificActionLabel>
       <strong>raise</strong> {action.event}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -76,9 +57,9 @@ export const SendActionLabel: React.FC<{
 }> = ({ action }) => {
   if (!action.event) {
     return (
-      <ActionType>
+      <SpecificActionLabel>
         <strong>send</strong> <em>unknown</em>
-      </ActionType>
+      </SpecificActionLabel>
     );
   }
 
@@ -103,9 +84,9 @@ export const SendActionLabel: React.FC<{
   );
 
   return (
-    <ActionType>
+    <SpecificActionLabel>
       {actionLabel} {actionTo}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -113,9 +94,9 @@ export const LogActionLabel: React.FC<{
   action: PotentiallyStructurallyCloned<LogAction<unknown, EventObject>>;
 }> = ({ action }) => {
   return (
-    <ActionType>
+    <SpecificActionLabel>
       <strong>log</strong> {action.label}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -123,9 +104,9 @@ export const CancelActionLabel: React.FC<{
   action: PotentiallyStructurallyCloned<CancelAction>;
 }> = ({ action }) => {
   return (
-    <ActionType>
+    <SpecificActionLabel>
       <strong>cancel</strong> {action.sendId}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -133,14 +114,14 @@ export const StopActionLabel: React.FC<{
   action: PotentiallyStructurallyCloned<StopAction<unknown, EventObject>>;
 }> = ({ action }) => {
   return (
-    <ActionType>
+    <SpecificActionLabel>
       <strong>stop</strong>{' '}
       {typeof action.activity === 'object' && 'id' in action.activity ? (
         action.activity.id
       ) : (
         <em>expr</em>
       )}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -148,14 +129,14 @@ export const AssignActionLabel: React.FC<{
   action: PotentiallyStructurallyCloned<AssignAction<unknown, EventObject>>;
 }> = ({ action }) => {
   return (
-    <ActionType>
+    <SpecificActionLabel>
       <strong>assign</strong>{' '}
       {typeof action.assignment === 'object' ? (
         Object.keys(action.assignment).join(', ')
       ) : (
         <em>{action.assignment?.name || 'expr'}</em>
       )}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -163,10 +144,10 @@ export const ChooseActionLabel: React.FC<{
   action: PotentiallyStructurallyCloned<ChooseAction<unknown, EventObject>>;
 }> = () => {
   return (
-    <ActionType>
+    <SpecificActionLabel>
       <strong>choose</strong>
       {/* TODO: recursively add actions/guards */}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -180,9 +161,9 @@ export const CustomActionLabel: React.FC<{
   }
 
   return (
-    <ActionType>
+    <SpecificActionLabel>
       {label === 'anonymous' ? <em>anonymous</em> : <strong>{label}</strong>}
-    </ActionType>
+    </SpecificActionLabel>
   );
 };
 
@@ -218,8 +199,8 @@ export const ActionViz: React.FC<{
   }[action.type] ?? <CustomActionLabel action={action} />;
 
   return (
-    <div data-viz="action" data-viz-action={kind}>
+    <ActionLabelBeforeElement kind={kind}>
       {actionType}
-    </div>
+    </ActionLabelBeforeElement>
   );
 };

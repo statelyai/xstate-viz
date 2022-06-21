@@ -34,18 +34,22 @@ describe('Embedded mode', () => {
     });
   });
   describe('default (mode:viz)1', () => {
-    before(() => {
+    it('panels should be hidden', () => {
       cy.interceptGraphQL({
         getSourceFile: sourceFileFixture,
       });
       cy.visitEmbedWithNextPageProps({
         sourceFile: sourceFileFixture,
       });
-    });
-    it('panels should be hidden', () => {
-      cy.getPanelsView().should('be.hidden');
+      cy.getPanelsView().should('not.exist');
     });
     it('canvas header should be hidden', () => {
+      cy.interceptGraphQL({
+        getSourceFile: sourceFileFixture,
+      });
+      cy.visitEmbedWithNextPageProps({
+        sourceFile: sourceFileFixture,
+      });
       cy.getCanvasHeader().should('not.exist');
     });
   });
