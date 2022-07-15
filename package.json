@@ -9,6 +9,7 @@
     "@emotion/styled": "^11",
     "@graphql-typed-document-node/core": "^3.1.0",
     "@monaco-editor/react": "^4.2.1",
+    "@replayio/cypress": "^0.2.3",
     "@sentry/react": "^6.10.0",
     "@sentry/tracing": "^6.10.0",
     "@supabase/supabase-js": "^1.22.5",
@@ -41,8 +42,13 @@
     "postinstall": "patch-package && mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public",
     "cypress:open": "cypress open",
     "cypress:test": "cypress run",
+    "cypress:record": "RECORD_ALL_CONTENT=1 RECORD_REPLAY_METADATA_FILE=$(mktemp) cypress run --browser 'Replay Firefox'",
     "jest": "jest",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "e2e:wait": "wait-on http://localhost:3000",
+    "e2e:run": "npm run e2e:wait && npm run cypress:test",
+    "e2e:server": "npm run start & npm run e2e:run",
+    "e2e:build": "npm run serve & npm run e2e:run"
   },
   "eslintConfig": {
     "extends": [
@@ -86,6 +92,7 @@
     "patch-package": "^6.4.7",
     "prettier": "^2.3.2",
     "sass": "^1.33.0",
-    "typescript": "^4.3.5"
+    "typescript": "^4.3.5",
+    "wait-on":"^6.0.1"
   }
 }

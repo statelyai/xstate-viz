@@ -1,6 +1,12 @@
-name: CI/CD
+name: Tests
 
-on: [push]
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: Cypress browser to use
 
 jobs:
   cypress-tests:
@@ -22,21 +28,16 @@ jobs:
       - name: Jest tests
         run: yarn jest --ci
 
-      - name: Build
-        run: yarn next build
-        env:
-          NEXT_PUBLIC_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
-          NEXT_PUBLIC_SUPABASE_API_URL: ${{ secrets.SUPABASE_API_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_API_KEY: ${{ secrets.SUPABASE_ANON_API_KEY }}
-          NEXT_PUBLIC_USE_LOCAL_MONACO: 'true'
-          CI: 'false'
-
       - name: Run Cypress
         uses: replayio/action-cypress@v0.1.4
         with:
-          command: npm run e2e:build -- -- --
+          command: npm run e2e:server -- -- --
           browser: "Replay Firefox"
           apiKey: ${{ secrets.CYPRESS_REPLAY_API_KEY }}
           public: true
           issue-number: ${{ github.event.pull_request.number }}
           upload-all: true
+
+      - run: npx @replayio/replay ls
+        if: ${{ always() }}
+        shell: bash 
