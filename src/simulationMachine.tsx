@@ -7,7 +7,11 @@ import {
   SCXML,
 } from 'xstate';
 import { AnyEventObject, assign, interpret, send, spawn } from 'xstate';
-import { createWindowReceiver } from '@xstate/inspect';
+import {
+  createWebSocketReceiver,
+  createWindowReceiver,
+  InspectReceiver,
+} from '@xstate/inspect';
 
 import { createModel } from 'xstate/lib/model';
 import { devTools } from './devInterface';
@@ -77,13 +81,26 @@ export const simulationMachine = simModel.createMachine(
         invoke: {
           id: 'proxy',
           src: () => (sendBack, onReceive) => {
-            const receiver = createWindowReceiver({
-              // for some random reason the `window.top` is being rewritten to `window.self`
-              // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
-              // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
-              // so we pass it explicitly here
-              targetWindow: window.opener || window.parent,
-            });
+            const serverUrl = new URLSearchParams(window.location.search).get(
+              'server',
+            );
+
+            let receiver: InspectReceiver;
+            if (serverUrl) {
+              const [protocol, ...server] = serverUrl.split('://');
+              receiver = createWebSocketReceiver({
+                protocol: protocol as 'ws' | 'wss',
+                server: server.join('://'),
+              });
+            } else {
+              receiver = createWindowReceiver({
+                // for some random reason the `window.top` is being rewritten to `window.self`
+                // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
+                // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
+                // so we pass it explicitly here
+                targetWindow: window.opener || window.parent,
+              });
+            }
 
             onReceive((event) => {
               if (event.type === 'xstate.event') {

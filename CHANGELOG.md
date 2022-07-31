@@ -1,5 +1,25 @@
 # XState Visualizer
 
+## 0.7.0
+
+### Minor Changes
+
+- [#293](https://github.com/statelyai/xstate-viz/pull/293) [`67e24ae`](https://github.com/statelyai/xstate-viz/commit/67e24ae76aa253855c6bd866472f45c77be75367) Thanks [@jacksteamdev](https://github.com/jacksteamdev)! - You can now inspect via WebSocket. To do that you can add the WebSocket server url as a query parameter, for example `https://stately.ai/viz?inspect&server=ws://localhost:3000`
+
+### Patch Changes
+
+- [#343](https://github.com/statelyai/xstate-viz/pull/343) [`632f950`](https://github.com/statelyai/xstate-viz/commit/632f950c6d0d1989a263d2cb0f5cf0483950e8f2) Thanks [@Andarist](https://github.com/Andarist)! - Fixed panning/dragging interations (the ones that include pressing pointer down) in FireFox.
+
+## 0.6.0
+
+### Minor Changes
+
+- [#338](https://github.com/statelyai/xstate-viz/pull/338) [`196e44d`](https://github.com/statelyai/xstate-viz/commit/196e44d296a845cdd0f6dfa230fdad3089a77d21) Thanks [@riccardo-forina](https://github.com/riccardo-forina)! - You can now visualize descriptions added directly to state nodes and transitions
+
+### Patch Changes
+
+- [#336](https://github.com/statelyai/xstate-viz/pull/336) [`225757d`](https://github.com/statelyai/xstate-viz/commit/225757de7c9d65397a2d14c5397a1432373a7266) Thanks [@kmannislands](https://github.com/kmannislands)! - Remove unecessary feature policy claims from generated embed iframes
+
 ## 0.5.1
 
 ### Patch Changes
