@@ -25,7 +25,7 @@ export const CanvasHeader: React.FC = () => {
   const loggedInUserData = useLoggedInUserData();
   const registryData = sourceState.context.sourceRegistryData;
   const userOwnsSource =
-    loggedInUserData?.id === registryData?.system?.owner?.id;
+    loggedInUserData?.id === registryData?.project?.owner?.id;
   return (
     <HStack zIndex={1} justifyContent="space-between" height="3rem">
       <Link
@@ -53,7 +53,7 @@ export const CanvasHeader: React.FC = () => {
       {registryData && (
         <Stack direction="row" spacing="4" alignItems="center" pr="4">
           <Text fontWeight="semibold" fontSize="sm" color="gray.100">
-            {registryData?.system?.name || 'Unnamed Source'}
+            {registryData?.project?.name || 'Unnamed Source'}
           </Text>
           <HStack>
             <LikeButton />
@@ -67,11 +67,11 @@ export const CanvasHeader: React.FC = () => {
               />
               <MenuList>
                 {userOwnsSource &&
-                  sourceState.context.sourceRegistryData?.system?.id && (
+                  sourceState.context.sourceRegistryData?.project?.id && (
                     <MenuItem
                       as="a"
                       href={registryLinks.editSystem(
-                        sourceState.context.sourceRegistryData?.system?.id,
+                        sourceState.context.sourceRegistryData?.project?.id,
                       )}
                     >
                       <HStack spacing="3">
@@ -80,17 +80,17 @@ export const CanvasHeader: React.FC = () => {
                       </HStack>
                     </MenuItem>
                   )}
-                {registryData.system?.owner && (
+                {registryData.project?.owner && (
                   <MenuItem
                     as="a"
                     href={registryLinks.viewUserById(
-                      registryData?.system?.owner?.id,
+                      registryData?.project?.owner?.id,
                     )}
                   >
                     <HStack spacing="3">
                       <Avatar
-                        src={registryData.system?.owner?.avatarUrl || ''}
-                        name={registryData.system?.owner?.displayName || ''}
+                        src={registryData.project?.owner?.avatarUrl || ''}
+                        name={registryData.project?.owner?.displayName || ''}
                         size="xs"
                         height="24px"
                         width="24px"
