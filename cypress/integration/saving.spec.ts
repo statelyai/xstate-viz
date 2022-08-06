@@ -24,7 +24,7 @@ describe('Saving', () => {
       },
       createSourceFile: {
         id: 'source-file-id',
-        system: {
+        project: {
           name: 'Source File',
           owner: {
             id: 'id',
@@ -57,7 +57,7 @@ describe('Saving', () => {
       getSourceFile: {
         id: 'source-file-id',
         text: '// New File',
-        system: {
+        project: {
           name: 'Source File',
           owner: {
             id: 'id',
@@ -66,7 +66,7 @@ describe('Saving', () => {
       },
       updateSourceFile: {
         id: 'source-file-id',
-        system: {
+        project: {
           name: 'Source File',
           owner: {
             id: 'id',

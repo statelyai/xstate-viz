@@ -4,7 +4,7 @@ fragment SourceFile on SourceFile {
   text
   youHaveLiked
   likesCount
-  system {
+  project {
     id
     name
     owner {
