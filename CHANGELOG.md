@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.7.1
+
+### Patch Changes
+
+- [#373](https://github.com/statelyai/xstate-viz/pull/373) [`ecf0d23`](https://github.com/statelyai/xstate-viz/commit/ecf0d2384a5a05955eff5b7eea334d3f0ee887e6) Thanks [@davidkpiano](https://github.com/davidkpiano)! - Updated API to point to projects rather than systems
+
 ## 0.7.0
 
 ### Minor Changes
