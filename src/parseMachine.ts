@@ -81,6 +81,7 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
       log: console.log,
       warn: console.warn,
     },
+    window: globalThis,
     ...windowShim,
   });
 
