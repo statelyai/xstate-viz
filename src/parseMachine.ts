@@ -25,6 +25,12 @@ const windowShim = {
   clearInterval: (...args: any[]) => {
     return clearInterval(...args);
   },
+  confirm: (...args: any[]) => {
+    return confirm(...args);
+  },
+  prompt: (...args: any[]) => {
+    return prompt(...args);
+  },
 };
 
 export function parseMachines(sourceJs: string): Array<StateNode> {
@@ -75,6 +81,7 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
       log: console.log,
       warn: console.warn,
     },
+    window: globalThis,
     ...windowShim,
   });
 
