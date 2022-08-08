@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.8.0
+
+### Minor Changes
+
+- [#377](https://github.com/statelyai/xstate-viz/pull/377) [`9b731ba`](https://github.com/statelyai/xstate-viz/commit/9b731baf0acc3e62343cc6cca0a7e9c4ffee0e2c) Thanks [@farskid](https://github.com/farskid)! - Support `confirm`, `prompt` and `window.*` in the visualizer
+
 ## 0.7.1
 
 ### Patch Changes
