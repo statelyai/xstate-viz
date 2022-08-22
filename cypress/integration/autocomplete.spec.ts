@@ -6,7 +6,7 @@ describe('Autocomplete in the editor', () => {
     // Wait for the autocomplete to show up
     cy.contains('assign');
 
-    cy.getMonacoEditor().type('{downarrow}{downarrow}{enter}');
+    cy.getMonacoEditor().type('{downarrow}{enter}');
 
     cy.contains(`import { assign, createMachine } from 'xstate';`);
   });

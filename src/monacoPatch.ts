@@ -194,43 +194,54 @@ monacoLoader.init = function (...args) {
             return;
           }
 
-          const suggestions = info.entries.map((entry: any) => {
-            let range = wordRange;
-            if (entry.replacementSpan) {
-              const p1 = model.getPositionAt(entry.replacementSpan.start);
-              const p2 = model.getPositionAt(
-                entry.replacementSpan.start + entry.replacementSpan.length,
-              );
+          const suggestions = info.entries
+            .filter((entry: any) => {
+              // Here we filter any entry that exists in XState but is not imported from the core library
+              if (
+                entry.name in XState &&
+                entry.source !== 'file:///node_modules/xstate/lib/index'
+              ) {
+                return false;
+              }
+              return true;
+            })
+            .map((entry: any) => {
+              let range = wordRange;
+              if (entry.replacementSpan) {
+                const p1 = model.getPositionAt(entry.replacementSpan.start);
+                const p2 = model.getPositionAt(
+                  entry.replacementSpan.start + entry.replacementSpan.length,
+                );
 
-              range = new monaco.Range(
-                p1.lineNumber,
-                p1.column,
-                p2.lineNumber,
-                p2.column,
-              );
-            }
+                range = new monaco.Range(
+                  p1.lineNumber,
+                  p1.column,
+                  p2.lineNumber,
+                  p2.column,
+                );
+              }
 
-            const tags = [];
-            if (entry.kindModifiers?.indexOf('deprecated') !== -1) {
-              tags.push(monaco.languages.CompletionItemTag.Deprecated);
-            }
+              const tags = [];
+              if (entry.kindModifiers?.indexOf('deprecated') !== -1) {
+                tags.push(monaco.languages.CompletionItemTag.Deprecated);
+              }
 
-            return {
-              uri: resource,
-              position: position,
-              offset: offset,
-              range: range,
-              label: entry.name,
-              insertText: entry.name,
-              sortText: entry.sortText,
-              kind: (provider.constructor as any).convertKind(entry.kind),
-              tags,
-              // properties below were added here
-              data: entry.data,
-              source: entry.source,
-              hasAction: entry.hasAction,
-            };
-          });
+              return {
+                uri: resource,
+                position: position,
+                offset: offset,
+                range: range,
+                label: entry.name,
+                insertText: entry.name,
+                sortText: entry.sortText,
+                kind: (provider.constructor as any).convertKind(entry.kind),
+                tags,
+                // properties below were added here
+                data: entry.data,
+                source: entry.source,
+                hasAction: entry.hasAction,
+              };
+            });
 
           return {
             suggestions,
