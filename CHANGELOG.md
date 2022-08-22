@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.8.1
+
+### Patch Changes
+
+- [#382](https://github.com/statelyai/xstate-viz/pull/382) [`a9019ed`](https://github.com/statelyai/xstate-viz/commit/a9019ed9ebdb5e962f96fe189b258f74e21eceef) Thanks [@mellson](https://github.com/mellson)! - The editor will now prefer imports from xstate core.
+
 ## 0.8.0
 
 ### Minor Changes
