@@ -4,8 +4,8 @@ import type { languages } from 'monaco-editor';
 
 // should be in sync with the "modules" allowed by our eval Function
 import * as XState from 'xstate';
-import * as XStateActions from 'xstate/lib/actions';
 import * as XStateModel from 'xstate/lib/model';
+import * as XStateActions from 'xstate/lib/actions';
 
 // dont hate the player, hate the game
 // https://github.com/microsoft/vscode-loader/issues/33
@@ -123,26 +123,12 @@ function getAutoImport(provider: any, details: any): AutoImport | undefined {
   let specifier = '';
 
   // fortunately auto-imports are not suggested for types
-  if (
-    codeAction.description.includes('xstate/lib/actions') &&
-    details.name in XStateActions
-  ) {
-    specifier = 'xstate/lib/actions';
-  } else if (
-    codeAction.description.includes('xstate/lib/actionTypes') &&
-    details.name in XStateActions
-  ) {
-    specifier = 'xstate/lib/actionTypes';
-  } else if (
-    codeAction.description.includes('xstate/lib/model') &&
-    details.name in XStateModel
-  ) {
-    specifier = 'xstate/lib/model';
-  } else if (
-    codeAction.description.includes('xstate') &&
-    details.name in XState
-  ) {
+  if (details.name in XState) {
     specifier = 'xstate';
+  } else if (details.name in XStateModel) {
+    specifier = 'xstate/lib/model';
+  } else if (details.name in XStateActions) {
+    specifier = 'xstate/lib/actions';
   }
 
   if (!specifier) {
