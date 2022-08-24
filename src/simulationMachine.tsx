@@ -2,6 +2,7 @@ import produce from 'immer';
 import {
   ActorRefFrom,
   AnyInterpreter,
+  createMachine,
   EventFrom,
   InterpreterStatus,
   SCXML,
@@ -84,6 +85,36 @@ export const simulationMachine = simModel.createMachine(
             const serverUrl = new URLSearchParams(window.location.search).get(
               'server',
             );
+
+            let registered = false;
+
+            setInterval(() => {
+              fetch('http://localhost:8888/test')
+                .then((data) => data.json())
+                .then((data) => {
+                  console.log('>>>', data);
+                  const machineData = data[0];
+                  const machine = createMachine(machineData.machine);
+                  const state = machine.resolveState(machineData.state);
+
+                  if (!registered) {
+                    sendBack(
+                      simModel.events['SERVICE.REGISTER']({
+                        sessionId: machineData.id,
+                        machine,
+                        state,
+                        parent: undefined,
+                        source: 'inspector',
+                      }),
+                    );
+                    registered = true;
+                  } else {
+                    sendBack(
+                      simModel.events['SERVICE.STATE'](machineData.id, state),
+                    );
+                  }
+                });
+            }, 1000);
 
             let receiver: InspectReceiver;
             if (serverUrl) {
