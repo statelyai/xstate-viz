@@ -82,96 +82,123 @@ export const simulationMachine = simModel.createMachine(
         invoke: {
           id: 'proxy',
           src: () => (sendBack, onReceive) => {
-            const serverUrl = new URLSearchParams(window.location.search).get(
-              'server',
-            );
+            const searchParams = new URLSearchParams(window.location.search);
+            const serverUrl = searchParams.get('server');
+            const functionUrl = searchParams.get('url');
+            const pollParam = searchParams.get('poll');
+            const poll = pollParam && !isNaN(+pollParam) ? +pollParam : 1000;
 
-            let registered = false;
+            let receiver: InspectReceiver;
+            if (functionUrl) {
+              let registered = false;
+              let lastTimestamp: string;
 
-            setInterval(() => {
-              fetch('http://localhost:8888/test')
-                .then((data) => data.json())
-                .then((data) => {
-                  console.log('>>>', data);
-                  const machineData = data[0];
-                  const machine = createMachine(machineData.machine);
-                  const state = machine.resolveState(machineData.state);
+              setInterval(() => {
+                try {
+                  fetch(functionUrl)
+                    .then((data) => data.json())
+                    .catch((err) => {
+                      console.error(err);
+                    })
+                    .then((data) => {
+                      const machineData = data;
+                      const machine = createMachine(machineData.machine);
+                      const state = machine.resolveState(machineData.state);
 
-                  if (!registered) {
+                      if (!registered) {
+                        sendBack(
+                          simModel.events['SERVICE.REGISTER']({
+                            sessionId: machineData.id,
+                            machine,
+                            state,
+                            parent: undefined,
+                            source: 'inspector',
+                          }),
+                        );
+                        lastTimestamp = machineData.updated_at;
+                        registered = true;
+                      } else {
+                        if (lastTimestamp !== machineData.updated_at) {
+                          sendBack(
+                            simModel.events['SERVICE.STATE'](
+                              machineData.id,
+                              state,
+                            ),
+                          );
+                          lastTimestamp = machineData.updated_at;
+                        }
+                      }
+                    });
+                } catch (e) {
+                  console.error(e);
+                }
+              }, poll);
+
+              onReceive((event) => {
+                if (event.type === 'xstate.event') {
+                  fetch(functionUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(event.event),
+                  });
+                }
+              });
+            } else {
+              if (serverUrl) {
+                const [protocol, ...server] = serverUrl.split('://');
+                receiver = createWebSocketReceiver({
+                  protocol: protocol as 'ws' | 'wss',
+                  server: server.join('://'),
+                });
+              } else {
+                receiver = createWindowReceiver({
+                  // for some random reason the `window.top` is being rewritten to `window.self`
+                  // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
+                  // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
+                  // so we pass it explicitly here
+                  targetWindow: window.opener || window.parent,
+                });
+              }
+
+              onReceive((event) => {
+                if (event.type === 'xstate.event') {
+                  receiver.send({
+                    ...event,
+                    type: 'xstate.event',
+                    event: JSON.stringify(event.event),
+                  });
+                }
+              });
+
+              return receiver.subscribe((event) => {
+                switch (event.type) {
+                  case 'service.register':
+                    let state = event.machine.resolveState(event.state);
                     sendBack(
                       simModel.events['SERVICE.REGISTER']({
-                        sessionId: machineData.id,
-                        machine,
+                        sessionId: event.sessionId,
+                        machine: event.machine,
                         state,
-                        parent: undefined,
+                        parent: event.parent,
                         source: 'inspector',
                       }),
                     );
-                    registered = true;
-                  } else {
+                    break;
+                  case 'service.state':
                     sendBack(
-                      simModel.events['SERVICE.STATE'](machineData.id, state),
+                      simModel.events['SERVICE.STATE'](
+                        event.sessionId,
+                        event.state,
+                      ),
                     );
-                  }
-                });
-            }, 1000);
-
-            let receiver: InspectReceiver;
-            if (serverUrl) {
-              const [protocol, ...server] = serverUrl.split('://');
-              receiver = createWebSocketReceiver({
-                protocol: protocol as 'ws' | 'wss',
-                server: server.join('://'),
-              });
-            } else {
-              receiver = createWindowReceiver({
-                // for some random reason the `window.top` is being rewritten to `window.self`
-                // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
-                // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
-                // so we pass it explicitly here
-                targetWindow: window.opener || window.parent,
-              });
+                    break;
+                  case 'service.stop':
+                    sendBack(simModel.events['SERVICE.STOP'](event.sessionId));
+                    break;
+                  default:
+                    break;
+                }
+              }).unsubscribe;
             }
-
-            onReceive((event) => {
-              if (event.type === 'xstate.event') {
-                receiver.send({
-                  ...event,
-                  type: 'xstate.event',
-                  event: JSON.stringify(event.event),
-                });
-              }
-            });
-
-            return receiver.subscribe((event) => {
-              switch (event.type) {
-                case 'service.register':
-                  let state = event.machine.resolveState(event.state);
-                  sendBack(
-                    simModel.events['SERVICE.REGISTER']({
-                      sessionId: event.sessionId,
-                      machine: event.machine,
-                      state,
-                      parent: event.parent,
-                      source: 'inspector',
-                    }),
-                  );
-                  break;
-                case 'service.state':
-                  sendBack(
-                    simModel.events['SERVICE.STATE'](
-                      event.sessionId,
-                      event.state,
-                    ),
-                  );
-                  break;
-                case 'service.stop':
-                  sendBack(simModel.events['SERVICE.STOP'](event.sessionId));
-                  break;
-                default:
-                  break;
-              }
-            }).unsubscribe;
           },
         },
       },
