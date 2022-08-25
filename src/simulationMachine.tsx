@@ -128,6 +128,7 @@ export const simulationMachine = simModel.createMachine(
                           lastTimestamp = machineData.updated_at;
                         }
                       }
+                      sendBack({ type: 'SERVICE.READY' });
                     });
                 } catch (e) {
                   console.error(e);
@@ -140,6 +141,7 @@ export const simulationMachine = simModel.createMachine(
                     method: 'POST',
                     body: JSON.stringify(event.event),
                   });
+                  sendBack({ type: 'SERVICE.PENDING' });
                 }
               });
             } else {
@@ -199,6 +201,20 @@ export const simulationMachine = simModel.createMachine(
                 }
               }).unsubscribe;
             }
+          },
+        },
+        initial: 'idle',
+        states: {
+          idle: {
+            on: {
+              'SERVICE.PENDING': 'pending',
+            },
+          },
+          pending: {
+            tags: 'pending',
+            on: {
+              'SERVICE.READY': 'idle',
+            },
           },
         },
       },
