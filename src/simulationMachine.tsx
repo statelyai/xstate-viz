@@ -63,6 +63,13 @@ export const simModel = createModel(
   },
 );
 
+async function asyncPoll(fn: () => Promise<any>, interval: number) {
+  while (true) {
+    await fn();
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+}
+
 export const simulationMachine = simModel.createMachine(
   {
     preserveActionOrder: true,
@@ -93,7 +100,7 @@ export const simulationMachine = simModel.createMachine(
               let registered = false;
               let lastTimestamp: string;
 
-              setInterval(() => {
+              asyncPoll(async () => {
                 try {
                   fetch(functionUrl)
                     .then((data) => data.json())
@@ -102,6 +109,11 @@ export const simulationMachine = simModel.createMachine(
                     })
                     .then((data) => {
                       const machineData = data;
+                      if (!machineData) {
+                        console.error('No machine data received');
+                        return;
+                      }
+
                       const machine = createMachine(machineData.machine);
                       const state = machine.resolveState(machineData.state);
 
