@@ -5,6 +5,7 @@ import {
   ContextFrom,
   DoneInvokeEvent,
   EventFrom,
+  InterpreterFrom,
   send,
   spawn,
   StateFrom,
@@ -36,7 +37,7 @@ const authModel = createModel(
       },
     ),
     notifRef: null! as ActorRefFrom<typeof notifMachine>,
-    sourceRef: null as SourceMachineActorRef | null,
+    sourceRef: null as InterpreterFrom<typeof makeSourceMachine> | null,
     loggedInUserData: null as LoggedInUserFragment | null,
   },
   {
@@ -54,6 +55,7 @@ const authModel = createModel(
 export type AuthMachine = ReturnType<typeof createAuthMachine>;
 
 export type AuthMachineState = StateFrom<AuthMachine>;
+export type AuthMachineInterpreter = InterpreterFrom<AuthMachine>;
 
 export const createAuthMachine = (params: {
   sourceRegistryData: SourceRegistryData | null;
@@ -62,6 +64,7 @@ export const createAuthMachine = (params: {
 }) =>
   authModel.createMachine(
     {
+      tsTypes: {} as import("./authMachine.typegen").Typegen0,
       preserveActionOrder: true,
       id: 'auth',
       initial: 'initializing',
@@ -102,7 +105,7 @@ export const createAuthMachine = (params: {
                     router: params.router,
                     isEmbedded: params.isEmbbeded,
                   }),
-                ),
+                ) as any,
               };
             }),
           ],
@@ -213,14 +216,12 @@ export const createAuthMachine = (params: {
         signing_in: {
           entry: 'signInUser',
           type: 'final',
-          meta: {
-            description: `
+          description: `
             Calling signInUser redirects us away from this
             page - this is modelled as a final state because
             the state machine is stopped and recreated when
             the user gets redirected back.
           `,
-          },
         },
       },
     },
