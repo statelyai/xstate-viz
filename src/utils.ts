@@ -178,12 +178,6 @@ export const callAPI = (input: {
   const apiBaseUrl = `${baseUrl}/api/v1/viz`;
   const apiUrl = `${apiBaseUrl}/${endpoint}`;
   const url = queryParams ? `${apiUrl}?${queryParams}` : apiUrl;
-  console.log('Hello ');
-
-  console.log({
-    'content-type': 'application/json',
-    ...(accessToken && { authorization: 'Bearer ' + accessToken }),
-  });
 
   return fetch(url, {
     method: 'POST',
