@@ -35,7 +35,7 @@
   },
   "scripts": {
     "start": "concurrently \"npm:start:app\" \"npm:graphql:codegen\"",
-    "start:app": "next",
+    "start:app": "next -p 3001",
     "build": "graphql-codegen && next build",
     "serve": "next start",
     "graphql:codegen": "graphql-codegen --watch",

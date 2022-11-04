@@ -1,4 +1,7 @@
 import { TypedDocumentNode } from '@graphql-typed-document-node/core';
+import { useSelector } from '@xstate/react';
+import { print } from 'graphql';
+import { NextRouter } from 'next/router';
 import * as React from 'react';
 import {
   ActionObject,
@@ -17,9 +20,6 @@ import {
   EmbedPanel,
   ParsedEmbed,
 } from './types';
-import { print } from 'graphql';
-import { useSelector } from '@xstate/react';
-import { NextRouter } from 'next/router';
 
 export function isNullEvent(eventName: string) {
   return eventName === ActionTypes.NullEvent;
@@ -166,6 +166,43 @@ export const gQuery = <Data, Variables>(
       }
       return res;
     });
+
+export const callAPI = (input: {
+  endpoint: string;
+  queryParams?: URLSearchParams;
+  body?: any;
+  accessToken?: string;
+}) => {
+  const { endpoint, queryParams, body, accessToken } = input;
+  const baseUrl = process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL;
+  const apiBaseUrl = `${baseUrl}/api/v1/viz`;
+  const apiUrl = `${apiBaseUrl}/${endpoint}`;
+  const url = queryParams ? `${apiUrl}?${queryParams}` : apiUrl;
+  console.log('Hello ');
+
+  console.log({
+    'content-type': 'application/json',
+    ...(accessToken && { authorization: 'Bearer ' + accessToken }),
+  });
+
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(accessToken && { authorization: 'Bearer ' + accessToken }),
+    },
+    mode: 'no-cors',
+    body: body ? JSON.stringify(body) : undefined,
+  })
+    .then((resp) => resp.json())
+    .then((res) => {
+      if (res.errors) {
+        console.log('error', res.errors);
+        throw new Error(res.errors[0]!.message);
+      }
+      return res;
+    });
+};
 
 export function willChange(
   machine: AnyStateMachine,

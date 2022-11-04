@@ -1,14 +1,13 @@
 import { Button, Text } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from './authContext';
 import { getSupabaseClient } from './authMachine';
-import { AddLikeDocument } from './graphql/AddLike.generated';
 import { RemoveLikeDocument } from './graphql/RemoveLike.generated';
 import { HeartIcon, HeartOutlinedIcon } from './Icons';
 import { likesMachine } from './likesMachine';
 import { useSourceActor } from './sourceMachine';
-import { gQuery } from './utils';
+import { callAPI, gQuery } from './utils';
 
 export const LikeButton = () => {
   const authService = useAuth();
@@ -24,14 +23,15 @@ export const LikeButton = () => {
     },
     services: {
       like: async () => {
-        const accessToken = supabaseClient.auth.session()?.access_token;
-        await gQuery(
-          AddLikeDocument,
-          {
-            sourceFileId: sourceState.context.sourceID,
-          },
-          accessToken,
-        );
+        await callAPI({
+          endpoint: 'add-like',
+          queryParams: sourceState.context.sourceID
+            ? new URLSearchParams({
+                sourceFileId: sourceState.context.sourceID,
+              })
+            : undefined,
+          accessToken: supabaseClient.auth.session()?.access_token,
+        });
       },
       unlike: async () => {
         const accessToken = supabaseClient.auth.session()?.access_token;

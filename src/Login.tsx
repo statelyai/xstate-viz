@@ -13,8 +13,8 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Text,
   Portal,
+  Text,
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
 import React from 'react';
@@ -67,7 +67,7 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
                     state.context.loggedInUserData.id,
                   )}
                 >
-                  View Machines
+                  View User
                 </MenuItem>
               )}
               <MenuItem
