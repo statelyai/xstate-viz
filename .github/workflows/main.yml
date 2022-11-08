@@ -17,7 +17,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Lint
-        run: yarn graphql-codegen && yarn tsc
+        run: yarn tsc
 
       - name: Jest tests
         run: yarn jest --ci
