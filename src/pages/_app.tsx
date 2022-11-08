@@ -14,6 +14,7 @@ import '../InvokeViz.scss';
 import '../monacoPatch';
 import '../StateNodeViz.scss';
 import '../TransitionViz.scss';
+import { NextComponentWithMeta } from '../types';
 
 // import { isOnClientSide } from '../isOnClientSide';
 
@@ -32,7 +33,7 @@ if (
   });
 }
 
-const MyApp = ({ pageProps, Component }: AppProps) => {
+const AuthWrapper = ({ pageProps, Component }: AppProps) => {
   const router = useRouter();
 
   const authService = useInterpret(
@@ -48,6 +49,18 @@ const MyApp = ({ pageProps, Component }: AppProps) => {
       <Component {...pageProps} />
     </AuthProvider>
   );
+};
+
+const MyApp = (
+  props: AppProps & {
+    Component: NextComponentWithMeta;
+  },
+) => {
+  if (props.Component.preventAuth) {
+    return <props.Component {...props.pageProps}></props.Component>;
+  }
+
+  return <AuthWrapper {...props}></AuthWrapper>;
 };
 
 export default MyApp;
