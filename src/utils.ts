@@ -138,15 +138,20 @@ export const updateQueryParamsWithoutReload = (
   window.history.pushState({ path: newURL.href }, '', newURL.href);
 };
 
+const getApiUrl = (endpoint: string) => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL ?? 'http://localhost:3000';
+  const apiBaseUrl = `${baseUrl}/api/v1/viz`;
+  return `${apiBaseUrl}/${endpoint}`;
+};
+
 export async function callAPI<T>(input: {
   endpoint: string;
   queryParams?: URLSearchParams;
   body?: any;
 }) {
   const { endpoint, queryParams, body } = input;
-  const baseUrl = process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL;
-  const apiBaseUrl = `${baseUrl}/api/v1/viz`;
-  const apiUrl = `${apiBaseUrl}/${endpoint}`;
+  const apiUrl = getApiUrl(endpoint);
   const url = queryParams ? `${apiUrl}?${queryParams}` : apiUrl;
   const response = await fetch(url, {
     method: 'POST',
@@ -426,3 +431,13 @@ export const isSignedIn = () => {
   const authCookie = Cookies.get('supabase-auth-token');
   return authCookie !== undefined && authCookie.length > 0;
 };
+
+export const isErrorWithMessage = (
+  error: unknown,
+): error is {
+  message: string;
+} =>
+  typeof error === 'object' &&
+  error !== null &&
+  'message' in error &&
+  typeof (error as Record<string, unknown>).message === 'string';

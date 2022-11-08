@@ -22,30 +22,30 @@ jobs:
       - name: Jest tests
         run: yarn jest --ci
 
-      - name: Build
-        run: yarn next build
-        env:
-          NEXT_PUBLIC_SUPABASE_API_URL: ${{ secrets.SUPABASE_API_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_API_KEY: ${{ secrets.SUPABASE_ANON_API_KEY }}
-          NEXT_PUBLIC_USE_LOCAL_MONACO: 'true'
-          CI: 'false'
+      # - name: Build
+      #   run: yarn next build
+      #   env:
+      #     NEXT_PUBLIC_SUPABASE_API_URL: ${{ secrets.SUPABASE_API_URL }}
+      #     NEXT_PUBLIC_SUPABASE_ANON_API_KEY: ${{ secrets.SUPABASE_ANON_API_KEY }}
+      #     NEXT_PUBLIC_USE_LOCAL_MONACO: 'true'
+      #     CI: 'false'
 
-      - name: Run Cypress
-        uses: cypress-io/github-action@v2
-        with:
-          start: yarn serve
-          wait-on: http://localhost:3000
+      # - name: Run Cypress
+      #   uses: cypress-io/github-action@v2
+      #   with:
+      #     start: yarn serve
+      #     wait-on: http://localhost:3000
 
-      - name: Upload Screenshots
-        uses: actions/upload-artifact@v1
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: cypress/screenshots
+      # - name: Upload Screenshots
+      #   uses: actions/upload-artifact@v1
+      #   if: failure()
+      #   with:
+      #     name: cypress-screenshots
+      #     path: cypress/screenshots
 
-      - name: Upload Videos
-        uses: actions/upload-artifact@v1
-        if: always()
-        with:
-          name: cypress-videos
-          path: cypress/videos
+      # - name: Upload Videos
+      #   uses: actions/upload-artifact@v1
+      #   if: always()
+      #   with:
+      #     name: cypress-videos
+      #     path: cypress/videos

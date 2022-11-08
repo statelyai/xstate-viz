@@ -37,14 +37,21 @@ export const getServerSideProps: GetServerSideProps<
     };
   }
 
-  const sourceFileResult = await callAPI<SourceFile | null>({
-    endpoint: 'get-source-file',
-    queryParams: new URLSearchParams({
-      sourceFileId,
-    }),
-  });
+  console.log('fetching source file', sourceFileId);
 
-  const sourceFile = sourceFileResult.data;
+  let sourceFile: SourceFile | null = null;
+
+  try {
+    const sourceFileResult = await callAPI<SourceFile | null>({
+      endpoint: 'get-source-file',
+      queryParams: new URLSearchParams({
+        sourceFileId,
+      }),
+    });
+    sourceFile = sourceFileResult.data;
+  } catch (error) {
+    console.log('error fetching source file', error);
+  }
 
   if (!sourceFile) {
     return {

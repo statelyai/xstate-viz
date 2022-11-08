@@ -11,7 +11,7 @@ describe('Sign up funnel', () => {
 
     describe(`When you are viewing someone else's machine`, () => {
       it('Should ask you to sign up when you fork it', () => {
-        cy.interceptGraphQL({
+        cy.interceptAPI({
           getSourceFile: {
             id: 'source-file-id',
             text: '// Some great text',
@@ -28,7 +28,7 @@ describe('Sign up funnel', () => {
       });
 
       it('Should ask you to sign up when you press like', () => {
-        cy.interceptGraphQL({
+        cy.interceptAPI({
           getSourceFile: {
             id: 'source-file-id',
             text: `

@@ -1,36 +1,23 @@
 /// <reference types="cypress" />
 
-import { SourceFileFragment } from '../../src/graphql/SourceFileFragment.generated';
 import '@testing-library/cypress/add-commands';
+import { inspect, Inspector } from '@xstate/inspect';
 import 'cypress-localstorage-commands';
 import 'cypress-real-events/support';
-import { inspect, Inspector } from '@xstate/inspect';
 import { interpret, InterpreterFrom, StateMachine } from 'xstate';
-import { state } from './state';
+import { SourceFile } from '../../src/apiTypes';
 import { ParsedEmbed } from '../../src/types';
-import { Mutation, Query } from '../../src/graphql/schemaTypes.generated';
+import { state } from './state';
 
 const setMockAuthToken = () => {
-  cy.setLocalStorage(
-    'supabase.auth.token',
-    JSON.stringify({
-      currentSession: {
-        access_token: 'token',
-        user: {
-          app_metadata: { provider: 'github' },
-          user_metadata: {
-            avatar_url: 'https://avatars.githubusercontent.com/u/28293365',
-            full_name: 'Matt Pocock',
-          },
-        },
-      },
-    }),
-  );
+  cy.setCookie('supabase-auth-token', 'mock-auth-token');
 };
 
-const interceptGraphQL = (data: DeepPartial<Mutation & Query>) => {
-  // TODO - get this from an env variable
-  cy.intercept('https://dev.stately.ai/registry/api/graphql', {
+const interceptAPI = <T>(data: DeepPartial<T>) => {
+  const baseUrl = process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL;
+  const apiUrlGlob = `${baseUrl}/api/v1/viz/*`;
+  cy.intercept('POST', apiUrlGlob, {
+    statusCode: 200,
     body: {
       data,
     },
@@ -79,7 +66,7 @@ const visitInspector = () => {
  * Allows you to visit the /viz/:id page and mock
  * its SSR return
  */
-const visitVizWithNextPageProps = (data: Partial<SourceFileFragment>) => {
+const visitVizWithNextPageProps = (data: Partial<SourceFile>) => {
   cy.visit(
     `/viz/${data.id}?ssr=${encodeURIComponent(
       JSON.stringify({ data, id: data.id }),
@@ -97,7 +84,7 @@ const visitEmbedWithNextPageProps = ({
   controls,
   sourceFile,
 }: Partial<ParsedEmbed> & {
-  sourceFile: Partial<SourceFileFragment>;
+  sourceFile: Partial<SourceFile>;
 }) => {
   const path = sourceFile ? `/viz/embed/${sourceFile.id}` : '/viz/embed';
   const searchParams = new URLSearchParams();
@@ -225,8 +212,8 @@ const getResizeHandle = () => {
   return cy.findByTestId('resize-handle');
 };
 
-const getResetButton = () => cy.findByText('RESET')
-const getFitToContentButton = () => cy.findByLabelText('Fit to content')
+const getResetButton = () => cy.findByText('RESET');
+const getFitToContentButton = () => cy.findByLabelText('Fit to content');
 
 type DeepPartial<T> = T extends Function
   ? T
@@ -253,7 +240,7 @@ declare global {
        * Allows the tester to mock the GraphQL API to return whatever
        * values they like
        */
-      interceptGraphQL: typeof interceptGraphQL;
+      interceptAPI: typeof interceptAPI;
 
       getCanvas: typeof getCanvas;
 
@@ -290,7 +277,7 @@ declare global {
 Cypress.Commands.add('setMockAuthToken', setMockAuthToken);
 Cypress.Commands.add('getMonacoEditor', getMonacoEditor);
 Cypress.Commands.add('getCanvas', getCanvas);
-Cypress.Commands.add('interceptGraphQL', interceptGraphQL);
+Cypress.Commands.add('interceptAPI', interceptAPI);
 Cypress.Commands.add('visitInspector', visitInspector);
 Cypress.Commands.add('inspectMachine', inspectMachine);
 Cypress.Commands.add('visitVizWithNextPageProps', visitVizWithNextPageProps);

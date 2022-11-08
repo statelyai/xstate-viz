@@ -25,7 +25,12 @@ import { isOnClientSide } from './isOnClientSide';
 import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
 import { SourceProvider, SourceRegistryData } from './types';
-import { callAPI, isSignedIn, updateQueryParamsWithoutReload } from './utils';
+import {
+  callAPI,
+  isErrorWithMessage,
+  isSignedIn,
+  updateQueryParamsWithoutReload,
+} from './utils';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -378,11 +383,18 @@ export const makeSourceMachine = (params: {
             source_error: {
               entry: [
                 send(
-                  (_, e: any) =>
-                    notifModel.events.BROADCAST(
-                      (e.data as Error).toString(),
-                      'error',
-                    ),
+                  (_, e: any) => {
+                    if (e.data !== null && isErrorWithMessage(e.data)) {
+                      return notifModel.events.BROADCAST(
+                        e.data.message,
+                        'error',
+                      );
+                    }
+                    return notifModel.events.BROADCAST(
+                      'No source file found',
+                      'info',
+                    );
+                  },
                   { to: (ctx: any) => ctx.notifRef },
                 ),
                 (_: any, e: any) => {

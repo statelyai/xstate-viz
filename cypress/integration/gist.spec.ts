@@ -10,7 +10,7 @@ describe('Gists', () => {
   `;
 
   const setup = () => {
-    cy.interceptGraphQL({
+    cy.interceptAPI({
       getLoggedInUser: {},
     });
     cy.setMockAuthToken();
@@ -39,7 +39,7 @@ describe('Gists', () => {
 
   it('Should allow you to fork a source file from a gist', () => {
     setup();
-    cy.interceptGraphQL({
+    cy.interceptAPI({
       createSourceFile: {
         id: 'new-id',
       },
