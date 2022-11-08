@@ -25,7 +25,7 @@ import { isOnClientSide } from './isOnClientSide';
 import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
 import { SourceProvider, SourceRegistryData } from './types';
-import { callAPI, updateQueryParamsWithoutReload } from './utils';
+import { callAPI, isSignedIn, updateQueryParamsWithoutReload } from './utils';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -150,10 +150,6 @@ export const makeSourceMachine = (params: {
   router: NextRouter;
   isEmbedded: boolean;
 }) => {
-  const isLoggedIn = () => {
-    return Boolean(params.auth.session());
-  };
-
   return sourceModel.createMachine(
     {
       initial: 'checking_initial_data',
@@ -249,7 +245,7 @@ export const makeSourceMachine = (params: {
             FORK: [
               {
                 target: '#creating',
-                cond: isLoggedIn,
+                cond: () => isSignedIn(),
                 actions: ['addForkOfToDesiredName'],
               },
               {
@@ -350,7 +346,7 @@ export const makeSourceMachine = (params: {
                   on: {
                     SAVE: [
                       {
-                        cond: isLoggedIn,
+                        cond: () => isSignedIn(),
                         target: '#updating',
                       },
                       {
@@ -365,7 +361,7 @@ export const makeSourceMachine = (params: {
                   on: {
                     SAVE: [
                       {
-                        cond: isLoggedIn,
+                        cond: () => isSignedIn(),
                         target: '#creating',
                         actions: ['addForkOfToDesiredName'],
                       },
@@ -428,7 +424,7 @@ export const makeSourceMachine = (params: {
             },
             SAVE: [
               {
-                cond: isLoggedIn,
+                cond: () => isSignedIn(),
                 target: 'creating',
               },
               {
@@ -473,7 +469,7 @@ export const makeSourceMachine = (params: {
               on: {
                 CHOOSE_NAME: {
                   target: 'pendingSave',
-                  actions: assign((context, event) => {
+                  actions: assign((_, event) => {
                     return {
                       desiredMachineName: event.name,
                     };
@@ -680,8 +676,8 @@ export const makeSourceMachine = (params: {
             return callAPI<SourceFile>({
               endpoint: 'create-source-file',
               body: {
-                text: ctx.sourceRawContent || '',
-                name: ctx.desiredMachineName || '',
+                text: ctx.sourceRawContent ?? '',
+                name: ctx.desiredMachineName ?? '',
                 forkFromId: ctx.sourceID,
               },
             }).then((res) => res.data);
@@ -689,8 +685,8 @@ export const makeSourceMachine = (params: {
           return callAPI<SourceFile>({
             endpoint: 'create-source-file',
             body: {
-              text: ctx.sourceRawContent || '',
-              name: ctx.desiredMachineName || '',
+              text: ctx.sourceRawContent ?? '',
+              name: ctx.desiredMachineName ?? '',
             },
           }).then((res) => res.data);
         },

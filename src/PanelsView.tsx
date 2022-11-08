@@ -1,16 +1,16 @@
-import { SettingsIcon, ExternalLinkIcon } from '@chakra-ui/icons';
+import { ExternalLinkIcon, SettingsIcon } from '@chakra-ui/icons';
 import {
-  Tabs,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
-  Button,
-  BoxProps,
   Badge,
+  BoxProps,
+  Button,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
 } from '@chakra-ui/react';
-import React, { useMemo, useEffect, useState } from 'react';
 import { useSelector } from '@xstate/react';
+import { useEffect, useState } from 'react';
 import { ActorsPanel, selectServices } from './ActorsPanel';
 import { EditorPanel } from './EditorPanel';
 import { useEmbed } from './embedContext';
