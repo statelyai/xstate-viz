@@ -1,8 +1,8 @@
-import App from '../App';
 import { GetServerSideProps } from 'next';
-import { gQuery } from '../utils';
-import { GetSourceFileDocument } from '../graphql/GetSourceFile.generated';
+import { SourceFile } from '../apiTypes';
+import App from '../App';
 import { SourceRegistryData } from '../types';
+import { callAPI } from '../utils';
 
 export interface SourceFileIdPageProps {
   sourceRegistryData: SourceRegistryData | null;
@@ -37,11 +37,14 @@ export const getServerSideProps: GetServerSideProps<
     };
   }
 
-  const sourceFileResult = await gQuery(GetSourceFileDocument, {
-    id: sourceFileId,
+  const sourceFileResult = await callAPI<SourceFile | null>({
+    endpoint: 'get-source-file',
+    queryParams: new URLSearchParams({
+      sourceFileId,
+    }),
   });
 
-  const sourceFile = sourceFileResult.data?.getSourceFile ?? null;
+  const sourceFile = sourceFileResult.data;
 
   if (!sourceFile) {
     return {

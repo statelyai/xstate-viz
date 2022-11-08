@@ -1,6 +1,5 @@
-import { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import { useSelector } from '@xstate/react';
-import { print } from 'graphql';
+import Cookies from 'js-cookie';
 import { NextRouter } from 'next/router';
 import * as React from 'react';
 import {
@@ -139,64 +138,26 @@ export const updateQueryParamsWithoutReload = (
   window.history.pushState({ path: newURL.href }, '', newURL.href);
 };
 
-export const gQuery = <Data, Variables>(
-  query: TypedDocumentNode<Data, Variables>,
-  variables: Variables,
-  accessToken?: string,
-): Promise<{ data?: Data }> =>
-  fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(accessToken && { authorization: 'Bearer ' + accessToken }),
-    },
-    body: JSON.stringify({
-      query: print(query),
-      variables,
-    }),
-  })
-    .then((resp) => resp.json())
-    .then((res) => {
-      /**
-       * Throw the GQL error if it comes - this
-       * doesn't happen by default
-       */
-      if (res.errors) {
-        throw new Error(res.errors[0]!.message);
-      }
-      return res;
-    });
-
-export const callAPI = (input: {
+export async function callAPI<T>(input: {
   endpoint: string;
   queryParams?: URLSearchParams;
   body?: any;
-  accessToken?: string;
-}) => {
-  const { endpoint, queryParams, body, accessToken } = input;
+}) {
+  const { endpoint, queryParams, body } = input;
   const baseUrl = process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL;
   const apiBaseUrl = `${baseUrl}/api/v1/viz`;
   const apiUrl = `${apiBaseUrl}/${endpoint}`;
   const url = queryParams ? `${apiUrl}?${queryParams}` : apiUrl;
-
-  return fetch(url, {
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      ...(accessToken && { authorization: 'Bearer ' + accessToken }),
     },
-    mode: 'no-cors',
     body: body ? JSON.stringify(body) : undefined,
-  })
-    .then((resp) => resp.json())
-    .then((res) => {
-      if (res.errors) {
-        console.log('error', res.errors);
-        throw new Error(res.errors[0]!.message);
-      }
-      return res;
-    });
-};
+  });
+  const json = await response.json();
+  return response.ok ? (json as { data: T }) : Promise.reject(json);
+}
 
 export function willChange(
   machine: AnyStateMachine,
@@ -460,3 +421,8 @@ export const isAcceptingSpaceNatively = (
   el.tagName === 'INPUT' ||
   isTextInputLikeElement(el) ||
   getRoles(el).includes('button');
+
+export const isSignedIn = () => {
+  const authCookie = Cookies.get('supabase-auth-token');
+  return authCookie !== undefined && authCookie.length > 0;
+};

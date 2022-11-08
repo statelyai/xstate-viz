@@ -1,5 +1,0 @@
-query GetSourceFile($id: String!) {
-  getSourceFile(id: $id) {
-    ...SourceFile
-  }
-}

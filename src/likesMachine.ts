@@ -1,4 +1,4 @@
-import { createMachine, assign, ActorRefFrom, spawn, send } from 'xstate';
+import { ActorRefFrom, assign, createMachine, send, spawn } from 'xstate';
 import { notifMachine } from './notificationMachine';
 
 interface Context {
@@ -30,13 +30,13 @@ export const likesMachine = createMachine<Context, Event>({
   on: {
     SOURCE_DATA_CHANGED: [
       {
-        cond: (ctx, e) => !e.data,
+        cond: (_, e) => !e.data,
         target: '.waitingForSourceData',
       },
       {
-        cond: (ctx, e) => e.data!.youHaveLiked,
+        cond: (_, e) => e.data!.youHaveLiked,
         target: '.liked',
-        actions: assign((context, event) => {
+        actions: assign((_, event) => {
           return {
             likesCount: event.data!.likesCount,
           };
@@ -44,7 +44,7 @@ export const likesMachine = createMachine<Context, Event>({
       },
       {
         target: '.notLiked',
-        actions: assign((context, event) => {
+        actions: assign((_, event) => {
           return {
             likesCount: event.data!.likesCount,
           };

@@ -1,5 +1,0 @@
-mutation ForkSourceFile($forkFromId: String!, $text: String!, $name: String!) {
-  forkSourceFile(text: $text, name: $name, forkFromId: $forkFromId) {
-    ...SourceFile
-  }
-}

@@ -1,11 +1,11 @@
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
+import { useInterpret } from '@xstate/react';
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
-import { useInterpret } from '@xstate/react';
-import { createAuthMachine } from '../authMachine';
-import { AuthProvider } from '../authContext';
 import '../ActionViz.scss';
+import { AuthProvider } from '../authContext';
+import { createAuthMachine } from '../authMachine';
 import '../base.scss';
 import '../DelayViz.scss';
 import '../EdgeViz.scss';

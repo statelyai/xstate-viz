@@ -1,7 +1,6 @@
 import { SupabaseAuthClient } from '@supabase/supabase-js/dist/main/lib/SupabaseAuthClient';
 import { useActor, useSelector } from '@xstate/react';
 import { NextRouter } from 'next/router';
-import { AuthMachine } from './authMachine';
 import {
   ActorRefFrom,
   assign,
@@ -15,27 +14,18 @@ import {
   State,
   StateFrom,
 } from 'xstate';
+import { choose } from 'xstate/lib/actions';
 import { createModel } from 'xstate/lib/model';
+import { SourceFile } from './apiTypes';
+import { useAuth } from './authContext';
+import { AuthMachine } from './authMachine';
 import { cacheCodeChangesMachine } from './cacheCodeChangesMachine';
 import { confirmBeforeLeavingMachine } from './confirmLeavingService';
-import { CreateSourceFileDocument } from './graphql/CreateSourceFile.generated';
-import {
-  GetSourceFileDocument,
-  GetSourceFileQuery,
-} from './graphql/GetSourceFile.generated';
-import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
-import {
-  UpdateSourceFileDocument,
-  UpdateSourceFileMutation,
-} from './graphql/UpdateSourceFile.generated';
+import { isOnClientSide } from './isOnClientSide';
 import { localCache } from './localCache';
 import { notifMachine, notifModel } from './notificationMachine';
-import { gQuery, updateQueryParamsWithoutReload } from './utils';
 import { SourceProvider, SourceRegistryData } from './types';
-import { ForkSourceFileDocument } from './graphql/ForkSourceFile.generated';
-import { isOnClientSide } from './isOnClientSide';
-import { useAuth } from './authContext';
-import { choose, pure } from 'xstate/lib/actions';
+import { callAPI, updateQueryParamsWithoutReload } from './utils';
 
 const initialMachineCode = `
 import { createMachine } from 'xstate';
@@ -102,9 +92,7 @@ export const sourceModel = createModel(
       LOADED_FROM_GIST: (rawSource: string) => ({
         rawSource,
       }),
-      LOADED_FROM_REGISTRY: (
-        data: NonNullable<GetSourceFileQuery['getSourceFile']>,
-      ) => ({ data }),
+      LOADED_FROM_REGISTRY: (data: NonNullable<SourceFile>) => ({ data }),
       CODE_UPDATED: (code: string, sourceID: string | null) => ({
         code,
         sourceID,
@@ -552,21 +540,16 @@ export const makeSourceMachine = (params: {
             onDone: {
               target: 'with_source.source_loaded.user_owns_this_source',
               actions: [
-                assign(
-                  (
-                    context,
-                    event: DoneInvokeEvent<UpdateSourceFileMutation>,
-                  ) => {
-                    return {
-                      sourceID: event.data.updateSourceFile.id,
-                      sourceProvider: 'registry',
-                      sourceRegistryData: {
-                        ...event.data.updateSourceFile,
-                        dataSource: 'client',
-                      },
-                    };
-                  },
-                ),
+                assign((_, event: DoneInvokeEvent<SourceFile>) => {
+                  return {
+                    sourceID: event.data.id,
+                    sourceProvider: 'registry',
+                    sourceRegistryData: {
+                      ...event.data,
+                      dataSource: 'client',
+                    },
+                  };
+                }),
                 send(
                   notifModel.events.BROADCAST('Saved successfully', 'success'),
                   {
@@ -600,7 +583,7 @@ export const makeSourceMachine = (params: {
         hasLocalStorageCachedSource: (context) => {
           const result = localCache.getSourceRawContent(
             context.sourceID,
-            context.sourceRegistryData?.updatedAt,
+            context.sourceRegistryData?.updatedAt.toString() ?? null,
           );
 
           return Boolean(result);
@@ -641,10 +624,10 @@ export const makeSourceMachine = (params: {
             },
           },
         ),
-        assignCreateSourceFileToContext: assign((context, _event: any) => {
-          const event: DoneInvokeEvent<SourceFileFragment> = _event;
+        assignCreateSourceFileToContext: assign((_, _event: any) => {
+          const event: DoneInvokeEvent<SourceFile> = _event;
           return {
-            sourceID: event.data?.id,
+            sourceID: event.data.id,
             sourceProvider: 'registry',
             sourceRegistryData: {
               ...event.data,
@@ -660,7 +643,7 @@ export const makeSourceMachine = (params: {
         getLocalStorageCachedSource: assign((context, event) => {
           const result = localCache.getSourceRawContent(
             context.sourceID,
-            context.sourceRegistryData?.updatedAt,
+            context.sourceRegistryData?.updatedAt.toString() ?? null,
           );
 
           if (!result) {
@@ -692,39 +675,34 @@ export const makeSourceMachine = (params: {
         },
       },
       services: {
-        createSourceFile: async (ctx, e): Promise<SourceFileFragment> => {
+        createSourceFile: async (ctx): Promise<SourceFile> => {
           if (ctx.sourceID && ctx.sourceProvider === 'registry') {
-            return gQuery(
-              ForkSourceFileDocument,
-              {
+            return callAPI<SourceFile>({
+              endpoint: 'create-source-file',
+              body: {
                 text: ctx.sourceRawContent || '',
                 name: ctx.desiredMachineName || '',
                 forkFromId: ctx.sourceID,
               },
-              params.auth.session()?.access_token!,
-            ).then((res) => res.data?.forkSourceFile!);
+            }).then((res) => res.data);
           }
-          return gQuery(
-            CreateSourceFileDocument,
-            {
+          return callAPI<SourceFile>({
+            endpoint: 'create-source-file',
+            body: {
               text: ctx.sourceRawContent || '',
               name: ctx.desiredMachineName || '',
             },
-            params.auth.session()?.access_token!,
-          ).then((res) => {
-            return res.data?.createSourceFile!;
-          });
+          }).then((res) => res.data);
         },
         updateSourceFile: async (ctx, e) => {
           if (e.type !== 'SAVE') return;
-          return gQuery(
-            UpdateSourceFileDocument,
-            {
+          return callAPI<SourceFile>({
+            endpoint: 'update-source-file',
+            body: {
               id: ctx.sourceID,
               text: ctx.sourceRawContent,
             },
-            params.auth.session()?.access_token!,
-          ).then((res) => res.data);
+          }).then((res) => res.data);
         },
         loadSourceContent: (ctx) => async (send) => {
           switch (ctx.sourceProvider) {
@@ -749,15 +727,15 @@ export const makeSourceMachine = (params: {
               });
               break;
             case 'registry':
-              const result = await gQuery(
-                GetSourceFileDocument,
-                {
-                  id: ctx.sourceID,
-                },
-                params.auth.session()?.access_token!,
-              );
-              const sourceFile = result.data?.getSourceFile;
-
+              const result = await callAPI<SourceFile>({
+                endpoint: 'get-source-file',
+                queryParams: ctx.sourceID
+                  ? new URLSearchParams({
+                      sourceFileId: ctx.sourceID,
+                    })
+                  : undefined,
+              });
+              const sourceFile = result.data;
               if (!sourceFile) {
                 throw new NotFoundError('Source not found in Registry');
               }

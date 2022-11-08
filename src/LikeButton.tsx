@@ -1,13 +1,13 @@
 import { Button, Text } from '@chakra-ui/react';
 import { useMachine, useSelector } from '@xstate/react';
 import { useEffect } from 'react';
+import { SourceFile } from './apiTypes';
 import { useAuth } from './authContext';
 import { getSupabaseClient } from './authMachine';
-import { RemoveLikeDocument } from './graphql/RemoveLike.generated';
 import { HeartIcon, HeartOutlinedIcon } from './Icons';
 import { likesMachine } from './likesMachine';
 import { useSourceActor } from './sourceMachine';
-import { callAPI, gQuery } from './utils';
+import { callAPI } from './utils';
 
 export const LikeButton = () => {
   const authService = useAuth();
@@ -23,25 +23,24 @@ export const LikeButton = () => {
     },
     services: {
       like: async () => {
-        await callAPI({
+        await callAPI<SourceFile>({
           endpoint: 'add-like',
           queryParams: sourceState.context.sourceID
             ? new URLSearchParams({
                 sourceFileId: sourceState.context.sourceID,
               })
             : undefined,
-          accessToken: supabaseClient.auth.session()?.access_token,
         });
       },
       unlike: async () => {
-        const accessToken = supabaseClient.auth.session()?.access_token;
-        await gQuery(
-          RemoveLikeDocument,
-          {
-            sourceFileId: sourceState.context.sourceID,
-          },
-          accessToken,
-        );
+        await callAPI({
+          endpoint: 'remove-like',
+          queryParams: sourceState.context.sourceID
+            ? new URLSearchParams({
+                sourceFileId: sourceState.context.sourceID,
+              })
+            : undefined,
+        });
       },
     },
     actions: {

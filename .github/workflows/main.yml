@@ -25,7 +25,6 @@ jobs:
       - name: Build
         run: yarn next build
         env:
-          NEXT_PUBLIC_GRAPHQL_API_URL: https://dev.stately.ai/registry/api/graphql
           NEXT_PUBLIC_SUPABASE_API_URL: ${{ secrets.SUPABASE_API_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_API_KEY: ${{ secrets.SUPABASE_ANON_API_KEY }}
           NEXT_PUBLIC_USE_LOCAL_MONACO: 'true'
