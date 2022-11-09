@@ -22,6 +22,8 @@ jobs:
       - name: Jest tests
         run: yarn jest --ci
 
+      # TODO: The Cypress tests need updating after we've moved to consume REST endpoints. That work is on hold until we decide how to do e2e tests internally.
+      #
       # - name: Build
       #   run: yarn next build
       #   env:
