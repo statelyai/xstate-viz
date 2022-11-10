@@ -185,7 +185,10 @@ function getDeepestNodeLevel(node: DirectedGraphNode): number {
 }
 
 interface ElkRunContext {
-  previousError?: Error;
+  // On attempt 0, try with compaction and wrapping.
+  // On attempt 1, try with wrapping and no compaction.
+  // On attempt 2, try with no wrapping and no compaction.
+  attempt: number;
   relativeNodeEdgeMap: RelativeNodeEdgeMap;
   backLinkMap: DigraphBackLinkMap;
   rectMap: DOMRectMap;
@@ -207,12 +210,13 @@ function getElkChild(
   const hasSelfEdges = backEdges.some((edge) => edge.source === edge.target);
 
   // Nodes should only wrap if they have non-atomic child nodes
-  const shouldWrap = getDeepestNodeLevel(node) > node.level + 1;
+  const shouldWrap =
+    runContext.attempt < 2 && getDeepestNodeLevel(node) > node.level + 1;
 
   // Compaction should apply if there was no previous error, since errors can occur
   // sometimes with compaction:
   // https://github.com/kieler/elkjs/issues/98
-  const shouldCompact = shouldWrap && !runContext.previousError;
+  const shouldCompact = shouldWrap && runContext.attempt === 0;
 
   return {
     id: node.id,
@@ -330,6 +334,7 @@ export async function getElkGraph(
   const backLinkMap = getBackLinkMap(rootDigraphNode);
   const rootEdges = relativeNodeEdgeMap[0].get(undefined) || [];
   const initialRunContext: ElkRunContext = {
+    attempt: 0,
     relativeNodeEdgeMap,
     backLinkMap,
     rectMap,
@@ -352,18 +357,16 @@ export async function getElkGraph(
   });
 
   let rootElkNode: ElkNode | undefined = undefined;
-  let attempts = 0;
 
   // Make multiple attempts to layout ELK node.
   // Depending on the error, certain heuristics may be applied to mitigate the error on the next attempt.
   // These heuristics read the `initialRunContext.previousError` to determine what layout options to change.
-  while (attempts <= 2 && !rootElkNode) {
-    attempts++;
+  while (initialRunContext.attempt <= 2 && !rootElkNode) {
     try {
       rootElkNode = await elk.layout(getRootElkNodeData(initialRunContext));
     } catch (err) {
       console.error(err);
-      initialRunContext.previousError = err as Error;
+      initialRunContext.attempt += 1;
     }
   }
 
