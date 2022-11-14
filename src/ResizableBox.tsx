@@ -12,7 +12,7 @@ import { Point } from './types';
 
 const resizableModel = createModel(
   {
-    ref: null as React.MutableRefObject<HTMLElement> | null,
+    ref: null as React.RefObject<HTMLElement> | null,
     widthDelta: 0,
   },
   {
@@ -34,7 +34,7 @@ const resizableMachine = resizableModel.createMachine({
     src: (ctx) =>
       dragSessionTracker.withContext({
         ...dragSessionModel.initialContext,
-        ref: ctx.ref,
+        ref: ctx.ref!,
       }),
   },
   initial: 'idle',

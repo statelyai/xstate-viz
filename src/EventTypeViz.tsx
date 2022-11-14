@@ -1,6 +1,9 @@
 import React from 'react';
 import type { InvokeDefinition } from 'xstate/lib/types';
 import type { DelayedTransitionMetadata } from './TransitionViz';
+import { ActionLabelBeforeElement } from './ActionLabelBeforeElement';
+import { SpecificActionLabel } from './SpecificActionLabel';
+import { chakra } from '@chakra-ui/react';
 
 export function toDelayString(delay: string | number): string {
   if (typeof delay === 'number' || !isNaN(+delay)) {
@@ -37,13 +40,48 @@ export function InvokeViz({ invoke }: { invoke: InvokeDefinition<any, any> }) {
   const id = unnamed ? 'anonymous' : invoke.id;
 
   return (
-    <div
-      data-viz="action"
-      data-viz-action="invoke"
-      title={`${id} (${invokeSrc})`}
+    <ActionLabelBeforeElement kind="invoke" title={`${id} (${invokeSrc})`}>
+      <SpecificActionLabel>{unnamed ? <em>{id}</em> : id}</SpecificActionLabel>
+    </ActionLabelBeforeElement>
+  );
+}
+
+function EventTypeWrapper({
+  children,
+  keyword,
+}: {
+  children: React.ReactNode;
+  keyword?: 'done' | 'error' | 'after' | 'always';
+}) {
+  return (
+    <chakra.div
+      css={{
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        gap: '1ch',
+      }}
+      _before={
+        keyword && {
+          content: '""',
+          height: '0.5rem',
+          width: '0.5rem',
+          borderRadius: '0.5rem',
+          backgroundColor: {
+            done: '#33ff99',
+            error: '#e76f4b',
+            always: '#fff',
+            after: '#fff',
+          }[keyword],
+          display: 'block',
+        }
+      }
     >
-      <div data-viz="action-type">{unnamed ? <em>{id}</em> : id}</div>
-    </div>
+      {children}
+    </chakra.div>
   );
 }
 
@@ -54,58 +92,53 @@ export const EventTypeViz: React.FC<{
 }> = ({ eventType: event, delay, onChangeEventType }) => {
   if (event.startsWith('done.state.')) {
     return (
-      <div data-viz="eventType" data-viz-keyword="done">
-        <em data-viz="eventType-keyword">onDone</em>
-      </div>
+      <EventTypeWrapper keyword="done">
+        <em>onDone</em>
+      </EventTypeWrapper>
     );
   }
 
   if (event.startsWith('done.invoke.')) {
     const match = event.match(/^done\.invoke\.(.+)$/);
     return (
-      <div data-viz="eventType" data-viz-keyword="done">
-        <em data-viz="eventType-keyword">done:</em>{' '}
-        <div data-viz="eventType-text">
-          {match ? formatInvocationId(match[1]) : '??'}
-        </div>
-      </div>
+      <EventTypeWrapper keyword="done">
+        <em>done:</em> <div>{match ? formatInvocationId(match[1]) : '??'}</div>
+      </EventTypeWrapper>
     );
   }
 
   if (event.startsWith('error.platform.')) {
     const match = event.match(/^error\.platform\.(.+)$/);
     return (
-      <div data-viz="eventType" data-viz-keyword="error">
-        <em data-viz="eventType-keyword">error:</em>{' '}
-        <div data-viz="eventType-text">{match ? match[1] : '??'}</div>
-      </div>
+      <EventTypeWrapper keyword="error">
+        <em>error:</em> <div>{match ? match[1] : '??'}</div>
+      </EventTypeWrapper>
     );
   }
 
   if (delay?.delayType === 'DELAYED_INVALID') {
-    return <div data-viz="eventType">{event}</div>;
+    return <EventTypeWrapper>{event}</EventTypeWrapper>;
   }
 
   if (delay?.delayType === 'DELAYED_VALID') {
     return (
-      <div data-viz="eventType" data-viz-keyword="after">
-        <em data-viz="eventType-keyword">after</em>{' '}
-        <div data-viz="eventType-text">{delay.delayString}</div>
-      </div>
+      <EventTypeWrapper keyword="after">
+        <em>after</em> <div>{delay.delayString}</div>
+      </EventTypeWrapper>
     );
   }
 
   if (event === '') {
     return (
-      <div data-viz="eventType" data-viz-keyword="always">
-        <em data-viz="eventType-keyword">always</em>
-      </div>
+      <EventTypeWrapper keyword="always">
+        <em>always</em>
+      </EventTypeWrapper>
     );
   }
 
   return (
-    <div data-viz="eventType">
-      <div data-viz="eventType-text">{event}</div>
-    </div>
+    <EventTypeWrapper>
+      <div>{event}</div>
+    </EventTypeWrapper>
   );
 };

@@ -1,26 +1,49 @@
-import { Box, ChakraProvider } from '@chakra-ui/react';
-import React, { useEffect, useMemo } from 'react';
+import { ExternalLinkIcon, QuestionOutlineIcon } from '@chakra-ui/icons';
+import {
+  Box,
+  Button,
+  IconButton,
+  Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Portal,
+} from '@chakra-ui/react';
 import { useActor, useInterpret, useSelector } from '@xstate/react';
-import { useAuth } from './authContext';
+import router, { useRouter } from 'next/router';
+import { useEffect, useMemo } from 'react';
+import xstatePkgJson from 'xstate/package.json';
 import { AppHead } from './AppHead';
+import { useAuth } from './authContext';
 import { CanvasProvider } from './CanvasContext';
-import { EmbedProvider } from './embedContext';
+import { CanvasHeader } from './CanvasHeader';
+import { canvasMachine, canvasModel } from './canvasMachine';
 import { CanvasView } from './CanvasView';
+import { CommonAppProviders } from './CommonAppProviders';
+import { EmbedProvider, useEmbed } from './embedContext';
 import { isOnClientSide } from './isOnClientSide';
+import { Login } from './Login';
 import { MachineNameChooserModal } from './MachineNameChooserModal';
 import { PaletteProvider } from './PaletteContext';
 import { paletteMachine } from './paletteMachine';
 import { PanelsView } from './PanelsView';
-import { SimulationProvider } from './SimulationContext';
-import { simulationMachine } from './simulationMachine';
-import { getSourceActor, useSourceRegistryData } from './sourceMachine';
-import { theme } from './theme';
-import { EditorThemeProvider } from './themeContext';
-import { EmbedContext, EmbedMode } from './types';
-import { useInterpretCanvas } from './useInterpretCanvas';
-import router, { useRouter } from 'next/router';
-import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
+import { RootContainer } from './RootContainer';
+import { useSimulation } from './SimulationContext';
+import { getSourceActor, useSourceRegistryData } from './sourceMachine';
+import { ActorsTab } from './tabs/ActorsTab';
+import { CodeTab } from './tabs/CodeTab';
+import { EventsTab } from './tabs/EventsTab';
+import { SettingsTab } from './tabs/SettingsTab';
+import { StateTab } from './tabs/StateTab';
+import { EmbedMode } from './types';
+import {
+  calculatePanelIndexByPanelName,
+  parseEmbedQuery,
+  withoutEmbedQueryParams,
+} from './utils';
+import { WelcomeArea } from './WelcomeArea';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -62,32 +85,61 @@ const useReceiveMessage = (
   }, []);
 };
 
-const getGridArea = (embed?: EmbedContext) => {
-  if (embed?.isEmbedded && embed.mode === EmbedMode.Viz) {
-    return 'canvas';
-  }
-
-  if (embed?.isEmbedded && embed.mode === EmbedMode.Panels) {
-    return 'panels';
-  }
-
-  return 'canvas panels';
-};
-
-function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
-  const { query, asPath } = useRouter();
-  const embed = useMemo(
-    () => ({
-      ...parseEmbedQuery(query),
-      isEmbedded,
-      originalUrl: withoutEmbedQueryParams(query),
-    }),
-    [query, asPath],
+function ControlsAdditionalMenu() {
+  return (
+    <Menu closeOnSelect={true} placement="top-end">
+      <MenuButton
+        as={IconButton}
+        size="sm"
+        isRound
+        aria-label="More info"
+        marginLeft="auto"
+        variant="secondary"
+        icon={
+          <QuestionOutlineIcon
+            boxSize={6}
+            css={{ '& circle': { display: 'none' } }}
+          />
+        }
+      />
+      <Portal>
+        <MenuList fontSize="sm" padding="0">
+          <MenuItem
+            as={Link}
+            href="https://github.com/statelyai/xstate-viz/issues/new?template=bug_report.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Report an issue
+          </MenuItem>
+          <MenuItem
+            as={Link}
+            href="https://github.com/statelyai/xstate"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {`XState version ${xstatePkgJson.version}`}
+          </MenuItem>
+          <MenuItem
+            as={Link}
+            href="https://stately.ai/privacy"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Privacy Policy
+          </MenuItem>
+        </MenuList>
+      </Portal>
+    </Menu>
   );
+}
 
-  const paletteService = useInterpret(paletteMachine);
-  // don't use `devTools: true` here as it would freeze your browser
-  const simService = useInterpret(simulationMachine);
+function WebApp() {
+  const embed = useEmbed();
+  const pannable = !embed?.isEmbedded || embed.pan;
+  const zoomable = !embed?.isEmbedded || embed.zoom;
+
+  const simService = useSimulation();
   const machine = useSelector(simService, (state) => {
     return state.context.currentSessionId
       ? state.context.serviceDataMap[state.context.currentSessionId!]?.machine
@@ -96,6 +148,17 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
 
   const sourceService = useSelector(useAuth(), getSourceActor);
   const [sourceState, sendToSourceService] = useActor(sourceService!);
+  const sourceID = sourceState.context.sourceID;
+  const canShowWelcomeMessage = sourceState.hasTag('canShowWelcomeMessage');
+
+  const canvasService = useInterpret(canvasMachine, {
+    context: {
+      ...canvasModel.initialContext,
+      sourceID,
+      pannable,
+      zoomable,
+    },
+  });
 
   useReceiveMessage({
     // used to receive messages from the iframe in embed preview
@@ -111,48 +174,118 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
     });
   }, [machine?.id, sendToSourceService]);
 
-  // TODO: Subject to refactor into embedActor
+  useEffect(() => {
+    canvasService.send({
+      type: 'SOURCE_CHANGED',
+      id: sourceID,
+    });
+  }, [sourceID, canvasService]);
 
-  const sourceID = sourceState!.context.sourceID;
+  const shouldRenderCanvas =
+    !embed?.isEmbedded || embed.mode !== EmbedMode.Panels;
+  const shouldRenderPanels = !embed?.isEmbedded || embed.mode !== EmbedMode.Viz;
 
-  const canvasService = useInterpretCanvas({
-    sourceID,
-    embed,
-  });
+  return (
+    <>
+      <RootContainer
+        canvas={
+          shouldRenderCanvas && (
+            <CanvasProvider value={canvasService}>
+              <CanvasView
+                pannable={pannable}
+                zoomable={zoomable}
+                showControls={!embed?.isEmbedded || embed.controls}
+                Header={
+                  !embed?.isEmbedded && (
+                    <Box
+                      data-testid="canvas-header"
+                      bg="gray.800"
+                      zIndex={1}
+                      padding="0"
+                      height="3rem"
+                    >
+                      <CanvasHeader />
+                    </Box>
+                  )
+                }
+                Empty={canShowWelcomeMessage && <WelcomeArea />}
+                ControlsAdditionalMenu={
+                  !embed?.isEmbedded && <ControlsAdditionalMenu />
+                }
+              />
+            </CanvasProvider>
+          )
+        }
+        panels={
+          shouldRenderPanels && (
+            <PanelsView
+              defaultIndex={
+                embed?.isEmbedded
+                  ? calculatePanelIndexByPanelName(embed.panel)
+                  : 0
+              }
+              tabs={(() => {
+                const tabs = [CodeTab, StateTab, EventsTab, ActorsTab];
+                if (!embed?.isEmbedded) {
+                  tabs.push(SettingsTab);
+                }
+                return tabs;
+              })()}
+              tabListRightButtons={
+                !embed?.isEmbedded ? (
+                  <Login />
+                ) : embed.showOriginalLink && embed.originalUrl ? (
+                  <Button
+                    height="100%"
+                    rounded="none"
+                    marginLeft="auto"
+                    colorScheme="blue"
+                    as="a"
+                    target="_blank"
+                    rel="noopener noreferer nofollow"
+                    href={embed?.originalUrl}
+                    leftIcon={<ExternalLinkIcon />}
+                  >
+                    Open in Stately.ai/viz
+                  </Button>
+                ) : null
+              }
+              resizable={!embed?.isEmbedded || embed.mode === EmbedMode.Full}
+            />
+          )
+        }
+      />
+      <MachineNameChooserModal />
+    </>
+  );
+}
 
-  // This is because we're doing loads of things on client side anyway
-  if (!isOnClientSide()) return <VizHead />;
+function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
+  const { query, asPath } = useRouter();
+  const embed = useMemo(
+    () => ({
+      ...parseEmbedQuery(query),
+      isEmbedded,
+      originalUrl: withoutEmbedQueryParams(query),
+    }),
+    [query, asPath],
+  );
+
+  const paletteService = useInterpret(paletteMachine);
 
   return (
     <>
       <VizHead />
-      <EmbedProvider value={embed}>
-        <ChakraProvider theme={theme}>
-          <EditorThemeProvider>
+      {/* This is because we're doing loads of things on client side anyway */}
+      {isOnClientSide() && (
+        <CommonAppProviders>
+          <EmbedProvider value={embed}>
             <PaletteProvider value={paletteService}>
-              <SimulationProvider value={simService}>
-                <Box
-                  data-testid="app"
-                  data-viz-theme="dark"
-                  as="main"
-                  display="grid"
-                  gridTemplateColumns="1fr auto"
-                  gridTemplateAreas={`"${getGridArea(embed)}"`}
-                  height="100vh"
-                >
-                  {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
-                    <CanvasProvider value={canvasService}>
-                      <CanvasView />
-                    </CanvasProvider>
-                  )}
-                  <PanelsView />
-                  <MachineNameChooserModal />
-                </Box>
-              </SimulationProvider>
+              <WebApp />
             </PaletteProvider>
-          </EditorThemeProvider>
-        </ChakraProvider>
-      </EmbedProvider>
+          </EmbedProvider>
+        </CommonAppProviders>
+      )}
     </>
   );
 }

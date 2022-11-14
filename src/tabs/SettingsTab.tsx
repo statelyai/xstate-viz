@@ -1,20 +1,25 @@
+import { SettingsIcon } from '@chakra-ui/icons';
 import {
-  Thead,
-  Tbody,
-  Table,
-  Tr,
-  Th,
-  Td,
-  Heading,
   Box,
+  Heading,
   Kbd,
-  VStack,
   Select,
+  Tab,
+  Table,
+  TabPanel,
+  TabPanelProps,
+  TabProps,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  VStack,
 } from '@chakra-ui/react';
-import { ThemeName, themes } from './editor-themes';
-import { useEditorTheme } from './themeContext';
-import { useSimulationMode } from './SimulationContext';
-import { getPlatformMetaKeyLabel } from './utils';
+import { ThemeName, themes } from '../editor-themes';
+import { useSimulationMode } from '../SimulationContext';
+import { useEditorTheme } from '../themeContext';
+import { getPlatformMetaKeyLabel } from '../utils';
 
 const KeyboardShortcuts = () => (
   <Box>
@@ -58,7 +63,8 @@ const KeyboardShortcuts = () => (
           <Td>
             <VStack alignItems="flex-start">
               <span>
-                <Kbd>Up</Kbd> , <Kbd>Left</Kbd> , <Kbd>Down</Kbd> , <Kbd>Right</Kbd>
+                <Kbd>Up</Kbd> , <Kbd>Left</Kbd> , <Kbd>Down</Kbd> ,{' '}
+                <Kbd>Right</Kbd>
               </span>
             </VStack>
           </Td>
@@ -68,7 +74,7 @@ const KeyboardShortcuts = () => (
         </Tr>
         <Tr>
           <Td>
-              <Kbd>Shift</Kbd> + <Kbd>1</Kbd>
+            <Kbd>Shift</Kbd> + <Kbd>1</Kbd>
           </Td>
           <Td>Fit to content</Td>
         </Tr>
@@ -87,7 +93,7 @@ const KeyboardShortcuts = () => (
   </Box>
 );
 
-export const SettingsPanel: React.FC = () => {
+const SettingsPanel: React.FC = () => {
   const editorTheme = useEditorTheme();
   const simulationMode = useSimulationMode();
   return (
@@ -114,4 +120,17 @@ export const SettingsPanel: React.FC = () => {
       </Box>
     </VStack>
   );
+};
+
+export const SettingsTab = {
+  Tab: (props: TabProps) => (
+    <Tab {...props} marginLeft="auto" marginRight="2">
+      <SettingsIcon aria-label="Settings" />
+    </Tab>
+  ),
+  TabPanel: (props: TabPanelProps) => (
+    <TabPanel {...props} height="100%" overflowY="auto">
+      <SettingsPanel />
+    </TabPanel>
+  ),
 };

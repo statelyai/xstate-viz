@@ -5,15 +5,7 @@ import { useRouter } from 'next/router';
 import { useInterpret } from '@xstate/react';
 import { createAuthMachine } from '../authMachine';
 import { AuthProvider } from '../authContext';
-import '../ActionViz.scss';
-import '../base.scss';
-import '../DelayViz.scss';
-import '../EdgeViz.scss';
-import '../EventTypeViz.scss';
-import '../InvokeViz.scss';
 import '../monacoPatch';
-import '../StateNodeViz.scss';
-import '../TransitionViz.scss';
 
 // import { isOnClientSide } from '../isOnClientSide';
 
