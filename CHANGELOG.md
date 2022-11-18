@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.8.2
+
+### Patch Changes
+
+- [#387](https://github.com/statelyai/xstate-viz/pull/387) [`77b2a13`](https://github.com/statelyai/xstate-viz/commit/77b2a13a76da0dbd9b2c7003c1872daca90c5760) Thanks [@zgotsch](https://github.com/zgotsch)! - Add some additional heuristics to avoid layout failures
+
 ## 0.8.1
 
 ### Patch Changes
