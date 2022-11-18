@@ -18,7 +18,7 @@ describe('Saving', () => {
         data: sourceFileToBeCreated,
       },
     });
-    cy.interceptGraphQL({
+    cy.interceptAPI({
       getLoggedInUser: {
         id: 'id',
       },
@@ -50,7 +50,7 @@ describe('Saving', () => {
 
   it('Should allow you to save an existing file', () => {
     cy.setMockAuthToken();
-    cy.interceptGraphQL({
+    cy.interceptAPI({
       getLoggedInUser: {
         id: 'id',
       },

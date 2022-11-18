@@ -2,18 +2,10 @@ import {
   Avatar,
   Box,
   Button,
-  HStack,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Text,
   Portal,
 } from '@chakra-ui/react';
 import { useActor } from '@xstate/react';
@@ -24,7 +16,7 @@ import { registryLinks } from './registryLinks';
 export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
   const authService = useAuth();
   const [state] = useActor(authService);
-  const session = state.context!.client.auth.session();
+  const user = state.context.loggedInUserData;
 
   return (
     <Box {...props} zIndex="1" display="flex" alignItems="center">
@@ -37,10 +29,10 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
           height="100%"
           isFullWidth
           onClick={() => {
-            authService.send('CHOOSE_PROVIDER');
+            authService.send('EXTERNAL_SIGN_IN');
           }}
         >
-          Login
+          Sign In
         </Button>
       )}
 
@@ -49,11 +41,8 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
           <MenuButton>
             <Avatar
               marginRight="2"
-              src={session?.user?.user_metadata?.avatar_url || ''}
-              name={
-                session?.user?.user_metadata?.full_name ||
-                session?.user?.user_metadata?.user_name
-              }
+              src={user?.avatarUrl ?? ''}
+              name={user?.displayName ?? ''}
               height="30px"
               width="30px"
             />
@@ -67,52 +56,20 @@ export const Login: React.FC<React.ComponentProps<typeof Box>> = (props) => {
                     state.context.loggedInUserData.id,
                   )}
                 >
-                  View Machines
+                  My Profile
                 </MenuItem>
               )}
               <MenuItem
                 onClick={() => {
-                  authService.send('SIGN_OUT');
+                  authService.send('EXTERNAL_SIGN_OUT');
                 }}
               >
-                Logout
+                Sign Out
               </MenuItem>
             </MenuList>
           </Portal>
         </Menu>
       )}
-
-      <Modal
-        isOpen={state.matches({
-          signed_out: 'choosing_provider',
-        })}
-        onClose={() => {
-          authService.send('CANCEL_PROVIDER');
-        }}
-        // colorScheme="blackAlpha"
-      >
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Sign In</ModalHeader>
-          <ModalBody>
-            <Text fontSize="sm">
-              Sign in to Stately to be able to save, fork and like machines.
-            </Text>
-          </ModalBody>
-          <ModalFooter justifyContent="flex-start">
-            <HStack>
-              <Button
-                onClick={() => {
-                  authService.send({ type: 'SIGN_IN', provider: 'github' });
-                }}
-                colorScheme="blue"
-              >
-                GitHub
-              </Button>
-            </HStack>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </Box>
   );
 };

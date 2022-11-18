@@ -1,10 +1,10 @@
+import { LoggedInUser, SourceFile } from '../../src/apiTypes';
+
 describe('Editor persistence', () => {
   const setup = () => {
     cy.setMockAuthToken();
-    cy.interceptGraphQL({
-      getLoggedInUser: {
-        id: 'id',
-      },
+    cy.interceptAPI<LoggedInUser>({
+      id: 'id',
     });
   };
 
@@ -37,16 +37,16 @@ describe('Editor persistence', () => {
         }),
       );
 
-      cy.interceptGraphQL({
-        getLoggedInUser: {
-          id: 'id',
-        },
-        getSourceFile: {
-          id: 'source-file-id',
-          updatedAt: '2018-04-02',
-          text: `// Changes from the registry!`,
-        },
+      cy.interceptAPI<LoggedInUser>({
+        id: 'id',
       });
+
+      cy.interceptAPI<SourceFile>({
+        id: 'source-file-id',
+        updatedAt: new Date('2018-04-02'),
+        text: `// Changes from the registry!`,
+      });
+
       cy.visitVizWithNextPageProps({
         id: 'source-file-id',
       });
@@ -67,7 +67,7 @@ describe('Editor persistence', () => {
         }),
       );
 
-      cy.interceptGraphQL({
+      cy.interceptAPI({
         getLoggedInUser: {
           id: 'id',
         },

@@ -1,12 +1,12 @@
+import type { editor } from 'monaco-editor';
 import type {
   AnyEventObject,
   AnyInterpreter,
   State,
   StateMachine,
 } from 'xstate';
-import { SourceFileFragment } from './graphql/SourceFileFragment.generated';
 import { Model } from 'xstate/lib/model.types';
-import type { editor } from 'monaco-editor';
+import { SourceFile } from './apiTypes';
 
 export type AnyStateMachine = StateMachine<any, any, any>;
 
@@ -24,7 +24,7 @@ export type AnyState = State<any, any>;
 
 export type SourceProvider = 'gist' | 'registry';
 
-export interface SourceRegistryData extends SourceFileFragment {
+export interface SourceRegistryData extends SourceFile {
   // we can't trust SSR data to be accurate because at the moment we can use authenticated user during SSR
   // so properties like `youHaveLiked` might be initially inaccurate
   dataSource: 'ssr' | 'client';

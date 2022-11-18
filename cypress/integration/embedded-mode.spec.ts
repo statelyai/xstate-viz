@@ -19,7 +19,7 @@ createMachine({
 describe('Embedded mode', () => {
   describe('default controls', () => {
     before(() => {
-      cy.interceptGraphQL({
+      cy.interceptAPI({
         getSourceFile: sourceFileFixture,
       });
       cy.visitEmbedWithNextPageProps({
@@ -35,7 +35,7 @@ describe('Embedded mode', () => {
   });
   describe('default (mode:viz)1', () => {
     before(() => {
-      cy.interceptGraphQL({
+      cy.interceptAPI({
         getSourceFile: sourceFileFixture,
       });
       cy.visitEmbedWithNextPageProps({
@@ -52,7 +52,7 @@ describe('Embedded mode', () => {
 
   describe('mode:panels', () => {
     beforeEach(() => {
-      cy.interceptGraphQL({
+      cy.interceptAPI({
         getSourceFile: sourceFileFixture,
       });
     });
@@ -152,7 +152,7 @@ describe('Embedded mode', () => {
 
   describe('mode:full', () => {
     before(() => {
-      cy.interceptGraphQL({
+      cy.interceptAPI({
         getSourceFile: sourceFileFixture,
       });
       cy.visitEmbedWithNextPageProps({

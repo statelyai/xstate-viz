@@ -1,5 +1,0 @@
-mutation UpdateSourceFile($id: String!, $text: String!) {
-  updateSourceFile(id: $id, text: $text) {
-    ...SourceFile
-  }
-}

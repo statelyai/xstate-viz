@@ -1,4 +1,6 @@
-import { TypedDocumentNode } from '@graphql-typed-document-node/core';
+import { useSelector } from '@xstate/react';
+import Cookies from 'js-cookie';
+import { NextRouter } from 'next/router';
 import * as React from 'react';
 import {
   ActionObject,
@@ -17,9 +19,6 @@ import {
   EmbedPanel,
   ParsedEmbed,
 } from './types';
-import { print } from 'graphql';
-import { useSelector } from '@xstate/react';
-import { NextRouter } from 'next/router';
 
 export function isNullEvent(eventName: string) {
   return eventName === ActionTypes.NullEvent;
@@ -139,33 +138,31 @@ export const updateQueryParamsWithoutReload = (
   window.history.pushState({ path: newURL.href }, '', newURL.href);
 };
 
-export const gQuery = <Data, Variables>(
-  query: TypedDocumentNode<Data, Variables>,
-  variables: Variables,
-  accessToken?: string,
-): Promise<{ data?: Data }> =>
-  fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
+const getApiUrl = (endpoint: string) => {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL ?? 'http://localhost:3000';
+  const apiBaseUrl = `${baseUrl}/api/v1/viz`;
+  return `${apiBaseUrl}/${endpoint}`;
+};
+
+export async function callAPI<T>(input: {
+  endpoint: string;
+  queryParams?: URLSearchParams;
+  body?: any;
+}) {
+  const { endpoint, queryParams, body } = input;
+  const apiUrl = getApiUrl(endpoint);
+  const url = queryParams ? `${apiUrl}?${queryParams}` : apiUrl;
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      ...(accessToken && { authorization: 'Bearer ' + accessToken }),
     },
-    body: JSON.stringify({
-      query: print(query),
-      variables,
-    }),
-  })
-    .then((resp) => resp.json())
-    .then((res) => {
-      /**
-       * Throw the GQL error if it comes - this
-       * doesn't happen by default
-       */
-      if (res.errors) {
-        throw new Error(res.errors[0]!.message);
-      }
-      return res;
-    });
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = await response.json();
+  return response.ok ? (json as { data: T }) : Promise.reject(json);
+}
 
 export function willChange(
   machine: AnyStateMachine,
@@ -429,3 +426,18 @@ export const isAcceptingSpaceNatively = (
   el.tagName === 'INPUT' ||
   isTextInputLikeElement(el) ||
   getRoles(el).includes('button');
+
+export const isSignedIn = () => {
+  const authCookie = Cookies.get('supabase-auth-token');
+  return authCookie !== undefined && authCookie.length > 0;
+};
+
+export const isErrorWithMessage = (
+  error: unknown,
+): error is {
+  message: string;
+} =>
+  typeof error === 'object' &&
+  error !== null &&
+  'message' in error &&
+  typeof (error as Record<string, unknown>).message === 'string';

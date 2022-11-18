@@ -1,16 +1,14 @@
-import { GetSourceFileSsrQuery } from '../../src/graphql/GetSourceFileSSR.generated';
+import { SourceFile } from '../../src/apiTypes';
 
 const SOURCE_ID = 'source-file-id';
 
-const getSSRParam = (
-  data: Partial<GetSourceFileSsrQuery['getSourceFile']> & { id: string },
-) => {
+const getSSRParam = (data: Partial<SourceFile> & { id: string }) => {
   return encodeURIComponent(JSON.stringify({ data, id: data.id }));
 };
 
 describe('Embed Preview', () => {
   beforeEach(() => {
-    cy.interceptGraphQL({
+    cy.interceptAPI({
       getSourceFile: {
         id: SOURCE_ID,
         text: `
