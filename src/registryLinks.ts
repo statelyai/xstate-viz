@@ -4,5 +4,5 @@ export const registryLinks = {
   editSystem: (id: string) =>
     `${process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL}/projects/${id}/edit`,
   sourceFileOgImage: (id: string) =>
-    `${process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL}/machines/${id}.png`,
+    `${process.env.NEXT_PUBLIC_REGISTRY_PUBLIC_URL}/viz/machines/${id}.png`,
 };
