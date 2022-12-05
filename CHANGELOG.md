@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.8.5
+
+### Patch Changes
+
+- [`60a35a2`](https://github.com/statelyai/xstate-viz/commit/60a35a2e3696a2434afc524180657e7b30e7aee8) Thanks [@mellson](https://github.com/mellson)! - Screenshots now have a better quality and are cropped to the machine.
+
 ## 0.8.2
 
 ### Patch Changes
