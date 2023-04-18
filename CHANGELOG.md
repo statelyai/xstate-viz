@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.8.6
+
+### Patch Changes
+
+- [#408](https://github.com/statelyai/xstate-viz/pull/408) [`1894954`](https://github.com/statelyai/xstate-viz/commit/1894954c478f34e3b91b431d5de56d633655fe74) Thanks [@mellson](https://github.com/mellson)! - Remove Sentry.
+
 ## 0.8.5
 
 ### Patch Changes
