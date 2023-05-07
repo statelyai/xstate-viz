@@ -32,7 +32,7 @@
     "xstate": "^4.26.0"
   },
   "scripts": {
-    "start": "next -p 3001",
+    "start": "next -p 3000",
     "build": "next build",
     "serve": "next start",
     "postinstall": "patch-package && mkdir -p public/monaco-editor && cp -r node_modules/monaco-editor public",
