@@ -21,6 +21,7 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 import router, { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
+import { VizOrientationProvider } from './visualizerOrientationContext';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -131,23 +132,20 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
           <EditorThemeProvider>
             <PaletteProvider value={paletteService}>
               <SimulationProvider value={simService}>
-                <Box
-                  data-testid="app"
-                  data-viz-theme="dark"
-                  as="main"
-                  display="grid"
-                  gridTemplateColumns="1fr auto"
-                  gridTemplateAreas={`"${getGridArea(embed)}"`}
-                  height="100vh"
-                >
-                  {!(embed?.isEmbedded && embed.mode === EmbedMode.Panels) && (
-                    <CanvasProvider value={canvasService}>
-                      <CanvasView />
-                    </CanvasProvider>
-                  )}
-                  <PanelsView />
-                  <MachineNameChooserModal />
-                </Box>
+                <VizOrientationProvider embed={embed}>
+                  <>
+                    {!(
+                      embed?.isEmbedded && embed.mode === EmbedMode.Panels
+                    ) && (
+                      <CanvasProvider value={canvasService}>
+                        <CanvasView />
+                      </CanvasProvider>
+                    )}
+                    <PanelsView />
+
+                    <MachineNameChooserModal />
+                  </>
+                </VizOrientationProvider>
               </SimulationProvider>
             </PaletteProvider>
           </EditorThemeProvider>

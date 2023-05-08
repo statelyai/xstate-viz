@@ -9,11 +9,13 @@ import {
   PointDelta,
 } from './dragSessionTracker';
 import { Point } from './types';
+import { useVizOrientation } from './visualizerOrientationContext';
 
 const resizableModel = createModel(
   {
     ref: null as React.MutableRefObject<HTMLElement> | null,
     widthDelta: 0,
+    heightDelta: 0,
   },
   {
     events: {
@@ -51,6 +53,9 @@ const resizableMachine = resizableModel.createMachine({
             widthDelta: (ctx, e) => {
               return Math.max(0, ctx.widthDelta - e.delta.x);
             },
+            heightDelta: (ctx, e) => {
+              return Math.max(0, ctx.heightDelta - e.delta.y);
+            },
           }),
         },
         DRAG_SESSION_STOPPED: 'idle',
@@ -63,6 +68,7 @@ const ResizeHandle: React.FC<{
   onChange: (width: number) => void;
 }> = ({ onChange }) => {
   const ref = useRef<HTMLDivElement>(null!);
+  const vizOrientation = useVizOrientation();
 
   const [state] = useMachine(
     resizableMachine.withContext({
@@ -72,20 +78,27 @@ const ResizeHandle: React.FC<{
   );
 
   useEffect(() => {
-    onChange(state.context.widthDelta);
-  }, [state.context.widthDelta, onChange]);
+    if (vizOrientation.orientation === 'top/bottom') {
+      onChange(state.context.heightDelta);
+    } else {
+      onChange(state.context.widthDelta);
+    }
+  }, [state.context.widthDelta, onChange, state.context.heightDelta]);
 
   return (
     <Box
       ref={ref}
       data-testid="resize-handle"
-      width="1"
+      width={vizOrientation.orientation === 'top/bottom' ? '100%' : '1px'}
       css={{
         position: 'absolute',
         top: 0,
         left: 0,
-        height: '100%',
-        cursor: 'ew-resize',
+        height: vizOrientation.orientation === 'top/bottom' ? '4px' : '100%',
+        cursor:
+          vizOrientation.orientation === 'top/bottom'
+            ? 'ns-resize'
+            : 'ew-resize',
         opacity: 0,
         transition: 'opacity 0.2s ease',
       }}
@@ -106,7 +119,7 @@ const ResizeHandle: React.FC<{
   );
 };
 
-interface ResizableBoxProps extends Omit<BoxProps, 'width'> {
+interface ResizableBoxProps extends Omit<BoxProps, 'width' | 'height'> {
   disabled?: boolean;
 }
 
@@ -116,20 +129,33 @@ export const ResizableBox: React.FC<ResizableBoxProps> = ({
   ...props
 }) => {
   const [widthDelta, setWidthDelta] = useState(0);
+  const [heightDelta, setHeightDelta] = useState(0);
+  const vizOrientation = useVizOrientation();
+  const width =
+    vizOrientation.orientation === 'top/bottom'
+      ? '100%'
+      : `clamp(36rem, calc(36rem + ${widthDelta}px), 70vw)`;
+  const height =
+    vizOrientation.orientation === 'top/bottom'
+      ? `clamp(36rem, calc(36rem + ${heightDelta}px), 90vh)`
+      : 'auto';
+
+  const handleSizeChange = (value: number) => {
+    if (vizOrientation.orientation === 'top/bottom') {
+      setHeightDelta(value);
+    } else {
+      setWidthDelta(value);
+    }
+  };
 
   return (
     // 35rem to avoid shortcut codes breaking
     // into multiple lines
-    <Box
-      {...props}
-      style={
-        !disabled
-          ? { width: `clamp(36rem, calc(36rem + ${widthDelta}px), 70vw)` }
-          : undefined
-      }
-    >
+    <Box {...props} style={!disabled ? { width, height } : undefined}>
       {children}
-      {!disabled && <ResizeHandle onChange={(value) => setWidthDelta(value)} />}
+      {!disabled && (
+        <ResizeHandle onChange={(value) => handleSizeChange(value)} />
+      )}
     </Box>
   );
 };

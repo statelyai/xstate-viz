@@ -15,6 +15,10 @@ import { ThemeName, themes } from './editor-themes';
 import { useEditorTheme } from './themeContext';
 import { useSimulationMode } from './SimulationContext';
 import { getPlatformMetaKeyLabel } from './utils';
+import {
+  OrientationType,
+  useVizOrientation,
+} from './visualizerOrientationContext';
 
 const KeyboardShortcuts = () => (
   <Box>
@@ -58,7 +62,8 @@ const KeyboardShortcuts = () => (
           <Td>
             <VStack alignItems="flex-start">
               <span>
-                <Kbd>Up</Kbd> , <Kbd>Left</Kbd> , <Kbd>Down</Kbd> , <Kbd>Right</Kbd>
+                <Kbd>Up</Kbd> , <Kbd>Left</Kbd> , <Kbd>Down</Kbd> ,{' '}
+                <Kbd>Right</Kbd>
               </span>
             </VStack>
           </Td>
@@ -68,7 +73,7 @@ const KeyboardShortcuts = () => (
         </Tr>
         <Tr>
           <Td>
-              <Kbd>Shift</Kbd> + <Kbd>1</Kbd>
+            <Kbd>Shift</Kbd> + <Kbd>1</Kbd>
           </Td>
           <Td>Fit to content</Td>
         </Tr>
@@ -90,6 +95,7 @@ const KeyboardShortcuts = () => (
 export const SettingsPanel: React.FC = () => {
   const editorTheme = useEditorTheme();
   const simulationMode = useSimulationMode();
+  const vizOrientation = useVizOrientation();
   return (
     <VStack paddingY="5" spacing="7" alignItems="stretch">
       {simulationMode === 'visualizing' && <KeyboardShortcuts />}
@@ -110,6 +116,22 @@ export const SettingsPanel: React.FC = () => {
               {themes[themeName as ThemeName].name}
             </option>
           ))}
+        </Select>
+      </Box>
+      <Box>
+        <Heading as="h2" fontSize="l" marginBottom="5">
+          Visualizer orientation
+        </Heading>
+        <Select
+          maxWidth="fit-content"
+          defaultValue={vizOrientation.orientation}
+          onChange={(e) => {
+            const orientation = e.target.value as OrientationType;
+            vizOrientation.changeOrientation(orientation);
+          }}
+        >
+          <option value="left/right">left/right</option>
+          <option value="top/bottom">top/bottom</option>
         </Select>
       </Box>
     </VStack>
