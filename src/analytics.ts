@@ -15,11 +15,6 @@ function preCryptoGenerateUUID() {
   return UUID.replace(/z/, str);
 }
 
-export const createUniqueId: () => string =
-  typeof window !== 'undefined' && typeof self.crypto.randomUUID === 'function'
-    ? () => self.crypto.randomUUID()
-    : preCryptoGenerateUUID;
-
 const debounce = <T extends (...args: any[]) => ReturnType<T>>(
   callback: T,
   timeout: number,
@@ -44,7 +39,7 @@ const storage = testStorageSupport() ? window.localStorage : createStorage();
 const getRandomUniqueId = () => {
   const uniqueId = storage.getItem('random.uuid');
   if (uniqueId) return uniqueId;
-  const newUniqueId = createUniqueId();
+  const newUniqueId = preCryptoGenerateUUID();
   storage.setItem('random.uuid', newUniqueId);
   return newUniqueId;
 };
