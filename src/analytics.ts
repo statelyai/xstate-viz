@@ -83,7 +83,6 @@ const sendEvents = () => {
     method: 'POST',
     body: JSON.stringify(eventsToSend),
   }).catch(console.log);
- JSON.stringify(eventsToSend),
 };
 
 // Debounce the sending of events to avoid sending too many at the same time.
