@@ -99,7 +99,6 @@ const batchEvent = (
   properties?: PropertyDict,
   { instantDelivery = false } = {},
 ) => {
-  console.log('analytics batchEvent');
   const unixTimestamp = Math.floor(new Date().getTime() / 1000);
   batchedEvents.push({
     event: eventName,
