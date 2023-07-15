@@ -19,6 +19,7 @@ import {
 } from './sourceMachine';
 import { SourceRegistryData } from './types';
 import { callAPI, isSignedIn } from './utils';
+import { analytics } from './analytics';
 
 const authModel = createModel(
   {
@@ -165,7 +166,10 @@ export const createAuthMachine = (params: {
               src: (_): Promise<LoggedInUser> =>
                 callAPI<LoggedInUser>({
                   endpoint: 'get-user',
-                }).then((res) => res.data),
+                }).then((res) => {
+                  analytics()?.identify(res.data.id);
+                  return res.data;
+                }),
               onDone: {
                 target: 'idle',
                 actions: [
