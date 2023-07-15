@@ -21,6 +21,7 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 import router, { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
+import { analytics } from './analytics';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',
@@ -110,6 +111,10 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
       id: machine?.id || '',
     });
   }, [machine?.id, sendToSourceService]);
+
+  useEffect(() => {
+    analytics()?.track('Opening XState Viz (localdev ignore)');
+  }, []);
 
   // TODO: Subject to refactor into embedActor
 
