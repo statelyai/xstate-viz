@@ -140,6 +140,12 @@ export interface AnalyticsInstance extends Identity<typeof analyticsInstance> {}
  * So use this for tracking custom events with the returned track function.
  */
 export const analytics = (): AnalyticsInstance | undefined => {
+  if (
+    !process.env.NEXT_PUBLIC_MIXPANEL_TOKEN ||
+    typeof window === 'undefined'
+  ) {
+    return;
+  }
   return analyticsInstance;
 };
 
