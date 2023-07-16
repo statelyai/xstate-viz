@@ -18,7 +18,7 @@ import {
   sourceModel,
 } from './sourceMachine';
 import { SourceRegistryData } from './types';
-import { callAPI, isSignedIn } from './utils';
+import { callAPI, isSignedIn, once } from './utils';
 import { analytics } from './analytics';
 
 const authModel = createModel(
@@ -167,7 +167,6 @@ export const createAuthMachine = (params: {
                 callAPI<LoggedInUser>({
                   endpoint: 'get-user',
                 }).then((res) => {
-                  analytics()?.identify(res.data.id);
                   return res.data;
                 }),
               onDone: {
@@ -188,6 +187,8 @@ export const createAuthMachine = (params: {
                       to: (ctx) => ctx.sourceRef!,
                     },
                   ),
+                  (_, event) => analytics()?.identify(event.data.id),
+                  once(() => analytics()?.track('Opening XState Viz')),
                 ],
               },
               onError: {
@@ -202,6 +203,7 @@ export const createAuthMachine = (params: {
                       to: (ctx) => ctx.notifRef,
                     },
                   ),
+                  once(() => analytics()?.track('Opening XState Viz')),
                 ],
               },
             },
