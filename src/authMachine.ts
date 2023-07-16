@@ -170,9 +170,7 @@ export const createAuthMachine = (params: {
               src: (_): Promise<LoggedInUser> =>
                 callAPI<LoggedInUser>({
                   endpoint: 'get-user',
-                }).then((res) => {
-                  return res.data;
-                }),
+                }).then((res) => res.data),
               onDone: {
                 target: 'idle',
                 actions: [
