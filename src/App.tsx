@@ -112,10 +112,6 @@ function App({ isEmbedded = false }: { isEmbedded?: boolean }) {
     });
   }, [machine?.id, sendToSourceService]);
 
-  useEffect(() => {
-    analytics()?.track('Opening XState Viz');
-  }, []);
-
   // TODO: Subject to refactor into embedActor
 
   const sourceID = sourceState!.context.sourceID;
