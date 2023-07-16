@@ -21,9 +21,10 @@ import { SourceRegistryData } from './types';
 import { callAPI, isSignedIn, once } from './utils';
 import { analytics } from './analytics';
 
-const trackApplicationLoad = once(() =>
-  analytics()?.track('Opening XState Viz'),
-);
+const trackApplicationLoad = once((_, event) => {
+  analytics()?.identify(event.data.id);
+  analytics()?.track('Opening XState Viz');
+});
 
 const authModel = createModel(
   {
@@ -189,7 +190,6 @@ export const createAuthMachine = (params: {
                       to: (ctx) => ctx.sourceRef!,
                     },
                   ),
-                  (_, event) => analytics()?.identify(event.data.id),
                   trackApplicationLoad,
                 ],
               },
