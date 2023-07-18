@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.9.0
+
+### Minor Changes
+
+- [#414](https://github.com/statelyai/xstate-viz/pull/414) [`8a336e3`](https://github.com/statelyai/xstate-viz/commit/8a336e330bb13f04abd547c48e445d9c9c3c94fc) Thanks [@kevinmaes](https://github.com/kevinmaes)! - Analytics
+
 ## 0.8.6
 
 ### Patch Changes
