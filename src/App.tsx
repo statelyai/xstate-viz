@@ -21,6 +21,7 @@ import { useInterpretCanvas } from './useInterpretCanvas';
 import router, { useRouter } from 'next/router';
 import { parseEmbedQuery, withoutEmbedQueryParams } from './utils';
 import { registryLinks } from './registryLinks';
+import { analytics } from './analytics';
 
 const defaultHeadProps = {
   title: 'XState Visualizer',

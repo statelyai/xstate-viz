@@ -20,6 +20,7 @@
     "js-cookie": "^3.0.1",
     "lz-string": "^1.4.4",
     "memory-web-storage": "^1.0.0",
+    "mixpanel": "^0.17.0",
     "monaco-editor": "^0.25.2",
     "next": "^11.1.0",
     "react": "^17.0.2",
@@ -27,6 +28,7 @@
     "react-json-view": "^1.21.3",
     "react-markdown": "^6.0.2",
     "realms-shim": "^1.2.2",
+    "sha3": "^2.1.4",
     "web-vitals": "^1.0.1",
     "web-worker": "^1.0.0",
     "xstate": "^4.26.0"

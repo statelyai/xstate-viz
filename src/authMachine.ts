@@ -18,7 +18,13 @@ import {
   sourceModel,
 } from './sourceMachine';
 import { SourceRegistryData } from './types';
-import { callAPI, isSignedIn } from './utils';
+import { callAPI, isSignedIn, once } from './utils';
+import { analytics } from './analytics';
+
+const trackApplicationLoad = once((_, event) => {
+  analytics()?.identify(event.data.id);
+  analytics()?.track('Opening XState Viz');
+});
 
 const authModel = createModel(
   {
@@ -184,6 +190,7 @@ export const createAuthMachine = (params: {
                       to: (ctx) => ctx.sourceRef!,
                     },
                   ),
+                  trackApplicationLoad,
                 ],
               },
               onError: {
@@ -198,6 +205,7 @@ export const createAuthMachine = (params: {
                       to: (ctx) => ctx.notifRef,
                     },
                   ),
+                  trackApplicationLoad,
                 ],
               },
             },
