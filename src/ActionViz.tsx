@@ -62,11 +62,16 @@ export const ActionType: React.FC<{ title?: string }> = ({
 };
 
 export const RaiseActionLabel: React.FC<{
-  action: PotentiallyStructurallyCloned<RaiseAction<EventObject>>;
+  action: PotentiallyStructurallyCloned<RaiseAction<any, any, EventObject>>;
 }> = ({ action }) => {
+  const eventType =
+    typeof action.event === 'object' && action.event !== null
+      ? action.event.type ?? <em>unknown</em>
+      : `${action.event}`;
+
   return (
     <ActionType>
-      <strong>raise</strong> {action.event}
+      <strong>raise</strong> {eventType}
     </ActionType>
   );
 };
@@ -120,7 +125,7 @@ export const LogActionLabel: React.FC<{
 };
 
 export const CancelActionLabel: React.FC<{
-  action: PotentiallyStructurallyCloned<CancelAction>;
+  action: PotentiallyStructurallyCloned<CancelAction<any, any, any>>;
 }> = ({ action }) => {
   return (
     <ActionType>
@@ -200,7 +205,7 @@ export const ActionViz: React.FC<{
       <AssignActionLabel action={action as AssignAction<any, any>} />
     ),
     [ActionTypes.Raise]: (
-      <RaiseActionLabel action={action as RaiseAction<any>} />
+      <RaiseActionLabel action={action as RaiseAction<any, any, any>} />
     ),
     [ActionTypes.Send]: (
       <SendActionLabel action={action as SendActionObject<any, any>} />
@@ -208,7 +213,9 @@ export const ActionViz: React.FC<{
     [ActionTypes.Log]: (
       <LogActionLabel action={action as LogAction<any, any>} />
     ),
-    [ActionTypes.Cancel]: <CancelActionLabel action={action as CancelAction} />,
+    [ActionTypes.Cancel]: (
+      <CancelActionLabel action={action as CancelAction<any, any, any>} />
+    ),
     [ActionTypes.Stop]: (
       <StopActionLabel action={action as StopAction<any, any>} />
     ),
