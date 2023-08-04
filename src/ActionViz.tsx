@@ -64,14 +64,9 @@ export const ActionType: React.FC<{ title?: string }> = ({
 export const RaiseActionLabel: React.FC<{
   action: PotentiallyStructurallyCloned<RaiseAction<EventObject>>;
 }> = ({ action }) => {
-  const eventType =
-    typeof action.event === 'object' && action.event !== null
-      ? action.event.type ?? <em>unknown</em>
-      : `${action.event}`;
-
   return (
     <ActionType>
-      <strong>raise</strong> {eventType}
+      <strong>raise</strong> {action.event}
     </ActionType>
   );
 };
