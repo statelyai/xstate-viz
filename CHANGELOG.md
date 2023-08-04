@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.9.1
+
+### Patch Changes
+
+- [#422](https://github.com/statelyai/xstate-viz/pull/422) [`10858d2`](https://github.com/statelyai/xstate-viz/commit/10858d2c3efc7073b675582b892fdd8b735e11ef) Thanks [@davidkpiano](https://github.com/davidkpiano)! - Fixes issue where raise actions were causing visualizer to crash
+
 ## 0.9.0
 
 ### Minor Changes
