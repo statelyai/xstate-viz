@@ -74,10 +74,10 @@ export const createAuthMachine = (params: {
         if (isSignedIn()) {
           sendBack({ type: 'SIGNED_IN' });
         }
-        ctx.client.auth.onAuthStateChange((state) => {
+        ctx.client.auth.onAuthStateChange((event, session) => {
           // we only care about SIGNED_IN because signing out is "synchronous" from our perspective anyway
           // and is handled in response to user actions
-          if (state === 'SIGNED_IN') {
+          if (event === 'SIGNED_IN') {
             sendBack({ type: 'SIGNED_IN' });
           }
         });
@@ -121,7 +121,7 @@ export const createAuthMachine = (params: {
       external_sign_in: {
         entry: [
           (_) => {
-            if (typeof window === undefined) return;
+            if (typeof window === 'undefined') return;
             window.open(
               `/registry/login?redirectTo=${encodeURIComponent(
                 window.location.pathname,
@@ -135,7 +135,7 @@ export const createAuthMachine = (params: {
         tags: ['authorized'],
         entry: [
           (_) => {
-            if (typeof window === undefined) return;
+            if (typeof window === 'undefined') return;
             window.open(
               `/registry/logout?redirectTo=${encodeURIComponent(
                 window.location.pathname,
