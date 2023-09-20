@@ -428,8 +428,18 @@ export const isAcceptingSpaceNatively = (
   getRoles(el).includes('button');
 
 export const isSignedIn = () => {
-  const authCookie = Cookies.get('supabase-auth-token');
-  return authCookie !== undefined && authCookie.length > 0;
+  const match = process.env.NEXT_PUBLIC_SUPABASE_API_URL.match(
+    /https:\/\/(.*)\.supabase/,
+  );
+
+  if (match) {
+    const supabaseProjectName = match[1];
+    const cookieName = `sb-${supabaseProjectName}-auth-token`;
+    const authCookie = Cookies.get(cookieName);
+    return authCookie !== undefined && authCookie.length > 0;
+  }
+
+  return false;
 };
 
 export const isErrorWithMessage = (
