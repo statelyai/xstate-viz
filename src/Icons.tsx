@@ -61,6 +61,9 @@ export const MagicIcon = makeIcon(
       </g>
     </g>
   </>,
+  {
+    fill: 'current',
+  },
 );
 
 export const SaveIcon = makeIcon(

@@ -12,7 +12,7 @@ import { useMachine, useSelector } from '@xstate/react';
 import React from 'react';
 import { createMachine } from 'xstate';
 import { useAuth } from './authContext';
-import { BoltIcon, LightbulbIcon } from './Icons';
+import { BoltIcon, LightbulbIcon, MagicIcon } from './Icons';
 import { Overlay } from './Overlay';
 import { getSourceActor } from './sourceMachine';
 
@@ -131,13 +131,37 @@ export const WelcomeArea = () => {
           <>
             <Stack spacing="6">
               <Stack>
-                <Title>XState Visualizer</Title>
+                <Title>XState Visualizer (Legacy)</Title>
                 <Description>
-                  Welcome to the visualizer! Here, you can build state machine
-                  diagrams using XState.
+                  Welcome to the legacy visualizer! Here, you can continue to
+                  build state machine diagrams using XState.{' '}
+                </Description>
+                <Description>
+                  For a better experience,{' '}
+                  <Link
+                    href="https://stately.ai?source=viz"
+                    target="_blank"
+                    color="blue.300"
+                  >
+                    use our Stately visual editor
+                  </Link>{' '}
+                  to build state machines visually, export to XState V5, and
+                  much much more.
                 </Description>
               </Stack>
               <Stack spacing="3">
+                <Button
+                  {...buttonStyleProps}
+                  as={Link}
+                  href="https://stately.ai?source=viz"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <HStack spacing="4">
+                    <MagicIcon color="gray.200" h="6" w="6" />
+                    <Text color="gray.100">Use the Stately visual editor</Text>
+                  </HStack>
+                </Button>
                 <Button
                   {...buttonStyleProps}
                   onClick={() => send('CLICK_SEE_EXAMPLE')}
@@ -150,7 +174,7 @@ export const WelcomeArea = () => {
                 <Button
                   {...buttonStyleProps}
                   as={Link}
-                  href="http://xstate.js.org/docs"
+                  href="http://stately.ai/docs/xstate"
                   rel="noreferrer"
                   target="_blank"
                 >
