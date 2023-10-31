@@ -16,6 +16,7 @@ import {
   MenuList,
   Portal,
   Spinner,
+  Text,
   VStack,
 } from '@chakra-ui/react';
 import { useSelector } from '@xstate/react';
@@ -93,6 +94,27 @@ export const CanvasView: React.FC = () => {
       {!embed?.isEmbedded && (
         <Box data-testid="canvas-header" bg="gray.800" zIndex={1} padding="0">
           <CanvasHeader />
+          <Box
+            bg="blue.600"
+            px="1"
+            py="2"
+            color="white"
+            textAlign="center"
+            fontWeight="600"
+          >
+            <Text>
+              ✨ Our{' '}
+              <Link
+                href="https://stately.ai?source=viz-banner"
+                target="_blank"
+                color="blue.50"
+                textDecoration="underline"
+              >
+                new Stately visual editor
+              </Link>{' '}
+              is out now! ✨
+            </Text>
+          </Box>
         </Box>
       )}
       <CanvasContainer panModeEnabled={panModeEnabled}>

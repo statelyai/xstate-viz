@@ -96,7 +96,7 @@ export const WelcomeArea = () => {
               <Link
                 color="blue.300"
                 fontSize="sm"
-                href="https://xstate.js.org/docs"
+                href="https://stately.ai/docs/xstate"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -118,7 +118,7 @@ export const WelcomeArea = () => {
               <Link
                 color="blue.300"
                 fontSize="sm"
-                href="https://xstate.js.org/docs"
+                href="https://stately.ai/docs/xstate"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -145,8 +145,8 @@ export const WelcomeArea = () => {
                   >
                     use our Stately visual editor
                   </Link>{' '}
-                  to build state machines visually, export to XState V5, and
-                  much much more.
+                  to build state machines visually, generate machines from text
+                  descriptions, export to XState V5, and much much more.
                 </Description>
               </Stack>
               <Stack spacing="3">
@@ -156,6 +156,7 @@ export const WelcomeArea = () => {
                   href="https://stately.ai?source=viz"
                   rel="noreferrer"
                   target="_blank"
+                  bg="orange.600"
                 >
                   <HStack spacing="4">
                     <MagicIcon color="gray.200" h="6" w="6" />
