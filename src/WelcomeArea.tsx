@@ -130,94 +130,103 @@ export const WelcomeArea = () => {
         )}
         {state.matches('welcomeArea') && (
           <>
-            <Stack spacing="6">
-              <Stack>
-                <Title size="lg">Stately Visualizer</Title>
-                <Description>
-                  Build state machine diagrams using XState.{' '}
-                </Description>
-                <Description>
-                  For the best experience,{' '}
-                  <Link
-                    href="https://stately.ai?source=viz"
-                    target="_blank"
-                    color="blue.300"
+            <Stack spacing="3">
+              <Stack spacing="6">
+                <Title>
+                  <Heading size="lg">Stately Visualizer</Heading>
+                </Title>
+                <Text color="gray.400" size="md">
+                  Build state machine diagrams using XState.
+                </Text>
+                <Stack backgroundColor="gray.700" spacing="5" padding="6">
+                  <Text>
+                    This legacy visualizer is deprecated and is no longer
+                    maintained.
+                  </Text>
+                  <Text>
+                    For the best experience,{' '}
+                    <Link
+                      href="https://stately.ai?source=viz"
+                      target="_blank"
+                      color="blue.300"
+                    >
+                      use our new Stately editor
+                    </Link>{' '}
+                    to build and visualize state machines with drag-and-drop, AI
+                    assistance, exporting to XState V5, and more.
+                  </Text>
+                  <Text>
+                    Full parity between the new Stately editor and this
+                    visualizer is coming soon.
+                    <Link
+                      href="https://stately.ai/docs/visualizer"
+                      target="_blank"
+                      color="blue.300"
+                    >
+                      {' '}
+                      Read our docs for more information on the differences
+                      between the legacy visualizer and new visualizer.
+                    </Link>
+                  </Text>
+                  <Text>
+                    <Button
+                      {...buttonStyleProps}
+                      as={Link}
+                      href="https://stately.ai?source=viz"
+                      rel="noreferrer"
+                      target="_blank"
+                      bg="orange.600"
+                      maxWidth="auto"
+                    >
+                      <HStack spacing="4">
+                        <MagicIcon color="gray.200" h="6" w="6" />
+                        <Text color="gray.100">
+                          Use the new Stately visualizer
+                        </Text>
+                      </HStack>
+                    </Button>
+                  </Text>
+                </Stack>
+                <Stack spacing="3">
+                  <Heading
+                    size="md"
+                    paddingTop="3"
+                    fontWeight="400"
+                    color="gray.400"
                   >
-                    use our Stately visualizer
-                  </Link>{' '}
-                  to build and visualize state machines. You can create with
-                  drag-and-drop, generate machines from text descriptions,
-                  export to XState V5, and more.
-                </Description>
-              </Stack>
-              <Stack spacing="3">
-                <Button
-                  {...buttonStyleProps}
-                  as={Link}
-                  href="https://stately.ai?source=viz"
-                  rel="noreferrer"
-                  target="_blank"
-                  bg="orange.600"
-                >
-                  <HStack spacing="4">
-                    <MagicIcon color="gray.200" h="6" w="6" />
-                    <Text color="gray.100">Use the new Stately visualizer</Text>
-                  </HStack>
-                </Button>
-                <Heading size="md" paddingTop="3">
-                  XState Legacy Visualizer
-                </Heading>
-                <Description>
-                  This legacy visualizer is deprecated and is no longer
-                  maintained. We recommend migrating your state machines to use
-                  the{' '}
-                  <Link
-                    href="https://stately.ai?source=viz"
-                    target="_blank"
-                    color="blue.300"
+                    Start using legacy visualizer
+                  </Heading>
+                  <Button
+                    {...buttonStyleProps}
+                    onClick={() => send('CLICK_SEE_EXAMPLE')}
                   >
-                    new Stately visualizer
-                  </Link>
-                  .{' '}
-                  <Link
-                    href="https://stately.ai/docs/visualizer"
+                    <HStack spacing="4">
+                      <ViewIcon color="gray.200" h="6" w="6" />
+                      <Text color="gray.100">See an example</Text>
+                    </HStack>
+                  </Button>
+                  <Button
+                    {...buttonStyleProps}
+                    as={Link}
+                    href="http://stately.ai/docs/xstate"
+                    rel="noreferrer"
                     target="_blank"
-                    color="blue.300"
                   >
-                    Read our docs for more information on the differences
-                    between the legacy visualizer and new visualizer.
-                  </Link>
-                </Description>
-                <Button
-                  {...buttonStyleProps}
-                  onClick={() => send('CLICK_SEE_EXAMPLE')}
-                >
-                  <HStack spacing="4">
-                    <ViewIcon color="gray.200" h="6" w="6" />
-                    <Text color="gray.100">See an example</Text>
-                  </HStack>
-                </Button>
-                <Button
-                  {...buttonStyleProps}
-                  as={Link}
-                  href="http://stately.ai/docs/xstate"
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <HStack spacing="4">
-                    <LightbulbIcon color="gray.200" h="6" w="6" />
-                    <Text color="gray.100">Learn how to build machines</Text>
-                  </HStack>
-                </Button>
-                <Button
-                  {...buttonStyleProps}
-                  onClick={() => send('CLICK_START_CODING')}
-                >
-                  <HStack spacing="4">
-                    <BoltIcon color="gray.200" h="6" w="6" />
-                    <Text color="gray.100">Start coding right away</Text>
-                  </HStack>
-                </Button>
+                    <HStack spacing="4">
+                      <LightbulbIcon color="gray.200" h="6" w="6" />
+                      <Text color="gray.100">Learn how to build machines</Text>
+                    </HStack>
+                  </Button>
+                  <Button
+                    {...buttonStyleProps}
+                    onClick={() => send('CLICK_START_CODING')}
+                  >
+                    <HStack spacing="4">
+                      <BoltIcon color="gray.200" h="6" w="6" />
+                      <Text color="gray.100">Start coding right away</Text>
+                    </HStack>
+                  </Button>
+                </Stack>
               </Stack>
             </Stack>
           </>
