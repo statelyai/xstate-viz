@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   ButtonProps,
+  Heading,
   HStack,
   Link,
   Stack,
@@ -131,22 +132,22 @@ export const WelcomeArea = () => {
           <>
             <Stack spacing="6">
               <Stack>
-                <Title>XState Visualizer (Legacy)</Title>
+                <Title size="lg">Stately Visualizer</Title>
                 <Description>
-                  Welcome to the legacy visualizer! Here, you can continue to
-                  build state machine diagrams using XState.{' '}
+                  Build state machine diagrams using XState.{' '}
                 </Description>
                 <Description>
-                  For a better experience,{' '}
+                  For the best experience,{' '}
                   <Link
                     href="https://stately.ai?source=viz"
                     target="_blank"
                     color="blue.300"
                   >
-                    use our Stately visual editor
+                    use our Stately visualizer
                   </Link>{' '}
-                  to build state machines visually, generate machines from text
-                  descriptions, export to XState V5, and much much more.
+                  to build and visualize state machines. You can create with
+                  drag-and-drop, generate machines from text descriptions,
+                  export to XState V5, and more.
                 </Description>
               </Stack>
               <Stack spacing="3">
@@ -160,9 +161,33 @@ export const WelcomeArea = () => {
                 >
                   <HStack spacing="4">
                     <MagicIcon color="gray.200" h="6" w="6" />
-                    <Text color="gray.100">Use the Stately visual editor</Text>
+                    <Text color="gray.100">Use the new Stately visualizer</Text>
                   </HStack>
                 </Button>
+                <Heading size="md" paddingTop="3">
+                  XState Legacy Visualizer
+                </Heading>
+                <Description>
+                  This legacy visualizer is deprecated and is no longer
+                  maintained. We recommend migrating your state machines to use
+                  the{' '}
+                  <Link
+                    href="https://stately.ai?source=viz"
+                    target="_blank"
+                    color="blue.300"
+                  >
+                    new Stately visualizer
+                  </Link>
+                  .{' '}
+                  <Link
+                    href="https://stately.ai/docs/visualizer"
+                    target="_blank"
+                    color="blue.300"
+                  >
+                    Read our docs for more information on the differences
+                    between the legacy visualizer and new visualizer.
+                  </Link>
+                </Description>
                 <Button
                   {...buttonStyleProps}
                   onClick={() => send('CLICK_SEE_EXAMPLE')}
