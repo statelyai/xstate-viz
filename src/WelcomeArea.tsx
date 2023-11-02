@@ -82,7 +82,7 @@ export const WelcomeArea = () => {
   });
 
   return (
-    <Overlay>
+    <Overlay zIndex={0}>
       <Box maxW="lg" p="4">
         {state.matches('seeingExample') && (
           <>
