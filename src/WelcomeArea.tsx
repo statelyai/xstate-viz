@@ -149,6 +149,7 @@ export const WelcomeArea = () => {
                       href="https://stately.ai?source=viz"
                       target="_blank"
                       color="blue.300"
+                      className="plausible-event-name=viz+stately-editor-button"
                     >
                       use our new Stately editor
                     </Link>{' '}
@@ -162,6 +163,7 @@ export const WelcomeArea = () => {
                       href="https://stately.ai/docs/visualizer"
                       target="_blank"
                       color="blue.300"
+                      className="plausible-event-name=viz+docs"
                     >
                       {' '}
                       Read our docs for more information on the differences
@@ -177,6 +179,7 @@ export const WelcomeArea = () => {
                       target="_blank"
                       bg="orange.600"
                       maxWidth="auto"
+                      className="plausible-event-name=viz+new-visualizer"
                     >
                       <HStack spacing="4">
                         <MagicIcon color="gray.200" h="6" w="6" />
@@ -199,6 +202,7 @@ export const WelcomeArea = () => {
                   <Button
                     {...buttonStyleProps}
                     onClick={() => send('CLICK_SEE_EXAMPLE')}
+                    className="plausible-event-name=viz+legacy-example"
                   >
                     <HStack spacing="4">
                       <ViewIcon color="gray.200" h="6" w="6" />
@@ -211,6 +215,7 @@ export const WelcomeArea = () => {
                     href="http://stately.ai/docs/xstate"
                     rel="noreferrer"
                     target="_blank"
+                    className="plausible-event-name=viz+docs"
                   >
                     <HStack spacing="4">
                       <LightbulbIcon color="gray.200" h="6" w="6" />
@@ -220,6 +225,7 @@ export const WelcomeArea = () => {
                   <Button
                     {...buttonStyleProps}
                     onClick={() => send('CLICK_START_CODING')}
+                    className="plausible-event-name=viz+start-coding-using-legacy"
                   >
                     <HStack spacing="4">
                       <BoltIcon color="gray.200" h="6" w="6" />
