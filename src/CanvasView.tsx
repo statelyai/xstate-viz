@@ -105,7 +105,7 @@ export const CanvasView: React.FC = () => {
             <Text>
               ✨ Our{' '}
               <Link
-                href="https://stately.ai?source=viz-banner"
+                href="https://stately.ai/editor?source=viz-banner"
                 target="_blank"
                 color="blue.50"
                 textDecoration="underline"

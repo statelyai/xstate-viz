@@ -146,7 +146,7 @@ export const WelcomeArea = () => {
                   <Text>
                     For the best experience,{' '}
                     <Link
-                      href="https://stately.ai?source=viz"
+                      href="https://stately.ai/editor?source=viz"
                       target="_blank"
                       color="blue.300"
                       className="plausible-event-name=viz+stately-editor-button"
@@ -174,7 +174,7 @@ export const WelcomeArea = () => {
                     <Button
                       {...buttonStyleProps}
                       as={Link}
-                      href="https://stately.ai?source=viz"
+                      href="https://stately.ai/editor?source=viz"
                       rel="noreferrer"
                       target="_blank"
                       bg="orange.600"
