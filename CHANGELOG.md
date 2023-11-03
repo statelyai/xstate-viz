@@ -1,5 +1,11 @@
 # XState Visualizer
 
+## 0.10.0
+
+### Minor Changes
+
+- [#425](https://github.com/statelyai/xstate-viz/pull/425) [`c80b891`](https://github.com/statelyai/xstate-viz/commit/c80b8911fbdd89d41d422aece502b654e75129aa) Thanks [@laurakalbag](https://github.com/laurakalbag)! - Add a banner and welcome screen link introducing the Stately visual editor
+
 ## 0.9.1
 
 ### Patch Changes
