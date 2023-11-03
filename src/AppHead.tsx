@@ -46,7 +46,7 @@ export const AppHead = ({ importElk = true, ...props }: AppHeadProps) => {
       <script
         async
         data-domain="stately.ai"
-        src="https://plausible.io/js/plausible.js"
+        src="https://plausible.io/js/script.tagged-events.js"
       />
     </Head>
   );

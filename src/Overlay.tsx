@@ -1,7 +1,7 @@
-import { Box } from '@chakra-ui/react';
+import { Box, BoxProps } from '@chakra-ui/react';
 import React from 'react';
 
-export const Overlay: React.FC = ({ children }) => {
+export const Overlay: React.FC<BoxProps> = ({ children, ...props }) => {
   return (
     <Box
       display="flex"
@@ -12,7 +12,7 @@ export const Overlay: React.FC = ({ children }) => {
       height="100%"
       width="100%"
       background="blackAlpha.100"
-      zIndex={1}
+      zIndex={props.zIndex ?? 1}
     >
       {children}
     </Box>
