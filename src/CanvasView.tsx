@@ -109,6 +109,7 @@ export const CanvasView: React.FC = () => {
                 target="_blank"
                 color="blue.50"
                 textDecoration="underline"
+                className="plausible-event-name=viz+editor-banner"
               >
                 new Stately visual editor
               </Link>{' '}

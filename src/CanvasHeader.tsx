@@ -38,6 +38,7 @@ export const CanvasHeader: React.FC = () => {
         }}
         target="_blank"
         rel="noreferrer"
+        className="plausible-event-name=viz+stately-logo"
       >
         <Logo
           fill="white"
