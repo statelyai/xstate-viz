@@ -2,6 +2,7 @@ import produce from 'immer';
 import {
   ActorRefFrom,
   AnyInterpreter,
+  createMachine,
   EventFrom,
   InterpreterStatus,
   SCXML,
@@ -62,6 +63,13 @@ export const simModel = createModel(
   },
 );
 
+async function asyncPoll(fn: () => Promise<any>, interval: number) {
+  while (true) {
+    await fn();
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+}
+
 export const simulationMachine = simModel.createMachine(
   {
     preserveActionOrder: true,
@@ -81,66 +89,144 @@ export const simulationMachine = simModel.createMachine(
         invoke: {
           id: 'proxy',
           src: () => (sendBack, onReceive) => {
-            const serverUrl = new URLSearchParams(window.location.search).get(
-              'server',
-            );
+            const searchParams = new URLSearchParams(window.location.search);
+            const serverUrl = searchParams.get('server');
+            const functionUrl = searchParams.get('url');
+            const pollParam = searchParams.get('poll');
+            const poll = pollParam && !isNaN(+pollParam) ? +pollParam : 1000;
 
             let receiver: InspectReceiver;
-            if (serverUrl) {
-              const [protocol, ...server] = serverUrl.split('://');
-              receiver = createWebSocketReceiver({
-                protocol: protocol as 'ws' | 'wss',
-                server: server.join('://'),
+            if (functionUrl) {
+              let registered = false;
+              let lastTimestamp: string;
+
+              asyncPoll(async () => {
+                try {
+                  fetch(functionUrl)
+                    .then((data) => data.json())
+                    .catch((err) => {
+                      console.error(err);
+                    })
+                    .then((data) => {
+                      const machineData = data;
+                      if (!machineData) {
+                        console.error('No machine data received');
+                        return;
+                      }
+
+                      const machine = createMachine(machineData.machine);
+                      const state = machine.resolveState(machineData.state);
+
+                      if (!registered) {
+                        sendBack(
+                          simModel.events['SERVICE.REGISTER']({
+                            sessionId: machineData.id,
+                            machine,
+                            state,
+                            parent: undefined,
+                            source: 'inspector',
+                          }),
+                        );
+                        lastTimestamp = machineData.updated_at;
+                        registered = true;
+                      } else {
+                        if (lastTimestamp !== machineData.updated_at) {
+                          sendBack(
+                            simModel.events['SERVICE.STATE'](
+                              machineData.id,
+                              state,
+                            ),
+                          );
+                          lastTimestamp = machineData.updated_at;
+                        }
+                      }
+                      sendBack({ type: 'SERVICE.READY' });
+                    });
+                } catch (e) {
+                  console.error(e);
+                }
+              }, poll);
+
+              onReceive((event) => {
+                if (event.type === 'xstate.event') {
+                  fetch(functionUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(event.event),
+                  });
+                  sendBack({ type: 'SERVICE.PENDING' });
+                }
               });
             } else {
-              receiver = createWindowReceiver({
-                // for some random reason the `window.top` is being rewritten to `window.self`
-                // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
-                // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
-                // so we pass it explicitly here
-                targetWindow: window.opener || window.parent,
-              });
-            }
-
-            onReceive((event) => {
-              if (event.type === 'xstate.event') {
-                receiver.send({
-                  ...event,
-                  type: 'xstate.event',
-                  event: JSON.stringify(event.event),
+              if (serverUrl) {
+                const [protocol, ...server] = serverUrl.split('://');
+                receiver = createWebSocketReceiver({
+                  protocol: protocol as 'ws' | 'wss',
+                  server: server.join('://'),
+                });
+              } else {
+                receiver = createWindowReceiver({
+                  // for some random reason the `window.top` is being rewritten to `window.self`
+                  // looks like maybe some webpack replacement plugin (or similar) plays tricks on us
+                  // this breaks the auto-detection of the correct `targetWindow` in the `createWindowReceiver`
+                  // so we pass it explicitly here
+                  targetWindow: window.opener || window.parent,
                 });
               }
-            });
 
-            return receiver.subscribe((event) => {
-              switch (event.type) {
-                case 'service.register':
-                  let state = event.machine.resolveState(event.state);
-                  sendBack(
-                    simModel.events['SERVICE.REGISTER']({
-                      sessionId: event.sessionId,
-                      machine: event.machine,
-                      state,
-                      parent: event.parent,
-                      source: 'inspector',
-                    }),
-                  );
-                  break;
-                case 'service.state':
-                  sendBack(
-                    simModel.events['SERVICE.STATE'](
-                      event.sessionId,
-                      event.state,
-                    ),
-                  );
-                  break;
-                case 'service.stop':
-                  sendBack(simModel.events['SERVICE.STOP'](event.sessionId));
-                  break;
-                default:
-                  break;
-              }
-            }).unsubscribe;
+              onReceive((event) => {
+                if (event.type === 'xstate.event') {
+                  receiver.send({
+                    ...event,
+                    type: 'xstate.event',
+                    event: JSON.stringify(event.event),
+                  });
+                }
+              });
+
+              return receiver.subscribe((event) => {
+                switch (event.type) {
+                  case 'service.register':
+                    let state = event.machine.resolveState(event.state);
+                    sendBack(
+                      simModel.events['SERVICE.REGISTER']({
+                        sessionId: event.sessionId,
+                        machine: event.machine,
+                        state,
+                        parent: event.parent,
+                        source: 'inspector',
+                      }),
+                    );
+                    break;
+                  case 'service.state':
+                    sendBack(
+                      simModel.events['SERVICE.STATE'](
+                        event.sessionId,
+                        event.state,
+                      ),
+                    );
+                    break;
+                  case 'service.stop':
+                    sendBack(simModel.events['SERVICE.STOP'](event.sessionId));
+                    break;
+                  default:
+                    break;
+                }
+              }).unsubscribe;
+            }
+          },
+        },
+        initial: 'idle',
+        states: {
+          idle: {
+            on: {
+              'SERVICE.PENDING': 'pending',
+            },
+          },
+          pending: {
+            tags: 'pending',
+            on: {
+              'SERVICE.READY': 'idle',
+            },
           },
         },
       },

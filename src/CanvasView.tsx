@@ -51,6 +51,9 @@ export const CanvasView: React.FC = () => {
   const isLayoutPending = useSelector(simService, (state) =>
     state.hasTag('layoutPending'),
   );
+  const isSimPending = useSelector(simService, (state) =>
+    state.hasTag('pending'),
+  );
   const isEmpty = useSelector(simService, (state) => state.hasTag('empty'));
   const digraph = useMemo(
     () => (machine ? toDirectedGraph(machine) : undefined),
@@ -118,7 +121,11 @@ export const CanvasView: React.FC = () => {
           </Box>
         </Box>
       )}
-      <CanvasContainer panModeEnabled={panModeEnabled}>
+      <CanvasContainer
+        panModeEnabled={panModeEnabled}
+        opacity={isSimPending ? 0.7 : 1}
+        transition="opacity 0.2s ease-in-out"
+      >
         {digraph && <Graph digraph={digraph} />}
         {isLayoutPending && (
           <Overlay>

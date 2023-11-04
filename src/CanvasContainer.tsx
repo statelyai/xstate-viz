@@ -19,6 +19,7 @@ import {
   PointDelta,
 } from './dragSessionTracker';
 import { AnyState } from './types';
+import { Box, BoxProps } from '@chakra-ui/react';
 
 const dragModel = createModel(
   {
@@ -272,9 +273,12 @@ const getCursorByState = (state: AnyState) =>
     ) as { cursor?: CSSProperties['cursor'] }
   )?.cursor;
 
-export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
+type CanvasContainerProps = { panModeEnabled: boolean } & BoxProps;
+
+export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   children,
   panModeEnabled,
+  ...boxProps
 }) => {
   const canvasService = useCanvas();
   const embed = useEmbed();
@@ -456,14 +460,15 @@ export const CanvasContainer: React.FC<{ panModeEnabled: boolean }> = ({
   }, [canvasService, embed]);
 
   return (
-    <div
+    <Box
       ref={canvasRef}
       style={{
         cursor: getCursorByState(state),
         WebkitFontSmoothing: 'auto',
       }}
+      {...boxProps}
     >
       {children}
-    </div>
+    </Box>
   );
 };
