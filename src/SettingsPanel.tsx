@@ -82,6 +82,16 @@ const KeyboardShortcuts = () => (
           </Td>
           <Td>Zoom-in/out</Td>
         </Tr>
+        <Tr>
+          <Td>
+            <VStack alignItems="flex-start">
+              <span>
+                <Kbd>Ctrl</Kbd> + <Kbd>Space</Kbd>
+              </span>
+            </VStack>
+          </Td>
+          <Td>Navigate around in pan mode</Td>
+        </Tr>
       </Tbody>
     </Table>
   </Box>
