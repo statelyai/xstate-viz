@@ -41,6 +41,7 @@ export type ServiceRefEvents =
     };
 
 export interface ServiceData {
+  service?: AnyInterpreter;
   sessionId: string;
   machine: AnyStateMachine;
   state: AnyState;
