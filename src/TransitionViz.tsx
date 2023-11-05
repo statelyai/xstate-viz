@@ -1,6 +1,6 @@
 import { useSelector } from '@xstate/react';
 import React, { useMemo } from 'react';
-import type { AnyStateNodeDefinition, Guard } from 'xstate';
+import type { AnyStateNodeDefinition, Guard, StateNode } from 'xstate';
 import { DirectedGraphEdge } from './directedGraph';
 import { EventTypeViz, toDelayString } from './EventTypeViz';
 import { Point } from './pathUtils';
@@ -65,6 +65,38 @@ const getDelayFromEventType = (
   }
 };
 
+// traverses down compound state nodes using relative path segments
+function resolveStateDown (startState: StateNode, relativePath : Array<string>): StateNode {
+  if (relativePath.length===0)
+    return startState;
+
+  for (let i=0; i<relativePath.length && startState !== undefined; i++) {
+    startState = startState.states[relativePath[i]];
+  }
+
+  return startState;
+}
+
+
+// function that tries to find the state via relative path segments
+function resolveState(startState: StateNode, relativePath : Array<string>): StateNode {
+  
+  let localStartState : StateNode | undefined = startState;
+  let resolvedState;
+  // let's try to look deeper down first
+  do {
+    resolvedState   = resolveStateDown(localStartState, relativePath);
+    localStartState = localStartState.parent;
+  } while (resolvedState===undefined && localStartState!==undefined)
+  
+  if (resolvedState === undefined) {
+    // didn't found it, and there is no parent furhter up to ask...
+    //throw Error("cannot resolve/find state to check for the 'in' condition")          
+  }
+
+  return resolvedState;    
+}
+
 const delayOptionsSelector = (state: StateFrom<typeof simulationMachine>) =>
   state.context.serviceDataMap[state.context.currentSessionId!]?.machine.options
     ?.delays;
@@ -80,16 +112,21 @@ export const TransitionViz: React.FC<{
     service,
     (s) => s.context.serviceDataMap[s.context.currentSessionId!]?.state,
   );
+  const machine = useSelector(
+    service,
+    (s) => s.context.serviceDataMap[s.context.currentSessionId!]?.machine,
+  );
+  const deliminator = machine?.delimiter || ".";
   const delayOptions = useSelector(service, delayOptionsSelector);
   const delay = useMemo(
     () =>
       delayOptions
         ? getDelayFromEventType(
-            definition.eventType,
-            delayOptions,
-            state?.context,
-            state?.event,
-          )
+          definition.eventType,
+          delayOptions,
+          state?.context,
+          state?.event,
+        )
         : undefined,
     [definition.eventType, delayOptions, state],
   );
@@ -97,13 +134,27 @@ export const TransitionViz: React.FC<{
   if (!state) {
     return null;
   }
+  
+  // extra check if the transition might be blocked by the 'in' property...
+  const isBlocked =
+    typeof definition.in === "string" &&  // exists
+    definition.in.length > 0 &&           // with non empty content
+    (
+      definition.in[0] === "#"            
+        // is 'custom id' 
+        ? !machine || !state.matches(machine.getStateNodeById(definition.in.substring(1)).path.join(deliminator))
+        // is (relative) path
+        : !state.matches(resolveState(definition.source, definition.in.split(deliminator)).path.join(deliminator))   
+    )
 
   const isDisabled =
     delay?.delayType === 'DELAYED_INVALID' ||
     !state.nextEvents.includes(definition.eventType);
+
   const isPotential =
-    state.nextEvents.includes(edge.transition.eventType) &&
-    !!state.configuration.find((sn) => sn === edge.source);
+    state.nextEvents.includes(definition.eventType) &&
+    !!state.configuration.find((sn) => sn === edge.source) &&
+    !isBlocked;
 
   return (
     <button
