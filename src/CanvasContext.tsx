@@ -1,7 +1,6 @@
 import { InterpreterFrom } from 'xstate';
 import { canvasMachine } from './canvasMachine';
-import { createRequiredContext } from './utils';
+import { createInterpreterContext, createRequiredContext } from './utils';
 
-export const [CanvasProvider, useCanvas] = createRequiredContext<
-  InterpreterFrom<typeof canvasMachine>
->('Canvas');
+export const [CanvasProvider, useCanvas, createCanvasMachineSelector] =
+  createInterpreterContext<InterpreterFrom<typeof canvasMachine>>('Canvas');
