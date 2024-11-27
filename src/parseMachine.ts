@@ -6,18 +6,19 @@ import realmsShim from 'realms-shim';
 
 const realm = realmsShim.makeRootRealm();
 
-const wrapCallbackToPreventThis =
-  (callback: (...args: any[]) => void) =>
-  (...args: any[]) => {
+function wrapToPreventThis<F extends (...args: any[]) => any>(callback: F): F {
+  const wrapped: any = (...args: any[]) => {
     return callback(...args);
   };
+  return wrapped;
+}
 
 const windowShim = {
   setInterval: (callback: (...args: any[]) => void, ...args: any[]) => {
-    return setInterval(wrapCallbackToPreventThis(callback), ...args);
+    return setInterval(wrapToPreventThis(callback), ...args);
   },
   setTimeout: (callback: (...args: any[]) => void, ...args: any[]) => {
-    return setTimeout(wrapCallbackToPreventThis(callback), ...args);
+    return setTimeout(wrapToPreventThis(callback), ...args);
   },
   clearTimeout: (...args: any[]) => {
     return clearTimeout(...args);
@@ -36,11 +37,18 @@ const windowShim = {
 export function parseMachines(sourceJs: string): Array<StateNode> {
   const machines: Array<StateNode> = [];
 
-  const createMachineCapturer =
-    (machineFactory: any) =>
-    (...args: any[]) => {
-      const machine = machineFactory(...args);
+  const createMachineCapturer = (machineFactory: any) =>
+    function (...args: any[]) {
+      const machine = machineFactory.apply(
+        // @ts-ignore
+        this as any,
+        args,
+      );
       machines.push(machine);
+
+      machine.withConfig = createMachineCapturer(machine.withConfig);
+      machine.withContext = createMachineCapturer(machine.withContext);
+
       return machine;
     };
 
@@ -53,8 +61,10 @@ export function parseMachines(sourceJs: string): Array<StateNode> {
         case 'xstate':
           return {
             ...XState,
-            createMachine: createMachineCapturer(XState.createMachine),
-            Machine: createMachineCapturer(XState.Machine),
+            createMachine: createMachineCapturer(
+              wrapToPreventThis(XState.createMachine),
+            ),
+            Machine: createMachineCapturer(wrapToPreventThis(XState.Machine)),
           };
         case 'xstate/lib/actions':
           return XStateActions;
